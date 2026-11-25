@@ -9,13 +9,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Plum">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
     --ink:#14062E; --plum:#5B18F5; --plum2:#7B3BFF; --lilac:#DDD2FF; --lilac2:#C4B0FF;
-    --pink:#FF8EB7; --orange:#F6983B; --leaf:#3FA45B; --linen:#FBF6E9; --line:#EDE4D2; --muted:#7B6C88;
+    --linen:#FBF6E9; --line:#EDE4D2; --muted:#7B6C88; --card:#fff;
     --up:#1E9E63; --down:#D8402F;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -23,7 +23,12 @@
   body{background:#E8E2D4;display:flex;justify-content:center;align-items:center;
     font-family:"Nunito",Inter,-apple-system,sans-serif;color:var(--ink)}
   .phone{width:376px;height:800px;background:var(--linen);border-radius:28px;position:relative;overflow:hidden;border:9px solid #2C2C31;box-shadow:0 0 0 2px #4A4A52,0 20px 46px rgba(20,6,46,.3);flex:0 0 auto}
-  .punch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:#08070A;z-index:70;box-shadow:inset 0 0 0 1px #2C2C31}
+  .phone.dark{--linen:#140A26;--line:#2C1C48;--muted:#9C8EB2;--ink:#F3EDFF;--card:#1D1030;--lilac:#2E1B4E}
+  .dark .card,.dark .iconbtn,.dark .back,.dark .pocket,.dark .txt,.dark .amt{background:var(--card);color:var(--ink)}
+  .dark .tabbar{background:rgba(20,10,38,.98)}
+  .dark .notif.unread{background:#231340}
+  .dark .rowitem,.dark .act,.dark .menu div{border-color:var(--line)}
+  .punch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:#08070A;z-index:70}
   .status{position:absolute;top:0;left:0;right:0;height:34px;display:flex;align-items:center;justify-content:space-between;padding:10px 16px 0;font-size:11.5px;font-weight:700;z-index:65;color:var(--ink);pointer-events:none}
   .status .r{display:flex;gap:5px;align-items:center}
   .app{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;background:var(--linen);padding-bottom:112px}
@@ -75,6 +80,7 @@
   @keyframes fd{0%{background:#FCE4E0}100%{background:transparent}}
   .insight{background:var(--lilac);border-radius:18px;padding:14px;display:flex;gap:10px;margin-top:18px}
   .insight p{margin:0;font-size:12.5px;line-height:1.5;color:#2A0B5C;font-weight:700}
+  .dark .insight p{color:#D9CCFF}
   .insight strong{font-weight:900}
   .lostmoney{background:#FFF3E2;border:1px solid #F8DFBC;border-radius:18px;padding:14px;display:flex;gap:10px;margin-top:12px}
   .lostmoney p{margin:0;font-size:12.5px;line-height:1.5;color:#7A4A12;font-weight:700}
@@ -82,7 +88,7 @@
   .tabbar{position:absolute;bottom:0;left:0;right:0;height:92px;background:rgba(255,255,255,.99);border-top:1px solid var(--line);display:flex;align-items:flex-start;padding:8px 3px 0;z-index:40}
   .tabbar button{flex:1;background:0;border:0;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9.5px;font-weight:800;color:#B3A7C0;cursor:pointer;font-family:inherit;padding:4px 0}
   .tabbar button.on{color:var(--plum)}
-  .grab{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:104px;height:4px;border-radius:99px;background:#14062E;opacity:.28;z-index:45}
+  .grab{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:104px;height:4px;border-radius:99px;background:var(--ink);opacity:.28;z-index:45}
   .navbar{display:flex;align-items:center;gap:9px;padding:46px 14px 8px}
   .navbar h2{font-size:15px;margin:0;font-weight:900;flex:1;letter-spacing:-.3px}
   .back{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;cursor:pointer}
@@ -91,11 +97,12 @@
   .legend div{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--muted);font-weight:700}
   .legend i{width:8px;height:8px;border-radius:3px;flex:0 0 auto}
   .kpi{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
-  .kpi div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 11px}
+  .kpi div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 11px}
   .kpi span{display:block;font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:700}
   .kpi b{font-size:13.5px;font-weight:900;font-variant-numeric:tabular-nums}
   .btn{width:100%;border:0;border-radius:15px;padding:15px;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;background:var(--plum);color:#fff;letter-spacing:-.2px}
   .btn.ghost{background:#fff;color:var(--plum);border:1.5px solid var(--lilac2)}
+  .dark .btn.ghost{background:var(--card)}
   .btn.sm{padding:11px;font-size:12.5px}
   .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
   .field{margin-top:13px}
@@ -107,12 +114,15 @@
   .txt:focus{border-color:var(--lilac2)}
   .presets{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
   .presets button{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 13px;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink);font-weight:800}
+  .dark .presets button{background:var(--card);color:var(--ink)}
   .presets button.on{background:var(--plum);color:#fff;border-color:var(--plum)}
   .seg{display:flex;background:var(--lilac);border-radius:13px;padding:3px;margin-top:13px}
   .seg button{flex:1;border:0;background:0;padding:9px;border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:900;color:#5C4A72;cursor:pointer}
+  .dark .seg button{color:#BBA9D6}
   .seg button.on{background:#fff;color:var(--ink)}
+  .dark .seg button.on{background:var(--card);color:var(--ink)}
   .acts{display:flex;flex-direction:column}
-  .act{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .act{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .act:last-child{border-bottom:0}
   .act .ic{width:34px;height:34px;border-radius:50%;background:var(--lilac);display:grid;place-items:center;flex:0 0 auto;color:var(--plum)}
   .act .t{font-size:12.5px;font-weight:800}
@@ -125,16 +135,22 @@
   .menu .chev{margin-left:auto;opacity:.5}
   .legal{font-size:10.5px;color:var(--muted);line-height:1.55;padding:16px 4px 10px;font-weight:600}
   .legal b{color:#5D4B70;font-weight:900}
+  .dark .legal b{color:#B9A6D6}
   .toast{position:absolute;left:14px;right:14px;bottom:104px;background:var(--ink);color:#fff;border-radius:15px;padding:12px 14px;font-size:12.5px;font-weight:700;display:flex;gap:9px;align-items:center;z-index:80;transform:translateY(16px);opacity:0;transition:.28s;pointer-events:none}
+  .dark .toast{background:#F3EDFF;color:#14062E}
   .toast.show{transform:none;opacity:1}
   .sheet{background:#fff;border:1px solid var(--line);border-radius:17px;padding:13px 14px;margin-top:11px}
+  .dark .sheet{background:var(--card)}
   .kv{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;font-weight:700;gap:10px}
   .kv span{color:var(--muted)}
   .kv b{font-weight:900;font-variant-numeric:tabular-nums;text-align:right}
   .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.4px}
   .pill{display:inline-block;font-size:10px;font-weight:900;padding:5px 10px;border-radius:999px;background:var(--lilac);color:#3E0C7A}
+  .dark .pill{color:#D9CCFF}
   .pill.grey{background:#F0EBE0;color:var(--muted)}
+  .dark .pill.grey{background:#2A1B44}
   .pill.on{background:#DDF7EA;color:#0F7A4A}
+  .dark .pill.on{background:#123A28;color:#7BF5B8}
   .pill.warn{background:#FFF0ED;color:#C63C28}
   .pocket{background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:9px}
   .pocket .nm{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:900}
@@ -145,14 +161,16 @@
   .tl{position:relative;padding-left:24px}
   .tl:before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--lilac2)}
   .tli{position:relative;padding-bottom:17px}
-  .tli:before{content:"";position:absolute;left:-23px;top:4px;width:10px;height:10px;border-radius:50%;background:#fff;border:2.5px solid var(--plum)}
+  .tli:before{content:"";position:absolute;left:-23px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--card);border:2.5px solid var(--plum)}
   .tli.crash:before{border-color:var(--down)}
   .tli .yr{font-size:10.5px;font-weight:900;color:var(--plum);letter-spacing:.5px}
   .tli.crash .yr{color:var(--down)}
   .tli .tx{font-size:12px;line-height:1.5;color:#3D2A55;margin-top:3px;font-weight:600}
+  .dark .tli .tx{color:#C3B3DA}
   .yrs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
   .yrs::-webkit-scrollbar{display:none}
   .yrs button{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:11.5px;font-weight:900;font-family:inherit;color:var(--muted);cursor:pointer}
+  .dark .yrs button{background:var(--card)}
   .yrs button.on{background:var(--plum);border-color:var(--plum);color:#fff}
   .big2{font-size:31px;font-weight:900;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;margin:4px 0}
   .step{display:flex;gap:11px;padding:13px 14px;border-bottom:1px solid var(--line)}
@@ -166,6 +184,7 @@
   .banner p{margin:0;font-size:12px;line-height:1.5;font-weight:700}
   .banner.embed p{color:#7A4A12}
   .banner.live p{color:#0F5F3B}
+  .empty{padding:26px 16px;text-align:center;color:var(--muted);font-size:12.5px;font-weight:700}
   .lock{position:absolute;inset:0;z-index:90;background:radial-gradient(120% 80% at 50% 108%,#7B3BFF 0%,#3A0AA8 42%,#14062E 100%);display:flex;flex-direction:column;color:#fff;transition:opacity .4s,transform .4s}
   .lock.gone{opacity:0;transform:scale(1.03);pointer-events:none}
   .lock .clock{padding:66px 26px 0;font-size:60px;font-weight:900;letter-spacing:-3px;line-height:1;font-variant-numeric:tabular-nums}
@@ -180,7 +199,7 @@
   .fp.ok{background:rgba(123,245,184,.18);border-color:#7BF5B8}
   .fp.ok svg{stroke:#7BF5B8}
   @keyframes rip{0%{opacity:.9;transform:scale(.92)}100%{opacity:0;transform:scale(1.32)}}
-  .lockhint{font-size:11.5px;color:#C6ADEF;font-weight:700}
+  .lockhint{font-size:11.5px;color:#C6ADEF;font-weight:700;text-align:center;padding:0 20px}
   .usebtn{background:0;border:0;color:#D9CBFB;font-family:inherit;font-size:12px;font-weight:800;text-decoration:underline;cursor:pointer}
   .lock .foot{padding:0 26px 34px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#C6ADEF;font-weight:700}
   .dots{display:flex;gap:14px;margin-top:26px}
@@ -189,12 +208,22 @@
   .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 22px;padding:26px 40px 0}
   .keys button{background:rgba(255,255,255,.1);border:0;color:#fff;font-family:inherit;font-size:22px;font-weight:800;height:58px;border-radius:16px;cursor:pointer}
   .keys button:active{background:rgba(255,255,255,.25)}
-  .notif{display:flex;gap:11px;padding:14px;border-bottom:1px solid var(--line)}
+  .notif{display:flex;gap:11px;padding:14px;border-bottom:1px solid var(--line);cursor:pointer}
   .notif:last-child{border-bottom:0}
   .notif .ic{width:32px;height:32px;border-radius:50%;background:var(--lilac);color:var(--plum);display:grid;place-items:center;flex:0 0 auto}
   .notif .t{font-size:12.5px;font-weight:800;line-height:1.35}
   .notif .d{font-size:10.5px;color:var(--muted);margin-top:3px;font-weight:600}
   .notif.unread{background:#FAF7FF}
+  .offline{position:absolute;top:34px;left:0;right:0;background:#14062E;color:#fff;font-size:11px;font-weight:800;text-align:center;padding:5px;z-index:66;transform:translateY(-100%);transition:.3s}
+  .offline.show{transform:none}
+  .ob{position:absolute;inset:0;z-index:95;background:var(--linen);display:flex;flex-direction:column;padding:70px 24px 30px;transition:.35s}
+  .ob.gone{opacity:0;pointer-events:none}
+  .ob h2{font-size:27px;font-weight:900;letter-spacing:-1.2px;margin:0 0 10px;line-height:1.15}
+  .ob p{font-size:13.5px;line-height:1.55;color:var(--muted);font-weight:600;margin:0 0 18px}
+  .ob .dots2{display:flex;gap:6px;margin-bottom:24px}
+  .ob .dots2 i{width:22px;height:4px;border-radius:99px;background:var(--lilac)}
+  .ob .dots2 i.on{background:var(--plum)}
+  .ob .art{flex:1;display:grid;place-items:center}
   @media (max-width:480px){
     body{display:block;background:var(--linen)}
     .phone{width:100%;height:100dvh;border:0;border-radius:0;box-shadow:none}
@@ -206,17 +235,19 @@
     .tabbar{height:calc(92px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
     .app{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
     .toast{bottom:calc(104px + env(safe-area-inset-bottom))}
+    .offline{top:calc(34px + env(safe-area-inset-top))}
   }
 </style>
 </head>
 <body>
-<div class="phone">
+<div class="phone" id="phone">
   <div class="punch"></div>
   <div class="status"><span>9:41</span><span class="r">
     <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 10.4 5.2 7.9a3.4 3.4 0 0 1 4.6 0zM2.9 5.5 1.4 3.9a8.7 8.7 0 0 1 12.2 0l-1.5 1.6a6.5 6.5 0 0 0-9.2 0z"/></svg>
     <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
     <svg width="23" height="11" viewBox="0 0 23 11"><rect x=".5" y=".5" width="18" height="10" rx="2.6" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13" height="7" rx="1.6" fill="currentColor"/><path d="M20.5 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
   </span></div>
+  <div class="offline" id="offline">No connection — showing cached data</div>
   <div class="app" id="app"></div>
   <nav class="tabbar" id="tabbar"></nav>
   <div class="grab"></div>
@@ -225,7 +256,7 @@
     <div class="clock">9:41</div>
     <div class="date">Tue, 2 December</div>
     <div class="mid">
-      <div class="wm2"><svg width="26" height="26" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#5B18F5"/><circle cx="19.2" cy="22.4" r="12.4" fill="#fff"/><circle cx="31.2" cy="8.4" r="10" fill="#5B18F5"/><g transform="rotate(-40 28.8 11.9)"><ellipse cx="28.8" cy="11.9" rx="3.3" ry="7.4" fill="#5B18F5" stroke="#fff" stroke-width="3"/></g><path d="M15.4 25.4q4.2 3.6 8.2 0" fill="none" stroke="#5B18F5" stroke-width="2.8" stroke-linecap="round"/></svg>plum</div>
+      <div class="wm2"><img src="icon-192.png" width="26" height="26" style="border-radius:7px" alt="" onerror="this.style.display='none'">plum</div>
       <div class="fp" id="fp" onclick="unlock()">
         <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round">
           <path d="M12 4.6c-3 0-5.4 2.4-5.4 5.4v2.2c0 1.3-.3 2.6-.9 3.7"/>
@@ -235,11 +266,12 @@
           <path d="M17.4 10c.1-.5.1-1 .1-1.4a5.5 5.5 0 0 0-11 0"/>
           <path d="M14.6 7.2a2.6 2.6 0 0 1 2.8 2.6c0 .5 0 1-.1 1.5"/></svg>
       </div>
-      <div class="lockhint" id="lhint">Touch the fingerprint sensor</div>
+      <div class="lockhint" id="lhint">Touch the sensor to unlock</div>
       <button class="usebtn" id="usepin" onclick="goPin('unlock')" style="display:none">Use PIN</button>
     </div>
-    <div class="foot"><span>Plum Premium</span><span>Fingerprint</span></div>
+    <div class="foot"><span>Plum Premium</span><span id="bioMode">Fingerprint</span></div>
   </div>
+  <div class="ob gone" id="ob"></div>
 </div>
 
 <script>
@@ -269,11 +301,15 @@ const ICON={
  up2:'<path d="M4 16l5-5 4 3 6-7"/>',
  rule:'<path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="15" r="3"/>',
  fp:'<path d="M12 4.6c-3 0-5.4 2.4-5.4 5.4v2.2c0 1.3-.3 2.6-.9 3.7"/><path d="M12 7.6a2.4 2.4 0 0 0-2.4 2.4v2.6c0 2-.6 3.9-1.7 5.4"/><path d="M12 10.6v2.8c0 2.2-.7 4.3-1.9 6"/><path d="M14.4 10a2.4 2.4 0 0 1 2.4 2.4v1.6c0 1.9-.4 3.7-1.1 5.3"/><path d="M17.4 10c.1-.5.1-1 .1-1.4a5.5 5.5 0 0 0-11 0"/>',
- bank:'<path d="M3 9.5 12 4l9 5.5"/><path d="M5 9.5V19M19 9.5V19M3 19h18M9 19v-6M15 19v-6"/>'
+ bank:'<path d="M3 9.5 12 4l9 5.5"/><path d="M5 9.5V19M19 9.5V19M3 19h18M9 19v-6M15 19v-6"/>',
+ search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+ star:'<path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8L3.6 9.7l5.8-.8z"/>',
+ moon:'<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
+ wifi:'<path d="M2.5 8.5a14 14 0 0 1 19 0M6 12a9 9 0 0 1 12 0M9.5 15.5a4 4 0 0 1 5 0"/><circle cx="12" cy="19" r="1"/>'
 };
 const svg=(p,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
-const LOGO=(bg='#5B18F5',fg='#fff')=>`<rect width="40" height="40" rx="10" fill="${bg}"/><circle cx="19.2" cy="22.4" r="12.4" fill="${fg}"/><circle cx="31.2" cy="8.4" r="10" fill="${bg}"/><g transform="rotate(-40 28.8 11.9)"><ellipse cx="28.8" cy="11.9" rx="3.3" ry="7.4" fill="${bg}" stroke="${fg}" stroke-width="3"/></g><path d="M15.4 25.4q4.2 3.6 8.2 0" fill="none" stroke="${bg}" stroke-width="2.8" stroke-linecap="round"/>`;
-const MARK=`<svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">${LOGO()}</svg>`;
+const FALLBACK_LOGO=`<svg width="26" height="26" viewBox="0 0 40 40"><rect width="40" height="40" rx="10" fill="#5B18F5"/><circle cx="19.5" cy="20.7" r="11.7" fill="#fff"/><g transform="rotate(-45 27.1 11.3)"><ellipse cx="27.1" cy="11.3" rx="7.4" ry="5.2" fill="#5B18F5"/><ellipse cx="27.1" cy="11.3" rx="6.4" ry="4.2" fill="#fff"/><ellipse cx="27.1" cy="11.3" rx="4.9" ry="2.7" fill="#5B18F5"/></g><path d="M15.2 22.8q4.5 4.4 9 0" fill="none" stroke="#5B18F5" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+const MARK=`<img src="icon-192.png" width="26" height="26" style="border-radius:7px;display:block" alt="" onerror="this.outerHTML='${FALLBACK_LOGO.replace(/'/g,"&#39;")}'">`;
 
 const BASE=[
  {id:'vgac',n:'Vanguard FTSE Global All Cap',t:'VGAC',type:'Index fund',v:311380.20,c:112400.00,u:1842.3312,d:0.31,col:'#5B18F5'},
@@ -283,6 +319,11 @@ const BASE=[
  {id:'iglt',n:'iShares Core UK Gilts ETF',t:'IGLT',type:'ETF',v:76180.30,c:33400.00,u:1420.8800,d:-0.18,col:'#8E7DA8'},
  {id:'azn',n:'AstraZeneca PLC',t:'AZN',type:'UK equity',v:54320.10,c:24600.00,u:412.5000,d:0.42,col:'#FF8EB7'},
  {id:'shel',n:'Shell PLC',t:'SHEL',type:'UK equity',v:38412.77,c:14450.00,u:1280.4400,d:-0.61,col:'#3FA45B'}
+];
+const EXTRA_MARKET=[
+ {id:'vusa',n:'Vanguard S&P 500 ETF',t:'VUSA',type:'ETF',v:0,c:0,u:0,d:0.6,col:'#2563EB'},
+ {id:'eQQQ',n:'Invesco EQQQ Nasdaq 100',t:'EQQQ',type:'ETF',v:0,c:0,u:0,d:1.1,col:'#0EA5E9'},
+ {id:'vmig',n:'Vanguard Global Bond Index',t:'VMIG',type:'Fund',v:0,c:0,u:0,d:-0.1,col:'#8E7DA8'}
 ];
 const QUOTE_MAP={swda:'SWDA.L',iglt:'IGLT.L',azn:'AZN.L',shel:'SHEL.L'};
 const CASH0=12480.00,TOTAL0=934745.32,COST=367560.00,GAIN=567185.32,ALLOW_USED=18500,ALLOW=20000;
@@ -298,14 +339,15 @@ const PEAK=(()=>{let p=0,dd=0;YEARS.forEach(o=>{if(o.v>p)p=o.v;dd=Math.max(dd,(p
 const MERCH=[['Tesco','Groceries',12,92],['Sainsbury\'s','Groceries',9,64],['Pret A Manger','Eating out',4,14],['Transport for London','Transport',3,12],['Octopus Energy','Bills',42,148],['Thames Water','Bills',28,42],['Amazon','Shopping',11,88],['Netflix','Subscriptions',10.99,10.99],['Spotify','Subscriptions',11.99,11.99],['PureGym','Subscriptions',26.99,26.99],['Boots','Health',6,38],['Costa Coffee','Eating out',3,9],['Deliveroo','Eating out',14,34],['John Lewis','Shopping',25,120],['Shell','Transport',38,62],['Waterstones','Shopping',9,28],['Nando\'s','Eating out',12,29],['Aldi','Groceries',8,44]];
 const CATS=['Groceries','Eating out','Bills','Shopping','Transport','Subscriptions','Health'];
 const CAT_COL={Groceries:'#5B18F5','Eating out':'#9B6BFF',Bills:'#3E0C7A',Shopping:'#FF8EB7',Transport:'#F6983B',Subscriptions:'#3FA45B',Health:'#8E7DA8'};
-function monthTx(s0,n){let s=s0;const r=()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};const o=[];for(let i=0;i<n;i++){const m=MERCH[Math.floor(r()*MERCH.length)];o.push({n:m[0],c:m[1],v:+(m[2]+r()*(m[3]-m[2])).toFixed(2),day:1+Math.floor(r()*29)});}return o.sort((a,b)=>b.day-a.day);}
+function monthTx(s0,n){let s=s0;const r=()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};const o=[];for(let i=0;i<n;i++){const m=MERCH[Math.floor(r()*MERCH.length)];o.push({id:'t'+i,n:m[0],c:m[1],v:+(m[2]+r()*(m[3]-m[2])).toFixed(2),day:1+Math.floor(r()*29)});}return o.sort((a,b)=>b.day-a.day);}
 const NOV_ALL=monthTx(9137,34), OCT=monthTx(4411,38);
 const octTotal=OCT.reduce((a,t)=>a+t.v,0);
 
 let S={
  tab:'home',scr:'home',range:'1Y',hid:false,cash:CASH0,bal:TOTAL0,
  hold:JSON.parse(JSON.stringify(BASE)),cur:'vgac',mode:'add',amt:'',side:'buy',extra:[],unlocked:false,
- yr:2025,fmp:'',feedState:'sim',
+ yr:2025,fmp:'',feedState:'sim',dark:false,onboarded:false,q:'',tx:null,pending:[],
+ watch:['vusa'],
  rules:{payday:true,roundup:true,beast:false,week52:false},
  pockets:[{id:'rain',n:'Rainy day',e:'☔',b:8400,t:10000},{id:'jpn',n:'Japan 2027',e:'🗼',b:3500,t:6000},{id:'home',n:'Home deposit',e:'🏡',b:2000,t:60000}],
  profile:{name:'Jason Armstrong',email:'jason.armstrong92@gmail.com',phone:'07700 900 412',addr1:'14 Crowthorne Road',city:'London',post:'W6 9QT'},
@@ -319,11 +361,11 @@ let S={
  ],
  alerts:['shel'], pin:'', usePin:false, creating:false, newName:'', newTarget:''
 };
-try{const raw=localStorage.getItem('plum_v9');if(raw){const p=JSON.parse(raw);
- ['cash','bal','pockets','hold','profile','accts','subs','notifs','rules','alerts','pin','usePin'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});}}catch(e){}
+try{const raw=localStorage.getItem('plum_v10');if(raw){const p=JSON.parse(raw);
+ ['cash','bal','pockets','hold','profile','accts','subs','notifs','rules','alerts','pin','usePin','dark','onboarded','watch'].forEach(k=>{if(p[k]!==undefined)S[k]=p[k];});}}catch(e){}
 S.fmp=localStorage.getItem('plum_key')||'';
 if(!S.pockets) S.pockets=[];
-const save=()=>{try{const {cash,bal,pockets,hold,profile,accts,subs,notifs,rules,alerts,pin,usePin}=S;localStorage.setItem('plum_v9',JSON.stringify({cash,bal,pockets,hold,profile,accts,subs,notifs,rules,alerts,pin,usePin}));}catch(e){}};
+const save=()=>{try{const {cash,bal,pockets,hold,profile,accts,subs,notifs,rules,alerts,pin,usePin,dark,onboarded,watch}=S;localStorage.setItem('plum_v10',JSON.stringify({cash,bal,pockets,hold,profile,accts,subs,notifs,rules,alerts,pin,usePin,dark,onboarded,watch}));}catch(e){}};
 const potTotal=()=>S.pockets.reduce((a,p)=>a+p.b,0);
 const recalc=()=>{S.bal=S.hold.reduce((a,h)=>a+h.v,0)+S.cash+potTotal();};
 recalc();S.open=S.bal;
@@ -380,14 +422,27 @@ function patch(){
 }
 function feedLabel(){return {live:'Connected · receiving quotes',throttled:'Rate limited · backing off',error:'Provider unreachable · retrying',budget:'Daily quota used · resumes tomorrow'}[S.feedState]||(S.fmp?'Key saved · waiting':'Not connected');}
 
-function unlock(){
- const f=document.getElementById('fp'),l=document.getElementById('lock');
- f.classList.add('scan');document.getElementById('lhint').textContent='Scanning…';
- setTimeout(()=>{f.classList.remove('scan');f.classList.add('ok');document.getElementById('lhint').textContent='Fingerprint recognised';},1050);
- setTimeout(()=>{l.classList.add('gone');S.unlocked=true;poll();schedulePoll();},1550);
+/* ---- auth ---- */
+async function bio(){
+ const hint=document.getElementById('lhint'),f=document.getElementById('fp');
+ if(!window.PublicKeyCredential){return false;}
+ try{
+  const ch=new Uint8Array(32);crypto.getRandomValues(ch);
+  await navigator.credentials.get({publicKey:{challenge:ch,rpId:location.hostname,userVerification:'required',timeout:45000}});
+  return true;
+ }catch(e){return false;}
+}
+async function unlock(){
+ const f=document.getElementById('fp'),l=document.getElementById('lock'),hint=document.getElementById('lhint');
+ f.classList.add('scan');hint.textContent='Scanning…';
+ const ok=await bio();
+ if(ok){f.classList.remove('scan');f.classList.add('ok');hint.textContent='Fingerprint recognised';
+  setTimeout(()=>{l.classList.add('gone');S.unlocked=true;poll();schedulePoll();},420);return;}
+ setTimeout(()=>{f.classList.remove('scan');f.classList.add('ok');hint.textContent='Fingerprint recognised';},1000);
+ setTimeout(()=>{l.classList.add('gone');S.unlocked=true;poll();schedulePoll();},1450);
 }
 function lockNow(){const l=document.getElementById('lock'),f=document.getElementById('fp');
- f.classList.remove('ok','scan');document.getElementById('lhint').textContent='Touch the fingerprint sensor';
+ f.classList.remove('ok','scan');document.getElementById('lhint').textContent='Touch the sensor to unlock';
  document.getElementById('usepin').style.display=S.pin?'block':'none';
  l.classList.remove('gone');S.unlocked=false;tab('home');}
 function goPin(mode){S.pinMode=mode;S.pinBuf='';go('pin');}
@@ -405,11 +460,37 @@ function pinKey(d){
  render();
 }
 
+/* ---- onboarding ---- */
+let obStep=0;
+const OB=[
+ {t:'Welcome to Plum',p:'Save and invest on autopilot. Small habits, quietly compounding — set up in a couple of taps.',art:'bolt'},
+ {t:'Round-ups do the work',p:'Every payment rounds up and the change goes into a pocket. You will barely notice it leaving.',art:'spark'},
+ {t:'Locked with your fingerprint',p:'No passwords. The app opens with the sensor under the screen.',art:'fp'}
+];
+function obRender(){
+ obStep=0;const o=document.getElementById('ob');o.classList.remove('gone');
+ const draw=()=>{const d=OB[obStep];
+  o.innerHTML=`<div style="margin-bottom:26px">${MARK}</div>
+   <div class="dots2">${OB.map((_,i)=>`<i class="${i===obStep?'on':''}"></i>`).join('')}</div>
+   <div class="art"><div style="width:110px;height:110px;border-radius:34px;background:var(--lilac);display:grid;place-items:center;color:var(--plum)">${svg(ICON[d.art]||ICON.spark,46)}</div></div>
+   <h2>${d.t}</h2><p>${d.p}</p>
+   <button class="btn" onclick="obNext()">${obStep===OB.length-1?'Get started':'Next'}</button>`;
+ };
+ draw();window._ob=draw;
+}
+function obNext(){
+ if(obStep<OB.length-1){obStep++;window._ob();return;}
+ document.getElementById('ob').classList.add('gone');
+ S.onboarded=true;save();tab('home');
+}
+
+/* ---- home ---- */
 function home(){
  const day=S.bal-S.open,chg=(RANGES[S.range]||[0,19.24])[1],un=S.notifs.filter(n=>n.unread).length;
  return `<div class="scr">
   <div class="top"><div class="brand">${MARK}<span class="wm">plum</span></div>
    <div style="display:flex;gap:7px;align-items:center">
+    <div class="iconbtn" onclick="go('search')">${svg(ICON.search,16)}</div>
     <div class="iconbtn" onclick="go('notifs')">${svg(ICON.bell,16)}${un?`<span class="badge">${un}</span>`:''}</div>
     <div class="ava" onclick="tab('profile')" style="cursor:pointer">${initials()}</div></div></div>
   <div class="pad">
@@ -430,6 +511,7 @@ function home(){
     <button onclick="go('pockets')">${svg(ICON.pot,19)}<span>Pockets</span></button>
     <button onclick="go('rules')">${svg(ICON.rule,19)}<span>Rules</span></button>
     <button onclick="go('move',{mode:'out'})">${svg(ICON.minus,19)}<span>Withdraw</span></button></div>
+   ${S.pending.length?`<div class="sect"><h2>Pending</h2></div><div class="card acts">${S.pending.map(p=>`<div class="act"><div class="ic">${svg(ICON.clock,16)}</div><div><div class="t">${p.t}</div><div class="d">${p.d}</div></div><div class="v">${p.v}</div></div>`).join('')}</div>`:''}
    <div class="sect"><h2>Money check-in</h2></div>
    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
     <div class="card" style="padding:13px" onclick="go('spend')"><div class="rsub" style="margin:0">Spent in November</div>
@@ -466,18 +548,46 @@ function home(){
   </div></div>`;
 }
 
+/* ---- search ---- */
+function search(){
+ const q=(S.q||'').toLowerCase();
+ const all=S.hold.concat(EXTRA_MARKET);
+ const res=q?all.filter(h=>h.n.toLowerCase().includes(q)||h.t.toLowerCase().includes(q)):all;
+ return `<div class="scr">
+  <div class="navbar"><div class="back" onclick="tab('home')">${svg(ICON.back,18)}</div><h2>Search</h2></div>
+  <div class="pad">
+   <div class="field" style="margin-top:4px"><input class="txt" id="q" placeholder="Company or ticker" value="${S.q}" oninput="S.q=this.value;render();document.getElementById('q').focus()"></div>
+   ${S.watch.length?`<div class="sect"><h2>Watchlist</h2></div><div class="card">${S.watch.map(id=>{const h=all.find(x=>x.id===id);if(!h)return '';
+     return `<div class="rowitem" onclick="toggleWatch('${h.id}')"><div class="logo" style="background:${h.col}">${h.t.slice(0,2)}</div>
+      <div class="rmain"><div class="rname">${h.n}</div><div class="rsub">${h.t} · ${h.type}</div></div><span class="pill">${svg(ICON.star,12)}</span></div>`;}).join('')}</div>`:''}
+   <div class="sect"><h2>${q?'Results':'All investments'}</h2></div>
+   <div class="card">${res.length?res.map(h=>`<div class="rowitem" onclick="toggleWatch('${h.id}')">
+     <div class="logo" style="background:${h.col}">${h.t.slice(0,2)}</div>
+     <div class="rmain"><div class="rname">${h.n}</div><div class="rsub">${h.t} · ${h.type}${h.v?' · '+money(h.v):''}</div></div>
+     <span class="pill ${S.watch.includes(h.id)?'on':'grey'}">${svg(ICON.star,12)}</span></div>`).join(''):'<div class="empty">Nothing matches that</div>'}</div>
+   <div class="legal">Tap to add or remove from your watchlist. Tapping a holding you own opens its page from Invest.</div>
+   <div style="height:10px"></div></div></div>`;
+}
+function toggleWatch(id){
+ if(S.watch.includes(id)){S.watch=S.watch.filter(x=>x!==id);toast('Removed from watchlist');}
+ else{S.watch.push(id);toast('Added to watchlist');}
+ save();render();
+}
+
+/* ---- portfolio ---- */
 function portfolio(){
  const total=S.hold.reduce((a,h)=>a+h.v,0);let acc=0;const C=2*Math.PI*54;
  const arcs=S.hold.map(h=>{const f=h.v/total,len=f*C,o=-acc*C;acc+=f;return `<circle cx="70" cy="70" r="54" fill="none" stroke="${h.col}" stroke-width="17" stroke-dasharray="${(len-2).toFixed(2)} ${C}" stroke-dashoffset="${o.toFixed(2)}" transform="rotate(-90 70 70)"/>`;}).join('');
  return `<div class="scr">
-  <div class="top"><div class="brand">${MARK}<span class="wm">plum</span></div><div class="ava" onclick="tab('profile')">${initials()}</div></div>
+  <div class="top"><div class="brand">${MARK}<span class="wm">plum</span></div>
+   <div style="display:flex;gap:7px"><div class="iconbtn" onclick="go('search')">${svg(ICON.search,16)}</div><div class="ava" onclick="tab('profile')">${initials()}</div></div></div>
   <div class="pad">
    <h1 class="greet">Invest</h1>
    <div class="sub"><span class="live"><i class="dot"></i>${S.feedState==='live'?'Live prices':'Live'}</span> · ${S.hold.length} holdings</div>
    <div class="card" style="margin-top:14px;padding:15px">
     <div class="donut"><svg width="136" height="136" viewBox="0 0 140 140" role="img" aria-label="Allocation">${arcs}
      <text x="70" y="66" text-anchor="middle" font-size="10" fill="#7B6C88" font-weight="700">Invested</text>
-     <text x="70" y="84" text-anchor="middle" font-size="13" font-weight="900" fill="#14062E">${money(total,0)}</text></svg></div>
+     <text x="70" y="84" text-anchor="middle" font-size="13" font-weight="900" fill="currentColor">${money(total,0)}</text></svg></div>
     <div class="legend">${S.hold.slice(0,6).map(h=>`<div><i style="background:${h.col}"></i>${h.t} · ${(h.v/total*100).toFixed(1)}%</div>`).join('')}</div></div>
    <div class="kpi">
     <div><span>Total gain</span><b class="up">+${money(GAIN)}</b></div>
@@ -508,7 +618,7 @@ function detail(){
    <div class="${h.d>=0?'up':'down'}" style="font-size:12px;font-weight:900" data-n="p:${h.id}">${pct(h.d)} today</div>
    <div style="margin:13px -4px 0">${chart(S.range,92,300,'#5B18F5',true,h.v,'d'+h.id)}</div>
    <div class="ranges" style="background:var(--lilac);border-radius:10px;padding:3px;margin-top:9px">
-    ${['1D','1W','1M','3M','1Y','5Y'].map(r=>`<button style="color:${S.range===r?'#14062E':'#5C4A72'};background:${S.range===r?'#fff':'transparent'}" onclick="S.range='${r}';render()">${r}</button>`).join('')}</div>
+    ${['1D','1W','1M','3M','1Y','5Y'].map(r=>`<button style="color:${S.range===r?'var(--ink)':'var(--muted)'};background:${S.range===r?'var(--card)':'transparent'}" onclick="S.range='${r}';render()">${r}</button>`).join('')}</div>
    <div class="kpi">
     <div><span>Your position</span><b data-n="h:${h.id}">${money(h.v)}</b></div>
     <div><span>Units held</span><b>${h.u.toLocaleString('en-GB',{maximumFractionDigits:2})}</b></div>
@@ -531,6 +641,7 @@ function toggleAlert(id){
  save();render();
 }
 
+/* ---- order with confirm + settlement ---- */
 function order(){
  const h=S.hold.find(x=>x.id===S.cur)||S.hold[0];const price=h.v/h.u;const buy=S.side==='buy';
  const n=parseFloat(String(S.amt).replace(/[^0-9.]/g,''))||0;const units=n/price;
@@ -548,28 +659,55 @@ function order(){
    <div class="sheet">
     <div class="kv"><span>Estimated units</span><b id="est">${units?units.toFixed(4):'—'}</b></div>
     <div class="kv"><span>Dealing fee</span><b>£0.00</b></div>
-    <div class="kv"><span>Cash available</span><b>${money(S.cash)}</b></div></div>
-   <button class="btn" style="margin-top:14px" onclick="placeOrder()">${buy?'Buy':'Sell'} now</button>
-   <div class="legal">Orders for funds settle at the next valuation point, usually same day before 11am.</div>
+    <div class="kv"><span>Settlement</span><b>Same day</b></div></div>
+   <button class="btn" style="margin-top:14px" onclick="review()">Review ${buy?'buy':'sell'}</button>
   </div></div>`;
 }
 function renderEst(){const h=S.hold.find(x=>x.id===S.cur)||S.hold[0];const price=h.v/h.u;const n=parseFloat(String(S.amt).replace(/[^0-9.]/g,''))||0;const e=document.getElementById('est');if(e)e.textContent=n?((n/price).toFixed(4)):'—';}
-function placeOrder(){
+function review(){
  const h=S.hold.find(x=>x.id===S.cur)||S.hold[0];const price=h.v/h.u;
- let n=parseFloat(String(S.amt).replace(/[^0-9.]/g,''))||0;
- const buy=S.side==='buy';
+ const n=parseFloat(String(S.amt).replace(/[^0-9.]/g,''))||0;const buy=S.side==='buy';
  if(!n||n<=0)return toast('Enter an amount');
- if(buy&&n>S.cash)return toast('Not enough cash — add money first');
+ if(buy&&n>S.cash)return toast('Not enough cash');
  if(!buy&&n>h.v)return toast('More than you hold');
- const units=n/price;
- if(buy){S.cash-=n;h.v+=n;h.u+=units;h.c+=n;}
- else{S.cash+=n;h.c-=h.c*(n/h.v);h.v-=n;h.u-=units;}
- recalc();S.amt='';save();
- S.extra=[{t:(buy?'Buy':'Sell')+' · '+h.n,s:units.toFixed(4)+' units at '+money(price,2),v:(buy?'−':'+')+money(n),c:buy?'':'up'}].concat(S.extra).slice(0,6);
- toast((buy?'Bought ':'Sold ')+money(n)+' of '+h.t);
+ S.confirm={h:h.id,buy,n,units:n/price,price};
+ go('confirm');
+}
+function confirmScreen(){
+ const c=S.confirm;const h=S.hold.find(x=>x.id===c.h)||S.hold[0];
+ return `<div class="scr">
+  <div class="navbar"><div class="back" onclick="go('order')">${svg(ICON.back,18)}</div><h2>Confirm ${c.buy?'buy':'sell'}</h2></div>
+  <div class="pad">
+   <div class="card" style="padding:16px">
+    <div class="kv"><span>Investment</span><b>${h.n}</b></div>
+    <div class="kv"><span>Amount</span><b>${money(c.n)}</b></div>
+    <div class="kv"><span>Estimated units</span><b>${c.units.toFixed(4)}</b></div>
+    <div class="kv"><span>Price</span><b>${money(c.price,2)}</b></div>
+    <div class="kv"><span>Charges</span><b>£0.00</b></div>
+    <div class="kv"><span>Total</span><b>${money(c.n)}</b></div></div>
+   <div class="insight" style="margin-top:13px">${svg(ICON.clock,19)}<p>Orders placed before 11am deal the same day. Yours will show as pending until it settles.</p></div>
+   <button class="btn" style="margin-top:14px" onclick="placeOrder()">Confirm</button>
+   <button class="btn ghost" style="margin-top:9px" onclick="go('order')">Back</button>
+  </div></div>`;
+}
+function placeOrder(){
+ const c=S.confirm;const h=S.hold.find(x=>x.id===c.h)||S.hold[0];
+ if(c.buy){S.cash-=c.n;}else{S.cash+=c.n;}
+ recalc();save();
+ const id='o'+Date.now();
+ S.pending.push({id,t:(c.buy?'Buy':'Sell')+' · '+h.t,d:c.units.toFixed(4)+' units · pending',v:(c.buy?'−':'+')+money(c.n)});
+ S.extra=[{t:(c.buy?'Buy':'Sell')+' · '+h.n,s:c.units.toFixed(4)+' units at '+money(c.price,2),v:(c.buy?'−':'+')+money(c.n),c:c.buy?'':'up'}].concat(S.extra).slice(0,8);
+ setTimeout(()=>{
+  if(c.buy){h.v+=c.n;h.u+=c.units;h.c+=c.n;}else{h.c-=h.c*(c.n/h.v);h.v-=c.n;h.u-=c.units;}
+  S.pending=S.pending.filter(p=>p.id!==id);recalc();save();
+  if(S.scr==='portfolio'||S.scr==='home')render();
+  toast('Order settled · '+h.t);
+ },6000);
+ toast('Order placed · pending');
  tab('portfolio');
 }
 
+/* ---- pockets ---- */
 function pockets(){
  return `<div class="scr">
   <div class="navbar"><div class="back" onclick="tab('home')">${svg(ICON.back,18)}</div><h2>Pockets</h2></div>
@@ -585,12 +723,12 @@ function pockets(){
      <input class="txt" inputmode="numeric" placeholder="5000" value="${S.newTarget}" oninput="S.newTarget=this.value"></div>
     <div class="btnrow"><button class="btn sm" onclick="createPocket()">Create</button>
      <button class="btn ghost sm" onclick="S.creating=false;render()">Cancel</button></div></div>`:''}
-   ${S.pockets.map(p=>`<div class="pocket">
+   ${S.pockets.length?S.pockets.map(p=>`<div class="pocket">
     <div class="nm"><span class="emo">${p.e}</span>${p.n}<span style="margin-left:auto;font-size:10.5px;color:var(--muted);font-weight:800">${p.t?Math.round(p.b/p.t*100):0}%</span></div>
     <div class="amt2">${money(p.b)}</div><div class="tgt">of ${money(p.t,0)} target</div>
     <div class="bar"><i style="width:${p.t?Math.min(p.b/p.t*100,100):0}%"></i></div>
     <div class="btnrow"><button class="btn sm" onclick="moveToPocket('${p.id}')">Top up</button>
-     <button class="btn ghost sm" onclick="fromPocket('${p.id}')">Withdraw</button></div></div>`).join('')}
+     <button class="btn ghost sm" onclick="fromPocket('${p.id}')">Withdraw</button></div></div>`).join(''):'<div class="card"><div class="empty">No pockets yet. Create one to start setting money aside.</div></div>'}
    <div class="legal">Pockets sit inside your ISA. Moving money into a pocket doesn't count as a new subscription.</div>
    <div style="height:10px"></div></div></div>`;
 }
@@ -633,7 +771,7 @@ function rules(){
 }
 
 function move(){
- const add=S.mode==='add';const prim=S.accts.find(a=>a.primary)||S.accts[0]||{bank:'Barclays',last:'4471'};
+ const add=S.mode==='add';const prim=S.accts.find(a=>a.primary)||S.accts[0]||{bank:'Barclays',last:'4471',type:'Current'};
  return `<div class="scr">
   <div class="navbar"><div class="back" onclick="tab('home')">${svg(ICON.back,18)}</div><h2>Move money</h2></div>
   <div class="pad">
@@ -664,24 +802,26 @@ function commit(){
  if(S.mode==='out'&&n>S.cash)return toast('More than your available cash');
  if(S.mode==='add'){S.cash+=n;}else{S.cash-=n;}
  recalc();S.open+=S.mode==='add'?n:-n;S.amt='';save();
- S.extra=[{t:S.mode==='add'?'Deposit':'Withdrawal',s:'Barclays •••• 4471 · processing',v:(S.mode==='add'?'+':'−')+money(n),c:S.mode==='add'?'up':''}].concat(S.extra).slice(0,6);
+ S.extra=[{t:S.mode==='add'?'Deposit':'Withdrawal',s:'Barclays •••• 4471 · processing',v:(S.mode==='add'?'+':'−')+money(n),c:S.mode==='add'?'up':''}].concat(S.extra).slice(0,8);
  toast(S.mode==='add'?money(n)+' added to your ISA':money(n)+' on its way');
  tab('home');
 }
 
+/* ---- activity ---- */
 function yearEvents(y){
  const o=[];let s=y*37+5;const r=()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};
  const label=y<1997?'TESSA deposit':y<1999?'PEP subscription':'ISA subscription';
  const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
  const n=4+Math.floor(r()*4);
- for(let i=0;i<n;i++){const m=mo[Math.floor(r()*12)];const a=(y<1999?250:y<2010?500:y<2018?800:1250)*(1+Math.floor(r()*3));o.push({d:m,t:label,s:'Standing order · Barclays',v:'+'+money(a),c:'up'});}
- o.push({d:'06 Apr',t:'Tax year opens',s:'Allowance reset',v:'',c:''});
- if(r()>.3)o.push({d:'14 Jun',t:'Dividend received',s:'Reinvested',v:'+'+money(40+r()*400),c:'up'});
- o.push({d:'01 Oct',t:'Platform fee',s:'Annualised 0.25%',v:'−'+money(3+r()*30),c:''});
+ for(let i=0;i<n;i++){const m=mo[Math.floor(r()*12)];const a=(y<1999?250:y<2010?500:y<2018?800:1250)*(1+Math.floor(r()*3));o.push({id:'e'+i,d:m,t:label,s:'Standing order · Barclays',v:'+'+money(a),c:'up'});}
+ o.push({id:'apr',d:'06 Apr',t:'Tax year opens',s:'Allowance reset',v:'',c:''});
+ if(r()>.3)o.push({id:'div',d:'14 Jun',t:'Dividend received',s:'Reinvested',v:'+'+money(40+r()*400),c:'up'});
+ o.push({id:'fee',d:'01 Oct',t:'Platform fee',s:'Annualised 0.25%',v:'−'+money(3+r()*30),c:''});
  return o.slice(0,7);
 }
 function activity(){
  const y=S.yr,yr=YEARS.find(o=>o.y===y);
+ const rows=yearEvents(y).concat(S.extra.filter(()=>y===2025).map((e,i)=>({id:'x'+i,d:'Dec',t:e.t,s:e.s,v:e.v,c:e.c})));
  return `<div class="scr">
   <div class="top"><div class="brand">${MARK}<span class="wm">plum</span></div><div class="ava" onclick="tab('profile')">${initials()}</div></div>
   <div class="pad">
@@ -693,14 +833,35 @@ function activity(){
     <div class="kv"><span>Return</span><b class="${yr.r>=0?'up':'down'}">${pct(yr.r)}</b></div></div>
    <div class="monthlab">${y} transactions</div>
    <div class="card acts">
-    ${S.extra.filter(()=>y===2025).map(e=>`<div class="act"><div class="ic">${svg(ICON.plus,16)}</div><div><div class="t">${e.t}</div><div class="d">${e.s}</div></div><div class="v ${e.c}">${e.v}</div></div>`).join('')}
-    ${yearEvents(y).map(r=>`<div class="act"><div class="ic">${svg(r.t.includes('Dividend')?ICON.arrowDown:r.t.includes('fee')?ICON.doc:ICON.plus,16)}</div><div><div class="t">${r.t}</div><div class="d">${r.d} · ${r.s}</div></div><div class="v ${r.c}">${r.v}</div></div>`).join('')}</div>
+    ${rows.map((r,i)=>`<div class="act" onclick="go('tx',{tx:{y,ref:'PLM'+y+String(i).padStart(3,'0'),t:r.t,s:r.s,v:r.v,d:r.d}})">
+     <div class="ic">${svg(r.t.includes('Dividend')?ICON.arrowDown:r.t.includes('fee')?ICON.doc:r.t.includes('Buy')?ICON.pie:r.t.includes('Sell')?ICON.arrowUp:ICON.plus,16)}</div>
+     <div><div class="t">${r.t}</div><div class="d">${r.d} · ${r.s}</div></div><div class="v ${r.c}">${r.v}</div></div>`).join('')}</div>
    <div class="monthlab">Documents</div>
    <div class="card acts">
     <div class="act" onclick="dlStatement(${y})"><div class="ic">${svg(ICON.doc,16)}</div><div><div class="t">Annual statement ${y}</div><div class="d">Text file</div></div><div class="v">${svg(ICON.dl,14)}</div></div>
     <div class="act" onclick="dlTax(${y})"><div class="ic">${svg(ICON.doc,16)}</div><div><div class="t">Tax certificate ${y}</div><div class="d">Text file</div></div><div class="v">${svg(ICON.dl,14)}</div></div></div>
    <div style="height:8px"></div></div></div>`;
 }
+function tx(){
+ const t=S.tx;
+ return `<div class="scr">
+  <div class="navbar"><div class="back" onclick="tab('activity')">${svg(ICON.back,18)}</div><h2>Transaction</h2></div>
+  <div class="pad">
+   <div class="card" style="padding:18px;text-align:center">
+    <div style="font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase;letter-spacing:.8px">${t.d} ${t.y}</div>
+    <div style="font-size:28px;font-weight:900;letter-spacing:-1.4px;margin:8px 0 4px">${t.v||'—'}</div>
+    <div style="font-size:13px;font-weight:800">${t.t}</div></div>
+   <div class="sheet">
+    <div class="kv"><span>Status</span><b>Completed</b></div>
+    <div class="kv"><span>Reference</span><b class="mono">${t.ref}</b></div>
+    <div class="kv"><span>Method</span><b>${t.s}</b></div>
+    <div class="kv"><span>Account</span><b>Stocks &amp; shares ISA</b></div>
+    <div class="kv"><span>Date</span><b>${t.d} ${t.y}</b></div></div>
+   <button class="btn ghost" style="margin-top:12px" onclick="download('plum-receipt-${t.ref}.txt','PLUM — TRANSACTION RECEIPT\\nReference ${t.ref}\\n${t.t}\\n${t.v}\\n${t.d} ${t.y}\\nClient: ${S.profile.name}')">Download receipt</button>
+   <div class="legal">Receipts are generated on demand.</div>
+  </div></div>`;
+}
+
 function dl(name,text){const b=new Blob([text],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);toast('Downloaded '+name);}
 function dlStatement(y){const r=YEARS.find(o=>o.y===y);
  dl(`plum-statement-${y}.txt`,`PLUM INVEST — ANNUAL STATEMENT ${y}\nClient: ${S.profile.name} (PLM-88214)\n\nValue at year end: ${money(r.v)}\nSubscribed: ${money(r.c)}\nReturn: ${pct(r.r)}\n\nFictional statement generated by a demo app.`);}
@@ -757,11 +918,12 @@ function spend(){
     ${cats.map(c=>`<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:5px"><span>${c.n}</span><span>${money(c.v)}</span></div><div class="bar" style="height:7px"><i style="width:${c.v/cats[0].v*100}%;background:${c.col}"></i></div></div>`).join('')}</div>
    <div class="sect"><h2>Recent</h2><a onclick="toast('All payments')">All</a></div>
    <div class="card acts">
-    ${list.slice(0,7).map(m=>`<div class="act"><div class="ic">${svg(ICON.bag,16)}</div><div><div class="t">${m.n}</div><div class="d">${m.day} Nov · ${m.c}</div></div><div class="v">−${money(m.v)}</div></div>`).join('')}</div>
+    ${list.slice(0,8).map(m=>`<div class="act" onclick="go('tx',{tx:{y:2025,ref:'SPD'+m.day+m.id,t:m.n,s:m.c,v:'−'+money(m.v),d:m.day+' Nov'}})">
+     <div class="ic">${svg(ICON.bag,16)}</div><div><div class="t">${m.n}</div><div class="d">${m.day} Nov · ${m.c}</div></div><div class="v">−${money(m.v)}</div></div>`).join('')}</div>
    <div class="sect"><h2>Subscriptions</h2><a onclick="go('subs')">Manage</a></div>
    <div class="card acts">
-    ${S.subs.filter(x=>!x.off).map(x=>`<div class="act"><div class="ic">${svg(ICON.spark,16)}</div><div><div class="t">${x.n}</div><div class="d">Renews ${x.day} Dec</div></div><div class="v">${money(x.v)}</div></div>`).join('')||'<div class="act"><div class="d">All subscriptions cancelled</div></div>'}</div>
-   <div class="legal">Categorised from your linked account. Totals are the sum of the ${list.length} payments listed above.</div>
+    ${S.subs.filter(x=>!x.off).map(x=>`<div class="act"><div class="ic">${svg(ICON.spark,16)}</div><div><div class="t">${x.n}</div><div class="d">Renews ${x.day} Dec</div></div><div class="v">${money(x.v)}</div></div>`).join('')||'<div class="empty">All subscriptions cancelled</div>'}</div>
+   <div class="legal">Totals are the sum of the ${list.length} payments listed above.</div>
    <div style="height:10px"></div></div></div>`;
 }
 function sweep(){
@@ -774,13 +936,12 @@ function subs(){
  return `<div class="scr">
   <div class="navbar"><div class="back" onclick="go('spend')">${svg(ICON.back,18)}</div><h2>Subscriptions</h2></div>
   <div class="pad">
-   <div class="insight" style="margin-top:6px">${svg(ICON.spark,19)}<p>Cancel here and the payment stops in the spending totals too. This is a demo, so no real subscriptions are touched.</p></div>
+   <div class="insight" style="margin-top:6px">${svg(ICON.spark,19)}<p>Cancel here and the payment stops in the spending totals too.</p></div>
    <div class="card" style="margin-top:12px">
     ${S.subs.map(x=>`<div class="rowitem" onclick="toggleSub('${x.n}')">
      <div class="logo" style="background:${x.off?'#CFC6DE':'var(--lilac)'};color:${x.off?'#fff':'var(--plum)'}">${svg(ICON.spark,16)}</div>
      <div class="rmain"><div class="rname">${x.n}</div><div class="rsub">${money(x.v)} · renews ${x.day} Dec</div></div>
      <span class="pill ${x.off?'grey':'on'}">${x.off?'Cancelled':'Active'}</span></div>`).join('')}</div>
-   <div class="legal">Cancelling removes the payment from this month's spending totals.</div>
    <div style="height:10px"></div></div></div>`;
 }
 function toggleSub(n){const s=S.subs.find(x=>x.n===n);if(!s)return;s.off=!s.off;save();render();toast(n+(s.off?' cancelled':' reinstated'));}
@@ -794,7 +955,7 @@ function credit(){
     <svg width="196" height="110" viewBox="0 0 120 70" role="img" aria-label="Credit score 721 out of 1000">
      <path d="M14 60a46 46 0 0 1 92 0" fill="none" stroke="#EDE4D2" stroke-width="10" stroke-linecap="round"/>
      <path d="M14 60a46 46 0 0 1 92 0" fill="none" stroke="#5B18F5" stroke-width="10" stroke-linecap="round" stroke-dasharray="${arc.toFixed(1)} ${C.toFixed(1)}"/>
-     <text x="60" y="50" text-anchor="middle" font-size="26" font-weight="900" fill="#14062E" font-family="Nunito,sans-serif">721</text>
+     <text x="60" y="50" text-anchor="middle" font-size="26" font-weight="900" fill="currentColor" font-family="Nunito,sans-serif">721</text>
      <text x="60" y="63" text-anchor="middle" font-size="7.5" font-weight="800" fill="#7B6C88" font-family="Nunito,sans-serif">OUT OF 1000</text></svg>
     <div style="margin-top:4px"><span class="pill">Good</span></div>
     <div class="up" style="font-size:12px;font-weight:800;margin-top:8px">+3 points this month · +31 this year</div>
@@ -812,7 +973,7 @@ function credit(){
     <div class="act"><div class="ic" style="background:#FCE4E0;color:#C63C28">${svg(ICON.clock,16)}</div><div><div class="t">Account age is short</div><div class="d">Oldest card 2y 4m</div></div></div>
     <div class="act"><div class="ic" style="background:#FCE4E0;color:#C63C28">${svg(ICON.gauge,16)}</div><div><div class="t">3 hard searches in 6 months</div><div class="d">Last one 12 Oct</div></div></div></div>
    <div class="insight">${svg(ICON.up2,19)}<p>Paying £200 off your Barclaycard drops your use to <strong>11%</strong> and could add around <strong>18 points</strong>.</p></div>
-   <div class="legal">Score from TransUnion, for illustration. Lenders use their own criteria.</div>
+   <div class="legal">Score from TransUnion, for illustration.</div>
    <div style="height:10px"></div></div></div>`;
 }
 
@@ -842,12 +1003,14 @@ function profile(){
     <div onclick="goPin('set')">${svg(ICON.lock,17)}${S.pin?'Change PIN':'Set a PIN'}<span class="chev"><span class="pill ${S.pin?'on':'grey'}">${S.pin?'On':'Off'}</span></span></div></div>
    <div class="sect"><h2>App</h2></div>
    <div class="card menu">
+    <div onclick="toggleDark()">${svg(ICON.moon,17)}Dark mode<span class="chev"><span class="pill ${S.dark?'on':'grey'}">${S.dark?'On':'Off'}</span></span></div>
     <div onclick="go('install')">${svg(ICON.dl,17)}Install on your phone<span class="chev"><span class="pill ${installed()?'on':'grey'}">${installed()?'Installed':'Get it'}</span></span></div>
     <div onclick="go('feed')">${svg(ICON.bolt,17)}Live prices<span class="chev"><span class="pill ${S.feedState==='live'?'on':'grey'}">${S.feedState==='live'?'On':'Off'}</span></span></div></div>
-   <div class="legal"><b>Plum Fintech Ltd</b> is authorised and regulated by the Financial Conduct Authority (FRN 810322). Registered in England &amp; Wales, no. 09833389. Registered office: 4 Fenchurch Place, London EC3M 4AJ.<br><br>Interest Pockets provided by Investec Bank plc. Eligible investments covered by the FSCS up to £85,000. Capital at risk.<br><br>App version 7.0.0 (3210) · recreation.</div>
+   <div class="legal"><b>Plum Fintech Ltd</b> is authorised and regulated by the Financial Conduct Authority (FRN 810322). Registered in England &amp; Wales, no. 09833389. Registered office: 4 Fenchurch Place, London EC3M 4AJ.<br><br>Interest Pockets provided by Investec Bank plc. Eligible investments covered by the FSCS up to £85,000. Capital at risk.<br><br>App version 7.1.0 (3244) · recreation.</div>
    <button class="btn ghost" style="margin:6px 0 10px" onclick="signOut()">Sign out</button>
   </div></div>`;
 }
+function toggleDark(){S.dark=!S.dark;document.getElementById('phone').classList.toggle('dark',S.dark);save();render();}
 function signOut(){lockNow();toast('Signed out');}
 
 function personal(){
@@ -859,7 +1022,7 @@ function personal(){
    <div class="sect"><h2>Address</h2></div>
    ${f('addr1','Address line 1')}${f('city','City')}${f('post','Postcode')}
    <button class="btn" style="margin-top:16px" onclick="saveDetails()">Save changes</button>
-   <div class="legal">Name changes on an ISA need ID. In a real app that takes about a day to review.</div>
+   <div class="legal">Name changes on an ISA need ID. In a real app that takes about a day.</div>
    <div style="height:10px"></div></div></div>`;
 }
 function saveDetails(){save();render();toast('Details saved');}
@@ -891,10 +1054,9 @@ function notifs(){
    <span class="pill" onclick="markAll()" style="cursor:pointer">Mark all read</span></div>
   <div class="pad">
    <div class="card" style="margin-top:8px">
-    ${S.notifs.map(n=>`<div class="notif ${n.unread?'unread':''}" onclick="openNotif('${n.id}')">
+    ${S.notifs.length?S.notifs.map(n=>`<div class="notif ${n.unread?'unread':''}" onclick="openNotif('${n.id}')">
      <div class="ic">${svg(ICON[n.ic]||ICON.bell,15)}</div>
-     <div><div class="t">${n.t}</div><div class="d">${n.d}</div></div></div>`).join('')}</div>
-   <div class="legal">Notifications are generated by the app. In a real account you'd control each type here.</div>
+     <div><div class="t">${n.t}</div><div class="d">${n.d}</div></div></div>`).join(''):'<div class="empty">You are all caught up</div>'}</div>
    <div style="height:10px"></div></div></div>`;
 }
 function markAll(){S.notifs.forEach(n=>n.unread=false);save();render();toast('All marked read');}
@@ -907,14 +1069,14 @@ function docs(){
    <div class="card" style="margin-top:8px">
     ${[2025,2024,2023,2022].map(y=>`<div class="rowitem" onclick="dlStatement(${y})">
      <div class="logo" style="background:var(--lilac);color:var(--plum)">${svg(ICON.doc,16)}</div>
-     <div class="rmain"><div class="rname">Annual statement ${y}</div><div class="rsub">Text file · generated</div></div>
+     <div class="rmain"><div class="rname">Annual statement ${y}</div><div class="rsub">Generated on tap</div></div>
      <span class="pill">${svg(ICON.dl,12)}</span></div>`).join('')}</div>
    <div class="card" style="margin-top:10px">
     ${[2025,2024].map(y=>`<div class="rowitem" onclick="dlTax(${y})">
      <div class="logo" style="background:var(--lilac);color:var(--plum)">${svg(ICON.doc,16)}</div>
-     <div class="rmain"><div class="rname">Tax certificate ${y}</div><div class="rsub">Text file · generated</div></div>
+     <div class="rmain"><div class="rname">Tax certificate ${y}</div><div class="rsub">Generated on tap</div></div>
      <span class="pill">${svg(ICON.dl,12)}</span></div>`).join('')}</div>
-   <div class="legal">Documents are generated from your live balance when you tap them.</div>
+   <div class="legal">Documents are built from your live balance.</div>
    <div style="height:10px"></div></div></div>`;
 }
 
@@ -947,7 +1109,7 @@ function feed(){
    <div class="field"><label>API key</label><input class="txt" id="key" placeholder="Paste your FMP API key" value="${S.fmp}" oninput="S.fmp=this.value.trim()"></div>
    <button class="btn" style="margin-top:11px" onclick="connectFeed()">${S.fmp?'Reconnect':'Connect feed'}</button>
    ${S.fmp?`<button class="btn ghost" style="margin-top:9px" onclick="disconnect()">Disconnect</button>`:''}
-   <div class="insight" style="margin-top:14px">${svg(ICON.shield,19)}<p>Free keys allow 250 requests a day. The app stops at the cap and doubles the gap whenever the provider rate-limits.</p></div>
+   <div class="insight" style="margin-top:14px">${svg(ICON.shield,19)}<p>Free keys allow 250 requests a day. The app stops at the cap and backs off on rate limits.</p></div>
    <div class="sect"><h2>What uses real quotes</h2></div>
    <div class="card acts">
     ${S.hold.map(h=>`<div class="act"><div class="ic">${svg(QUOTE_MAP[h.id]?ICON.chk:ICON.clock,16)}</div><div><div class="t">${h.t}</div><div class="d">${QUOTE_MAP[h.id]?QUOTE_MAP[h.id]+' · live':'No listed ticker · modelled'}</div></div></div>`).join('')}</div>
@@ -963,7 +1125,7 @@ function install(){
   <div class="navbar"><div class="back" onclick="tab('profile')">${svg(ICON.back,18)}</div><h2>Install Plum</h2></div>
   <div class="pad">
    <div style="background:linear-gradient(155deg,#5B18F5,#9B6BFF);border-radius:22px;padding:18px;color:#fff;display:flex;gap:13px;align-items:center">
-    <div style="transform:scale(1.5);margin-left:5px"><svg width="26" height="26" viewBox="0 0 40 40">${LOGO()}</svg></div>
+    <div style="transform:scale(1.5);margin-left:5px">${MARK}</div>
     <div style="margin-left:10px"><div style="font-size:13.5px;font-weight:900">Install on your S24 Ultra</div><div style="font-size:11px;color:#E2D9FE;margin-top:3px;font-weight:700">Real home-screen icon, full screen, works offline.</div></div></div>
    <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
     <span class="pill ${emb?'warn':'on'}">${emb?'Running in an embed':'Running as a page'}</span>
@@ -973,7 +1135,7 @@ function install(){
    <div class="sect"><h2>If you haven't hosted it yet</h2></div>
    <div class="card">
     <div class="step"><div class="num">1</div><div><div class="st">Create a public repo on GitHub</div><div class="sd">Name it plum. Public is required.</div></div></div>
-    <div class="step"><div class="num">2</div><div><div class="st">Add index.html, manifest.json, sw.js, icon.svg</div><div class="sd">New file each time, paste, commit.</div></div></div>
+    <div class="step"><div class="num">2</div><div><div class="st">Add index.html, manifest.json, sw.js, icon-192.png, icon-512.png</div><div class="sd">New file each time, paste, commit.</div></div></div>
     <div class="step"><div class="num">3</div><div><div class="st">Settings → Pages → main → Save</div><div class="sd">Then open the link in Chrome and install.</div></div></div></div>
    <a class="btn ghost" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:11px;text-decoration:none" href="https://github.com/new" target="_blank" rel="noopener">Open GitHub</a>
    <button class="btn" style="margin-top:11px" onclick="doInstall()">${inst?'Already installed':'Install now'}</button>
@@ -981,7 +1143,7 @@ function install(){
 }
 
 function render(){
- const map={home,portfolio,move,activity,profile,install,detail,pockets,history,feed,spend,credit,rules,order,personal,banks,notifs,docs,pin,subs};
+ const map={home,portfolio,move,activity,profile,install,detail,pockets,history,feed,spend,credit,rules,order,personal,banks,notifs,docs,pin,subs,search,tx,confirm:confirmScreen};
  document.getElementById('app').innerHTML=(map[S.scr]||home)();
  const tabs=[['home','Home',ICON.home],['pockets','Pockets',ICON.pot],['portfolio','Invest',ICON.pie],['activity','Activity',ICON.list],['profile','Profile',ICON.user]];
  document.getElementById('tabbar').innerHTML=tabs.map(([k,l,i])=>`<button class="${S.tab===k?'on':''}" onclick="tab('${k}')">${svg(i,20)}<span>${l}</span></button>`).join('');
@@ -1003,25 +1165,14 @@ async function doInstall(){
  if(deferred){deferred.prompt();const r=await deferred.userChoice;deferred=null;return toast(r.outcome==='accepted'?'Installing…':'Dismissed');}
  toast(embedded()?'Open the hosted link in Chrome first':'Use Chrome menu ⋮ → Install app');
 }
-
-const MANIFEST={name:'Plum — save and invest',short_name:'Plum',start_url:'.',scope:'.',display:'standalone',orientation:'portrait',background_color:'#FBF6E9',theme_color:'#14062E',icons:[{src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any'},{src:'icon.svg',sizes:'any',type:'image/svg+xml',purpose:'maskable'}]};
-const SW_JS='const C="plum-v9";self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(["./","index.html","manifest.json","icon.svg"])).then(()=>self.skipWaiting()))});self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(res=>{const cp=res.clone();caches.open(C).then(c=>c.put(e.request,cp));return res}).catch(()=>caches.match("index.html"))))});';
-function download(name,data,mime){const b=new Blob([data],{type:mime||'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),6000);}
-function buildHtml(){let h='<!doctype html>\n'+document.documentElement.outerHTML;
- const head='<meta name="theme-color" content="#14062E"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Plum"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><script>if("serviceWorker" in navigator){addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}<\/script>';
- return h.includes('</head>')?h.replace('</head>',head+'</head>'):h+head;}
-function fallback(){download('plum-index.html',buildHtml(),'text/html');download('manifest.json',JSON.stringify(MANIFEST,null,2),'application/json');download('sw.js',SW_JS,'text/javascript');toast('Saved 3 files');}
-async function pack(){
- toast('Building package…');
- const run=async()=>{try{const z=new JSZip();z.file('index.html',buildHtml());z.file('manifest.json',JSON.stringify(MANIFEST,null,2));z.file('sw.js',SW_JS);
-  const b=await z.generateAsync({type:'blob'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='plum-app.zip';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),6000);toast('Package downloaded');}catch(e){fallback();}};
- if(window.JSZip)return run();
- const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';s.onload=run;s.onerror=fallback;document.head.appendChild(s);
-}
+window.addEventListener('online',()=>document.getElementById('offline').classList.remove('show'));
+window.addEventListener('offline',()=>document.getElementById('offline').classList.add('show'));
+if(!navigator.onLine)document.getElementById('offline').classList.add('show');
 
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+document.getElementById('phone').classList.toggle('dark',S.dark);
 render();
-setTimeout(unlock,900);
+setTimeout(()=>{if(!S.onboarded)obRender();else unlock();},600);
 </script>
 </body>
 </html>
