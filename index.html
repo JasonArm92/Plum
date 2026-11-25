@@ -1,57 +1,48 @@
 <!doctype html>
-<html lang="en-GB" data-theme="light">
+<html lang="en-GB" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#150A28">
 <title>Plum</title>
-<meta name="theme-color" content="#FBF6E9">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-purple.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=18c">
-<script>
-window.__plumErrors = [];
-window.addEventListener('error', function (e) {
-  window.__plumErrors.push(e.message + ' @ ' + (e.filename || '') + ':' + (e.lineno || ''));
-}, true);
-window.addEventListener('unhandledrejection', function (e) {
-  window.__plumErrors.push('promise: ' + ((e.reason && e.reason.message) || e.reason));
-});
-if (location.search.indexOf('reset') > -1) {
-  try { caches.keys().then(function (k) { k.forEach(function (n) { caches.delete(n); }); }); } catch (e) {}
-  if (navigator.serviceWorker) navigator.serviceWorker.getRegistrations().then(function (r) { r.forEach(function (x) { x.unregister(); }); });
-}
-</script>
+<link rel="stylesheet" href="styles.css">
+<script>window.__plumErrors=[];window.addEventListener("error",function(e){window.__plumErrors.push(e.message+" @ "+e.filename+":"+e.lineno)});</script>
 </head>
 <body>
-<div id="offline" class="offline" hidden>You're offline — showing your last synced data</div>
-<main id="view" class="view"></main>
-<nav id="tabs" class="tabs" hidden>
-  <a data-tab="home" class="tab"><svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></a>
-  <a data-tab="invest" class="tab"><svg viewBox="0 0 24 24"><path d="M4 19V9m5 10V5m5 14v-7m5 7V8"/></svg><span>Invest</span></a>
-  <a data-tab="spend" class="tab"><svg viewBox="0 0 24 24"><path d="M3 7h18v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM3 7l2-3h14l2 3M8 12h8"/></svg><span>Spend</span></a>
-  <a data-tab="brain" class="tab"><svg viewBox="0 0 24 24"><path d="M12 5a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 1zm0 0a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 1z"/></svg><span>Brain</span></a>
-  <a data-tab="profile" class="tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span>Profile</span></a>
-</nav>
-<div id="toasts" class="toasts"></div>
-<div id="modal" hidden></div>
-<script src="logos.js?v=18c"></script>
-<script src="app.js?v=18c"></script>
+<div id="app">
+  <main id="view"></main>
+  <nav class="tabs">
+    <button data-r="home" class="on" data-act="go" aria-label="Home">
+      <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/></svg>
+    </button>
+    <button data-r="invest" data-act="go" aria-label="Invest">
+      <svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg>
+    </button>
+    <button data-r="cards" data-act="go" aria-label="Cards">
+      <svg viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="3"/><path d="M2.5 10h19"/></svg>
+    </button>
+    <button data-r="activity" data-act="go" aria-label="Activity">
+      <svg viewBox="0 0 24 24"><path d="M3 12h4l3 7 4-14 3 7h4"/></svg>
+    </button>
+    <button data-r="more" data-act="go" aria-label="More">
+      <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
+    </button>
+  </nav>
+</div>
+<script src="logos.js"></script>
+<script src="app.js"></script>
 <script>
-setTimeout(function () {
-  var v = document.getElementById('view');
-  if (v && v.children.length) return;
-  var box = document.createElement('div');
-  box.style.cssText = 'position:fixed;inset:auto 12px 12px 12px;z-index:999;background:#C6362B;color:#fff;padding:14px;border-radius:14px;font:12px/1.5 ui-monospace,monospace;max-height:70vh;overflow:auto';
-  box.innerHTML = '<b style="font-size:13px">App did not start</b><br><br>' +
-    'url: ' + location.href + '<br>' +
-    'controller: ' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'yes (cached)' : 'no') + '<br>' +
-    'errors: ' + (window.__plumErrors.length ? '<br>· ' + window.__plumErrors.join('<br>· ') : 'none') +
-    '<br><br><a href="?reset=1" style="color:#fff;text-decoration:underline">Run with ?reset=1</a>';
-  document.body.appendChild(box);
-}, 1800);
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+  if (location.search.indexOf("reset=1") > -1) {
+    caches.keys().then(function (k) { return Promise.all(k.map(function (n) { return caches.delete(n); })); })
+      .then(function () { return navigator.serviceWorker.getRegistrations(); })
+      .then(function (r) { return Promise.all(r.map(function (x) { return x.unregister(); })); })
+      .then(function () { location.replace(location.pathname); });
+  }
+}
 </script>
 </body>
 </html>
