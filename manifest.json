@@ -1,21 +1,15 @@
 {
-  "id": "/",
   "name": "Plum",
   "short_name": "Plum",
-  "description": "Invest, save and grow your money.",
+  "description": "Invest, save and spend smarter.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#FBF6E9",
-  "theme_color": "#1A0A2B",
-  "lang": "en-GB",
-  "dir": "ltr",
-  "categories": ["finance", "productivity"],
-  "launch_handler": { "client_mode": "navigate-existing" },
+  "theme_color": "#FBF6E9",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "icon-purple.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-white.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
   ]
 }
