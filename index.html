@@ -10,7 +10,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=18c">
+<script>
+window.__plumErrors = [];
+window.addEventListener('error', function (e) {
+  window.__plumErrors.push(e.message + ' @ ' + (e.filename || '') + ':' + (e.lineno || ''));
+}, true);
+window.addEventListener('unhandledrejection', function (e) {
+  window.__plumErrors.push('promise: ' + ((e.reason && e.reason.message) || e.reason));
+});
+if (location.search.indexOf('reset') > -1) {
+  try { caches.keys().then(function (k) { k.forEach(function (n) { caches.delete(n); }); }); } catch (e) {}
+  if (navigator.serviceWorker) navigator.serviceWorker.getRegistrations().then(function (r) { r.forEach(function (x) { x.unregister(); }); });
+}
+</script>
 </head>
 <body>
 <div id="offline" class="offline" hidden>You're offline — showing your last synced data</div>
@@ -24,7 +37,21 @@
 </nav>
 <div id="toasts" class="toasts"></div>
 <div id="modal" hidden></div>
-<script src="logos.js"></script>
-<script src="app.js"></script>
+<script src="logos.js?v=18c"></script>
+<script src="app.js?v=18c"></script>
+<script>
+setTimeout(function () {
+  var v = document.getElementById('view');
+  if (v && v.children.length) return;
+  var box = document.createElement('div');
+  box.style.cssText = 'position:fixed;inset:auto 12px 12px 12px;z-index:999;background:#C6362B;color:#fff;padding:14px;border-radius:14px;font:12px/1.5 ui-monospace,monospace;max-height:70vh;overflow:auto';
+  box.innerHTML = '<b style="font-size:13px">App did not start</b><br><br>' +
+    'url: ' + location.href + '<br>' +
+    'controller: ' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'yes (cached)' : 'no') + '<br>' +
+    'errors: ' + (window.__plumErrors.length ? '<br>· ' + window.__plumErrors.join('<br>· ') : 'none') +
+    '<br><br><a href="?reset=1" style="color:#fff;text-decoration:underline">Run with ?reset=1</a>';
+  document.body.appendChild(box);
+}, 1800);
+</script>
 </body>
 </html>
