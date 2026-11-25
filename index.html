@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plum — save and invest</title>
+<meta name="theme-color" content="#1A0A2B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Plum">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1A0A2B; --plum:#7308E3; --lilac:#D8CEFE; --lilac2:#C3B2FB;
+    --linen:#FBF6E9; --line:#EDE4D2; --muted:#7B6C88; --up:#1E9E63; --down:#D8402F;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{background:#E8E2D4;display:flex;justify-content:center;align-items:center;
+    font-family:"Nunito",Inter,-apple-system,sans-serif;color:var(--ink)}
+  .phone{width:376px;height:800px;background:var(--linen);border-radius:28px;position:relative;overflow:hidden;
+    border:9px solid #2C2C31;box-shadow:0 0 0 2px #4A4A52,0 20px 46px rgba(26,10,43,.3);flex:0 0 auto}
+  .punch{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:10px;height:10px;border-radius:50%;background:#08070A;z-index:70;box-shadow:inset 0 0 0 1px #2C2C31}
+  .status{position:absolute;top:0;left:0;right:0;height:34px;display:flex;align-items:center;justify-content:space-between;
+    padding:10px 16px 0;font-size:11.5px;font-weight:700;z-index:65;color:var(--ink);pointer-events:none}
+  .status .r{display:flex;gap:5px;align-items:center}
+  .app{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;background:var(--linen);padding-bottom:112px}
+  .app::-webkit-scrollbar{display:none}
+  .scr{animation:in .22s cubic-bezier(.22,.7,.3,1)}
+  @keyframes in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+  .pad{padding:0 18px}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:46px 18px 10px}
+  .brand{display:flex;align-items:center;gap:7px}
+  .wm{font-weight:900;font-size:20px;letter-spacing:-1.3px;color:var(--plum)}
+  .ava{width:34px;height:34px;border-radius:50%;background:var(--lilac);color:var(--plum);display:grid;place-items:center;font-size:12px;font-weight:900}
+  .iconbtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;cursor:pointer}
+  h1.greet{font-size:24px;line-height:1.2;margin:2px 0 0;letter-spacing:-1.1px;font-weight:900}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:4px;font-weight:600}
+  .card{background:#fff;border:1px solid var(--line);border-radius:20px}
+  .hero{background:linear-gradient(155deg,#7308E3 0%,#8B2BF0 60%,#A94BF7 100%);border-radius:24px;padding:16px;color:#fff;position:relative;overflow:hidden}
+  .hero .lbl{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:#E2D3FE;display:flex;align-items:center;gap:7px;font-weight:800}
+  .hero .big{font-size:37px;font-weight:900;letter-spacing:-1.9px;margin:5px 0 7px;font-variant-numeric:tabular-nums}
+  .chip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.17);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800;color:#D6F7E5}
+  .hero .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11px;color:#E2D3FE;font-weight:700}
+  .ranges{display:flex;gap:4px;margin-top:8px}
+  .ranges button{flex:1;background:transparent;border:0;color:#E2D3FE;font-size:11.5px;font-weight:800;padding:7px 0;border-radius:8px;cursor:pointer;font-family:inherit}
+  .ranges button.on{background:rgba(255,255,255,.22);color:#fff}
+  .live{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#C4F6D9}
+  .dot{width:6px;height:6px;border-radius:50%;background:#4FE39A;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+  .quick button{background:#fff;border:1px solid var(--line);border-radius:16px;padding:11px 3px 9px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:10px;font-weight:800;color:var(--ink);cursor:pointer;font-family:inherit}
+  .sect{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 10px}
+  .sect h2{font-size:16.5px;margin:0;font-weight:900;letter-spacing:-.7px}
+  .sect a{font-size:12px;color:var(--plum);font-weight:800;cursor:pointer;text-decoration:none}
+  .allow{padding:14px 15px}
+  .allow .row{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:8px;font-weight:700}
+  .bar{height:8px;border-radius:99px;background:var(--lilac);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--plum);border-radius:99px}
+  .allow .fine{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.45;font-weight:600}
+  .rowitem{display:flex;align-items:center;gap:11px;padding:12px 13px;border-bottom:1px solid var(--line);cursor:pointer}
+  .rowitem:last-child{border-bottom:0}
+  .logo{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:10.5px;font-weight:900;color:#fff;flex:0 0 auto}
+  .rmain{flex:1;min-width:0}
+  .rname{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.2px}
+  .rsub{font-size:11px;color:var(--muted);margin-top:2px;font-weight:600}
+  .rval{text-align:right;font-size:13px;font-weight:900;font-variant-numeric:tabular-nums}
+  .rpc{font-size:11px;margin-top:2px;text-align:right;font-variant-numeric:tabular-nums;font-weight:800}
+  .up{color:var(--up)} .down{color:var(--down)}
+  .flash-up{animation:fu .7s ease-out} .flash-down{animation:fd .7s ease-out}
+  @keyframes fu{0%{background:#DDF7EA}100%{background:transparent}}
+  @keyframes fd{0%{background:#FCE4E0}100%{background:transparent}}
+  .insight{background:var(--lilac);border-radius:18px;padding:14px;display:flex;gap:10px;margin-top:18px}
+  .insight p{margin:0;font-size:12.5px;line-height:1.5;color:#33175A;font-weight:700}
+  .insight strong{font-weight:900}
+  .lostmoney{background:#FFF3E2;border:1px solid #F8DFBC;border-radius:18px;padding:14px;display:flex;gap:10px;margin-top:12px}
+  .lostmoney p{margin:0;font-size:12.5px;line-height:1.5;color:#7A4A12;font-weight:700}
+  .lostmoney strong{font-weight:900}
+  .tabbar{position:absolute;bottom:0;left:0;right:0;height:92px;background:rgba(255,255,255,.99);border-top:1px solid var(--line);display:flex;align-items:flex-start;padding:8px 3px 0;z-index:40}
+  .tabbar button{flex:1;background:0;border:0;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9.5px;font-weight:800;color:#B3A7C0;cursor:pointer;font-family:inherit;padding:4px 0}
+  .tabbar button.on{color:var(--plum)}
+  .grab{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:104px;height:4px;border-radius:99px;background:#1A0A2B;opacity:.28;z-index:45}
+  .navbar{display:flex;align-items:center;gap:9px;padding:46px 14px 8px}
+  .navbar h2{font-size:15px;margin:0;font-weight:900;flex:1;letter-spacing:-.3px}
+  .back{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;cursor:pointer}
+  .donut{display:grid;place-items:center;padding:6px 0 2px}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 9px;padding:4px 4px 0;margin-top:6px}
+  .legend div{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--muted);font-weight:700}
+  .legend i{width:8px;height:8px;border-radius:3px;flex:0 0 auto}
+  .kpi{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+  .kpi div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 11px}
+  .kpi span{display:block;font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:700}
+  .kpi b{font-size:13.5px;font-weight:900;font-variant-numeric:tabular-nums}
+  .btn{width:100%;border:0;border-radius:15px;padding:15px;font-size:14px;font-weight:900;font-family:inherit;cursor:pointer;background:var(--plum);color:#fff;letter-spacing:-.2px}
+  .btn.ghost{background:#fff;color:var(--plum);border:1.5px solid var(--lilac2)}
+  .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px}
+  .field{margin-top:13px}
+  .field label{font-size:11px;color:var(--muted);display:block;margin-bottom:6px;font-weight:800}
+  .amt{display:flex;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:17px;padding:13px 15px;gap:8px}
+  .amt span{font-size:25px;color:var(--muted);font-weight:800}
+  .amt input{border:0;outline:0;background:transparent;font-family:inherit;font-size:29px;font-weight:900;width:100%;color:var(--ink);font-variant-numeric:tabular-nums;letter-spacing:-1.5px}
+  .txt{width:100%;border:1.5px solid var(--line);border-radius:15px;padding:12px 14px;font-family:inherit;font-size:13px;font-weight:700;color:var(--ink);background:#fff;outline:0}
+  .presets{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .presets button{background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 13px;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink);font-weight:800}
+  .presets button.on{background:var(--plum);color:#fff;border-color:var(--plum)}
+  .seg{display:flex;background:var(--lilac);border-radius:13px;padding:3px;margin-top:13px}
+  .seg button{flex:1;border:0;background:0;padding:9px;border-radius:10px;font-family:inherit;font-size:12.5px;font-weight:900;color:#5C4A72;cursor:pointer}
+  .seg button.on{background:#fff;color:var(--ink)}
+  .acts{display:flex;flex-direction:column}
+  .act{display:flex;align-items:center;gap:11px;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .act:last-child{border-bottom:0}
+  .act .ic{width:34px;height:34px;border-radius:50%;background:var(--lilac);display:grid;place-items:center;flex:0 0 auto;color:var(--plum)}
+  .act .t{font-size:12.5px;font-weight:800}
+  .act .d{font-size:10.5px;color:var(--muted);margin-top:2px;font-weight:600}
+  .act .v{margin-left:auto;font-size:12.5px;font-weight:900;font-variant-numeric:tabular-nums}
+  .monthlab{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:18px 4px 6px;font-weight:900}
+  .menu{display:flex;flex-direction:column}
+  .menu div{display:flex;align-items:center;gap:11px;padding:13px 14px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px;font-weight:700}
+  .menu div:last-child{border-bottom:0}
+  .menu .chev{margin-left:auto;opacity:.5}
+  .legal{font-size:10.5px;color:var(--muted);line-height:1.55;padding:16px 4px 10px;font-weight:600}
+  .legal b{color:#5D4B70;font-weight:900}
+  .toast{position:absolute;left:14px;right:14px;bottom:104px;background:var(--ink);color:#fff;border-radius:15px;padding:12px 14px;font-size:12.5px;font-weight:700;display:flex;gap:9px;align-items:center;z-index:80;transform:translateY(16px);opacity:0;transition:.28s;pointer-events:none}
+  .toast.show{transform:none;opacity:1}
+  .sheet{background:#fff;border:1px solid var(--line);border-radius:17px;padding:13px 14px;margin-top:11px}
+  .kv{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;font-weight:700;gap:10px}
+  .kv span{color:var(--muted)}
+  .kv b{font-weight:900;font-variant-numeric:tabular-nums;text-align:right}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.4px}
+  .pill{display:inline-block;font-size:10px;font-weight:900;padding:5px 10px;border-radius:999px;background:var(--lilac);color:#4A1580}
+  .pill.grey{background:#F0EBE0;color:var(--muted)}
+  .pill.on{background:#DDF7EA;color:#0F7A4A}
+  .pill.warn{background:#FFF0ED;color:#C63C28}
+  .pocket{background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:9px}
+  .pocket .nm{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:900}
+  .pocket .emo{width:28px;height:28px;border-radius:9px;background:var(--lilac);display:grid;place-items:center;font-size:14px}
+  .pocket .amt2{font-size:21px;font-weight:900;letter-spacing:-1px;margin:9px 0 2px;font-variant-numeric:tabular-nums}
+  .pocket .tgt{font-size:10.5px;color:var(--muted);font-weight:700}
+  .pocket .bar{margin-top:9px;height:7px}
+  .tl{position:relative;padding-left:24px}
+  .tl:before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--lilac2)}
+  .tli{position:relative;padding-bottom:17px}
+  .tli:before{content:"";position:absolute;left:-23px;top:4px;width:10px;height:10px;border-radius:50%;background:#fff;border:2.5px solid var(--plum)}
+  .tli.crash:before{border-color:var(--down)}
+  .tli .yr{font-size:10.5px;font-weight:900;color:var(--plum);letter-spacing:.5px}
+  .tli.crash .yr{color:var(--down)}
+  .tli .tx{font-size:12px;line-height:1.5;color:#3D2A55;margin-top:3px;font-weight:600}
+  .yrs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
+  .yrs::-webkit-scrollbar{display:none}
+  .yrs button{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;font-size:11.5px;font-weight:900;font-family:inherit;color:var(--muted);cursor:pointer}
+  .yrs button.on{background:var(--plum);border-color:var(--plum);color:#fff}
+  .big2{font-size:31px;font-weight:900;letter-spacing:-1.5px;font-variant-numeric:tabular-nums;margin:4px 0}
+  .step{display:flex;gap:11px;padding:13px 14px;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:0}
+  .step .num{width:22px;height:22px;border-radius:50%;background:var(--plum);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:900;flex:0 0 auto;margin-top:1px}
+  .step .st{font-size:12.5px;font-weight:800;line-height:1.4}
+  .step .sd{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5;font-weight:600}
+  .banner{border-radius:18px;padding:14px;display:flex;gap:10px;margin-bottom:12px}
+  .banner.embed{background:#FFF3E2;border:1px solid #F8DFBC}
+  .banner.live{background:#DDF7EA;border:1px solid #B6EBD1}
+  .banner p{margin:0;font-size:12px;line-height:1.5;font-weight:700}
+  .banner.embed p{color:#7A4A12}
+  .banner.live p{color:#0F5F3B}
+  .lock{position:absolute;inset:0;z-index:90;background:radial-gradient(120% 80% at 50% 108%,#8B2BF0 0%,#4A0B96 42%,#1A0A2B 100%);display:flex;flex-direction:column;color:#fff;transition:opacity .4s,transform .4s}
+  .lock.gone{opacity:0;transform:scale(1.03);pointer-events:none}
+  .lock .clock{padding:66px 26px 0;font-size:60px;font-weight:900;letter-spacing:-3px;line-height:1;font-variant-numeric:tabular-nums}
+  .lock .date{padding:8px 26px 0;font-size:13.5px;font-weight:700;color:#D9C4FB}
+  .lock .mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;margin-top:-30px}
+  .lock .wm2{font-weight:900;font-size:22px;letter-spacing:-1.2px;color:#fff;display:flex;align-items:center;gap:8px}
+  .fp{position:relative;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;cursor:pointer;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);transition:.3s}
+  .fp svg{stroke:#E7DAFE;transition:.3s}
+  .fp:after{content:"";position:absolute;inset:0;border-radius:50%;border:1.5px solid #7BF5B8;opacity:0;transform:scale(.9)}
+  .fp.scan:after{animation:rip 1.1s ease-out infinite}
+  .fp.scan svg{stroke:#7BF5B8}
+  .fp.ok{background:rgba(123,245,184,.18);border-color:#7BF5B8}
+  .fp.ok svg{stroke:#7BF5B8}
+  @keyframes rip{0%{opacity:.9;transform:scale(.92)}100%{opacity:0;transform:scale(1.32)}}
+  .lockhint{font-size:11.5px;color:#C6ADEF;font-weight:700}
+  .lock .foot{padding:0 26px 34px;display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#C6ADEF;font-weight:700}
+  /* full bleed on a real phone */
+  @media (max-width:480px){
+    body{display:block;background:var(--linen)}
+    .phone{width:100%;height:100dvh;border:0;border-radius:0;box-shadow:none}
+    .punch{display:none}
+    .status{padding-top:max(10px,env(safe-area-inset-top));height:calc(34px + env(safe-area-inset-top))}
+    .top{padding-top:calc(46px + env(safe-area-inset-top))}
+    .navbar{padding-top:calc(46px + env(safe-area-inset-top))}
+    .lock .clock{padding-top:calc(66px + env(safe-area-inset-top))}
+    .tabbar{height:calc(92px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom)}
+    .app{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="punch"></div>
+  <div class="status"><span>9:41</span><span class="r">
+    <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 10.4 5.2 7.9a3.4 3.4 0 0 1 4.6 0zM2.9 5.5 1.4 3.9a8.7 8.7 0 0 1 12.2 0l-1.5 1.6a6.5 6.5 0 0 0-9.2 0z"/></svg>
+    <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="1"/><rect x="4.5" y="5" width="3" height="6" rx="1"/><rect x="9" y="2.5" width="3" height="8.5" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+    <svg width="23" height="11" viewBox="0 0 23 11"><rect x=".5" y=".5" width="18" height="10" rx="2.6" fill="none" stroke="currentColor" opacity=".5"/><rect x="2" y="2" width="13" height="7" rx="1.6" fill="currentColor"/><path d="M20.5 4v3a2 2 0 0 0 0-3z" fill="currentColor" opacity=".5"/></svg>
+  </span></div>
+  <div class="app" id="app"></div>
+  <nav class="tabbar" id="tabbar"></nav>
+  <div class="grab"></div>
+  <div class="toast" id="toast"></div>
+  <div class="lock" id="lock">
+    <div class="clock">9:41</div>
+    <div class="date">Tue, 2 December</div>
+    <div class="mid">
+      <div class="wm2"><svg width="26" height="26" viewBox="0 0 40 40"><circle cx="20" cy="20" r="20" fill="#fff"/><circle cx="19.4" cy="22.6" r="12.2" fill="#7308E3"/><circle cx="30.6" cy="8.6" r="9.4" fill="#fff"/><g transform="rotate(-38 28.6 12.2)"><ellipse cx="28.6" cy="12.2" rx="3.2" ry="7" fill="#fff" stroke="#7308E3" stroke-width="2.9"/></g><path d="M15.6 25.4c1.5 2 4.6 2.2 6.6.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>plum</div>
+      <div class="fp" id="fp" onclick="unlock()">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round">
+          <path d="M12 4.6c-3 0-5.4 2.4-5.4 5.4v2.2c0 1.3-.3 2.6-.9 3.7"/>
+          <path d="M12 7.6a2.4 2.4 0 0 0-2.4 2.4v2.6c0 2-.6 3.9-1.7 5.4"/>
+          <path d="M12 10.6v2.8c0 2.2-.7 4.3-1.9 6"/>
+          <path d="M14.4 10a2.4 2.4 0 0 1 2.4 2.4v1.6c0 1.9-.4 3.7-1.1 5.3"/>
+          <path d="M17.4 10c.1-.5.1-1 .1-1.4a5.5 5.5 0 0 0-11 0"/>
+          <path d="M14.6 7.2a2.6 2.6 0 0 1 2.8 2.6c0 .5 0 1-.1 1.5"/></svg>
+      </div>
+      <div class="lockhint" id="lhint">Touch the fingerprint sensor</div>
+    </div>
+    <div class="foot"><span>Plum Premium</span><span>Fingerprint</span></div>
+  </div>
+</div>
+
+<script>
+const ICON = {
+  home:'<path d="M3 10.2 12 3l9 7.2V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  pie:'<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v8.5h8.5"/>',
+  move:'<path d="M7 17V7m0 0L4 10m3-3 3 3M17 7v10m0 0 3-3m-3 3-3-3"/>',
+  list:'<path d="M4 7h16M4 12h16M4 17h10"/>',
+  user:'<circle cx="12" cy="8.5" r="3.6"/><path d="M4.5 20c1.3-3.7 4-5.4 7.5-5.4s6.2 1.7 7.5 5.4"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>',
+  arrowUp:'<path d="M12 19V5m0 0-6 6m6-6 6 6"/>', arrowDown:'<path d="M12 5v14m0 0 6-6m-6 6-6-6"/>',
+  doc:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/>',
+  bell:'<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2H4.5z"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+  eye:'<path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.6"/>',
+  eyeOff:'<path d="M4 4l16 16"/><path d="M2.5 12S6 6.5 12 6.5c1.6 0 3 .4 4.3 1M21.5 12S18 17.5 12 17.5c-1.6 0-3-.4-4.3-1"/>',
+  lock:'<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 1 1 7 0v2.5"/>',
+  shield:'<path d="M12 3l7.5 3v6c0 4.4-3.1 7.6-7.5 9-4.4-1.4-7.5-4.6-7.5-9V6z"/>',
+  chev:'<path d="M9 5l7 7-7 7"/>', dl:'<path d="M12 3v12m0 0 5-5m-5 5-5-5M4 20h16"/>',
+  back:'<path d="M15 5l-7 7 7 7"/>', chk:'<path d="M5 12.5l4.5 4.5L19 7"/>',
+  sp:'<path d="M4 20V14M10 20V9M16 20v-4M22 20V5"/>',
+  pot:'<path d="M4 10h16v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M7 10V7a5 5 0 0 1 10 0v3"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  spark:'<path d="M12 3v4M12 17v4M4.5 12h4M15.5 12h4M6.7 6.7l2.8 2.8M14.5 14.5l2.8 2.8M17.3 6.7l-2.8 2.8M9.5 14.5l-2.8 2.8"/>',
+  bolt:'<path d="M13 3 5 13h6l-1 8 8-10h-6z"/>',
+  bag:'<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  gauge:'<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/>',
+  up2:'<path d="M4 16l5-5 4 3 6-7"/>',
+  rule:'<path d="M4 6h16M4 12h10M4 18h7"/><circle cx="18" cy="15" r="3"/>',
+  fp:'<path d="M12 4.6c-3 0-5.4 2.4-5.4 5.4v2.2c0 1.3-.3 2.6-.9 3.7"/><path d="M12 7.6a2.4 2.4 0 0 0-2.4 2.4v2.6c0 2-.6 3.9-1.7 5.4"/><path d="M12 10.6v2.8c0 2.2-.7 4.3-1.9 6"/><path d="M14.4 10a2.4 2.4 0 0 1 2.4 2.4v1.6c0 1.9-.4 3.7-1.1 5.3"/><path d="M17.4 10c.1-.5.1-1 .1-1.4a5.5 5.5 0 0 0-11 0"/>'
+};
+const svg = (p,s=20)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const LOGO = (fill='#7308E3', bg='#FBF6E9') => `<circle cx="20" cy="20" r="20" fill="${bg}"/><circle cx="19.4" cy="22.6" r="12.2" fill="${fill}"/><circle cx="30.6" cy="8.6" r="9.4" fill="${bg}"/><g transform="rotate(-38 28.6 12.2)"><ellipse cx="28.6" cy="12.2" rx="3.2" ry="7" fill="${bg}" stroke="${fill}" stroke-width="2.9"/></g><path d="M15.6 25.4c1.5 2 4.6 2.2 6.6.5" fill="none" stroke="${bg}" stroke-width="2.6" stroke-linecap="round"/>`;
+const MARK = `<svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">${LOGO()}</svg>`;
+
+const BASE = [
+  {id:'vgac', n:'Vanguard FTSE Global All Cap', t:'VGAC', type:'Index fund', v:311380.20, c:112400.00, u:1842.3312, d:0.31, col:'#7308E3'},
+  {id:'swda', n:'iShares Core MSCI World ETF', t:'SWDA', type:'ETF', v:191240.90, c:74000.00, u:2986.4410, d:0.52, col:'#8B2BF0'},
+  {id:'v80',  n:'Vanguard LifeStrategy 80%', t:'VLS80', type:'Fund', v:148310.45, c:62050.00, u:4122.5100, d:0.24, col:'#A94BF7'},
+  {id:'lgte', n:'L&G Global Technology Index', t:'LGGT', type:'Index fund', v:102420.60, c:34180.00, u:5310.2000, d:1.14, col:'#F6983B'},
+  {id:'iglt', n:'iShares Core UK Gilts ETF', t:'IGLT', type:'ETF', v:76180.30, c:33400.00, u:1420.8800, d:-0.18, col:'#8E7DA8'},
+  {id:'azn',  n:'AstraZeneca PLC', t:'AZN', type:'UK equity', v:54320.10, c:24600.00, u:412.5000, d:0.42, col:'#FF8EB7'},
+  {id:'shel', n:'Shell PLC', t:'SHEL', type:'UK equity', v:38412.77, c:14450.00, u:1280.4400, d:-0.61, col:'#3FA45B'}
+];
+const QUOTE_MAP = {swda:'SWDA.L', iglt:'IGLT.L', azn:'AZN.L', shel:'SHEL.L'};
+const CASH0=12480.00, POCK0=13900.00, TOTAL0=934745.32, COST=367560.00, GAIN=567185.32, ALLOW_USED=18500, ALLOW=20000;
+const money=(n,dp=2)=>'£'+n.toLocaleString('en-GB',{minimumFractionDigits:dp,maximumFractionDigits:dp});
+const pct=n=>(n>0?'+':'')+n.toFixed(2)+'%';
+
+const RET=[8.4,14.2,-6.1,12.8,9.6,15.1,6.4,24.3,-9.8,-18.4,-27.6,16.9,11.2,19.4,12.1,4.6,-31.2,24.8,12.9,-6.8,10.4,18.6,5.2,2.4,14.1,9.3,-6.2,19.4,2.1,16.8,-9.4,11.6,15.2,9.1];
+const CON=[3000,3000,3000,3000,3000,6000,6000,7000,7000,7000,7000,7000,7000,7000,7000,7000,7200,7200,10200,10200,10200,10200,11880,15240,15240,20000,20000,20000,20000,20000,20000,20000,20000,20000];
+const YEARS=(()=>{let v=0;const out=[];for(let i=0;i<RET.length;i++){v=v*(1+RET[i]/100)+CON[i];out.push({y:1992+i,c:CON[i],r:RET[i],raw:v});}const k=TOTAL0/out[out.length-1].raw;return out.map(o=>({y:o.y,c:o.c,r:o.r,v:o.raw*k}));})();
+const HIST=YEARS.map(o=>o.v);
+const PEAK=(()=>{let p=0,dd=0;YEARS.forEach(o=>{if(o.v>p)p=o.v;dd=Math.max(dd,(p-o.v)/p*100);});return dd;})();
+
+const POCKETS=[{id:'rain',n:'Rainy day',e:'☔',b:8400,t:10000},{id:'jpn',n:'Japan 2027',e:'🗼',b:3500,t:6000},{id:'home',n:'Home deposit',e:'🏡',b:2000,t:60000}];
+
+const MERCH=[['Tesco','Groceries',12,92],['Sainsbury\'s','Groceries',9,64],['Pret A Manger','Eating out',4,14],['Transport for London','Transport',3,12],['Octopus Energy','Bills',42,148],['Thames Water','Bills',28,42],['Amazon','Shopping',11,88],['Netflix','Subscriptions',10.99,10.99],['Spotify','Subscriptions',11.99,11.99],['PureGym','Subscriptions',26.99,26.99],['Boots','Health',6,38],['Costa Coffee','Eating out',3,9],['Deliveroo','Eating out',14,34],['John Lewis','Shopping',25,120],['Shell','Transport',38,62],['Waterstones','Shopping',9,28],['Nando\'s','Eating out',12,29],['Aldi','Groceries',8,44]];
+const CATS=['Groceries','Eating out','Bills','Shopping','Transport','Subscriptions','Health'];
+const CAT_COL={Groceries:'#7308E3','Eating out':'#A94BF7',Bills:'#4A1580',Shopping:'#FF8EB7',Transport:'#F6983B',Subscriptions:'#3FA45B',Health:'#8E7DA8'};
+function monthTx(s0,n){let s=s0;const r=()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};const out=[];for(let i=0;i<n;i++){const m=MERCH[Math.floor(r()*MERCH.length)];out.push({n:m[0],c:m[1],v:+(m[2]+r()*(m[3]-m[2])).toFixed(2),day:1+Math.floor(r()*29)});}return out.sort((a,b)=>b.day-a.day);}
+const NOV=monthTx(9137,34), OCT=monthTx(4411,38);
+const novTotal=NOV.reduce((a,t)=>a+t.v,0), octTotal=OCT.reduce((a,t)=>a+t.v,0);
+const catTotals=CATS.map(c=>({n:c,v:NOV.filter(t=>t.c===c).reduce((a,t)=>a+t.v,0),col:CAT_COL[c]})).sort((a,b)=>b.v-a.v);
+const SUBS=NOV.filter(t=>t.c==='Subscriptions');
+
+let S={tab:'home',scr:'home',range:'1Y',hid:false,cash:CASH0,pockets:POCK0,bal:TOTAL0,hold:JSON.parse(JSON.stringify(BASE)),cur:'vgac',mode:'add',amt:'',extra:[],unlocked:false,yr:2025,fmp:'',feedState:'sim',rules:{payday:true,roundup:true,beast:false,week52:false}};
+try{const raw=localStorage.getItem('plum_v7');if(raw){const p=JSON.parse(raw);if(Array.isArray(p.hold))S.hold=p.hold;if(typeof p.cash==='number')S.cash=p.cash;if(typeof p.pockets==='number')S.pockets=p.pockets;if(typeof p.bal==='number')S.bal=p.bal;if(p.rules)S.rules=p.rules;}}catch(e){}
+S.fmp=localStorage.getItem('plum_key')||'';
+S.open=S.bal;
+const save=()=>{try{localStorage.setItem('plum_v7',JSON.stringify({cash:S.cash,pockets:S.pockets,bal:S.bal,hold:S.hold,rules:S.rules}));}catch(e){}};
+
+let seed=11;
+const rnd=()=>{seed=(seed*1103515245+12345)%2147483648;return seed/2147483648;};
+const RANGES={'1D':[24,0.41],'1W':[28,1.82],'1M':[30,2.94],'3M':[34,6.41],'1Y':[40,19.24],'5Y':[44,71.6],'All':[34,154.31]};
+function series(r,base){if(r==='All'){const k=(base||S.bal)/TOTAL0;return HIST.map(v=>v*k);}const [n,ch]=RANGES[r]||RANGES['1Y'];const end=base||S.bal,start=end/(1+ch/100);const out=[];let v=start;for(let i=0;i<n;i++){v+=(end-start)/n+(rnd()-0.5)*start*0.011;out.push(Math.max(v,start*0.85));}out[n-1]=end;return out;}
+function chart(r,h=64,w=300,stroke='#C3B2FB',fill=true,base=null,uid=''){const d=series(r,base),mn=Math.min(...d),mx=Math.max(...d),sp=(mx-mn)||1;const pts=d.map((v,i)=>[(i/(d.length-1))*w,h-((v-mn)/sp)*(h-8)-4]);const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');const gid='g'+(uid||r).replace(/[^a-z0-9]/gi,'');return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${stroke}" stop-opacity=".3"/><stop offset="100%" stop-color="${stroke}" stop-opacity="0"/></linearGradient></defs>${fill?`<path d="${line} L${w} ${h} L0 ${h} Z" fill="url(#${gid})"/>`:''}<path d="${line}" fill="none" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>`;}
+
+function toast(msg){const t=document.getElementById('toast');t.innerHTML=svg(ICON.chk,16)+'<span>'+msg+'</span>';t.classList.add('show');clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),2500);}
+function go(scr,opt){S.scr=scr;if(opt)Object.assign(S,opt);render();document.getElementById('app').scrollTop=0;}
+function tab(t){S.tab=t;go(t);}
+
+let backoff=60000,feedTimer=null,budget=250;
+function todayKey(){return new Date().toISOString().slice(0,10);}
+(function loadBudget(){if(localStorage.getItem('plum_budget_day')!==todayKey()){localStorage.setItem('plum_budget_day',todayKey());localStorage.setItem('plum_budget','250');budget=250;}else budget=+(localStorage.getItem('plum_budget')||250);})();
+function schedulePoll(){clearTimeout(feedTimer);if(!S.fmp)return;feedTimer=setTimeout(async()=>{await poll();schedulePoll();},backoff);}
+async function poll(){
+  if(!S.fmp||!S.unlocked)return;
+  if(budget<=0){S.feedState='budget';patch();return;}
+  try{
+    const syms=Object.values(QUOTE_MAP).join(',');
+    const res=await fetch('https://financialmodelingprep.com/api/v3/quote/'+syms+'?apikey='+encodeURIComponent(S.fmp));
+    budget--;localStorage.setItem('plum_budget',String(budget));
+    if(res.status===429){S.feedState='throttled';backoff=Math.min(backoff*2,600000);patch();return;}
+    if(!res.ok)throw 0;
+    const data=await res.json();
+    if(!Array.isArray(data)||!data.length)throw 0;
+    let hit=0;
+    data.forEach(q=>{const id=Object.keys(QUOTE_MAP).find(k=>QUOTE_MAP[k]===q.symbol);const h=S.hold.find(x=>x.id===id);if(!h||typeof q.price!=='number')return;if(h.p)h.v=h.v*(q.price/h.p);h.p=q.price;if(typeof q.changesPercentage==='number')h.d=+q.changesPercentage.toFixed(2);hit++;});
+    if(hit){S.feedState='live';backoff=60000;S.bal=S.hold.reduce((a,h)=>a+h.v,0)+S.cash+S.pockets;patch();}
+  }catch(e){S.feedState='error';backoff=Math.min(backoff*2,600000);patch();}
+}
+function tick(){
+  if(!S.unlocked)return;
+  S.hold.forEach(h=>{if(S.fmp&&QUOTE_MAP[h.id]&&S.feedState==='live')return;const r=(rnd()-0.5)*0.0026;h.v=Math.max(h.v*(1+r),200);h.d=+(h.d+r*100).toFixed(2);});
+  S.bal=S.hold.reduce((a,h)=>a+h.v,0)+S.cash+S.pockets;patch();
+}
+setInterval(tick,2600);
+
+function patch(){
+  const day=S.bal-S.open;
+  document.querySelectorAll('[data-n]').forEach(el=>{
+    const k=el.dataset.n;let val,cls=null;
+    if(k==='bal')val=S.hid?'£••••••':money(S.bal);
+    else if(k==='day'){val=(day>=0?'+':'−')+money(Math.abs(day));cls=day>=0?'up':'down';}
+    else if(k==='daypct'){val=pct(day/S.open*100);cls=day>=0?'up':'down';}
+    else if(k.startsWith('h:')){const h=S.hold.find(x=>x.id===k.slice(2));if(!h)return;val=money(h.v);}
+    else if(k.startsWith('px:')){const h=S.hold.find(x=>x.id===k.slice(2));if(!h)return;val=money(h.v/h.u,(h.v/h.u)<10?4:2);}
+    else if(k.startsWith('p:')){const h=S.hold.find(x=>x.id===k.slice(2));if(!h)return;val=pct(h.d);cls=h.d>=0?'up':'down';}
+    if(val!=null&&el.textContent!==val){el.textContent=val;if(cls){el.className=cls+' flash-'+cls;setTimeout(()=>{el.className=cls;},700);}}
+  });
+  const hc=document.getElementById('heroChart');if(hc)hc.innerHTML=chart(S.range,62,300,'#C3B2FB',true);
+  const clock=document.getElementById('asof');if(clock)clock.textContent=new Date().toLocaleTimeString('en-GB',{hour12:false});
+  const st=document.getElementById('feedState');if(st)st.textContent=feedLabel();
+  const bg=document.getElementById('budget');if(bg)bg.textContent=budget+' left today';
+}
+function feedLabel(){return {live:'Connected · receiving quotes',throttled:'Rate limited · backing off',error:'Provider unreachable · retrying',budget:'Daily quota used · resumes tomorrow'}[S.feedState]||(S.fmp?'Key saved · waiting':'Not connected');}
+
+function unlock(){
+  const f=document.getElementById('fp'),l=document.getElementById('lock');
+  f.classList.add('scan');document.getElementById('lhint').textContent='Scanning…';
+  setTimeout(()=>{f.classList.remove('scan');f.classList.add('ok');document.getElementById('lhint').textContent='Fingerprint recognised';},1050);
+  setTimeout(()=>{l.classList.add('gone');S.unlocked=true;poll();schedulePoll();},1550);
+}
+function lockNow(){
+  const l=document.getElementById('lock'),f=document.getElementById('fp');
+  f.classList.remove('ok','scan');document.getElementById('lhint').textContent='Touch the fingerprint sensor';
+  l.classList.remove('gone');S.unlocked=false;tab('home');
+}
+
+function home(){
+  const day=S.bal-S.open;const chg=(RANGES[S.range]||[0,19.24])[1];
+  return `<div class="scr">
+    <div class="top"><div class="brand">${MARK}<span class="wm">plum</span></div>
+      <div style="display:flex;gap:7px;align-items:center">
+        <div class="iconbtn" onclick="go('install')">${svg(ICON.dl,16)}</div>
+        <div class="iconbtn" onclick="toast('No new notifications')">${svg(ICON.bell,16)}</div>
+        <div class="ava" onclick="tab('profile')" style="cursor:pointer">JW</div></div></div>
+    <div class="pad">
+      <h1 class="greet">Nice one, James</h1>
+      <div class="sub">Your money is up <span data-n="daypct" class="up">+0.41%</span> today</div>
+      <div class="hero" style="margin-top:14px">
+        <div class="lbl"><span class="live"><i class="dot"></i>Live · <span id="asof">14:32:07</span></span>
+          <span onclick="S.hid=!S.hid;render()" style="cursor:pointer;margin-left:auto">${svg(S.hid?ICON.eyeOff:ICON.eye,14)}</span></div>
+        <div class="big" data-n="bal">${S.hid?'£••••••':money(S.bal)}</div>
+        <div style="display:flex;gap:7px;align-items:center">
+          <span class="chip">${svg(ICON.arrowUp,10)} <span data-n="day">${(day>=0?'+':'−')+money(Math.abs(day))}</span> · <span data-n="daypct">${pct(day/S.open*100)}</span></span>
+          <span style="font-size:10.5px;color:#E2D3FE;font-weight:800">today</span></div>
+        <div id="heroChart" style="margin:10px -4px 0">${chart(S.range,60,300,'#C3B2FB',true)}</div>
+        <div class="ranges">${Object.keys(RANGES).map(r=>`<button class="${S.range===r?'on':''}" onclick="S.range='${r}';render()">${r}</button>`).join('')}</div>
+        <div class="meta"><span>${S.range} change</span><span>${pct(chg)} · ${money(S.bal*chg/100)}</span></div>
+      </div>
+      <div class="quick">
+        <button onclick="go('move',{mode:'add'})">${svg(ICON.plus,19)}<span>Add money</span></button>
+        <button onclick="go('pockets')">${svg(ICON.pot,19)}<span>Pockets</span></button>
+        <button onclick="go('rules')">${svg(ICON.rule,19)}<span>Rules</span></button>
+        <button onclick="go('move',{mode:'out'})">${svg(ICON.minus,19)}<span>Withdraw</span></button>
+      </div>
+      <div class="sect"><h2>Money check-in</h2></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+        <div class="card" style="padding:13px" onclick="go('spend')"><div class="rsub" style="margin:0">Spent in November</div>
+          <div style="font-size:19px;font-weight:900;letter-spacing:-.9px;margin-top:4px">${money(novTotal)}</div>
+          <div class="up" style="font-size:11px;font-weight:800;margin-top:2px">−${((1-novTotal/octTotal)*100).toFixed(1)}% vs October</div></div>
+        <div class="card" style="padding:13px" onclick="go('credit')"><div class="rsub" style="margin:0">Credit score</div>
+          <div style="font-size:19px;font-weight:900;letter-spacing:-.9px;margin-top:4px">721</div>
+          <div class="up" style="font-size:11px;font-weight:800;margin-top:2px">Good · +3 this month</div></div>
+      </div>
+      <div class="lostmoney">${svg(ICON.bolt,19)}<p><strong>Lost money found.</strong> Your broadband is £26/mo above the local average. Switching saves about <strong>£312 a year</strong>.</p></div>
+      <div class="sect"><h2>Your pockets</h2><a onclick="go('pockets')">See all</a></div>
+      <div class="card" style="padding:13px 14px;display:flex;align-items:center;gap:11px">
+        <div class="logo" style="background:var(--lilac);color:var(--plum)">${svg(ICON.pot,17)}</div>
+        <div style="flex:1"><div class="rname">Total in pockets</div><div class="rsub">${money(S.pockets)} across 3 pockets</div></div>
+        <span class="pill on">Round-ups on</span></div>
+      <div class="sect"><h2>ISA allowance</h2><a onclick="toast('Allowance resets 6 April 2026')">2025/26</a></div>
+      <div class="card allow">
+        <div class="row"><span style="color:var(--muted)">Subscribed</span><b>${money(ALLOW_USED,0)} of ${money(ALLOW,0)}</b></div>
+        <div class="bar"><i style="width:${ALLOW_USED/ALLOW*100}%"></i></div>
+        <div class="fine">${money(ALLOW-ALLOW_USED,0)} left this tax year. Resets 6 April 2026.</div></div>
+      <div class="sect"><h2>Your investments</h2><a onclick="tab('portfolio')">See all</a></div>
+      <div class="card">
+        ${S.hold.slice(0,3).map(h=>`<div class="rowitem" onclick="go('detail',{cur:'${h.id}'})">
+          <div class="logo" style="background:${h.col}">${h.t.slice(0,2)}</div>
+          <div class="rmain"><div class="rname">${h.n}</div><div class="rsub">${h.type} · ${pct((h.v-h.c)/h.c*100)} all time</div></div>
+          <div><div class="rval" data-n="h:${h.id}">${S.hid?'•••••':money(h.v)}</div><div class="rpc ${h.d>=0?'up':'down'}" data-n="p:${h.id}">${pct(h.d)}</div></div>
+        </div>`).join('')}
+      </div>
+      <div class="insight">${svg(ICON.shield,19)}<p><strong>${money(GAIN,0)}</strong> of growth sheltered from tax since 1992 — an estimated <strong>£113,437</strong> saved in capital gains tax.</p></div>
+      <div class="sect"><h2>Since 1992</h2><a onclick="go('history')">Full history</a></div>
+      <div class="card" style="padding:13px 14px" onclick="go('history')">
+        <div class="rsub" style="margin:0 0 7px">33 years, 5 market crashes, one long game.</div>
+        ${chart('All',68,300,'#7308E3',true)}
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-weight:900;margin-top:6px"><span>1992</span><span>2025</span></div></div>
+      <div style="height:12px"></div>
+    </div></div>`;
+}
+
+function spend(){
+  return `<div class="scr">
+    <div class="navbar"><div class="back" onclick="tab('home')">${svg(ICON.back,18)}</div><h2>Spending</h2><span class="pill">November</span></div>
+    <div class="pad">
+      <div class="card" style="padding:15px">
+        <div class="rsub" style="margin:0">Spent so far this month</div>
+        <div class="big2">${money(novTotal)}</div>
+        <div class="up" style="font-size:12px;font-weight:800">−${money(octTotal-novTotal)} vs October</div>
+        <div class="bar" style="margin-top:11px"><i style="width:${Math.min(novTotal/3200*100,100)}%"></i></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:7px;font-weight:700">${Math.round(novTotal/3200*100)}% of your £3,200 monthly budget</div></div>
+      <div class="insight" style="margin-top:13px">${svg(ICON.bolt,19)}<p><strong>Payday detected.</strong> £3,400.00 landed from Barclays on 28 Nov. Sweep 12% into Rainy day — about <strong>£408</strong>.</p></div>
+      <button class="btn" style="margin-top:11px" onclick="toast('£408 swept into Rainy day')">Sweep £408 to Rainy day</button>
+      <div class="sect"><h2>Where it went</h2><a onclick="toast('Categories')">${NOV.length} payments</a></div>
+      <div class="card" style="padding:15px">
+        ${catTotals.map(c=>`<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:5px"><span>${c.n}</span><span>${money(c.v)}</span></div><div class="bar" style="height:7px"><i style="width:${c.v/catTotals[0].v*100}%;background:${c.col}"></i></div></div>`).join('')}
+      </div>
+      <div class="sect"><h2>Recent</h2><a onclick="toast('All payments')">All</a></div>
+      <div class="card acts">
+        ${NOV.slice(0,7).map(m=>`<div class="act"><div class="ic">${svg(ICON.bag,16)}</div><div><div class="t">${m.n}</div><div class="d">${m.day} Nov · ${m.c}</div></div><div class="v">−${money(m.v)}</div></div>`).join('')}
+      </div>
+      <div class="sect"><h2>Subscriptions</h2><a onclick="toast('Subscription manager')">Manage</a></div>
+      <div class="card acts">
+        ${SUBS.map(x=>`<div class="act"><div class="ic">${svg(ICON.spark,16)}</div><div><div class="t">${x.n}</div><div class="d">Renews ${x.day} Dec</div></div><div class="v">${money(x.v)}</div></div>`).join('')}
+      </div>
+      <div class="legal">Categorised from your linked Barclays account. Totals are the sum of the ${NOV.length} payments listed above.</div>
+      <div style="height:10px"></div></div></div>`;
+}
+
+function credit(){
+  const score=721,C=Math.PI*46,arc=C*(score/1000);
+  return `<div class="scr">
+    <div class="navbar"><div class="back" onclick="tab('home')">${svg(ICON.back,18)}</div><h2>Credit score</h2><span class="pill">TransUnion</span></div>
+    <div class="pad">
+      <div class="card" style="padding:16px;text-align:center">
+        <svg width="196" height="110" viewBox="0 0 120 70" role="img" aria-label="Credit score 721 out of 1000">
+          <path d="M14 60a46 46 0 0 1 92 0" fill="none" stroke="#EDE4D2" stroke-width="10" stroke-linecap="round"/>
+          <path d="M14 60a46 46 0 0 1 92 0" fill="none" stroke="#7308E3" stroke-width="10" stroke-linecap="round" stroke-dasharray="${arc.toFixed(1)} ${C.toFixed(1)}"/>
+          <text x="60" y="50" text-anchor="middle" font-size="26" font-weight="900" fill="#1A0A2B" font-family="Nunito,sans-serif">721</text>
+          <text x="60" y="63" text-anchor="middle" font-size="7.5" font-weight="800" fill="#7B6C88" font-family="Nunito,sans-serif">OUT OF 1000</text></svg>
+        <div style="margin-top:4px"><span class="pill">Good</span></div>
+        <div class="up" style="font-size:12px;font-weight:800;margin-top:8px">+3 points this month · +31 this year</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;font-weight:700">Updated 2 Dec · next update 9 Dec</div></div>
+      <div class="card" style="padding:13px;margin-top:11px"><div class="rsub" style="margin:0 0 6px">Last 6 months</div>
+        ${chart('1M',64,300,'#7308E3',true)}
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-weight:900;margin-top:4px"><span>Jul 690</span><span>Oct 712</span><span>Dec 721</span></div></div>
+      <div class="sect"><h2>Helping you</h2></div>
+      <div class="card acts">
+        <div class="act"><div class="ic" style="background:#DDF7EA;color:var(--up)">${svg(ICON.chk,16)}</div><div><div class="t">No missed payments</div><div class="d">24 months clean</div></div></div>
+        <div class="act"><div class="ic" style="background:#DDF7EA;color:var(--up)">${svg(ICON.chk,16)}</div><div><div class="t">Credit use under 30%</div><div class="d">You're at 18%</div></div></div>
+        <div class="act"><div class="ic" style="background:#DDF7EA;color:var(--up)">${svg(ICON.chk,16)}</div><div><div class="t">Electoral roll confirmed</div><div class="d">W6 9QT</div></div></div>
+      </div>
+      <div class="sect"><h2>Holding you back</h2></div>
+      <div class="card acts">
+        <div class="act"><div class="ic" style="background:#FCE4E0;color:#C63C28">${svg(ICON.clock,16)}</div><div><div class="t">Account age is short</div><div class="d">Oldest card 2y 4m</div></div></div>
+        <div class="act"><div class="ic" style="background:#FCE4E0;color:#C63C28">${svg(ICON.gauge,16)}</div><div><div class="t">3 hard searches in 6 months</div><div class="d">Last one 12 Oct</div></div></div>
+      </div>
+      <div class="insight">${svg(ICON.up2,19)}<p>Paying £200 off your Barclaycard drops your use to <strong>11%</strong> and could add around <strong>18 points</strong>.</p></div>
+      <div class="legal">Score from TransUnion, for illustration. Lenders use their own criteria.</div>
+      <div style="height:10px"></div></div></div>`;
+}
+
+function portfolio(){
+  const total=S.hold.reduce((a,h)=>a+h.v,0);let acc=0;const C=2*Math.PI*54;
+  const arcs=S.hold.map(h=>{const f=h.v/total,len=f*C,o=-acc*C;acc+=f;return `<circle cx="70" cy="70" r="54" fill="none" stroke="${h.col}" stroke-width="17" stroke-dasharray="${(len-2).toFixed(2)} ${C}" stroke-dashoffset="${o.toFixed(2)}" transform="rotate(-90 70 70)"/>`;}).join('');
+  return `<div class="scr">
+    <div class="top"><div class="brand">${MARK}<span class="wm">plum</span></div><div class="ava" onclick="tab('profile')">JW</div></div>
+    <div class="pad">
+      <h1 class="greet">Invest</h1>
+      <div class="sub"><span class="live"><i class="dot"></i>${S.feedState==='live'?'Live prices':'Live'}</span> · ${S.hold.length} holdings</div>
+      <div class="card" style="margin-top:14px;padding:15px">
+        <div class="donut"><svg width="136" height="136" viewBox="0 0 140 140" role="img" aria-label="Allocation">${arcs}
+          <text x="70" y="66" text-anchor="middle" font-size="10" fill="#7B6C88" font-weight="700">Invested</text>
+          <text x="70" y="84" text-anchor="middle" font-size="13" font-weight="900" fill="#1A0A2B">${money(total,0)}</text></svg></div>
+        <div class="legend">${S.hold.slice(0,6).map(h=>`<div><i style="background:${h.col}"></i>${h.t} · ${(h.v/total*100).toFixed(1)}%</div>`).join('')}</div></div>
+      <div class="kpi">
+        <div><span>Total gain</span><b class="up">+${money(GAIN)}</b></div>
+        <div><span>Return</span><b class="up">+154.31%</b></div>
+        <div><span>Cost basis</span><b>${money(COST)}</b></div>
+        <div><span>Cash available</span><b>${money(S.cash)}</b></div></div>
+      <div class="sect"><h2>Holdings</h2><a onclick="toast('Sorted by value')">By value</a></div>
+      <div class="card">
+        ${S.hold.map(h=>`<div class="rowitem" onclick="go('detail',{cur:'${h.id}'})">
+          <div class="logo" style="background:${h.col}">${h.t.slice(0,2)}</div>
+          <div class="rmain"><div class="rname">${h.n}</div><div class="rsub">${h.u.toLocaleString('en-GB',{maximumFractionDigits:2})} units · ${(h.v/(total+S.cash)*100).toFixed(1)}%</div></div>
+          <div style="width:50px">${chart('1M',22,50,h.d>=0?'#1E9E63':'#D8402F',false,h.v,'p'+h.id)}</div>
+          <div><div class="rval" data-n="h:${h.id}">${money(h.v)}</div><div class="rpc ${h.d>=0?'up':'down'}" data-n="p:${h.id}">${pct(h.d)}</div></div>
+        </div>`).join('')}
+      </div><div style="height:8px"></div></div></div>`;
+}
+
+function detail(){
+  const h=S.hold.find(x=>x.id===S.cur)||S.hold[0];const price=h.v/h.u,gain=h.v-h.c;
+  return `<div class="scr">
+    <div class="navbar"><div class="back" onclick="tab('portfolio')">${svg(ICON.back,18)}</div><h2>${h.t}</h2>
+      <div class="iconbtn" onclick="toast('Price alert set at ${money(price*1.05)}')">${svg(ICON.bell,15)}</div></div>
+    <div class="pad">
+      <div class="logo" style="background:${h.col};width:46px;height:46px;border-radius:14px;font-size:12px">${h.t.slice(0,2)}</div>
+      <h1 class="greet" style="margin-top:11px;font-size:18.5px;line-height:1.3">${h.n}</h1>
+      <div class="sub">${h.type} · ${h.t} · GBP · <span class="live"><i class="dot"></i>live</span></div>
+      <div class="big2" data-n="px:${h.id}">${money(price,price<10?4:2)}</div>
+      <div class="${h.d>=0?'up':'down'}" style="font-size:12px;font-weight:900" data-n="p:${h.id}">${pct(h.d)} today</div>
+      <div style="margin:13px -4px 0">${chart(S.range,92,300,'#7308E3',true,h.v,'d'+h.id)}</div>
+      <div class="ranges" style="background:var(--lilac);border-radius:10px;padding:3px;margin-top:9px">
+        ${['1D','1W','1M','3M','1Y','5Y'].map(r=>`<button style="color:${S.range===r?'#1A0A2B':'#5C4A72'};background:${S.range===r?'#fff':'transparent'}" onclick="S.range='${r}';render()">${r}</button>`).join('')}</div>
+      <div class="kpi">
+        <div><span>Your position</span><b data-n="h:${h.id}">${money(h.v)}</b></div>
+        <div><span>Units held</span><b>${h.u.toLocaleString('en-GB',{maximumFractionDigits:2})}</b></div>
+        <div><span>Average cost</span><b>${money(h.c/h.u,2)}</b></div>
+        <div><span>Gain / loss</span><b class="${gain>=0?'up':'down'}">${gain>=0?'+':''}${money(gain)}</b></div></div>
+      <div class="btnrow"><button class="btn" onclick="toast('Buy order ticket opened')">Buy</button><button class="btn ghost" onclick="toast('Sell order ticket opened')">Sell</button></div>
+      <div class="sheet">
+        <div class="kv"><span>Ongoing charge</span><b>0.${h.type==='ETF'?'12':'23'}%</b></div>
+        <div class="kv"><span>Plum platform fee</span><b>0.25%</b></div>
+        <div class="kv"><span>Held in</span><b>Stocks &amp; shares ISA</b></div></div>
+      <div class="legal">Capital at risk. Past performance is not a reliable indicator of future results.</div>
+    </div></div>`;
+}
+
+function pockets(){
+  return `<div class="scr">
+    <div class="navbar"><div class="back" onclick="tab('home')">${svg(ICON.back,18)}</div><h2>Pockets</h2></div>
+    <div class="pad">
+      <div class="card" style="padding:15px">
+        <div class="rsub" style="margin:0">Saved in pockets</div>
+        <div class="big2">${money(S.pockets)}</div>
+        <div class="bar" style="margin-top:8px"><i style="width:${S.pockets/13900*100}%"></i></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;font-weight:700">Interest Pocket pays 3.51% AER variable, provided by Investec Bank plc.</div></div>
+      <div class="sect"><h2>Your pockets</h2><a onclick="toast('New pocket created')">+ New pocket</a></div>
+      ${POCKETS.map(p=>`<div class="pocket">
+        <div class="nm"><span class="emo">${p.e}</span>${p.n}<span style="margin-left:auto;font-size:10.5px;color:var(--muted);font-weight:800">${Math.round(p.b/p.t*100)}%</span></div>
+        <div class="amt2">${money(p.b)}</div><div class="tgt">of ${money(p.t,0)} target</div>
+        <div class="bar"><i style="width:${p.b/p.t*100}%"></i></div>
+        <button class="btn ghost" style="margin-top:11px;padding:11px;font-size:12.5px" onclick="toast('£250 moved to ${p.n}')">Top up</button></div>`).join('')}
+      <div style="height:8px"></div></div></div>`;
+}
+
+function rules(){
+  const R=[['payday','Pay day sweep','On every payday, move 12% aside'],['roundup','Round-ups','Round each payment up, keep the change'],['beast','Beast mode','AI deposits run 75% above default'],['week52','52-week challenge','Save a little more each week']];
+  return `<div class="scr">
+    <div class="navbar"><div class="back" onclick="tab('home')">${svg(ICON.back,18)}</div><h2>Rules</h2></div>
+    <div class="pad">
+      <div class="insight" style="margin-top:6px">${svg(ICON.spark,19)}<p>Rules run quietly in the background so you save without thinking about it. Pause any of them whenever you like.</p></div>
+      <div class="sect"><h2>Your rules</h2></div>
+      <div class="card">
+        ${R.map(([k,t,d])=>`<div class="rowitem" onclick="S.rules['${k}']=!S.rules['${k}'];save();render();toast('${t} '+(S.rules['${k}']?'on':'paused'))">
+          <div class="logo" style="background:var(--lilac);color:var(--plum)">${svg(ICON.rule,16)}</div>
+          <div class="rmain"><div class="rname">${t}</div><div class="rsub">${d}</div></div>
+          <span class="pill ${S.rules[k]?'on':'grey'}">${S.rules[k]?'On':'Off'}</span></div>`).join('')}
+      </div>
+      <div class="sect"><h2>This month</h2></div>
+      <div class="card" style="padding:14px">
+        <div class="kv"><span>Saved by rules</span><b class="up">+£86.40</b></div>
+        <div class="kv"><span>Pay day sweep</span><b>£408.00</b></div>
+        <div class="kv"><span>Round-ups</span><b>£4.62</b></div></div>
+      <div class="legal">Rules move money from your linked account. Cancel any time, nothing is locked away.</div>
+      <div style="height:10px"></div></div></div>`;
+}
+
+function move(){
+  const add=S.mode==='add';
+  return `<div class="scr">
+    <div class="navbar"><div class="back" onclick="tab('home')">${svg(ICON.back,18)}</div><h2>Move money</h2></div>
+    <div class="pad">
+      <div class="card" style="padding:13px 14px">
+        <div class="kv"><span>Cash available</span><b>${money(S.cash)}</b></div>
+        <div class="kv"><span>ISA allowance left</span><b>${money(ALLOW-ALLOW_USED,0)}</b></div></div>
+      <div class="seg"><button class="${add?'on':''}" onclick="S.mode='add';render()">Add money</button><button class="${!add?'on':''}" onclick="S.mode='out';render()">Withdraw</button></div>
+      <div class="field"><label>Amount</label>
+        <div class="amt"><span>£</span><input id="amt" inputmode="decimal" placeholder="0" value="${S.amt}" oninput="S.amt=this.value;renderPresets()"></div></div>
+      <div class="presets" id="presets">${[500,1000,2500,5000].map(a=>`<button class="${String(a)===S.amt?'on':''}" onclick="S.amt='${a}';render()">${money(a,0)}</button>`).join('')}</div>
+      <div class="field"><label>${add?'From':'To'}</label>
+        <div class="card" style="padding:13px 14px;display:flex;align-items:center;gap:11px">
+          <div class="logo" style="background:#1A0A2B;width:32px;height:32px;border-radius:9px;font-size:9.5px">BAR</div>
+          <div><div style="font-size:12.5px;font-weight:900">Barclays · Current</div><div class="mono" style="color:var(--muted)">•••• 4471</div></div>
+          <span style="margin-left:auto;font-size:11px;color:var(--plum);font-weight:900">Change</span></div></div>
+      <button class="btn" style="margin-top:16px" onclick="commit()">${add?'Add money':'Withdraw'}</button>
+      <div class="sect"><h2>Your Plum account</h2></div>
+      <div class="card" style="padding:6px 14px 11px">
+        <div class="kv"><span>Sort code</span><b class="mono">04-00-04</b></div>
+        <div class="kv"><span>Account number</span><b class="mono">8841 2270</b></div>
+        <div class="kv"><span>Reference</span><b class="mono">PLM88214</b></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:7px;line-height:1.5;font-weight:700">Only transfer from an account in your own name. Deposits clear within 2 hours.</div></div>
+      <div style="height:8px"></div></div></div>`;
+}
+
+function yearEvents(y){
+  const out=[];let s=y*37+5;const r=()=>{s=(s*1103515245+12345)%2147483648;return s/2147483648;};
+  const label=y<1997?'TESSA deposit':y<1999?'PEP subscription':'ISA subscription';
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const n=4+Math.floor(r()*4);
+  for(let i=0;i<n;i++){const m=months[Math.floor(r()*12)];const amt=(y<1999?250:y<2010?500:y<2018?800:1250)*(1+Math.floor(r()*3));out.push({d:m,t:label,s:'Standing order · Barclays',v:'+'+money(amt),c:'up'});}
+  out.push({d:'06 Apr',t:'Tax year opens',s:'Allowance reset',v:'',c:''});
+  if(r()>.3)out.push({d:'14 Jun',t:'Dividend received',s:'Reinvested',v:'+'+money(40+r()*400),c:'up'});
+  out.push({d:'01 Oct',t:'Platform fee',s:'Annualised 0.25%',v:'−'+money(3+r()*30),c:''});
+  return out.slice(0,7);
+}
+
+function activity(){
+  const y=S.yr,yr=YEARS.find(o=>o.y===y);
+  return `<div class="scr">
+    <div class="top"><div class="brand">${MARK}<span class="wm">plum</span></div><div class="ava" onclick="tab('profile')">JW</div></div>
+    <div class="pad">
+      <h1 class="greet">Activity</h1><div class="sub">Every transaction since 1992</div>
+      <div class="yrs">${YEARS.slice().reverse().map(o=>`<button class="${S.yr===o.y?'on':''}" onclick="S.yr=${o.y};render()">${o.y}</button>`).join('')}</div>
+      <div class="card" style="padding:13px 14px;margin-bottom:4px">
+        <div class="kv"><span>Value at end of ${y}</span><b>${money(yr.v)}</b></div>
+        <div class="kv"><span>Subscribed in ${y}</span><b>${money(yr.c,0)}</b></div>
+        <div class="kv"><span>Return</span><b class="${yr.r>=0?'up':'down'}">${pct(yr.r)}</b></div></div>
+      <div class="monthlab">${y} transactions</div>
+      <div class="card acts">
+        ${S.extra.filter(()=>y===2025).map(e=>`<div class="act"><div class="ic">${svg(ICON.plus,16)}</div><div><div class="t">${e.t}</div><div class="d">${e.s}</div></div><div class="v ${e.c}">${e.v}</div></div>`).join('')}
+        ${yearEvents(y).map(r=>`<div class="act"><div class="ic">${svg(r.t.includes('Dividend')?ICON.arrowDown:r.t.includes('fee')?ICON.doc:ICON.plus,16)}</div><div><div class="t">${r.t}</div><div class="d">${r.d} · ${r.s}</div></div><div class="v ${r.c}">${r.v}</div></div>`).join('')}
+      </div>
+      <div class="monthlab">Documents</div>
+      <div class="card acts">
+        <div class="act"><div class="ic">${svg(ICON.doc,16)}</div><div><div class="t">Annual statement ${y}</div><div class="d">PDF · 412 KB</div></div><div class="v">${svg(ICON.dl,14)}</div></div>
+        <div class="act"><div class="ic">${svg(ICON.doc,16)}</div><div><div class="t">Tax certificate ${y}</div><div class="d">PDF · 96 KB</div></div><div class="v">${svg(ICON.dl,14)}</div></div></div>
+      <div style="height:8px"></div></div></div>`;
+}
+
+function history(){
+  return `<div class="scr">
+    <div class="navbar"><div class="back" onclick="tab('home')">${svg(ICON.back,18)}</div><h2>Full history</h2></div>
+    <div class="pad">
+      <div class="card" style="padding:15px">
+        <div class="rsub" style="margin:0">Value today</div><div class="big2">${money(S.bal)}</div>
+        <div class="kpi" style="margin-top:9px"><div><span>Since 6 April 1992</span><b class="up">+154.31%</b></div><div><span>Total subscribed</span><b>${money(COST,0)}</b></div></div></div>
+      <div class="card" style="padding:13px;margin-top:11px">
+        ${chart('All',184,300,'#7308E3',true)}
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-weight:900;margin-top:6px"><span>1992</span><span>2000</span><span>2010</span><span>2020</span><span>2025</span></div></div>
+      <div class="insight" style="margin-top:13px">${svg(ICON.clock,19)}<p>Worst peak-to-trough fall: <strong>−${PEAK.toFixed(1)}%</strong>. You kept contributing through every one of them.</p></div>
+      <div class="sect"><h2>Milestones</h2></div>
+      <div class="tl">
+        <div class="tli"><div class="yr">2025</div><div class="tx">Portfolio passes £930,000. 33 years of monthly investing.</div></div>
+        <div class="tli crash"><div class="yr">2022</div><div class="tx">Gilt crisis. −9.4% for the year; contributions continued.</div></div>
+        <div class="tli"><div class="yr">2020</div><div class="tx">Covid drawdown. Recovered inside 11 months.</div></div>
+        <div class="tli"><div class="yr">2019</div><div class="tx">Crossed £500,000. Transferred the ISA to Plum.</div></div>
+        <div class="tli"><div class="yr">2016</div><div class="tx">Moved from active funds to passive index tracking.</div></div>
+        <div class="tli crash"><div class="yr">2008</div><div class="tx">Global financial crisis. −31.2% for the year.</div></div>
+        <div class="tli crash"><div class="yr">2000–02</div><div class="tx">Dotcom bust. Three straight down years.</div></div>
+        <div class="tli"><div class="yr">1999</div><div class="tx">PEPs replaced by the ISA. Wrapper transferred in full.</div></div>
+        <div class="tli"><div class="yr">1996</div><div class="tx">TESSA matured, rolled into a personal equity plan.</div></div>
+        <div class="tli"><div class="yr">1992</div><div class="tx">First £3,000 subscribed on 6 April, aged 24.</div></div></div>
+      <div class="sect"><h2>Year by year</h2></div>
+      <div class="card" style="padding:4px 14px 10px">
+        ${YEARS.slice().reverse().map(o=>`<div class="kv"><span>${o.y}</span><b class="${o.r>=0?'up':'down'}">${money(o.v)} <span style="color:var(--muted);font-weight:600">(${pct(o.r)})</span></b></div>`).join('')}</div>
+      <div style="height:10px"></div></div></div>`;
+}
+
+function feed(){
+  return `<div class="scr">
+    <div class="navbar"><div class="back" onclick="tab('profile')">${svg(ICON.back,18)}</div><h2>Live prices</h2></div>
+    <div class="pad">
+      <div class="card" style="padding:15px">
+        <div style="display:flex;align-items:center;gap:11px">
+          <div class="logo" style="background:${S.feedState==='live'?'#1E9E63':S.feedState==='throttled'||S.feedState==='error'?'#D8402F':'var(--lilac)'};color:${S.feedState==='sim'?'var(--plum)':'#fff'}">${svg(ICON.bolt,17)}</div>
+          <div style="flex:1"><div class="rname">Market data</div><div class="rsub" id="feedState">${feedLabel()}</div></div></div>
+        <div style="height:11px"></div>
+        <div class="kv"><span>Source</span><b>Financial Modeling Prep</b></div>
+        <div class="kv"><span>Refresh</span><b>Every 60 seconds</b></div>
+        <div class="kv"><span>Backoff on 429</span><b>Up to 10 min</b></div>
+        <div class="kv"><span>Daily quota</span><b id="budget">${budget} left today</b></div></div>
+      <div class="field"><label>API key</label><input class="txt" id="key" placeholder="Paste your FMP API key" value="${S.fmp}" oninput="S.fmp=this.value.trim()"></div>
+      <button class="btn" style="margin-top:11px" onclick="connectFeed()">${S.fmp?'Reconnect':'Connect feed'}</button>
+      ${S.fmp?`<button class="btn ghost" style="margin-top:9px" onclick="disconnect()">Disconnect</button>`:''}
+      <div class="insight" style="margin-top:14px">${svg(ICON.shield,19)}<p>Free keys allow 250 requests a day. The app stops at the cap, resumes tomorrow, and doubles the gap whenever the provider rate-limits.</p></div>
+      <div class="sect"><h2>What uses real quotes</h2></div>
+      <div class="card acts">
+        ${S.hold.map(h=>`<div class="act"><div class="ic">${svg(QUOTE_MAP[h.id]?ICON.chk:ICON.clock,16)}</div><div><div class="t">${h.t}</div><div class="d">${QUOTE_MAP[h.id]?QUOTE_MAP[h.id]+' · live':'No listed ticker · modelled'}</div></div></div>`).join('')}</div>
+      <div class="legal">Funds without a listed ticker price once daily in reality, so they stay on the internal model.</div>
+      <div style="height:10px"></div></div></div>`;
+}
+
+function profile(){
+  return `<div class="scr">
+    <div class="top"><div class="brand">${MARK}<span class="wm">plum</span></div><div class="ava">JW</div></div>
+    <div class="pad">
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="ava" style="width:56px;height:56px;font-size:16px">JW</div>
+        <div><div style="font-size:16.5px;font-weight:900;letter-spacing:-.5px">James Whitfield</div><div class="sub" style="margin-top:2px">Client ref PLM-88214</div></div></div>
+      <div style="margin-top:11px"><span class="pill">Plum Premium</span> <span class="pill grey">0.25% platform fee</span></div>
+      <div class="sect"><h2>Account</h2></div>
+      <div class="card menu">
+        <div onclick="toast('Personal details')">${svg(ICON.user,17)}Personal details<span class="chev">${svg(ICON.chev,15)}</span></div>
+        <div onclick="toast('Bank account •••• 4471')">${svg(ICON.move,17)}Linked bank account<span class="chev">${svg(ICON.chev,15)}</span></div>
+        <div onclick="go('history')">${svg(ICON.clock,17)}Full history since 1992<span class="chev">${svg(ICON.chev,15)}</span></div>
+        <div onclick="tab('activity')">${svg(ICON.doc,17)}Statements &amp; tax certificates<span class="chev">${svg(ICON.chev,15)}</span></div></div>
+      <div class="sect"><h2>Money</h2></div>
+      <div class="card menu">
+        <div onclick="go('spend')">${svg(ICON.bag,17)}Spending insights<span class="chev">${svg(ICON.chev,15)}</span></div>
+        <div onclick="go('credit')">${svg(ICON.gauge,17)}Credit score<span class="chev"><span class="pill">721</span></span></div>
+        <div onclick="go('rules')">${svg(ICON.rule,17)}Rules<span class="chev">${svg(ICON.chev,15)}</span></div></div>
+      <div class="sect"><h2>Security</h2></div>
+      <div class="card menu">
+        <div onclick="lockNow()">${svg(ICON.fp,17)}Lock with fingerprint<span class="chev">${svg(ICON.chk,15)}</span></div>
+        <div onclick="toast('PIN changed')">${svg(ICON.shield,17)}PIN<span class="chev">${svg(ICON.chev,15)}</span></div></div>
+      <div class="sect"><h2>App</h2></div>
+      <div class="card menu">
+        <div onclick="go('install')">${svg(ICON.dl,17)}Install on your phone<span class="chev"><span class="pill ${installed()?'on':'grey'}">${installed()?'Installed':'Get it'}</span></span></div>
+        <div onclick="go('feed')">${svg(ICON.bolt,17)}Live prices<span class="chev"><span class="pill ${S.feedState==='live'?'on':'grey'}">${S.feedState==='live'?'On':'Off'}</span></span></div></div>
+      <div class="legal"><b>Plum Fintech Ltd</b> is authorised and regulated by the Financial Conduct Authority (FRN 810322). Registered in England &amp; Wales, no. 09833389. Registered office: 4 Fenchurch Place, London EC3M 4AJ.<br><br>Interest Pockets provided by Investec Bank plc. Eligible investments covered by the FSCS up to £85,000. Capital at risk.<br><br>App version 6.3.0 (3160) · recreation.</div>
+      <button class="btn ghost" style="margin:6px 0 10px" onclick="toast('Signed out')">Sign out</button>
+    </div></div>`;
+}
+
+const embedded=()=>{try{return window.top!==window.self;}catch(e){return true;}};
+const installed=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+
+function install(){
+  const emb=embedded(),inst=installed();
+  return `<div class="scr">
+    <div class="navbar"><div class="back" onclick="tab('profile')">${svg(ICON.back,18)}</div><h2>Install Plum</h2></div>
+    <div class="pad">
+      <div style="background:linear-gradient(155deg,#7308E3,#A94BF7);border-radius:22px;padding:18px;color:#fff;display:flex;gap:13px;align-items:center">
+        <div style="transform:scale(1.5);margin-left:5px"><svg width="26" height="26" viewBox="0 0 40 40">${LOGO('#fff','#7308E3')}</svg></div>
+        <div style="margin-left:10px"><div style="font-size:13.5px;font-weight:900">Install on your S24 Ultra</div><div style="font-size:11px;color:#E2D3FE;margin-top:3px;font-weight:700">Real home-screen icon, full screen, works offline.</div></div></div>
+      <div style="display:flex;gap:6px;margin-top:12px;flex-wrap:wrap">
+        <span class="pill ${emb?'warn':'on'}">${emb?'Running in an embed':'Running as a page'}</span>
+        <span class="pill ${inst?'on':'grey'}">${inst?'Installed':'Not installed'}</span></div>
+      ${emb?`<div class="banner embed" style="margin-top:12px">${svg(ICON.dl,18)}<p>Chrome only installs from a real web address. Host these files first, then the button below works.</p></div>`
+           :`<div class="banner live" style="margin-top:12px">${svg(ICON.chk,18)}<p><strong>You're on the hosted page.</strong> Tap install below.</p></div>`}
+      <div class="sect"><h2>If you haven't hosted it yet</h2></div>
+      <div class="card">
+        <div class="step"><div class="num">1</div><div><div class="st">Save these files into one folder</div><div class="sd">index.html, manifest.json, sw.js, icon.svg</div></div></div>
+        <div class="step"><div class="num">2</div><div><div class="st">Drag the folder onto Netlify Drop</div><div class="sd">Free https link in about ten seconds.</div></div></div>
+        <div class="step"><div class="num">3</div><div><div class="st">Open that link in Chrome and install</div><div class="sd">Menu ⋮ → Install app.</div></div></div></div>
+      <a class="btn ghost" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:11px;text-decoration:none" href="https://app.netlify.com/drop" target="_blank" rel="noopener">Open Netlify Drop</a>
+      <button class="btn" style="margin-top:11px" onclick="doInstall()">${inst?'Already installed':'Install now'}</button>
+      <div class="legal">Once installed it runs from the home screen with its own icon and no browser chrome. The offline worker caches the app so it opens without a signal.</div>
+      <div style="height:10px"></div></div></div>`;
+}
+
+function render(){
+  const map={home,portfolio,move,activity,profile,install,detail,pockets,history,feed,spend,credit,rules};
+  document.getElementById('app').innerHTML=(map[S.scr]||home)();
+  const tabs=[['home','Home',ICON.home],['pockets','Pockets',ICON.pot],['portfolio','Invest',ICON.pie],['activity','Activity',ICON.list],['profile','Profile',ICON.user]];
+  document.getElementById('tabbar').innerHTML=tabs.map(([k,l,i])=>`<button class="${S.tab===k?'on':''}" onclick="tab('${k}')">${svg(i,20)}<span>${l}</span></button>`).join('');
+  patch();
+}
+function renderPresets(){const p=document.getElementById('presets');if(p)p.innerHTML=[500,1000,2500,5000].map(a=>`<button class="${String(a)===S.amt?'on':''}" onclick="S.amt='${a}';render()">${money(a,0)}</button>`).join('');}
+function commit(){
+  const n=parseFloat(String(S.amt).replace(/[^0-9.]/g,''));
+  if(!n||n<=0)return toast('Enter an amount');
+  if(S.mode==='out'&&n>S.cash)return toast('More than your available cash');
+  if(S.mode==='add'){S.cash+=n;S.bal+=n;S.open+=n;}else{S.cash-=n;S.bal-=n;S.open-=n;}
+  S.extra=[{t:S.mode==='add'?'Deposit':'Withdrawal',s:'Barclays •••• 4471 · processing',v:(S.mode==='add'?'+':'−')+money(n),c:S.mode==='add'?'up':''}].concat(S.extra).slice(0,4);
+  S.amt='';save();
+  toast(S.mode==='add'?money(n)+' added to your ISA':money(n)+' on its way');
+  tab('home');
+}
+function connectFeed(){
+  const k=(S.fmp||'').trim();
+  if(!k)return toast('Paste an API key first');
+  localStorage.setItem('plum_key',k);S.feedState='sim';backoff=60000;render();toast('Connecting…');
+  poll().then(()=>{schedulePoll();render();toast(S.feedState==='live'?'Feed connected':'Key saved · check the address');});
+}
+function disconnect(){S.fmp='';S.feedState='sim';clearTimeout(feedTimer);localStorage.removeItem('plum_key');render();toast('Feed disconnected');}
+
+let deferred=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;});
+async function doInstall(){
+  if(deferred){deferred.prompt();const r=await deferred.userChoice;deferred=null;return toast(r.outcome==='accepted'?'Installing…':'Dismissed');}
+  toast(embedded()?'Open the hosted link in Chrome first':'Use Chrome menu ⋮ → Install app');
+}
+
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+render();
+setTimeout(unlock,900);
+</script>
+</body>
+</html>
