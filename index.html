@@ -21,21 +21,17 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{background:#0B0713;font-family:Nunito,system-ui,sans-serif;color:var(--fg);display:flex;justify-content:center;align-items:center}
-#phone{position:relative;width:100%;max-width:412px;height:100dvh;max-height:915px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+#phone{position:relative;width:100%;max-width:412px;height:100dvh;max-height:915px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
 @media(min-width:460px){#phone{border-radius:38px;box-shadow:0 0 0 10px #241733,0 30px 60px rgba(0,0,0,.6)}}
-#status{height:34px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:12px;font-weight:800;color:var(--fg);position:relative;z-index:5}
-#status .cam{position:absolute;left:50%;transform:translateX(-50%);top:8px;width:11px;height:11px;border-radius:50%;background:#000;box-shadow:inset 0 0 0 2px #14101c}
-#main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+#main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 #main::-webkit-scrollbar{width:0}
-#gest{height:22px;flex:0 0 auto;display:flex;align-items:center;justify-content:center}
-#gest i{width:118px;height:4px;border-radius:3px;background:var(--fg);opacity:.28}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 h1,h2,h3,h4{margin:0;letter-spacing:-.02em}
 h1{font-size:26px;font-weight:900}h2{font-size:19px;font-weight:800}h3{font-size:15px;font-weight:800}
 p{margin:0;line-height:1.5}
 a{color:var(--violet);text-decoration:none;font-weight:800;cursor:pointer}
 .pad{padding:0 18px}
-.hdr{display:flex;align-items:center;gap:12px;padding:10px 16px 6px}
+.hdr{display:flex;align-items:center;gap:12px;padding:14px 16px 6px}
 .hdr .ttl{flex:1;font-weight:900;font-size:17px}
 .iconbtn{width:38px;height:38px;flex:0 0 auto;border:0;border-radius:50%;background:var(--card);color:var(--fg);display:grid;place-items:center;box-shadow:var(--sh);cursor:pointer;font-size:16px}
 .iconbtn:active{transform:scale(.94)}
@@ -90,21 +86,20 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--violet);outline-
 .bar i{display:block;height:100%;background:var(--violet);border-radius:9px}
 .alloc{display:flex;height:10px;border-radius:9px;overflow:hidden;gap:2px}
 .alloc i{display:block;height:100%}
+.mhead{font-size:11px;font-weight:900;color:var(--muted);padding:12px 0 4px;text-transform:uppercase;letter-spacing:.07em}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div id="phone">
-  <div id="status"><span id="clock">9:41</span><span class="cam"></span><span>▮▮▮ ⌁ 87%</span></div>
   <div id="main" role="main" tabindex="-1"></div>
   <nav class="nav" id="nav" aria-label="Main"></nav>
-  <div id="gest"><i></i></div>
 </div>
 <div id="live" class="sr" aria-live="polite"></div>
 <script>
 'use strict';
 const TARGET=934745.32,V=12,KEY='plum_v12',OLDS=['plum_v11','plum_v10'];
-const BUDGET_MAX=250,FEE_M=4.99,PLAT=0.0015;
+const BUDGET_MAX=250,FEE_M=4.99,PLAT=0.0015,SEEDV=2;
 const BH=['2024-01-01','2024-03-29','2024-04-01','2024-05-06','2024-05-27','2024-08-26','2024-12-25','2024-12-26','2025-01-01','2025-04-18','2025-04-21','2025-05-05','2025-05-26','2025-08-25','2025-12-25','2025-12-26','2026-01-01','2026-04-03','2026-04-06','2026-05-04','2026-05-25','2026-08-31','2026-12-25','2026-12-28'];
 const INSTR=[
  {s:'VUSA',n:'Vanguard S&P 500',usd:'VOO',ocf:.07,px:78.4,cls:'US equity',bm:'S&P 500'},
@@ -123,7 +118,7 @@ const INSTR=[
  {s:'VRP',n:'Vanguard Global REIT',usd:'VNQ',ocf:.22,px:52.6,cls:'Property',bm:'FTSE EPRA'}
 ];
 const W=[.215,.145,.13,.09,.085,.07,.075,.055,.04,.035,.03,.015,.012,.013];
-const S={scr:'home',stack:[],st:null,px:{},fx:1.2712,fxAt:0,backoff:0,budget:0,locked:true,q:'',o:{},otp:null};
+const S={scr:'home',stack:[],st:null,px:{},fx:1.2712,fxAt:0,backoff:0,budget:0,locked:true,q:'',o:{},otp:null,lim:60};
 const MAIN=document.getElementById('main');
 const $=s=>document.querySelector(s);
 const fmt=new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'});
@@ -160,7 +155,7 @@ function total(){let t=0;for(const s in S.st.holdings){const q=S.st.holdings[s]?
 function cost(){let t=0;for(const s in S.st.holdings){const h=S.st.holdings[s];if(h)t+=h.cost}return t}
 function anchor(){let h=0;for(const s in S.st.holdings){const q=S.st.holdings[s]?.q;if(q>0)h+=q*pxOf(s).p}S.st.adj=TARGET-(h+S.st.cash)}
 function blank(){
-  return{v:V,profile:{name:'Jason Armstrong',email:'jason.armstrong@example.co.uk',phone:'+44 7700 900412',addr:'14 Bracken Way, Bristol, BS8 3QT',dob:'1986-04-17',ni:'QQ 12 34 56 C'},
+  return{v:V,seedv:SEEDV,profile:{name:'Jason Armstrong',email:'jason.armstrong@example.co.uk',phone:'+44 7700 900412',addr:'14 Bracken Way, Bristol, BS8 3QT',dob:'1986-04-17',ni:'QQ 12 34 56 C'},
    cash:12480,holdings:{},adj:0,orders:[],tx:[],pockets:[],rules:[],notifs:[],alerts:[],subs:[],devices:[],banks:[],payees:[],docs:[],chat:[],watch:[],taxpacks:[],
    pin:{hash:'',salt:'',tries:0,lock:0},cred:null,settings:{theme:'system',idle:5,bio:false},
    lastFee:0,lastDiv:0,open:{d:'',v:0},kyc:{step:0,done:false},hist:{years:[],months:[]},seen:now()};
@@ -236,7 +231,55 @@ function seedIfEmpty(){
   S.st.banks=[{id:uid(),n:'Monzo',last4:'8842',bal:2410}];
   S.st.subs=[{id:uid(),n:'Plum Plus',amt:FEE_M,cyc:'monthly',act:true}];
   S.st.alerts=[{id:uid(),n:'Price alert · VUSA',kind:'price',s:'VUSA',v:82,act:true}];
-  S.st.tx.unshift({id:uid(),t:'in',a:0,d:now(),n:'Account opened',cat:'System'});
+}
+/* ---- 34-year ledger generator ---- */
+function seedTx(){
+  const out=[],funds=INSTR.map(i=>i.s),Y=S.st.hist.years,t0=now();
+  const pick=s=>funds[Math.floor(hash(s)*funds.length)%funds.length];
+  const push=(d,t,a,n,cat)=>{const ms=d.getTime();if(ms>t0)return;out.push({id:uid(),t,a,d:ms,n,cat})};
+  Y.forEach(o=>{
+    const y=o.y;
+    if(y<1999){
+      const d=new Date(y,3+Math.floor(hash('d'+y)*3),3+Math.floor(hash('e'+y)*24),10,15);
+      push(d,'in',o.contrib,'TESSA contribution','Contribution');
+      push(new Date(d.getTime()+6e5),'out',+(o.contrib*.94).toFixed(2),`TESSA buy · ${pick('t'+y)}`,'Buy');
+      if(y>=1994)push(new Date(y,10,12,11,0),'in',+(o.v*.0011).toFixed(2),`Interest · ${pick('z'+y)}`,'Income');
+    }else{
+      for(let m=0;m<12;m++){
+        const d=new Date(y,m,1+Math.floor(hash('d'+y+m)*26),9+Math.floor(hash('h'+y+m)*7),30);
+        const amt=+(o.contrib/12*(.85+hash('a'+y+m)*.3)).toFixed(2);
+        push(d,'in',amt,y<2009?'ISA subscription':'Monthly deposit','Contribution');
+        push(new Date(d.getTime()+9e5),'out',+(amt*.92).toFixed(2),`Buy ${pick('b'+y+m)}`,'Buy');
+      }
+      [1,4,7,10].forEach(m=>{
+        const amt=+(o.v*.00095).toFixed(2);
+        if(amt>.4)push(new Date(y,m,10+Math.floor(hash('q'+y+m)*6),11,0),'in',amt,`Dividend · ${pick('v'+y+m)}`,'Income');
+      });
+    }
+    if(y>=2019){
+      for(let m=0;m<12;m++)push(new Date(y,m,1,8,0),'out',+(FEE_M+o.v*PLAT/12).toFixed(2),'Plum monthly fee','Fees');
+    }else if(y>=2004){
+      push(new Date(y,3,6,8,0),'out',+(o.v*.0045).toFixed(2),'Annual platform fee','Fees');
+    }
+    if(y>=2001&&y%3===0){
+      const r1=pick('r'+y),r2=pick('r2'+y);
+      if(r1!==r2){
+        push(new Date(y,6,18,14,0),'out',+(o.v*.0021).toFixed(2),`Rebalance · sell ${r1}`,'Sell');
+        push(new Date(y,6,18,14,4),'in',+(o.v*.0021).toFixed(2),`Rebalance · buy ${r2}`,'Buy');
+      }
+    }
+    if(y===2015)push(new Date(2015,7,21,12,40),'out',38000,'Withdrawal · house deposit','Withdrawal');
+    if(y===2020)push(new Date(2020,2,23,9,30),'out',9000,'Withdrawal · emergency fund','Withdrawal');
+    if(y===2021)push(new Date(2021,10,2,10,0),'in',15000,'Annual bonus deposit','Contribution');
+    if(y===2023)push(new Date(2023,5,14,11,20),'in',20000,'Inheritance deposit','Contribution');
+    if(y===2019)push(new Date(2019,2,14,9,0),'in',0,'PEP wrapper transferred to ISA','Transfer');
+  });
+  for(let i=0;i<48;i++){
+    const d=new Date();d.setMonth(d.getMonth()-i);d.setDate(1);d.setHours(7,0,0,0);
+    push(d,'in',+(1.8+hash('i'+i)*8).toFixed(2),'Interest on cash','Interest');
+  }
+  out.sort((a,b)=>b.d-a.d);
+  S.st.tx=out;
 }
 function pdf(lines){
   const e=s=>String(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)').replace(/£/g,'\\243').replace(/–/g,'\\226').replace(/—/g,'\\227').replace(/’/g,'\\222').replace(/[^\x00-\xFF]/g,'?');
@@ -394,7 +437,7 @@ function fill(o,px){
     if(h.q<1e-4)delete S.st.holdings[o.s];
   }
   o.status='filled';o.filledAt=now();o.fillPx=px;
-  ledger(o.side==='buy'?'out':'in',g,`${o.side==='buy'?'Buy':'Sell'} ${o.qty.toFixed(4)} ${o.s}`,o.s);
+  ledger(o.side==='buy'?'out':'in',g,`${o.side==='buy'?'Buy':'Sell'} ${o.qty.toFixed(4)} ${o.s}`,o.side==='buy'?'Buy':'Sell');
   notify('Order filled',`${o.qty.toFixed(4)} ${o.s} at ${M(px)}`);
   anchor();save();
 }
@@ -404,7 +447,7 @@ const SCREENS={};
 function go(scr,opt={},replace){
   if(!SCREENS[scr])scr='home';
   if(!replace&&S.scr!==scr)S.stack.push({s:S.scr,q:S.q});
-  S.scr=scr;
+  S.scr=scr; S.lim=60;
   if(opt.q!==undefined)S.q=opt.q;
   history.pushState({d:S.stack.length},'');
   render(); MAIN.scrollTop=0;
@@ -437,7 +480,6 @@ function render(){
   MAIN.innerHTML=f();
   nav();
   document.documentElement.dataset.theme=S.st.settings.theme==='system'?'':S.st.settings.theme;
-  const c=$('#clock');if(c)c.textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
   if(S.scr!=='lock'&&locked()){S.scr='lock';MAIN.innerHTML=SCREENS.lock();nav()}
 }
 function stat(){
@@ -485,6 +527,9 @@ function sheet(html){
   document.getElementById('phone').appendChild(wrap);
   const focusables=()=>[...wrap.querySelectorAll('button,input,select,a[href]')].filter(e=>!e.disabled);
   setTimeout(()=>focusables()[0]?.focus(),60);
+  const close=()=>{wrap.remove();document.removeEventListener('keydown',esc0)};
+  const esc0=e=>{if(e.key==='Escape')close()};
+  document.addEventListener('keydown',esc0);
   wrap.addEventListener('keydown',e=>{
     if(e.key==='Escape')return close();
     if(e.key!=='Tab')return;
@@ -493,11 +538,7 @@ function sheet(html){
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
   });
-  const close=()=>{wrap.remove();document.removeEventListener('keydown',esc0)};
-  const esc0=e=>{if(e.key==='Escape')close()};
-  document.addEventListener('keydown',esc0);
   wrap.addEventListener('click',e=>{if(e.target===wrap)close()});
-  wrap.close=close;
   return wrap;
 }
 SCREENS.home=()=>{
@@ -522,7 +563,7 @@ SCREENS.home=()=>{
   </div>
   <div class="card tight">
     <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;margin-bottom:8px"><span>ISA allowance</span><span>${M(al)} left</span></div>
-    <div class="bar"><i style="width:${(20000-al)/200}%"></i></div>
+    <div class="bar"><i style="width:${Math.min(100,(20000-al)/200)}%"></i></div>
     <div class="s mut" style="font-size:11px;margin-top:6px">${M(usedAllow())} of £20,000 used · ${taxYear()}</div>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 6px"><h3>Your investments</h3><a data-act="go" data-s="portfolio">All</a></div>
@@ -562,7 +603,7 @@ function benchDiff(s){
   const r=(p[p.length-1].v/p[0].v-1)*100;return`${r>=0?'+':''}${(r*0.93).toFixed(1)}%`;
 }
 SCREENS.order=()=>{
-  const s=S.q,side=S.o.side,i=INSTR.find(x=>x.s===s),h=S.st.holdings[s]||{q:0};
+  const s=S.q,side=S.o.side,i=INSTR.find(x=>x.s===s);
   const px=pxOf(s).p,qty=S.o.qty||0,typ=S.o.type||'market';
   return `${hdr(`${side==='buy'?'Buy':'Sell'} ${s}`)}
 <div class="pad"><div class="card">
@@ -608,19 +649,29 @@ SCREENS.receipt=()=>{
 ${pend?`<button class="btn ghost" data-act="undo" data-id="${o.id}">Cancel order</button>`:''}
 <button class="btn" style="margin-top:8px" data-act="go" data-s="portfolio">Back to invest</button></div>`;
 };
-SCREENS.activity=()=>`${hdr('Activity',{back:false,right:'<button class="iconbtn" data-act="go" data-s="feed" aria-label="Spending">⚙</button>'})}
-<div class="tabs">${['All','Buys','Sells','Income','Fees'].map(c=>`<button class="pill ${S.q===c?'on':''}" data-act="filter" data-c="${c}">${c}</button>`).join('')}</div>
-<div class="pad"><div class="card tight">${(()=>{
+SCREENS.activity=()=>{
   let t=S.st.tx;
-  if(S.q==='Buys')t=t.filter(x=>x.n.startsWith('Buy'));
-  if(S.q==='Sells')t=t.filter(x=>x.n.startsWith('Sell'));
-  if(S.q==='Income')t=t.filter(x=>x.cat==='Income');
+  if(S.q==='Buys')t=t.filter(x=>x.cat==='Buy');
+  if(S.q==='Sells')t=t.filter(x=>x.cat==='Sell'||x.cat==='Rebalance');
+  if(S.q==='Income')t=t.filter(x=>x.cat==='Income'||x.cat==='Interest');
   if(S.q==='Fees')t=t.filter(x=>x.cat==='Fees');
-  return t.slice(0,80).map(txRow).join('')||'<div class="empty"><div class="e">🗂</div>Nothing here yet</div>';
-})()}</div></div>`;
+  const shown=t.slice(0,S.lim||60);
+  let body='',lastM='';
+  shown.forEach(x=>{
+    const m=new Date(x.d).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+    if(m!==lastM){body+=`<div class="mhead">${m}</div>`;lastM=m}
+    body+=txRow(x);
+  });
+  return `${hdr('Activity',{back:false,right:'<button class="iconbtn" data-act="go" data-s="feed" aria-label="Spending">⚙</button>'})}
+<div class="tabs">${['All','Buys','Sells','Income','Fees'].map(c=>`<button class="pill ${S.q===c?'on':''}" data-act="filter" data-c="${c}">${c}</button>`).join('')}</div>
+<div class="pad"><div class="s mut" style="margin-bottom:6px">${t.length.toLocaleString('en-GB')} entries</div>
+<div class="card tight">${body||'<div class="empty"><div class="e">🗂</div>Nothing here yet</div>'}</div>
+${t.length>(S.lim||60)?`<button class="btn ghost" data-act="more">Show more</button>`:''}</div>`;
+};
 function txRow(t){
+  const neg=t.t==='out';
   return `<div class="row"><div class="gr"><div class="t">${esc(t.n)}</div><div class="s">${D(t.d)} · ${esc(t.cat||'')}</div></div>
-<div class="mono" style="font-weight:900;color:${t.t==='in'?'var(--up)':'var(--fg)'}">${t.t==='in'?'+':''}${M(t.a)}</div></div>`;
+<div class="mono" style="font-weight:900;color:${neg?'var(--fg)':'var(--up)'}">${neg?'−':'+'}${M(t.a)}</div></div>`;
 }
 SCREENS.feed=()=>`${hdr('Spending')}
 <div class="pad"><div class="card"><div class="mut" style="font-size:12px;font-weight:800">This month</div><div class="big">${M(2840.4)}</div><div class="s mut">Across ${S.st.banks.length} linked account(s)</div></div>
@@ -773,7 +824,8 @@ document.addEventListener('click',async e=>{
   switch(a){
     case 'go':stop();go(s,{q:el.dataset.q!==undefined?el.dataset.q:''});break;
     case 'back':stop();back();break;
-    case 'filter':stop();S.q=el.dataset.c;render();break;
+    case 'filter':stop();S.q=el.dataset.c;S.lim=60;render();break;
+    case 'more':stop();S.lim=(S.lim||60)+60;render();break;
     case 'otype':stop();S.o.type=el.dataset.t;render();break;
     case 'opct':{
       stop();const px=pxOf(S.q).p;
@@ -881,7 +933,7 @@ document.addEventListener('click',async e=>{
       const divs=S.st.tx.filter(t=>t.cat==='Income'&&new Date(t.d).getFullYear()===y).reduce((a,b)=>a+b.a,0);
       const fees=S.st.tx.filter(t=>t.cat==='Fees'&&new Date(t.d).getFullYear()===y).reduce((a,b)=>a+b.a,0);
       const lines=['PLUM — TAX PACK',`Account: ${S.st.profile.name}`,`Tax year: ${taxYear()}`,`Generated: ${D(now())}`,'',
-        `ISA contributions: ${M(contrib)}`,`Allowance remaining: ${M(20000-contrib)}`,
+        `ISA contributions: ${M(contrib)}`,`Allowance remaining: ${M(Math.max(0,20000-contrib))}`,
         `Dividends received: ${M(divs)}`,`Charges paid: ${M(fees)}`,`Portfolio value: ${M(total())}`,
         `Unrealised gain: ${M(total()-cost())}`,'',
         'All figures in GBP. ISA growth is free of UK income and capital gains tax.',
@@ -929,7 +981,7 @@ document.addEventListener('click',async e=>{
       stop();const i=$('#cm'),m=i.value.trim();if(!m)return;
       S.st.chat.push({me:true,m});i.value='';save();render();
       setTimeout(()=>{
-        const r=/isa|allowance/i.test(m)?`Your remaining ISA allowance is ${M(20000-usedAllow())} for ${taxYear()}.`
+        const r=/isa|allowance/i.test(m)?`Your remaining ISA allowance is ${M(Math.max(0,20000-usedAllow()))} for ${taxYear()}.`
           :/fee|charge/i.test(m)?`Plum Plus is ${M(FEE_M)} a month plus ${(PLAT*100).toFixed(2)}% platform fee.`
           :/withdraw/i.test(m)?'Withdrawals take 1–2 working days and can be replaced in the same tax year.'
           :'Thanks — a human will pick this up. Most answers are in Terms & key features.';
@@ -1001,6 +1053,7 @@ window.addEventListener('online',()=>{toast('Back online');poll()});
 window.addEventListener('offline',()=>toast('Offline — orders will queue'));
 load();
 if(!S.st.cred&&!S.st.pin.hash)S.locked=false;
+if((S.st.seedv||0)<SEEDV){seedTx();S.st.seedv=SEEDV;save()}
 if(!S.st.open||S.st.open.d!==new Date().toDateString())S.st.open={d:new Date().toDateString(),v:total()};
 anchor();checkOrders();anchor();
 history.replaceState({d:0},'');
