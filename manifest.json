@@ -1,14 +1,14 @@
 {
-  "name": "Plum",
-  "short_name": "Plum",
+  "name": "Monzo",
+  "short_name": "Monzo",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#150A28",
-  "theme_color": "#150A28",
+  "background_color": "#FF4F40",
+  "theme_color": "#FF4F40",
   "icons": [
-    { "src": "icon-purple.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "icon-white.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+    { "src": "monzo-tile.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "monzo-tile.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
   ]
 }
