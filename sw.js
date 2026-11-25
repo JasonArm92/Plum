@@ -1,5 +1,5 @@
-const CACHE = "plum-v18-6";
-const SHELL = ["/", "/index.html", "/manifest.json", "/icon-purple.svg", "/icon-white.svg"];
+const CACHE = "monzo-v1";
+const SHELL = ["/", "/index.html", "/manifest.json", "/monzo-tile.svg", "/monzo-mark.svg", "/monzo-mark-white.svg"];
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
