@@ -1,13 +1,12 @@
 {
   "name": "Plum",
   "short_name": "Plum",
-  "description": "Invest, save and spend smarter.",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FBF6E9",
-  "theme_color": "#FBF6E9",
+  "background_color": "#150A28",
+  "theme_color": "#150A28",
   "icons": [
     { "src": "icon-purple.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
     { "src": "icon-white.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
