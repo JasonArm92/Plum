@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Plum">
-  <rect width="512" height="512" fill="#7308E3"/>
-  <g transform="translate(256 256) scale(.78) translate(-252 -252)">
-    <ellipse cx="252" cy="252" rx="148" ry="158" fill="#FBF6E9"/>
-    <ellipse cx="380" cy="152" rx="74" ry="112" transform="rotate(37 380 152)" fill="#7308E3"/>
-    <ellipse cx="347" cy="151" rx="39" ry="79" transform="rotate(37 347 151)" fill="#FBF6E9"/>
-    <path d="M373.5 115.8 Q359 160 320.5 186.2 Q335 142 373.5 115.8 Z" fill="#7308E3"/>
-    <path d="M200 311 Q252 351 304 311" fill="none" stroke="#7308E3" stroke-width="21" stroke-linecap="round"/>
+  <rect width="512" height="512" fill="#4B0AF7"/>
+  <g transform="translate(256 256) scale(.78) translate(-256 -256)">
+    <ellipse cx="256" cy="273" rx="144" ry="155" fill="#FFFFFF"/>
+    <ellipse cx="355" cy="140" rx="65" ry="97" transform="rotate(45 355 140)" fill="#4B0AF7"/>
+    <ellipse cx="343" cy="148" rx="40" ry="72" transform="rotate(45 343 148)" fill="#FFFFFF"/>
+    <path d="M371 116Q365 164 317 170Q323 122 371 116Z" fill="#4B0AF7"/>
+    <path d="M197 294Q253 344 309 294" fill="none" stroke="#4B0AF7" stroke-width="22" stroke-linecap="round"/>
   </g>
 </svg>
