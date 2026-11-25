@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Plum">
+  <defs>
+    <mask id="bay" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <rect width="512" height="512" fill="#fff"/>
+      <ellipse cx="355" cy="140" rx="65" ry="97" transform="rotate(45 355 140)" fill="#000"/>
+    </mask>
+  </defs>
+  <g fill="#FFFFFF">
+    <ellipse cx="256" cy="273" rx="144" ry="155" mask="url(#bay)"/>
+    <ellipse cx="343" cy="148" rx="40" ry="72" transform="rotate(45 343 148)"/>
+    <path d="M214 374q42 28 84 0" fill="none" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round"/>
+  </g>
+</svg>
