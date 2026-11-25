@@ -6,7 +6,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FBF6E9",
-  "theme_color": "#1A0A2B",
+  "theme_color": "#14062E",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
