@@ -1,65 +1,63 @@
-/* Monzo PWA service worker — v7 */
-const VERSION = 'v11';
+/* sw.js — v12 */
+
+const VERSION = 'v12';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
   './',
   './index.html',
+  './styles.css',
   './manifest.webmanifest',
   './monzo-mark.svg',
   './monzo-mark-white.svg',
   './monzo-tile.svg',
-  './monzo-maskable.svg'
+  './monzo-maskable.svg',
+  './src/main.js',
+  './src/core.js',
+  './src/ui.js',
+  './src/data.js',
+  './src/screens-a.js',
+  './src/screens-b.js'
 ];
 
-/* ---------- install ---------- */
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    /* add individually so one 404 doesn't abort the whole install */
     await Promise.all(PRECACHE.map(async url => {
       try {
         const res = await fetch(new Request(url, { cache: 'reload' }));
         if (res && (res.ok || res.type === 'opaque')) await cache.put(url, res);
-      } catch (e) { /* ignore */ }
+      } catch { /* ignore individual failures */ }
     }));
     await self.skipWaiting();
   })());
 });
 
-/* ---------- activate ---------- */
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(
-      keys.filter(k => k.startsWith('monzo-') && k !== CACHE).map(k => caches.delete(k))
-    );
+    await Promise.all(keys.filter(k => k.startsWith('monzo-') && k !== CACHE).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
 
-/* ---------- messaging ---------- */
 self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
-/* ---------- strategies ---------- */
-const isAsset = url =>
-  /\.(?:css|js|svg|png|jpe?g|webp|gif|ico|woff2?|ttf|otf|json|webmanifest)$/i.test(new URL(url).pathname);
-
+const isAsset = url => /\.(?:css|js|mjs|svg|png|jpe?g|webp|gif|ico|woff2?|ttf|otf|json|webmanifest)$/i.test(new URL(url).pathname);
 const isImageHost = url => {
-  const h = new URL(url).hostname;
-  return h === 'logo.clearbit.com' || h.endsWith('google.com') || h.endsWith('gstatic.com');
+  const host = new URL(url).hostname;
+  return host === 'logo.clearbit.com' || host.endsWith('google.com') || host.endsWith('gstatic.com');
 };
 
-/* network first, fall back to cache then to the shell */
-async function navigationHandler(request) {
+async function navigationHandler(request){
   const cache = await caches.open(CACHE);
   try {
     const res = await fetch(request);
     if (res && res.ok) cache.put('./index.html', res.clone());
     return res;
-  } catch (e) {
+  } catch {
     return (await cache.match(request)) ||
            (await cache.match('./index.html')) ||
            (await cache.match('./')) ||
@@ -67,11 +65,10 @@ async function navigationHandler(request) {
   }
 }
 
-/* cache first, refresh in the background */
-async function cacheFirst(request) {
+async function cacheFirst(request){
   const cache = await caches.open(CACHE);
   const hit = await cache.match(request, { ignoreSearch: true });
-  if (hit) {
+  if (hit){
     fetch(request).then(res => {
       if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
     }).catch(() => {});
@@ -82,8 +79,7 @@ async function cacheFirst(request) {
   return res;
 }
 
-/* stale while revalidate for third-party logos */
-async function staleWhileRevalidate(request) {
+async function staleWhileRevalidate(request){
   const cache = await caches.open(CACHE);
   const hit = await cache.match(request);
   const network = fetch(request).then(res => {
@@ -93,7 +89,6 @@ async function staleWhileRevalidate(request) {
   return hit || (await network) || new Response('', { status: 504 });
 }
 
-/* ---------- fetch ---------- */
 self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
@@ -101,31 +96,13 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
-  /* app shell */
-  if (request.mode === 'navigate') {
+  if (request.mode === 'navigate'){
     event.respondWith(navigationHandler(request));
     return;
   }
-
-  /* same-origin assets */
-  if (url.origin === location.origin) {
-    if (isAsset(request.url) || url.pathname.endsWith('/')) {
-      event.respondWith(cacheFirst(request));
-      return;
-    }
+  if (url.origin === location.origin){
     event.respondWith(cacheFirst(request));
     return;
   }
-
-  /* third-party logos and fonts */
-  if (isImageHost(request.url)) {
-    event.respondWith(staleWhileRevalidate(request));
-  }
-});
-
-/* ---------- background sync hook ---------- */
-self.addEventListener('sync', event => {
-  if (event.tag === 'monzo-sync') {
-    event.waitUntil(Promise.resolve());
-  }
+  if (isImageHost(request.url)) event.respondWith(staleWhileRevalidate(request));
 });
