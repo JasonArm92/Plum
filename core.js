@@ -1,5 +1,4 @@
-/* src/core.js — clock, formatting, DOM helpers, storage, state, actions, selectors.
-   Never touches the DOM for layout; never imports ui.js or screens. */
+/* src/core.js — clock, formatting, DOM helpers, storage, state, actions, selectors. */
 
 import {
   PLANS, CATS, FLEX, COMMITTED, DEFAULT_TARGETS, BANKS, BB_PROVIDERS, BB_CAP,
@@ -191,6 +190,7 @@ export function commit(){ save(); notify(S); }
 
 /* ---------------- selectors ---------------- */
 export const plan = () => PLANS[S.plan];
+export const PLANS_BANK = () => PLANS;
 export const balNow = () => S.tx.length ? S.tx[0].bal : 0;
 export const isaBal = () => S.isa.length ? S.isa[0].value : 0;
 export const potTotal = () => S.pots.reduce((a, p) => a + p.bal, 0);
