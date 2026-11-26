@@ -1,15 +1,21 @@
-/* sw.js — v16
-   Self-contained shell: index.html carries its own CSS and JS, so only the
-   shell, manifest and icons are precached. Navigation is network-first with a
-   cached shell fallback; same-origin assets are cache-first; fonts and logos
-   are stale-while-revalidate. */
+/* sw.js — v17
+   Self-contained shell. Navigation is network-first with a cached shell fallback;
+   same-origin assets are cache-first with a background refresh; fonts and logos are
+   stale-while-revalidate. */
 
-const VERSION = 'v16';
+const VERSION = 'v17';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
   './',
   './index.html',
+  './styles.css?v=17',
+  './main.js?v=17',
+  './core.js',
+  './data.js',
+  './ui.js',
+  './screens-a.js',
+  './screens-b.js',
   './manifest.webmanifest',
   './monzo-mark.svg',
   './monzo-mark-white.svg',
@@ -45,26 +51,27 @@ self.addEventListener('message', event => {
 });
 
 const isRemoteAsset = url => {
-  const host = new URL(url).hostname;
-  return host === 'logo.clearbit.com'
-      || host === 'fonts.googleapis.com'
-      || host === 'fonts.gstatic.com'
-      || host.endsWith('.gstatic.com');
+  try {
+    const host = new URL(url).hostname;
+    return host === 'logo.clearbit.com'
+        || host === 'fonts.googleapis.com'
+        || host === 'fonts.gstatic.com'
+        || host.endsWith('.gstatic.com');
+  } catch { return false; }
 };
 
 async function navigationHandler(request){
   const cache = await caches.open(CACHE);
   try {
     const res = await fetch(request);
-    if (res && res.ok) cache.put('./index.html', res.clone());
+    /* only the canonical shell replaces the cached shell */
+    if (res && res.ok && new URL(request.url).search === '') cache.put('./index.html', res.clone());
     return res;
   } catch {
     return (await cache.match(request))
         || (await cache.match('./index.html'))
         || (await cache.match('./'))
-        || new Response('Offline', {
-             status: 503, headers: { 'Content-Type': 'text/plain' }
-           });
+        || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
   }
 }
 
@@ -100,7 +107,8 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
-  const url = new URL(request.url);
+  let url;
+  try { url = new URL(request.url); } catch { return; }
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
   if (request.mode === 'navigate'){
