@@ -119,5 +119,5 @@ self.addEventListener('fetch', event => {
     event.respondWith(cacheFirst(request));
     return;
   }
-  if (isRemoteAsset(request.url)) event.respondWith(styleWhileRevalidate(request));
+  if (isRemoteAsset(request.url)) event.respondWith(staleWhileRevalidate(request));
 });
