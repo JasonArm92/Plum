@@ -1,7 +1,7 @@
 /* src/main.js — boot: hydrate state, apply appearance, wire chrome and lock, register screens. */
 
 import {
-  load, getState, subscribe, runInterest, runTick, togglePriv, syncBell
+  load, getState, subscribe, runInterest, runTick, runScheduled, togglePriv, syncBell
 } from './core.js';
 import { initRouter, register, go, goBack, bindGlobalChrome, toast } from './ui.js';
 
@@ -71,6 +71,7 @@ function unlock(){
   paintDots();
   const pad = document.getElementById('pinpad');
   if (pad) pad.classList.remove('on');
+  runScheduled();
   go('home');
 }
 
@@ -97,6 +98,8 @@ function boot(){
   load();
   runInterest();
   runTick();
+  /* catch up on anything the scheduler owes since the app was last open */
+  runScheduled();
 
   applyAll();
   paintAvatar();
@@ -150,6 +153,11 @@ function boot(){
 
   subscribe(() => { paintAvatar(); applyAll(); syncBell(); });
 
+  /* the app can be left open across midnight, so re-run the scheduler on return */
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') runScheduled();
+  });
+
   if (sessionStorage.getItem('unlocked') === '1') document.body.classList.remove('locked');
   go('home');
 
@@ -159,7 +167,7 @@ function boot(){
 
   if ('serviceWorker' in navigator){
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=18').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=19').catch(() => {});
     });
   }
 }
