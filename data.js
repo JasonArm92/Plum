@@ -41,7 +41,7 @@ export const DOMAINS = {
   'Barclays':'barclays.co.uk','HSBC':'hsbc.co.uk','Lloyds':'lloydsbank.com','NatWest':'natwest.com',
   'Santander':'santander.co.uk','Nationwide':'nationwide.co.uk','Starling':'starlingbank.com','Chase':'chase.co.uk',
   'Monzo Flex':'monzo.com','Monzo Aura':'monzo.com','Monzo Loans':'monzo.com','Monzo Billsback':'monzo.com',
-  'Saving Challenge':'monzo.com'
+  'Saving Challenge':'monzo.com','Savings interest':'monzo.com'
 };
 
 export const POTS0 = [
@@ -52,7 +52,6 @@ export const POTS0 = [
   { name:'Emergency',      goal:3000, bal:1000,    type:'savings' }
 ];
 
-/* ---------- deterministic RNG ---------- */
 let seed = 0x9e3779b9;
 export function rnd(){
   seed |= 0; seed = seed + 0x6D2B79F5 | 0;
@@ -63,7 +62,6 @@ export function rnd(){
 export const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
 export const pick = a => a[Math.floor(rnd() * a.length)];
 
-/* ---------- local date helpers (data is self-contained) ---------- */
 const p2 = n => String(n).padStart(2, '0');
 const isoS = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 const asDate = s => new Date(s + 'T12:00:00');
@@ -108,8 +106,9 @@ export function buildISA(now){
   }).reverse();
 }
 
-/* ---------- current account history ---------- */
-export function buildAccount(now){
+/* ---------- current account history ----------
+   isaByMonth supplies the ISA value at each month end so dividends can be paid. */
+export function buildAccount(now, isaByMonth = {}){
   const today = isoS(now);
   const tx = [];
   let bal = 1400;
@@ -118,6 +117,7 @@ export function buildAccount(now){
     tx.push({ id: uid(), date, time, name, cat, amt, bal, note: note || '' });
   };
 
+  /* side hustle: 3–4 builds a year since 2020, each followed by 12 retainers */
   const projects = [];
   for (let y = 2020; y <= now.getFullYear(); y++){
     const n = ri(3, 4);
@@ -143,7 +143,7 @@ export function buildAccount(now){
   while (d <= now){ months.push(new Date(d.getFullYear(), d.getMonth(), 1)); d = new Date(d.getFullYear(), d.getMonth() + 1, 1); }
 
   months.forEach(m0 => {
-    const y = m0.getFullYear(), m = m0.getMonth(), last = domS(y, m, 31);
+    const y = m0.getFullYear(), m = m0.getMonth(), last = domS(y, m, 31), ym = m0.toISOString().slice(0, 7);
     const day = (n, time, name, cat, amt, note) => {
       const date = domS(y, m, n);
       if (asDate(date) > now) return;
@@ -167,6 +167,7 @@ export function buildAccount(now){
     else if (first >= '2025-03-01' && first < '2026-09-01') day(1, '09:00', 'OpenRent', 'Rent', -799, 'Rent');
     else if (first >= '2026-09-01') day(12, '09:00', 'Blue Skies Lets', 'Rent', -850, 'Rent');
 
+    /* salary */
     day(28, '06:00', 'Kingdom Services Group', 'Income', 2850, 'Net salary');
 
     [6, 13, 20, 27].forEach(dd => day(dd, '17:40',
@@ -189,8 +190,19 @@ export function buildAccount(now){
       day(21, '11:30', 'The Works', 'Education', -ri(9, 22), 'Home education resources');
     }
 
-    (byMonth[first.slice(0, 7)] || []).forEach(p =>
+    /* side hustle income */
+    (byMonth[ym] || []).forEach(p =>
       add(p.date, '14:20', p.client, 'Income', p.amt, p.retainer ? 'Maintenance retainer' : 'Website build'));
+
+    /* dividends on the last day, then swept into Rainy Day */
+    const isaValue = isaByMonth[ym];
+    if (isaValue && last <= today){
+      const div = Math.round(isaValue * 0.0032 * 100) / 100;
+      if (div > 1){
+        add(last, '16:30', 'Vanguard', 'Investments', div, 'Dividend — FTSE Global All Cap');
+        add(last, '16:35', 'Rainy Day', 'Transfers', -div, 'Dividend swept to pot');
+      }
+    }
 
     if (last <= today && bal > 2100) add(last, '20:00', 'Rainy Day', 'Transfers', -(Math.round((bal - 2000) * 100) / 100), 'Monthly sweep');
   });
@@ -199,10 +211,12 @@ export function buildAccount(now){
 }
 
 export function buildSeed(now){
-  return { tx: buildAccount(now), isa: buildISA(now) };
+  const isa = buildISA(now);
+  const isaByMonth = {};
+  isa.forEach(r => { isaByMonth[r.date.slice(0, 7)] = r.value; });
+  return { tx: buildAccount(now, isaByMonth), isa };
 }
 
-/* ---------- ids ---------- */
 export function uid(){
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 }
