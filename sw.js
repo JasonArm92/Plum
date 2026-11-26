@@ -1,16 +1,16 @@
-/* sw.js — v17
+/* sw.js — v18
    Self-contained shell. Navigation is network-first with a cached shell fallback;
    same-origin assets are cache-first with a background refresh; fonts and logos are
    stale-while-revalidate. */
 
-const VERSION = 'v17';
+const VERSION = 'v18';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css?v=17',
-  './main.js?v=17',
+  './styles.css?v=18',
+  './main.js?v=18',
   './core.js',
   './data.js',
   './ui.js',
