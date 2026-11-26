@@ -1,12 +1,12 @@
 /* src/screens-a.js — daily-use surfaces. */
 
 import {
-  getState, esc, fmt, TODAY, THIS_YM, MONTHS, prettyDate, round2, plan,
+  getState, esc, fmt, TODAY, THIS_YM, MONTHS, round2, plan,
   balNow, isaBal, growTotal, savingsTotal, homeEquity, connTotal, loanOwed,
-  budgetTotal, spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend,
-  daysToPayday, balanceSeries, flexAvail, tyUsed, TAX_START, TARGET_ISA,
-  setHomeEstimate, setTarget, addTx, moveToPot, createPot, updatePot, addTx as pushTx,
-  CATS, FLEX
+  spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend,
+  daysToPayday, balanceSeries, tyUsed, TAX_START, TARGET_ISA,
+  setHomeEstimate, setTarget, addTx, moveToPot, createPot, updatePot,
+  addStandingOrder, addSharedTab, CATS, FLEX
 } from './core.js';
 
 import {
@@ -199,7 +199,7 @@ export function mountPay(root){
       document.getElementById('soGo').onclick = () => {
         const n = document.getElementById('soName').value.trim(), a = +document.getElementById('soAmt').value;
         if (!n || !a) return toast('Fill in both fields');
-        addStandingOrderLocal(n, a, +document.getElementById('soDay').value || 1);
+        addStandingOrder(n, a, +document.getElementById('soDay').value || 1);
         closeSheet(); render(); toast('Standing order created');
       };
     }
@@ -212,7 +212,7 @@ export function mountPay(root){
         const n = document.getElementById('tbName').value.trim(), tot = +document.getElementById('tbTot').value;
         const ppl = Math.max(2, +document.getElementById('tbPpl').value || 2);
         if (!n || !tot) return toast('Fill in both fields');
-        addTabLocal(n, tot, ppl);
+        addSharedTab(n, tot, ppl);
         closeSheet(); render(); toast('Tab created');
       };
     }
@@ -228,10 +228,6 @@ export function mountPay(root){
   });
   render();
 }
-
-import { addStandingOrder, addSharedTab } from './core.js';
-const addStandingOrderLocal = (n, a, d) => addStandingOrder(n, a, d);
-const addTabLocal = (n, t, p) => addSharedTab(n, t, p);
 
 /* ---------- trends ---------- */
 export function mountTrends(root){
@@ -290,7 +286,7 @@ export function mountAccount(root){
     <span class="mid"><span class="nm">${label}</span><span class="sub">${sub}</span></span></button>`;
   root.innerHTML = `<div class="h-sec"><h2>Account</h2></div>
     <div class="card" style="padding:6px 8px">
-      ${row('Your accounts', '1 account', 'data-go="accounts"')}
+      ${row('Your accounts', (1 + s.extraAccounts.length) + ' account' + (s.extraAccounts.length ? 's' : ''), 'data-go="accounts"')}
       ${row('Personal details', 'Name, address, contact', 'data-go="personal"')}
       ${row('Security &amp; privacy', 'Passcode, biometrics, sessions', 'data-go="security"')}
       ${row('Statements', 'PDF and CSV', 'data-go="statements"')}
@@ -436,13 +432,22 @@ export function mountInvest(root){
     <div class="card" style="padding:4px 14px"><ul class="txlist">
       ${s.isa.slice(0, 40).map(r => `<li class="tx"><span class="lg">${r.type[0]}</span>
         <span class="mid"><span class="nm">${esc(r.note)}</span>
-          <span class="mt">${prettyDate(r.date)} · ${r.type}</span></span>
+          <span class="mt">${prettyOf(r.date)} · ${r.type}</span></span>
         <span class="amt rev">${fmt(r.value)}</span></li>`).join('')}</ul></div>
     <p class="note">Lineage: PEP contributions to April 1999, PEP→ISA transfer, TESSA rollover, then ISA subscriptions.
       Distributions reinvested inside the wrapper.</p>`;
 
   const asc = s.isa.slice().reverse(), step = Math.max(1, Math.floor(asc.length / 140));
-  lineChart(root.querySelector('#isaChart'), asc.filter((_, i) => i % step === 0).map(r => ({ d: r.date, v: r.value })), { h: 150 });
+  lineChart(root.querySelector('#isaChart'),
+    asc.filter((_, i) => i % step === 0).map(r => ({ d: r.date, v: r.value })), { h: 150 });
+}
+
+function prettyOf(date){
+  const diff = Math.round((new Date(TODAY + 'T12:00:00') - new Date(date + 'T12:00:00')) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  const d = new Date(date + 'T12:00:00');
+  return `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
 }
 
 /* ---------- statements ---------- */
@@ -509,4 +514,4 @@ function download(kind, ym, asPdf){
   w.document.close(); w.focus();
   setTimeout(() => w.print(), 350);
   toast('Statement ready to print');
-}
+      }
