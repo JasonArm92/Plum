@@ -1,10 +1,10 @@
-/* sw.js — v15
+/* sw.js — v16
    Self-contained shell: index.html carries its own CSS and JS, so only the
    shell, manifest and icons are precached. Navigation is network-first with a
    cached shell fallback; same-origin assets are cache-first; fonts and logos
    are stale-while-revalidate. */
 
-const VERSION = 'v15';
+const VERSION = 'v16';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
