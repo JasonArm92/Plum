@@ -2,7 +2,7 @@
 
 import {
   PLANS, CATS, FLEX, COMMITTED, DEFAULT_TARGETS, BANKS, BB_PROVIDERS, BB_CAP,
-  DOMAINS, POTS0, buildSeed, uid
+  DOMAINS, POTS0, TARGET_ISA, buildSeed, uid
 } from './data.js';
 
 export const VERSION = 12;
@@ -125,7 +125,6 @@ export function freshState(){
 
 /* ---------------- migrations ---------------- */
 const migrations = [
-  /* 11 → 12: introduce the split-module shape */
   s => {
     s.v = 12;
     s.flex ||= { limit: 4000, used: 0, plans: [] };
@@ -548,4 +547,4 @@ export function runTick(){
   commit();
 }
 
-export { CATS, FLEX, COMMITTED, BANKS, BB_PROVIDERS, BB_CAP, DOMAINS };
+export { CATS, FLEX, COMMITTED, BANKS, BB_PROVIDERS, BB_CAP, DOMAINS, TARGET_ISA };
