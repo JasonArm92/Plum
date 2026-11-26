@@ -1,48 +1,63 @@
 <!DOCTYPE html>
-<html lang="en-GB">
+<html lang="en-GB" data-theme="auto">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Monzo</title>
 <meta name="theme-color" content="#FF4F40"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 <link rel="manifest" href="manifest.webmanifest"/>
 <link rel="icon" href="monzo-mark.svg"/>
 <link rel="apple-touch-icon" href="monzo-tile.svg"/>
+<script>try{var _t=JSON.parse(localStorage.getItem('monzo_v4')||'{}');document.documentElement.dataset.theme=(_t.prefs&&_t.prefs.theme)||'auto'}catch(e){}</script>
 <style>
 :root{
 --coral:#FF4F40;--navy:#091723;--ink:#091723;--muted:#6B7480;--line:#E7E9EB;
---bg:#fff;--surface:#F5F6F7;--green:#0E9F6E;--red:#D92D20;--amber:#B54708;
+--bg:#fff;--surface:#F5F6F7;--card:#fff;--bar:rgba(255,255,255,.94);
+--accent-soft:#FFF1F0;--crisis:#FFF6F5;--hero-b:transparent;--scrim:rgba(9,23,35,.42);
+--imp-soft:#EEF2FF;--imp-ink:#3538CD;--ok-soft:#ECFDF3;--ok-ink:#067647;
+--warn-soft:#FFFAEB;--warn-ink:#B54708;--green:#0E9F6E;--red:#D92D20;--amber:#B54708;
 --r:24px;--pill:500px;--safeb:env(safe-area-inset-bottom,0px);
+}
+[data-theme="dark"]{
+--coral:#FF6A5C;--navy:#141D28;--ink:#F2F4F7;--muted:#98A2B3;--line:#232C37;
+--bg:#0B0F14;--surface:#151B23;--card:#151B23;--bar:rgba(11,15,20,.92);
+--accent-soft:#2A1A18;--crisis:#241614;--hero-b:#232C37;--scrim:rgba(0,0,0,.62);
+--imp-soft:#1B2036;--imp-ink:#A5B4FC;--ok-soft:#0F2A20;--ok-ink:#6EE7B7;
+--warn-soft:#2A1F10;--warn-ink:#FCD34D;--green:#34D399;--red:#F87171;
+}
+@media (prefers-color-scheme:dark){
+[data-theme="auto"]{
+--coral:#FF6A5C;--navy:#141D28;--ink:#F2F4F7;--muted:#98A2B3;--line:#232C37;
+--bg:#0B0F14;--surface:#151B23;--card:#151B23;--bar:rgba(11,15,20,.92);
+--accent-soft:#2A1A18;--crisis:#241614;--hero-b:#232C37;--scrim:rgba(0,0,0,.62);
+--imp-soft:#1B2036;--imp-ink:#A5B4FC;--ok-soft:#0F2A20;--ok-ink:#6EE7B7;
+--warn-soft:#2A1F10;--warn-ink:#FCD34D;--green:#34D399;--red:#F87171;
+}
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;height:100%}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.42;overscroll-behavior-y:none}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 a{color:inherit;text-decoration:none}
-:focus-visible{outline:3px solid var(--navy);outline-offset:2px;border-radius:6px}
+:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:6px}
 .hide{display:none!important}
 #app{max-width:520px;margin:0 auto;min-height:100%;padding-bottom:calc(96px + var(--safeb));position:relative}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-/* ---------- top bar ---------- */
 .top{display:flex;align-items:center;gap:12px;padding:14px 20px 6px}
 .top h1{font-size:20px;font-weight:800;letter-spacing:-.4px;margin:0;flex:1}
 .iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:0 0 auto}
 .iconbtn:active{transform:scale(.94)}
 .avatar{width:40px;height:40px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;flex:0 0 auto;overflow:hidden}
-.avatar img{width:100%;height:100%;object-fit:cover}
-
-/* ---------- mark ---------- */
 .mark{display:inline-grid;place-items:center}
 .mark svg{display:block}
 
-/* ---------- cards ---------- */
 .pad{padding:0 20px}
 .card{background:var(--surface);border-radius:var(--r);padding:18px}
-.card.w{background:#fff;border:1px solid var(--line)}
-.hero{background:var(--navy);color:#fff;border-radius:28px;padding:22px;position:relative;overflow:hidden}
+.card.w{background:var(--card);border:1px solid var(--line)}
+.hero{background:var(--navy);color:#fff;border-radius:28px;padding:22px;position:relative;overflow:hidden;border:1px solid var(--hero-b)}
 .hero .bal{font-size:40px;font-weight:800;letter-spacing:-1.6px;line-height:1.05}
 .hero .sub{opacity:.62;font-size:13px;font-weight:600;margin-top:4px}
 .hero .lbl{font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.55}
@@ -60,8 +75,7 @@ a{color:inherit;text-decoration:none}
 .row .t span{font-size:13px;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .amt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pos{color:var(--green)}
-.neg{color:var(--ink)}
-.list{background:#fff}
+.list{background:var(--card)}
 .list .row{padding:13px 20px}
 .sec{margin:26px 0 8px;padding:0 20px;font-size:12px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
 .muted{color:var(--muted)}
@@ -71,30 +85,25 @@ a{color:inherit;text-decoration:none}
 .mono{font-variant-numeric:tabular-nums}
 hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 
-/* ---------- icons ---------- */
-.ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:0 0 auto;font-size:16px;font-weight:800;color:var(--navy)}
+.ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:0 0 auto;font-size:16px;font-weight:800;color:var(--ink)}
 .ico.coral{background:var(--coral);color:#fff}
 
-/* ---------- tab bar ---------- */
-.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;padding:8px 8px calc(8px + var(--safeb));z-index:40;max-width:520px;margin:0 auto}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--bar);backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;padding:8px 8px calc(8px + var(--safeb));z-index:40;max-width:520px;margin:0 auto}
 .tabs button{flex:1;display:grid;place-items:center;gap:3px;padding:6px 0;font-size:10.5px;font-weight:700;color:var(--muted)}
-.tabs button.on{color:var(--navy)}
+.tabs button.on{color:var(--ink)}
 .tabs svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
-/* ---------- sheets ---------- */
-#scrim{position:fixed;inset:0;background:rgba(9,23,35,.42);opacity:0;pointer-events:none;transition:opacity .22s;z-index:50}
+#scrim{position:fixed;inset:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .22s;z-index:50}
 #scrim.on{opacity:1;pointer-events:auto}
-#sheet{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:#fff;border-radius:28px 28px 0 0;padding:10px 20px calc(24px + var(--safeb));transform:translateY(102%);transition:transform .3s cubic-bezier(.22,1,.36,1);z-index:60;max-height:90vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(9,23,35,.18)}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--card);border-radius:28px 28px 0 0;padding:10px 20px calc(24px + var(--safeb));transform:translateY(102%);transition:transform .3s cubic-bezier(.22,1,.36,1);z-index:60;max-height:90vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(9,23,35,.18)}
 #sheet.on{transform:translateY(0)}
 .grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 16px}
 #sheet h2{font-size:22px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 
-/* ---------- toast ---------- */
 #toast{position:fixed;left:16px;right:16px;bottom:calc(88px + var(--safeb));max-width:488px;margin:0 auto;z-index:70;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .toast{background:var(--navy);color:#fff;border-radius:16px;padding:13px 16px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(9,23,35,.28);animation:tin .3s ease both}
 @keyframes tin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
-/* ---------- charts ---------- */
 .chart{width:100%;display:block;overflow:visible}
 .axis{font-size:10px;fill:var(--muted);font-weight:600}
 .seg{display:flex;background:var(--surface);border-radius:var(--pill);padding:3px;gap:2px;overflow-x:auto;scrollbar-width:none}
@@ -102,16 +111,15 @@ hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 .seg button{flex:1 0 auto;padding:8px 13px;border-radius:var(--pill);font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}
 .seg button.on{background:var(--navy);color:#fff}
 
-/* ---------- misc ---------- */
 .badge{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border-radius:var(--pill);padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
-.badge.imp{background:#EEF2FF;color:#3538CD}
-.badge.ok{background:#ECFDF3;color:#067647}
-.badge.warn{background:#FFFAEB;color:#B54708}
+.badge.imp{background:var(--imp-soft);color:var(--imp-ink)}
+.badge.ok{background:var(--ok-soft);color:var(--ok-ink)}
+.badge.warn{background:var(--warn-soft);color:var(--warn-ink)}
 .prog{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
 .prog i{display:block;height:100%;background:var(--coral);border-radius:4px;transition:width .5s}
 .prog.navy i{background:var(--navy)}
 input,select,textarea{font:inherit;width:100%;background:var(--surface);border:1px solid transparent;border-radius:14px;padding:13px 14px;color:var(--ink)}
-input:focus,select:focus,textarea:focus{border-color:var(--navy);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--coral);outline:none}
 label.f{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}
 .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
 .empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
@@ -123,7 +131,7 @@ label.f{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}
 .ledrow .m{font-weight:800;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px}
 .ledrow .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
 .ledrow .d{grid-column:2/4;font-size:11.5px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
-.crisis{background:#FFF6F5}
+.crisis{background:var(--crisis)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}}
 </style>
 </head>
@@ -133,14 +141,12 @@ label.f{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}
 <div id="sheet" role="dialog" aria-modal="true" aria-label="Sheet"></div>
 <div id="toast" aria-live="assertive"></div>
 <script>
-/* ============================================================
-   Monzo — monzo_v4
-   ============================================================ */
 const KEY='monzo_v4';
 const TARGET=934745.32;
 const PORT_TARGET=922628.93;
 const ISA_CASH=+(TARGET-PORT_TARGET).toFixed(2);
 const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const STANDALONE=matchMedia('(display-mode:standalone)').matches;
 
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -154,63 +160,37 @@ const dstr=d=>d.toISOString().slice(0,10);
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const ymLabel=ym=>MON[+ym.slice(5,7)-1]+' '+ym.slice(0,4);
 
-/* ---------- ISA historical subscription limits ---------- */
-const ISA_LIMITS={
-1999:7000,2000:7000,2001:7000,2002:7000,2003:7000,2004:7000,2005:7000,2006:7000,2007:7000,2008:7200,
-2009:7200,2010:10200,2011:10680,2012:11280,2013:11520,2014:11880,2015:15240,2016:15240,2017:20000,
-2018:20000,2019:20000,2020:20000,2021:20000,2022:20000,2023:20000,2024:20000,2025:20000,2026:20000
-};
+const ISA_LIMITS={1999:7000,2000:7000,2001:7000,2002:7000,2003:7000,2004:7000,2005:7000,2006:7000,2007:7000,2008:7200,2009:7200,2010:10200,2011:10680,2012:11280,2013:11520,2014:11880,2015:15240,2016:15240,2017:20000,2018:20000,2019:20000,2020:20000,2021:20000,2022:20000,2023:20000,2024:20000,2025:20000,2026:20000};
 const taxYear=()=>{const d=new Date();const y=d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6)?d.getFullYear()-1:d.getFullYear();return y};
 const tyLabel=y=>`${y}/${String(y+1).slice(2)}`;
 
 const SOURCES=['Halifax','Lloyds Bank','Barclays','Hargreaves Lansdown','Legal & General','AJ Bell','Barclays Stockbrokers','Cheltenham & Gloucester','Alliance Trust'];
 
 const MERCH=[
- {n:'Arriva North East',c:'Transport',lo:[2,6],cad:.55},
- {n:'Stagecoach Teesside',c:'Transport',lo:[2,5],cad:.4},
- {n:'Northern Rail',c:'Transport',lo:[3,14],cad:.2},
- {n:'National Rail',c:'Transport',lo:[8,42],cad:.12},
- {n:'Tesco Extra Stockton',c:'Groceries',lo:[6,54],cad:.75},
- {n:'Aldi Billingham',c:'Groceries',lo:[5,38],cad:.5},
- {n:'Lidl Norton',c:'Groceries',lo:[4,31],cad:.35},
- {n:'Sainsbury’s Whitehouse Farm',c:'Groceries',lo:[7,46],cad:.3},
- {n:'Wellington Square',c:'Shopping',lo:[8,64],cad:.3},
- {n:'Teesside Park',c:'Shopping',lo:[12,120],cad:.22},
- {n:'Cleveland Centre',c:'Shopping',lo:[5,48],cad:.26},
- {n:'The Thomas Sheraton',c:'Eating out',lo:[9,34],cad:.3},
- {n:'Costa Stockton High St',c:'Eating out',lo:[2,7],cad:.5},
- {n:'Greggs',c:'Eating out',lo:[1,6],cad:.55},
- {n:'Nando’s Teesside Park',c:'Eating out',lo:[14,42],cad:.14},
- {n:'Butterfly World',c:'Leisure',lo:[9,26],cad:.05},
- {n:'Preston Park Museum',c:'Leisure',lo:[4,18],cad:.05},
- {n:'Stewart Park Cafe',c:'Eating out',lo:[3,12],cad:.12},
- {n:'Ropner Park',c:'Leisure',lo:[2,8],cad:.08},
- {n:'Middlesbrough FC',c:'Leisure',lo:[22,58],cad:.06},
- {n:'Stockton Town FC',c:'Leisure',lo:[8,16],cad:.05},
- {n:'Billingham Forum',c:'Leisure',lo:[5,22],cad:.08},
- {n:'Teesside Airport',c:'Travel',lo:[48,220],cad:.03},
- {n:'Boots Stockton',c:'Health',lo:[4,29],cad:.14},
- {n:'Specsavers',c:'Health',lo:[25,180],cad:.03},
- {n:'Hays Travel',c:'Travel',lo:[180,640],cad:.02},
- {n:'B&Q Portrack',c:'Home',lo:[8,86],cad:.12},
- {n:'Screwfix',c:'Home',lo:[4,52],cad:.1},
- {n:'Shell A19',c:'Transport',lo:[28,62],cad:.16},
- {n:'BP Wolviston',c:'Transport',lo:[26,58],cad:.12},
- {n:'Cineworld Teesside',c:'Leisure',lo:[9,28],cad:.06},
- {n:'Amazon UK',c:'Shopping',lo:[6,74],cad:.3},
- {n:'Smyths Toys',c:'Shopping',lo:[9,64],cad:.05},
- {n:'Argos Stockton',c:'Shopping',lo:[12,92],cad:.05},
+ {n:'Arriva North East',c:'Transport',lo:[2,6],cad:.55},{n:'Stagecoach Teesside',c:'Transport',lo:[2,5],cad:.4},
+ {n:'Northern Rail',c:'Transport',lo:[3,14],cad:.2},{n:'National Rail',c:'Transport',lo:[8,42],cad:.12},
+ {n:'Tesco Extra Stockton',c:'Groceries',lo:[6,54],cad:.75},{n:'Aldi Billingham',c:'Groceries',lo:[5,38],cad:.5},
+ {n:'Lidl Norton',c:'Groceries',lo:[4,31],cad:.35},{n:'Sainsbury’s Whitehouse Farm',c:'Groceries',lo:[7,46],cad:.3},
+ {n:'Wellington Square',c:'Shopping',lo:[8,64],cad:.3},{n:'Teesside Park',c:'Shopping',lo:[12,120],cad:.22},
+ {n:'Cleveland Centre',c:'Shopping',lo:[5,48],cad:.26},{n:'The Thomas Sheraton',c:'Eating out',lo:[9,34],cad:.3},
+ {n:'Costa Stockton High St',c:'Eating out',lo:[2,7],cad:.5},{n:'Greggs',c:'Eating out',lo:[1,6],cad:.55},
+ {n:'Nando’s Teesside Park',c:'Eating out',lo:[14,42],cad:.14},{n:'Butterfly World',c:'Leisure',lo:[9,26],cad:.05},
+ {n:'Preston Park Museum',c:'Leisure',lo:[4,18],cad:.05},{n:'Stewart Park Cafe',c:'Eating out',lo:[3,12],cad:.12},
+ {n:'Ropner Park',c:'Leisure',lo:[2,8],cad:.08},{n:'Middlesbrough FC',c:'Leisure',lo:[22,58],cad:.06},
+ {n:'Stockton Town FC',c:'Leisure',lo:[8,16],cad:.05},{n:'Billingham Forum',c:'Leisure',lo:[5,22],cad:.08},
+ {n:'Teesside Airport',c:'Travel',lo:[48,220],cad:.03},{n:'Boots Stockton',c:'Health',lo:[4,29],cad:.14},
+ {n:'Specsavers',c:'Health',lo:[25,180],cad:.03},{n:'Hays Travel',c:'Travel',lo:[180,640],cad:.02},
+ {n:'B&Q Portrack',c:'Home',lo:[8,86],cad:.12},{n:'Screwfix',c:'Home',lo:[4,52],cad:.1},
+ {n:'Shell A19',c:'Transport',lo:[28,62],cad:.16},{n:'BP Wolviston',c:'Transport',lo:[26,58],cad:.12},
+ {n:'Cineworld Teesside',c:'Leisure',lo:[9,28],cad:.06},{n:'Amazon UK',c:'Shopping',lo:[6,74],cad:.3},
+ {n:'Smyths Toys',c:'Shopping',lo:[9,64],cad:.05},{n:'Argos Stockton',c:'Shopping',lo:[12,92],cad:.05},
  {n:'Wilko',c:'Home',lo:[4,34],cad:.1}
 ];
 const BILLS=[
- {n:'Northumbrian Water',c:'Bills',a:41.00,day:4},
- {n:'British Gas',c:'Bills',a:96.40,day:8},
- {n:'TV Licence',c:'Bills',a:14.45,day:12},
- {n:'BT Broadband',c:'Bills',a:38.99,day:17},
- {n:'Vodafone',c:'Bills',a:28.00,day:21},
- {n:'Sky',c:'Bills',a:52.00,day:25},
- {n:'EE Mobile',c:'Bills',a:18.50,day:2},
- {n:'Three',c:'Bills',a:16.00,day:14}
+ {n:'Northumbrian Water',c:'Bills',a:41.00,day:4},{n:'British Gas',c:'Bills',a:96.40,day:8},
+ {n:'TV Licence',c:'Bills',a:14.45,day:12},{n:'BT Broadband',c:'Bills',a:38.99,day:17},
+ {n:'Vodafone',c:'Bills',a:28.00,day:21},{n:'Sky',c:'Bills',a:52.00,day:25},
+ {n:'EE Mobile',c:'Bills',a:18.50,day:2},{n:'Three',c:'Bills',a:16.00,day:14}
 ];
 const INSTR=[
  ['Vanguard FTSE Global All Cap','Fund'],['Vanguard FTSE Dev World ex-UK','Fund'],['Vanguard US Equity Index','Fund'],
@@ -232,9 +212,7 @@ const INSTR=[
  ['Diageo','Stock'],['RELX','Stock'],['BAE Systems','Stock']
 ];
 
-/* ============================================================
-   STATE
-   ============================================================ */
+/* ---------- ledger ---------- */
 function buildLedger(rnd,target){
   const rows=[];let bal=0;
   let d=new Date(1992,9,1);
@@ -260,28 +238,21 @@ function buildLedger(rnd,target){
     if(y===1997&&m>5)mean=0.0105;
     if(y===1999&&m<3)mean=0.0128;
     const r=mean+(rnd()-.5)*0.055;
-    const opening=bal;
-    const div=opening*0.0018;
-    const mkt=opening*r;
-    const fee=opening*0.00031;
+    const opening=bal,div=opening*0.0018,mkt=opening*r,fee=opening*0.00031;
     const closing=Math.max(0,opening+contrib+div+mkt-fee);
     rows.push({ym:y+'-'+String(m+1).padStart(2,'0'),y,m,opening,contrib,div,mkt,fee,closing});
-    bal=closing;
-    d=new Date(y,m+1,1);
+    bal=closing;d=new Date(y,m+1,1);
   }
   const scale=target/bal;let prev=0;
   for(const row of rows){
     row.opening=prev;
-    row.contrib=+(row.contrib*scale).toFixed(2);
-    row.div=+(row.div*scale).toFixed(2);
-    row.mkt=+(row.mkt*scale).toFixed(2);
-    row.fee=+(row.fee*scale).toFixed(2);
+    row.contrib=+(row.contrib*scale).toFixed(2);row.div=+(row.div*scale).toFixed(2);
+    row.mkt=+(row.mkt*scale).toFixed(2);row.fee=+(row.fee*scale).toFixed(2);
     row.closing=+(row.opening+row.contrib+row.div+row.mkt-row.fee).toFixed(2);
     prev=row.closing;
   }
   const last=rows[rows.length-1];
-  last.mkt=+(last.mkt+(target-last.closing)).toFixed(2);
-  last.closing=target;
+  last.mkt=+(last.mkt+(target-last.closing)).toFixed(2);last.closing=target;
   const split=new Date(2015,9,1);
   for(const row of rows){
     const dt=new Date(row.y,row.m,1);
@@ -291,7 +262,6 @@ function buildLedger(rnd,target){
   }
   return rows;
 }
-
 function buildTx(rnd,startBal){
   const out=[];
   const today=new Date();today.setHours(0,0,0,0);
@@ -319,7 +289,6 @@ function buildTx(rnd,startBal){
   }
   return out.sort((a,b)=>b.t-a.t);
 }
-
 function fresh(){
   const rnd=mulberry32(19921024);
   const isa=buildLedger(rnd,TARGET);
@@ -334,24 +303,22 @@ function fresh(){
     {id:'p7',n:'Rainy Day',a:5000.00,rate:3.80,goal:8000,lock:null,ico:'☔',col:'#475467'}
   ];
   const potTotal=+pots.reduce((s,p)=>s+p.a,0).toFixed(2);
-  const hold=rnd;
-  let raw=INSTR.map(([n,k])=>({n,k,w:0.3+hold()*2.6}));
+  let raw=INSTR.map(([n,k])=>({n,k,w:0.3+rnd()*2.6}));
   const sum=raw.reduce((s,h)=>s+h.w,0);
-  const holdings=raw.map(h=>({n:h.n,k:h.k,v:+(h.w/sum*PORT_TARGET).toFixed(2),cost:+(h.w/sum*PORT_TARGET*(0.42+hold()*0.55)).toFixed(2)}));
+  const holdings=raw.map(h=>({n:h.n,k:h.k,v:+(h.w/sum*PORT_TARGET).toFixed(2),cost:+(h.w/sum*PORT_TARGET*(0.42+rnd()*0.55)).toFixed(2)}));
   const diff=+(PORT_TARGET-holdings.reduce((s,h)=>s+h.v,0)).toFixed(2);
   holdings[0].v=+(holdings[0].v+diff).toFixed(2);
   return {
     v:4,
     profile:{name:'Jason Armstrong',addr:'259 Piper Knowle Road',city:'Stockton-on-Tees',pc:'TS19 8JQ',email:'jasonarm82@gmail.com',phone:'07356170033',idv:'Verified',taxres:'United Kingdom',since:'14 October 2015',dob:'1982-04-11'},
     acct:{current:2847.19,savings:potTotal,isaCash:ISA_CASH,flexUsed:412.50,flexLimit:3000,odLimit:2000,odDrawn:340},
-    pots,tx,ledger:{isa},
-    holdings,
+    pots,tx,ledger:{isa},holdings,
     dd:BILLS.map((b,i)=>({id:'dd'+i,n:b.n,c:b.c,a:b.a,day:b.day,ref:'MZ'+String(4820011+i).slice(0,6),since:'2019-0'+(1+i%8)+'-1'+(i%9)})),
     sched:[{id:'sc1',n:'Mum',a:150,to:'Mum · 40-11-22 · 7341',freq:'Monthly',next:'2026-01-03',out:true}],
     payees:[{id:'py1',n:'Mum',s:'40-11-22',a:'73412200',i:'M'},{id:'py2',n:'Dan Whitfield',s:'04-00-04',a:'55120987',i:'D'},{id:'py3',n:'Cleveland Pottery Ltd',s:'20-33-87',a:'44210933',i:'C'}],
     notifs:[],card:{frozen:false,online:true,atm:200,mag:true},
     sec:{bio:true,pin:'4821',lock:true,privacy:false},
-    prefs:{motion:!REDUCED,notif:{tx:true,dd:true,pot:true,market:false}},
+    prefs:{theme:'auto',mark:'coral',motion:!REDUCED,notif:{tx:true,dd:true,pot:true,market:false}},
     cats:['Groceries','Transport','Eating out','Shopping','Bills','Leisure','Health','Home','Travel','Income','Transfers'],
     importLog:[{d:'2015-10-14',src:'Halifax',n:'ISA transfer-in'},{d:'2015-10-14',src:'Hargreaves Lansdown',n:'Investment account transfer'},{d:'2016-04-06',src:'Legal & General',n:'PEP consolidation'}],
     seen:{}
@@ -362,32 +329,49 @@ let S;
 function load(){
   try{
     const raw=localStorage.getItem(KEY);
-    if(raw){const p=JSON.parse(raw);if(p&&p.v===4&&p.ledger&&p.ledger.isa&&p.ledger.isa.length>300){S=p;return}}
+    if(raw){
+      const p=JSON.parse(raw);
+      if(p&&p.v===4&&p.ledger&&p.ledger.isa&&p.ledger.isa.length>300){
+        S=p;
+        S.prefs=S.prefs||{};
+        S.prefs.theme=S.prefs.theme||'auto';
+        S.prefs.mark=S.prefs.mark||'coral';
+        S.prefs.notif=S.prefs.notif||{tx:true,dd:true,pot:true,market:false};
+        S.seen=S.seen||{};S.notifs=S.notifs||[];
+        S.card=S.card||{frozen:false,online:true,atm:200,mag:true};
+        S.sec=S.sec||{bio:true,pin:'4821',lock:true,privacy:false};
+        applyTheme();return;
+      }
+    }
   }catch(e){}
-  S=fresh();save();
+  S=fresh();save();applyTheme();
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+function applyTheme(){document.documentElement.dataset.theme=S?.prefs?.theme||'auto'}
+function setTheme(t){S.prefs.theme=t;save();applyTheme();render();toast('Appearance updated')}
+function setMark(k){S.prefs.mark=k;save();render();toast('App icon updated')}
 
 /* derived */
 const isaBal=()=>S.ledger.isa[S.ledger.isa.length-1].closing;
 const portVal=()=>S.holdings.reduce((s,h)=>s+h.v,0);
 const netWorth=()=>S.acct.current+S.acct.savings+isaBal();
 const leftToSpend=()=>{
-  const d=new Date();const m=d.getMonth(),y=d.getFullYear();
+  const d=new Date(),m=d.getMonth(),y=d.getFullYear();
   const spent=S.tx.filter(t=>t.amt<0&&!t.sal&&new Date(t.d).getMonth()===m&&new Date(t.d).getFullYear()===y).reduce((s,t)=>s-t.amt,0);
-  const budget=2600;
-  return Math.max(0,+(budget-spent).toFixed(2));
+  return Math.max(0,+(2600-spent).toFixed(2));
 };
 const tyUsed=()=>{
-  const y=taxYear();const start=new Date(y,3,6);const end=new Date(y+1,3,6);
+  const y=taxYear(),start=new Date(y,3,6),end=new Date(y+1,3,6);
   return S.ledger.isa.filter(r=>{const dt=new Date(r.y,r.m,1);return dt>=start&&dt<end}).reduce((s,r)=>s+r.contrib,0);
 };
 
-/* ============================================================
-   CHROME
-   ============================================================ */
-const MARK=`<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#FF4F40"/><path d="M6.6 17.2V9.4a1.7 1.7 0 0 1 3.05-1.03L12 12.4l2.35-4.03A1.7 1.7 0 0 1 17.4 9.4v7.8" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
+/* ---------- chrome ---------- */
+function mark(size=26,variant){
+  const v=variant||S.prefs.mark||'coral';
+  const bg=v==='coral'?'#FF4F40':v==='navy'?'#091723':'#4A5563';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="${bg}"/><path d="M6.6 17.2V9.4a1.7 1.7 0 0 1 3.05-1.03L12 12.4l2.35-4.03A1.7 1.7 0 0 1 17.4 9.4v7.8" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
 function toast(msg){
   const t=document.createElement('div');t.className='toast';t.textContent=msg;
   $('#toast').appendChild(t);
@@ -400,8 +384,6 @@ function sheet(html){
 function closeSheet(){$('#sheet').classList.remove('on');$('#scrim').classList.remove('on')}
 $('#scrim').onclick=closeSheet;
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
-
-/* drag to dismiss */
 (function(){
   const s=$('#sheet');let y0=null,dy=0;
   s.addEventListener('touchstart',e=>{if(s.scrollTop>4)return;y0=e.touches[0].clientY},{passive:true});
@@ -409,12 +391,19 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
   s.addEventListener('touchend',()=>{if(y0===null)return;s.style.transform='';if(dy>90)closeSheet();y0=null;dy=0});
 })();
 
-/* ============================================================
-   ROUTER
-   ============================================================ */
+/* ---------- router ---------- */
 let stack=['home'];
-function go(r,p){stack.push(r+(p?':'+p:''));render();window.scrollTo(0,0)}
-function back(){if(stack.length>1)stack.pop();render();window.scrollTo(0,0)}
+function go(r,p){
+  const next=r+(p?':'+p:'');
+  if(cur()===next)return;
+  stack.push(next);render();window.scrollTo(0,0);
+}
+function back(){
+  closeSheet();
+  if(stack.length>1)stack.pop();
+  else stack=['home'];
+  render();window.scrollTo(0,0);
+}
 function reset(r){stack=[r];render();window.scrollTo(0,0)}
 const cur=()=>stack[stack.length-1];
 const curP=()=>{const c=cur();return c.includes(':')?c.split(':')[1]:null};
@@ -437,52 +426,53 @@ function tabs(){
   </nav>`;
 }
 
-/* ============================================================
-   CHART HELPERS
-   ============================================================ */
+/* ---------- charts ---------- */
 function lineChart(pts,w,h,opt={}){
   if(!pts.length)return '';
   const min=Math.min(...pts),max=Math.max(...pts),pad=(max-min)||1;
   const X=i=>i/(pts.length-1||1)*w, Y=v=>h-((v-min)/pad)*h;
   const d=pts.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
-  const area=`${d} L${w} ${h} L0 ${h} Z`;
   return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="height:${opt.h||140}px" aria-hidden="true">
     <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF4F40" stop-opacity=".28"/><stop offset="1" stop-color="#FF4F40" stop-opacity="0"/></linearGradient></defs>
-    <path d="${area}" fill="url(#g1)"/><path d="${d}" fill="none" stroke="#FF4F40" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="${d} L${w} ${h} L0 ${h} Z" fill="url(#g1)"/><path d="${d}" fill="none" stroke="#FF4F40" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
     <circle cx="${X(pts.length-1)}" cy="${Y(pts[pts.length-1])}" r="4" fill="#FF4F40"/></svg>`;
 }
 function barChart(vals,labels,w,h){
   if(!vals.length)return '';
-  const max=Math.max(...vals)||1;const bw=w/vals.length;
+  const max=Math.max(...vals)||1,bw=w/vals.length;
   return `<svg class="chart" viewBox="0 0 ${w} ${h+18}" style="height:${h+18}px" aria-hidden="true">
-    ${vals.map((v,i)=>`<rect x="${(i*bw+bw*0.18).toFixed(1)}" y="${(h-(v/max)*h).toFixed(1)}" width="${(bw*0.64).toFixed(1)}" height="${Math.max(1,(v/max)*h).toFixed(1)}" rx="3" fill="${v===max?'#FF4F40':'#091723'}" opacity="${v===max?1:.82}"/>`).join('')}
-    ${labels.map((l,i)=>`<text class="axis" x="${(i*bw+bw/2).toFixed(1)}" y="${h+13}" text-anchor="middle">${esc(l)}</text>`).join('')}
+    ${vals.map((v,i)=>`<rect x="${(i*bw+bw*0.18).toFixed(1)}" y="${(h-(v/max)*h).toFixed(1)}" width="${(bw*0.64).toFixed(1)}" height="${Math.max(1,(v/max)*h).toFixed(1)}" rx="3" fill="${v===max?'#FF4F40':'currentColor'}" opacity="${v===max?1:.82}"/>`).join('')}
+    ${labels.map((l,i)=>l?`<text class="axis" x="${(i*bw+bw/2).toFixed(1)}" y="${h+13}" text-anchor="middle">${esc(l)}</text>`:'').join('')}
   </svg>`;
 }
 function donut(data,w=150){
   const total=data.reduce((s,d)=>s+d.v,0)||1;let a=-Math.PI/2;
-  const R=w/2, r=R*0.62;
+  const R=w/2,r=R*0.62;
   const arcs=data.map(d=>{
-    const ang=d.v/total*Math.PI*2;const a2=a+ang;
-    const p=(rad,ang)=>[w/2+Math.cos(ang)*rad,w/2+Math.sin(ang)*rad];
+    const ang=d.v/total*Math.PI*2,a2=a+ang;
+    const p=(rad,an)=>[w/2+Math.cos(an)*rad,w/2+Math.sin(an)*rad];
     const [x1,y1]=p(R,a),[x2,y2]=p(R,a2),[x3,y3]=p(r,a2),[x4,y4]=p(r,a);
-    const big=ang>Math.PI?1:0;
-    a=a2;
+    const big=ang>Math.PI?1:0;a=a2;
     return `<path d="M${x1} ${y1} A${R} ${R} 0 ${big} 1 ${x2} ${y2} L${x3} ${y3} A${r} ${r} 0 ${big} 0 ${x4} ${y4} Z" fill="${d.c}"/>`;
   }).join('');
   return `<svg viewBox="0 0 ${w} ${w}" style="width:${w}px;height:${w}px" aria-hidden="true">${arcs}</svg>`;
 }
 function heatmap(cells){
   return `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${cells.map(c=>
-    `<div title="${c.d}: ${gbp(c.v)}" style="aspect-ratio:1;border-radius:6px;background:${c.v?`rgba(255,79,64,${clamp(c.v/120,.12,1).toFixed(2)})`:'#F1F2F4'}"></div>`).join('')}</div>`;
+    `<div title="${c.d}: ${gbp(c.v)}" style="aspect-ratio:1;border-radius:6px;background:${c.v?`rgba(255,79,64,${clamp(c.v/120,.12,1).toFixed(2)})`:'var(--surface)'}"></div>`).join('')}</div>`;
 }
 
-/* ============================================================
-   VIEWS
-   ============================================================ */
+/* ---------- views ---------- */
+function txRow(t,i){
+  const ico=t.amt>0?'↓':(t.n[0]||'?');
+  return `<button class="row stag" style="animation-delay:${Math.min(i*14,220)}ms;width:100%;text-align:left" onclick="go('tx','${t.id}')">
+    <span class="ico ${t.amt>0?'coral':''}">${esc(ico)}</span>
+    <span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}${t.pend?' · Pending':''}${t.dd?' · Direct Debit':''}</span></span>
+    <span class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${gbp(t.amt)}</span>
+  </button>`;
+}
 function vHome(){
   const lts=leftToSpend();
-  const recent=S.tx.slice(0,28);
   return `
   <div class="top">
     <div class="avatar" role="button" tabindex="0" onclick="go('hub')" aria-label="Accounts">JA</div>
@@ -506,58 +496,39 @@ function vHome(){
       <button class="badge" onclick="go('card')">Card</button>
     </div>
   </div>
-
-  <div class="sec" style="display:flex;justify-content:space-between;align-items:center">Pots <button class="badge" onclick="reset('savings')">${gbp0(S.acct.savings)}</button></div>
+  <div class="sec" style="display:flex;justify-content:space-between;align-items:center">Pots <button class="badge" onclick="go('savings')">${gbp0(S.acct.savings)}</button></div>
   <div style="display:flex;gap:10px;overflow-x:auto;padding:0 20px 6px;scrollbar-width:none">
-    ${S.pots.map(p=>`<button onclick="go('pot',p2='${p.id}')" class="card" style="flex:0 0 132px;text-align:left;background:${p.col}18;border:0">
+    ${S.pots.map(p=>`<button onclick="go('pot','${p.id}')" class="card" style="flex:0 0 132px;text-align:left;background:${p.col}18;border:0">
       <div style="font-size:22px">${p.ico}</div>
       <div style="font-weight:800;font-size:13px;margin-top:6px;line-height:1.2">${esc(p.n)}</div>
       <div class="mono" style="font-weight:800;font-size:14px;margin-top:4px">${gbp(p.a)}</div>
     </button>`).join('')}
-    <button class="card" style="flex:0 0 132px;border:1.5px dashed var(--line);background:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)" onclick="newPot()">+ New pot</button>
+    <button class="card" style="flex:0 0 132px;border:1.5px dashed var(--line);background:var(--card);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)" onclick="newPot()">+ New pot</button>
   </div>
-
   <div class="sec">Transactions</div>
   <div class="list">
-    ${recent.map((t,i)=>txRow(t,i)).join('')||'<div class="empty"><b>Nothing yet</b>Your spending will appear here.</div>'}
+    ${S.tx.slice(0,28).map((t,i)=>txRow(t,i)).join('')||'<div class="empty"><b>Nothing yet</b>Your spending will appear here.</div>'}
   </div>
   ${tabs()}`;
 }
-function txRow(t,i){
-  const ico=t.amt>0?'↓':(t.n[0]||'?');
-  return `<button class="row stag" style="animation-delay:${Math.min(i*14,220)}ms;width:100%;text-align:left" onclick="go('tx','${t.id}')">
-    <span class="ico ${t.amt>0?'coral':''}">${esc(ico)}</span>
-    <span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}${t.pend?' · Pending':''}${t.dd?' · Direct Debit':''}</span></span>
-    <span class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${gbp(t.amt)}</span>
-  </button>`;
-}
-
 function vHub(){
-  return topbar('Accounts',{back:true})+`
-  <div class="pad">
+  return topbar('Accounts',{back:true})+`<div class="pad">
     <div class="card w" style="margin-bottom:12px">
-      <div class="lbl small muted" style="font-weight:800;text-transform:uppercase;font-size:11px;letter-spacing:.8px">Net worth</div>
+      <div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Net worth</div>
       <div style="font-size:32px;font-weight:800;letter-spacing:-1.2px" class="mono">${gbp(netWorth())}</div>
     </div>
-    ${[
-      ['Current account',S.acct.current,'home'],
-      ['Savings',S.acct.savings,'savings'],
-      ['Cash ISA',S.acct.isaCash,'isa'],
-      ['Investments',portVal(),'inv'],
-      ['Monzo Flex',-S.acct.flexUsed,'flex'],
-      ['Overdraft',-S.acct.odDrawn,'od']
-    ].map(([n,v,r])=>`<button class="row" style="width:100%;text-align:left" onclick="reset('${r}')">
+    ${[['Current account',S.acct.current,'home'],['Savings',S.acct.savings,'savings'],['Cash ISA',S.acct.isaCash,'isa'],['Investments',portVal(),'inv'],['Monzo Flex',-S.acct.flexUsed,'flex'],['Overdraft',-S.acct.odDrawn,'od']]
+      .map(([n,v,r])=>`<button class="row" style="width:100%;text-align:left" onclick="go('${r}')">
       <span class="t"><b>${n}</b><span>${r==='isa'||r==='inv'?'Opened October 1992':'Monzo'}</span></span>
       <span class="amt ${v<0?'':'pos'}">${gbp(v)}</span></button>`).join('')}
     <div class="sec" style="padding:0;margin-top:24px">Combined ISA wrapper</div>
-    <div class="card" style="background:#FFF1F0">
+    <div class="card" style="background:var(--accent-soft)">
       <div style="display:flex;justify-content:space-between"><b>Stocks &amp; Shares ISA</b><b class="mono">${gbp(isaBal())}</b></div>
       <div class="small muted" style="margin-top:6px">Cash ${gbp(S.acct.isaCash)} · Invested ${gbp(portVal())}</div>
       <div class="tiny muted" style="margin-top:6px">${tyLabel(taxYear())} allowance used ${gbp(tyUsed())} of ${gbp(ISA_LIMITS[taxYear()]||20000)}</div>
     </div>
   </div>`;
 }
-
 function vTrends(){
   const range=S.seen.trendRange||'month';
   const cats={};
@@ -565,55 +536,57 @@ function vTrends(){
   S.tx.filter(t=>t.amt<0&&new Date(t.d)>=from).forEach(t=>{cats[t.c]=(cats[t.c]||0)+(-t.amt)});
   const palette=['#FF4F40','#091723','#7A5AF8','#0BA5EC','#0E9F6E','#B54708','#D92D20','#475467'];
   const cd=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([k,v],i)=>({k,v,c:palette[i%palette.length]}));
-  const total=cd.reduce((s,d)=>s+d.v,0);
   const days=range==='week'?7:range==='month'?30:range==='year'?12:36;
   const buckets=Array(days).fill(0);
   S.tx.filter(t=>t.amt<0).forEach(t=>{
-    const dt=new Date(t.d);const idx=range==='year'?11-dt.getMonth():range==='all'?35-(new Date().getFullYear()-dt.getFullYear())*12-dt.getMonth():Math.floor((Date.now()-dt.getTime())/864e5);
-    const i=range==='week'||range==='month'?days-1-idx:idx;
+    const dt=new Date(t.d);
+    let i;
+    if(range==='year')i=11-dt.getMonth();
+    else if(range==='all')i=35-(new Date().getFullYear()-dt.getFullYear())*12-dt.getMonth();
+    else i=days-1-Math.floor((Date.now()-dt.getTime())/864e5);
     if(i>=0&&i<days)buckets[i]+=-t.amt;
   });
+  const labels=Array(days).fill('');
+  if(range==='week')labels.splice(0,7,...['M','T','W','T','F','S','S']);
+  else if(range==='month')for(let i=0;i<days;i+=5)labels[i]=String(i+1);
+  else if(range==='year')labels.splice(0,12,...MON);
+  else for(let i=0;i<days;i+=6)labels[i]=String(new Date().getFullYear()-2+Math.floor(i/12));
   const bal=[];
   for(let i=Math.min(29,S.tx.length);i>=0;i--) bal.push(S.tx[i]?.bal||0);
   const cells=[];
   for(let i=34;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=dstr(d);const v=S.tx.filter(t=>t.d===ds&&t.amt<0).reduce((s,t)=>s-t.amt,0);cells.push({d:ds,v})}
-  const labels=range==='week'?['M','T','W','T','F','S','S']:range==='month'?Array.from({length:days},(_,i)=>i%5===0?String(i+1):''):MON;
-
   return topbar('Trends')+`<div class="pad">
-    <div class="seg" role="tablist" style="margin-bottom:16px">
+    <div class="seg" style="margin-bottom:16px">
       ${[['week','Week'],['month','Month'],['year','Year'],['all','All time']].map(([k,l])=>`<button class="${range===k?'on':''}" onclick="S.seen.trendRange='${k}';save();render()">${l}</button>`).join('')}
     </div>
     <div class="card w">
-      <div class="small muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px;font-size:11px">Balance trend</div>
+      <div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Balance trend</div>
       <div style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px" class="mono">${gbp(S.acct.current)}</div>
       ${lineChart(bal,320,120)}
     </div>
     <div class="card w" style="margin-top:12px">
-      <div class="small muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px;font-size:11px">Spending</div>
+      <div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Spending</div>
       <div style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px" class="mono">${gbp(buckets.reduce((a,b)=>a+b,0))}</div>
       ${barChart(buckets,labels,320,110)}
     </div>
     <div class="card w" style="margin-top:12px;display:flex;gap:16px;align-items:center">
       ${donut(cd,132)}
-      <div style="flex:1">
-        ${cd.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px">
-          <span style="width:9px;height:9px;border-radius:3px;background:${d.c};flex:0 0 auto"></span>
-          <span style="flex:1">${esc(d.k)}</span><b class="mono">${gbp(d.v)}</b></div>`).join('')}
-      </div>
+      <div style="flex:1">${cd.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px">
+        <span style="width:9px;height:9px;border-radius:3px;background:${d.c};flex:0 0 auto"></span>
+        <span style="flex:1">${esc(d.k)}</span><b class="mono">${gbp(d.v)}</b></div>`).join('')}</div>
     </div>
     <div class="card w" style="margin-top:12px">
-      <div class="small muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px;font-size:11px;margin-bottom:10px">Last 35 days</div>
+      <div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Last 35 days</div>
       ${heatmap(cells)}
     </div>
-    <div class="card" style="margin-top:12px;background:#FFF1F0">
+    <div class="card" style="margin-top:12px;background:var(--accent-soft)">
       <b>Lifetime performance</b>
       <div class="small muted" style="margin-top:4px">Since October 1992 · ${gbp(isaBal())} current value</div>
       <div style="margin-top:12px">${lineChart(S.ledger.isa.filter((_,i)=>i%3===0).map(r=>r.closing),320,90)}</div>
-      <button class="btn sm" style="margin-top:12px" onclick="reset('isa')">Open ISA history</button>
+      <button class="btn sm" style="margin-top:12px" onclick="go('isa')">Open ISA history</button>
     </div>
   </div>${tabs()}`;
 }
-
 function vSavings(){
   return topbar('Save')+`<div class="pad">
     <div class="hc">
@@ -628,17 +601,16 @@ function vSavings(){
       <span class="amt pos">${gbp(p.a)}</span></button>`).join('')}
     <button class="btn ghost" style="margin-top:14px" onclick="newPot()">+ Create a pot</button>
     <div class="sec" style="padding:0;margin-top:26px">Tax-efficient</div>
-    <button class="row" style="width:100%;text-align:left" onclick="reset('isa')">
+    <button class="row" style="width:100%;text-align:left" onclick="go('isa')">
       <span class="ico coral">ISA</span>
       <span class="t"><b>Stocks &amp; Shares ISA</b><span>Opened October 1992 · ${tyLabel(taxYear())} allowance ${gbp(ISA_LIMITS[taxYear()]||20000)}</span></span>
       <span class="amt">${gbp(isaBal())}</span></button>
-    <button class="row" style="width:100%;text-align:left" onclick="reset('inv')">
+    <button class="row" style="width:100%;text-align:left" onclick="go('inv')">
       <span class="ico">📈</span>
       <span class="t"><b>Investments</b><span>${S.holdings.length} holdings · ${gbp(portVal())}</span></span>
       <span class="amt">›</span></button>
   </div>${tabs()}`;
 }
-
 function vISA(){
   const rows=S.ledger.isa;
   const years=[...new Set(rows.map(r=>r.y))].sort((a,b)=>b-a);
@@ -664,7 +636,7 @@ function vISA(){
     <div class="sec" style="padding:0;margin-top:22px">Monthly ledger</div>
     <div style="border-top:1px solid var(--line)">
       ${years.map(y=>`<div>
-        <button class="yearbtn" onclick="S.seen.isaYear=${y};save();render()">
+        <button class="yearbtn" onclick="toggleYear(${y})" aria-expanded="${y===open}">
           <b>${y}</b><span class="small muted" style="flex:1">${gbp(rows.filter(r=>r.y===y).slice(-1)[0].closing)}</span>
           <span class="muted">${y===open?'▾':'▸'}</span>
         </button>
@@ -683,38 +655,38 @@ function vISA(){
     </div>
   </div>`;
 }
-
+function toggleYear(y){
+  S.seen.isaYear=(S.seen.isaYear===y)?null:y;
+  save();render();
+}
 function vInv(){
-  const total=portVal(),cost=S.holdings.reduce((s,h)=>s+h.cost,0);
-  const gain=total-cost;
+  const total=portVal(),cost=S.holdings.reduce((s,h)=>s+h.cost,0),gain=total-cost;
   return topbar('Investments',{back:true,right:`<button class="iconbtn" onclick="go('stmts','inv')" aria-label="Statements">📄</button>`})+`<div class="pad">
     <div class="card w">
       <div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Portfolio value</div>
       <div style="font-size:34px;font-weight:800;letter-spacing:-1.4px" class="mono">${gbp(total)}</div>
       <div class="small"><span class="pos">+${gbp(gain)}</span> <span class="muted">(${(gain/cost*100).toFixed(1)}%) since 1992</span></div>
     </div>
-    <div class="card" style="margin-top:12px;background:#FFF1F0">
+    <div class="card" style="margin-top:12px;background:var(--accent-soft)">
       <div class="row" style="padding:0"><span class="t"><b>Reinvested dividends</b><span>Automatic · last paid 1 Dec</span></span><span class="badge ok">On</span></div>
     </div>
     <div class="sec" style="padding:0;margin-top:22px">Holdings · ${S.holdings.length}</div>
-    ${S.holdings.slice().sort((a,b)=>b.v-a.v).map((h,i)=>`<button class="row" style="width:100%;text-align:left" onclick="go('hold','${i}')">
+    ${S.holdings.slice().sort((a,b)=>b.v-a.v).map(h=>`<button class="row" style="width:100%;text-align:left" onclick="go('hold','${encodeURIComponent(h.n)}')">
       <span class="ico" style="font-size:11px">${esc(h.k.slice(0,3).toUpperCase())}</span>
       <span class="t"><b>${esc(h.n)}</b><span>${esc(h.k)} · cost ${gbp(h.cost)}</span></span>
       <span class="amt">${gbp(h.v)}</span></button>`).join('')}
   </div>`;
 }
-
-function vHold(i){
-  const h=S.holdings[i];
+function vHold(name){
+  const h=S.holdings.find(x=>x.n===decodeURIComponent(name||''))||S.holdings[0];
   return topbar(h.n,{back:true})+`<div class="pad">
     <div class="card w"><div class="tiny muted">VALUE</div><div style="font-size:30px;font-weight:800" class="mono">${gbp(h.v)}</div>
     <div class="small"><span class="${h.v-h.cost>=0?'pos':''}">${h.v-h.cost>=0?'+':''}${gbp(h.v-h.cost)}</span> <span class="muted">(${((h.v-h.cost)/h.cost*100).toFixed(1)}%)</span></div></div>
-    <div class="card w" style="margin-top:12px"><div class="small muted">Cost basis ${gbp(h.cost)} · ${esc(h.k)} · held since 1992 wrapper</div></div>
+    <div class="card w" style="margin-top:12px"><div class="small muted">Cost basis ${gbp(h.cost)} · ${esc(h.k)} · held in the 1992 wrapper</div></div>
     <button class="btn" style="margin-top:14px" onclick="toast('Order ticket opened for ${esc(h.n)}')">Buy more</button>
     <button class="btn ghost" style="margin-top:8px" onclick="toast('Sell order placed')">Sell</button>
   </div>`;
 }
-
 function vPot(id){
   const p=S.pots.find(x=>x.id===id);if(!p)return vSavings();
   const pct=clamp(p.a/p.goal*100,0,100);
@@ -737,7 +709,6 @@ function vPot(id){
     <button class="row" style="width:100%;text-align:left" onclick="archivePot('${p.id}')"><span class="t"><b>Archive pot</b></span><span class="muted">›</span></button>
   </div>`;
 }
-
 function vTx(id){
   const t=S.tx.find(x=>x.id===id);if(!t)return vHome();
   return topbar('Transaction',{back:true})+`<div class="pad">
@@ -764,7 +735,6 @@ function vTx(id){
     <button class="btn" style="margin-top:14px" onclick="toast('Receipt attached')">Attach receipt</button>
   </div>`;
 }
-
 function vFlex(){
   return topbar('Monzo Flex',{back:true})+`<div class="pad">
     <div class="hc"><div class="tiny" style="font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.8">Available</div>
@@ -779,11 +749,9 @@ function vFlex(){
     <button class="btn" style="margin-top:14px" onclick="toast('Instalment paid early')">Pay instalment early</button>
   </div>`;
 }
-
 function vOD(){
-  const avail=S.acct.odLimit-S.acct.odDrawn;
   return topbar('Overdraft',{back:true})+`<div class="pad">
-    <div class="card w"><div class="tiny muted">Available to use</div><div style="font-size:32px;font-weight:800" class="mono">${gbp(avail)}</div>
+    <div class="card w"><div class="tiny muted">Available to use</div><div style="font-size:32px;font-weight:800" class="mono">${gbp(S.acct.odLimit-S.acct.odDrawn)}</div>
     <div class="small muted">${gbp(S.acct.odDrawn)} of ${gbp(S.acct.odLimit)} used · 29% EAR</div>
     <div class="prog" style="margin-top:10px"><i style="width:${S.acct.odDrawn/S.acct.odLimit*100}%"></i></div></div>
     <div style="display:flex;gap:10px;margin-top:14px">
@@ -793,17 +761,15 @@ function vOD(){
     <div class="card" style="margin-top:16px"><b class="small">Daily charge</b><div class="small muted">50p per day while over £0, capped at £15.50 a month.</div></div>
   </div>`;
 }
-
 function vDD(){
   return topbar('Direct Debits',{back:true})+`<div class="pad">
-    <div class="card w small muted">${S.dd.length} active mandates · next collection ${S.dd.slice().sort((a,b)=>a.day-b.day)[0].day} ${MON[new Date().getMonth()]}</div>
+    <div class="card w small muted">${S.dd.length} active mandates</div>
     ${S.dd.map(d=>`<button class="row" style="width:100%;text-align:left" onclick="ddSheet('${d.id}')">
       <span class="ico">${esc(d.n[0])}</span>
       <span class="t"><b>${esc(d.n)}</b><span>Monthly · day ${d.day} · ref ${esc(d.ref)}</span></span>
       <span class="amt">${gbp(d.a)}</span></button>`).join('')}
   </div>`;
 }
-
 function vSched(){
   return topbar('Scheduled',{back:true})+`<div class="pad">
     <div class="sec" style="padding:0">Standing orders</div>
@@ -813,53 +779,53 @@ function vSched(){
     <button class="btn" style="margin-top:16px" onclick="toast('New payee added')">+ Add payee</button>
   </div>`;
 }
-
 function vSearch(){
   const q=(S.seen.q||'').toLowerCase();
   const res=q?S.tx.filter(t=>t.n.toLowerCase().includes(q)||t.c.toLowerCase().includes(q)).slice(0,60):[];
   const led=q?S.ledger.isa.filter(r=>ymLabel(r.ym).toLowerCase().includes(q)||r.ym.includes(q)).slice(-24):[];
   return topbar('Search',{back:true})+`<div class="pad">
-    <input id="q" placeholder="Merchant, category or month" value="${esc(S.seen.q||'')}" oninput="S.seen.q=this.value;save();renderSearch()" autofocus/>
+    <input id="q" placeholder="Merchant, category or month" value="${esc(S.seen.q||'')}" oninput="S.seen.q=this.value;save();renderSearch()"/>
     ${q?`<div class="sec" style="padding:0">${res.length} transactions</div>
       ${res.map(t=>`<button class="row" style="width:100%;text-align:left" onclick="go('tx','${t.id}')"><span class="ico">${esc(t.n[0])}</span><span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB')}</span></span><span class="amt">${gbp(t.amt)}</span></button>`).join('')||'<div class="empty"><b>No matches</b></div>'}
       ${led.length?`<div class="sec" style="padding:0;margin-top:20px">ISA ledger</div>${led.map(r=>`<div class="row"><span class="t"><b>${ymLabel(r.ym)}</b><span>closing balance</span></span><span class="amt">${gbp(r.closing)}</span></div>`).join('')}`:''}`
     :`<div class="sec" style="padding:0">Recent searches</div>${['Tesco','Arriva','Bills','ISA'].map(s=>`<button class="row" style="width:100%;text-align:left" onclick="S.seen.q='${s}';save();render()"><span class="ico">⌕</span><span class="t"><b>${s}</b></span></button>`).join('')}`}
   </div>`;
 }
-function renderSearch(){const v=cur();if(v.split(':')[0]==='search'){const q=$('#q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}render()}}
-
+function renderSearch(){
+  if(cur().split(':')[0]!=='search')return;
+  render();
+  const q=$('#q');
+  if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}
+}
 function vStmts(kind){
   const isa=kind==='isa';
   const rows=isa?S.ledger.isa:[];
-  const years=isa?[...new Set(rows.map(r=>r.y))].sort((a,b)=>b-a):[new Date().getFullYear()];
+  const years=isa?[...new Set(rows.map(r=>r.y))].sort((a,b)=>b-a):[];
+  const tys=isa?[...new Set(rows.map(r=>{const d=new Date(r.y,r.m,1);return d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6)?r.y-1:r.y}))].sort((a,b)=>b-a).slice(0,12):[];
   return topbar(isa?'ISA statements':'Investment statements',{back:true})+`<div class="pad">
     <div class="card w small muted">Every month since inception. Each statement exports as CSV.</div>
-    ${isa?years.map(y=>`<div class="row"><span class="t"><b>${y}</b><span>12 monthly statements${y===1992?' · from October':''}</span></span>
-      <button class="badge" onclick="dlYear(${y})">CSV</button></div>`).join(''):''}
-    <div class="sec" style="padding:0;margin-top:20px">Tax year summaries</div>
-    ${[...new Set(rows.map(r=>{const d=new Date(r.y,r.m,1);return d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6)?r.y-1:r.y}))].sort((a,b)=>b-a).slice(0,12).map(y=>{
-      const c=rows.filter(r=>{const d=new Date(r.y,r.m,1);const ty=d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6)?r.y-1:r.y;return ty===y}).reduce((s,r)=>s+r.contrib,0);
-      return `<div class="row"><span class="t"><b>${tyLabel(y)}</b><span>limit ${gbp(ISA_LIMITS[y]||20000)}</span></span><span class="amt small">${gbp(c)}</span></div>`}).join('')}
+    ${years.map(y=>`<div class="row"><span class="t"><b>${y}</b><span>12 monthly statements${y===1992?' · from October':''}</span></span>
+      <button class="badge" onclick="dlYear(${y})">CSV</button></div>`).join('')}
+    ${tys.length?`<div class="sec" style="padding:0;margin-top:20px">Tax year summaries</div>
+    ${tys.map(y=>{const c=rows.filter(r=>{const d=new Date(r.y,r.m,1);const ty=d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6)?r.y-1:r.y;return ty===y}).reduce((s,r)=>s+r.contrib,0);
+      return `<div class="row"><span class="t"><b>${tyLabel(y)}</b><span>limit ${gbp(ISA_LIMITS[y]||20000)}</span></span><span class="amt small">${gbp(c)}</span></div>`}).join('')}`:''}
   </div>`;
 }
-
 function vNotifs(){
-  const n=S.notifs;
   return topbar('Notifications',{back:true})+`<div class="pad">
-    ${n.length?n.map(x=>`<div class="row"><span class="ico">${x.i||'•'}</span><span class="t"><b>${esc(x.t)}</b><span>${esc(x.b)}</span></span><span class="tiny muted">${x.d}</span></div>`).join(''):'<div class="empty"><b>All caught up</b>Alerts will appear here.</div>'}
+    ${S.notifs.length?S.notifs.map(x=>`<div class="row"><span class="ico">${x.i||'•'}</span><span class="t"><b>${esc(x.t)}</b><span>${esc(x.b)}</span></span><span class="tiny muted">${x.d}</span></div>`).join(''):'<div class="empty"><b>All caught up</b>Alerts will appear here.</div>'}
   </div>`;
 }
-
 function vBudgets(){
+  const m=new Date().getMonth();
   return topbar('Targets',{back:true})+`<div class="pad">
     <div class="card w small muted">Set a monthly target per category. Trends and Left to Spend use these.</div>
     ${['Groceries','Transport','Eating out','Shopping','Bills','Leisure'].map((c,i)=>{
-      const spent=S.tx.filter(t=>t.c===c&&new Date(t.d).getMonth()===new Date().getMonth()).reduce((s,t)=>s-t.amt,0);
+      const spent=S.tx.filter(t=>t.c===c&&new Date(t.d).getMonth()===m).reduce((s,t)=>s-t.amt,0);
       const cap=[420,120,180,200,320,90][i];
       return `<div class="row"><span class="t"><b>${c}</b><span>${gbp(spent)} of ${gbp(cap)}</span><div class="prog" style="margin-top:6px"><i style="width:${clamp(spent/cap*100,0,100)}%"></i></div></span></div>`}).join('')}
   </div>`;
 }
-
 function vProfile(){
   const p=S.profile;
   return topbar('You',{right:`<button class="iconbtn" onclick="go('settings')" aria-label="Settings">⚙️</button>`})+`<div class="pad">
@@ -876,10 +842,9 @@ function vProfile(){
     <button class="row" style="width:100%;text-align:left" onclick="toast('Chat opening…')"><span class="t"><b>Chat with us</b><span>Usually replies in 2 minutes</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('help')"><span class="t"><b>Help centre</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="toast('All systems operational')"><span class="t"><b>Service status</b></span><span class="badge ok">Operational</span></button>
-    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 4.0.1</div>
+    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 4.1.0</div>
   </div>${tabs()}`;
 }
-
 function vPD(){
   const p=S.profile;
   return topbar('Personal details',{back:true})+`<div class="pad">
@@ -893,7 +858,6 @@ function vPD(){
     <button class="btn" style="margin-top:16px" onclick="toast('Changes saved')">Save changes</button>
   </div>`;
 }
-
 function vSecurity(){
   return topbar('Security & privacy',{back:true})+`<div class="pad">
     <div class="row"><span class="t"><b>Fingerprint unlock</b><span>Use the sensor on your S24 Ultra</span></span><button class="badge ${S.sec.bio?'ok':''}" onclick="S.sec.bio=!S.sec.bio;save();render()">${S.sec.bio?'On':'Off'}</button></div>
@@ -904,13 +868,12 @@ function vSecurity(){
     <div class="row"><span class="ico">📱</span><span class="t"><b>Samsung Galaxy S24 Ultra</b><span>Stockton-on-Tees · this device</span></span><span class="badge ok">Current</span></div>
   </div>`;
 }
-
 function vCard(){
   const c=S.card;
   return topbar('Card controls',{back:true})+`<div class="pad">
     <div style="background:linear-gradient(135deg,#FF4F40,#FF7A5C);border-radius:22px;padding:20px;color:#fff;margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">${MARK}<b style="font-size:13px;letter-spacing:1px">MONZO</b></div>
-      <div style="font-family:ui-monospace,monospace;font-size:19px;letter-spacing:2.5px;margin-top:26px" id="pan">•••• •••• •••• 4471</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">${mark(26,'coral')}<b style="font-size:13px;letter-spacing:1px">MONZO</b></div>
+      <div style="font-family:ui-monospace,monospace;font-size:19px;letter-spacing:2.5px;margin-top:26px">•••• •••• •••• 4471</div>
       <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12px;opacity:.9"><span>J ARMSTRONG</span><span>09/29</span></div>
     </div>
     <div class="row"><span class="t"><b>Freeze card</b><span>${c.frozen?'Card is frozen':'Card is active'}</span></span><button class="badge ${c.frozen?'warn':'ok'}" onclick="S.card.frozen=!S.card.frozen;save();render();toast(S.card.frozen?'Card frozen':'Card unfrozen')">${c.frozen?'Frozen':'Active'}</button></div>
@@ -922,38 +885,58 @@ function vCard(){
     <button class="btn ghost" style="margin-top:8px" onclick="toast('Added to Google Wallet')">Add to Google Wallet</button>
   </div>`;
 }
-
 function vNotifPrefs(){
   return topbar('Notifications',{back:true})+`<div class="pad">
     ${[['tx','Transactions'],['dd','Direct Debits'],['pot','Pot activity'],['market','Market moves']].map(([k,l])=>
       `<div class="row"><span class="t"><b>${l}</b></span><button class="badge ${S.prefs.notif[k]?'ok':''}" onclick="S.prefs.notif['${k}']=!S.prefs.notif['${k}'];save();render()">${S.prefs.notif[k]?'On':'Off'}</button></div>`).join('')}
   </div>`;
 }
-
+function vAppearance(){
+  return topbar('Appearance',{back:true})+`<div class="pad">
+    <div class="card w small muted">Choose how the app looks. Match device follows your phone's dark mode setting.</div>
+    ${[['light','Light','☀️'],['dark','Dark','🌙'],['auto','Match device','🌗']].map(([k,l,i])=>
+      `<button class="row" style="width:100%;text-align:left" onclick="setTheme('${k}')"><span class="ico">${i}</span><span class="t"><b>${l}</b></span>${S.prefs.theme===k?'<span class="badge ok">Selected</span>':''}</button>`).join('')}
+  </div>`;
+}
+function vMark(){
+  return topbar('App icon',{back:true})+`<div class="pad">
+    <div class="card w small muted">Choose the mark used inside the app. The home screen icon is fixed at install.</div>
+    <div style="display:flex;gap:12px;margin-top:16px">
+      ${[['coral','Hot Coral'],['navy','Navy'],['mono','Graphite']].map(([k,l])=>
+        `<button onclick="setMark('${k}')" style="flex:1;text-align:center">
+          <div style="padding:16px;border-radius:20px;background:var(--surface);border:2px solid ${S.prefs.mark===k?'var(--coral)':'transparent'}">${mark(40,k)}</div>
+          <div class="tiny" style="margin-top:6px;font-weight:700">${l}</div></button>`).join('')}
+    </div>
+    <div class="card" style="margin-top:20px;display:flex;gap:14px;align-items:center">
+      <div style="padding:12px;border-radius:18px;background:var(--surface)">${mark(52)}</div>
+      <div class="small muted">Preview</div>
+    </div>
+  </div>`;
+}
 function vHelp(){
   const faq=[['How do I transfer an ISA?','Ask the receiving provider to raise a transfer. Your allowance is unaffected.'],['What is the ISA limit?','£20,000 per tax year across all ISA types.'],['When is interest paid?','Monthly, on the last day of the month.'],['How do I cancel a Direct Debit?','Open Direct Debits, pick the mandate and cancel.']];
   return topbar('Help',{back:true})+`<div class="pad">
     ${faq.map(([q,a])=>`<div class="card w" style="margin-bottom:10px"><b class="small">${q}</b><div class="small muted" style="margin-top:6px">${a}</div></div>`).join('')}
   </div>`;
 }
-
 function vMove(){
   return topbar('Move money',{back:true})+`<div class="pad">
     <div class="card w small muted">From <b>Current account</b> · ${gbp(S.acct.current)}</div>
-    ${S.pots.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="potMove('${p.id}',1);back()"><span class="ico" style="background:${p.col}20">${p.ico}</span><span class="t"><b>${esc(p.n)}</b><span>${gbp(p.a)}</span></span><span class="muted">›</span></button>`).join('')}
-    <button class="row" style="width:100%;text-align:left" onclick="isaAdd();back()"><span class="ico coral">ISA</span><span class="t"><b>Stocks &amp; Shares ISA</b></span><span class="muted">›</span></button>
+    ${S.pots.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="potMove('${p.id}',1)"><span class="ico" style="background:${p.col}20">${p.ico}</span><span class="t"><b>${esc(p.n)}</b><span>${gbp(p.a)}</span></span><span class="muted">›</span></button>`).join('')}
+    <button class="row" style="width:100%;text-align:left" onclick="isaAdd()"><span class="ico coral">ISA</span><span class="t"><b>Stocks &amp; Shares ISA</b></span><span class="muted">›</span></button>
   </div>`;
 }
-
 function vPay(){
   return topbar('Pay',{back:true})+`<div class="pad">
     <div class="sec" style="padding:0">Payees</div>
     ${S.payees.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="toast('Payment to ${esc(p.n)} sent')"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b><span>${esc(p.s)} · ${esc(p.a)}</span></span></button>`).join('')}
   </div>`;
 }
-
 function vSettings(){
   return topbar('Settings',{back:true})+`<div class="pad">
+    <button class="row" style="width:100%;text-align:left" onclick="go('appearance')"><span class="t"><b>Appearance</b><span>Light, dark or match device</span></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="go('mark')"><span class="t"><b>App icon</b><span>Mark variant</span></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="installApp()"><span class="t"><b>Install app</b><span>Add to home screen</span></span>${STANDALONE?'<span class="badge ok">Installed</span>':'<span class="muted">›</span>'}</button>
     <button class="row" style="width:100%;text-align:left" onclick="go('pd')"><span class="t"><b>Personal details</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('security')"><span class="t"><b>Security &amp; privacy</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('notifprefs')"><span class="t"><b>Notifications</b></span><span class="muted">›</span></button>
@@ -963,9 +946,14 @@ function vSettings(){
   </div>`;
 }
 
-/* ============================================================
-   ACTIONS
-   ============================================================ */
+/* ---------- actions ---------- */
+let deferred=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
+async function installApp(){
+  if(deferred){deferred.prompt();const r=await deferred.userChoice;deferred=null;toast(r.outcome==='accepted'?'Installing…':'Install dismissed');return}
+  if(STANDALONE){toast('Already installed');return}
+  toast('Open the browser menu and choose “Add to Home screen”');
+}
 function isaAdd(){
   const used=tyUsed(),lim=ISA_LIMITS[taxYear()]||20000,room=lim-used;
   if(room<=0){toast('Allowance used for '+tyLabel(taxYear()));return}
@@ -983,8 +971,7 @@ function doIsaAdd(room){
   S.acct.isaCash=+(S.acct.isaCash+v).toFixed(2);
   const last=S.ledger.isa[S.ledger.isa.length-1];
   last.contrib=+(last.contrib+v).toFixed(2);last.closing=+(last.closing+v).toFixed(2);
-  const ty=taxYear();
-  S.notifs.unshift({t:'ISA contribution',b:`${gbp(v)} added for ${tyLabel(ty)}`,d:'now',i:'ISA'});
+  S.notifs.unshift({t:'ISA contribution',b:`${gbp(v)} added for ${tyLabel(taxYear())}`,d:'now',i:'ISA'});
   save();closeSheet();render();toast(`${gbp(v)} added to your ISA`);
 }
 function potMove(id,sign){
@@ -994,7 +981,7 @@ function potMove(id,sign){
     <button class="btn" style="margin-top:16px" onclick="doPotMove('${id}',${sign})">Confirm</button>`);
 }
 function doPotMove(id,sign){
-  const p=S.pots.find(x=>x.id===id);const v=parseFloat($('#pmAmt').value||'0');
+  const p=S.pots.find(x=>x.id===id),v=parseFloat($('#pmAmt').value||'0');
   if(!(v>0)){toast('Enter an amount');return}
   if(sign>0&&v>S.acct.current){toast('Not enough available');return}
   if(sign<0&&v>p.a){toast('Not enough in pot');return}
@@ -1009,13 +996,15 @@ function newPot(){
     <button class="btn" style="margin-top:16px" onclick="doNewPot()">Create</button>`);
 }
 function doNewPot(){
-  const n=$('#npName').value.trim()||'New pot';const g=parseFloat($('#npGoal').value||'500');
+  const n=$('#npName').value.trim()||'New pot',g=parseFloat($('#npGoal').value||'500');
   S.pots.push({id:'p'+Date.now(),n,a:0,rate:2.80,goal:g,lock:null,ico:'🎯',col:'#7A5AF8'});
   save();closeSheet();render();toast('Pot created');
 }
 function archivePot(id){
-  const p=S.pots.find(x=>x.id===id);if(p.a>0){S.acct.current=+(S.acct.current+p.a).toFixed(2)}
-  S.pots=S.pots.filter(x=>x.id!==id);S.acct.savings=+S.pots.reduce((s,x)=>s+x.a,0).toFixed(2);
+  const p=S.pots.find(x=>x.id===id);
+  if(p.a>0)S.acct.current=+(S.acct.current+p.a).toFixed(2);
+  S.pots=S.pots.filter(x=>x.id!==id);
+  S.acct.savings=+S.pots.reduce((s,x)=>s+x.a,0).toFixed(2);
   save();back();toast('Pot archived');
 }
 function odMove(sign){
@@ -1076,16 +1065,14 @@ function dlYear(y){
   toast(`${y} statement downloaded`);
 }
 
-/* ============================================================
-   LOCK
-   ============================================================ */
+/* ---------- lock ---------- */
 function lockScreen(){
   $('#app').innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;padding:40px 24px">
     <div class="center">
-      <div class="mark" style="margin-bottom:22px">${MARK}</div>
+      <div class="mark" style="margin-bottom:22px">${mark(52)}</div>
       <div style="font-size:22px;font-weight:800;letter-spacing:-.5px">Welcome back, Jason</div>
       <div class="small muted" style="margin-top:4px">Touch the sensor to unlock</div>
-      <button onclick="unlock()" aria-label="Unlock with fingerprint" style="margin:26px auto 0;display:block;width:104px;height:104px;border-radius:50%;background:#FFF1F0;display:grid;place-items:center">
+      <button onclick="unlock()" aria-label="Unlock with fingerprint" style="margin:26px auto 0;width:104px;height:104px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center">
         <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#FF4F40" stroke-width="1.6" stroke-linecap="round">
           <path d="M12 4c-4.4 0-8 3.6-8 8v1"/><path d="M20 13v-1c0-4.4-3.6-8-8-8"/>
           <path d="M8.5 12a3.5 3.5 0 0 1 7 0v3.5"/><path d="M12 12v6"/><path d="M15.5 18.5V19"/><path d="M8.5 15.5V19"/>
@@ -1097,32 +1084,28 @@ function lockScreen(){
 }
 function unlock(){render()}
 
-/* ============================================================
-   RENDER
-   ============================================================ */
+/* ---------- render ---------- */
 function render(){
-  const c=cur();const [r,p]=c.split(':');
+  const c=cur(),[r,p]=c.split(':');
   const map={home:vHome,hub:vHub,trends:vTrends,savings:vSavings,isa:vISA,inv:vInv,hold:vHold,pot:vPot,tx:vTx,
     flex:vFlex,od:vOD,dd:vDD,sched:vSched,search:vSearch,stmts:vStmts,notifs:vNotifs,budgets:vBudgets,
-    profile:vProfile,pd:vPD,security:vSecurity,card:vCard,notifprefs:vNotifPrefs,help:vHelp,move:vMove,pay:vPay,settings:vSettings};
+    profile:vProfile,pd:vPD,security:vSecurity,card:vCard,notifprefs:vNotifPrefs,help:vHelp,move:vMove,pay:vPay,
+    settings:vSettings,appearance:vAppearance,mark:vMark};
   const fn=map[r]||vHome;
   $('#app').innerHTML=fn(p);
   $$('[data-count]').forEach(n=>{
     if(REDUCED)return;
-    const target=parseFloat(n.dataset.count);let cur=0;
-    const step=target/22;
-    const t=setInterval(()=>{cur+=step;if(cur>=target){cur=target;clearInterval(t)}n.textContent=gbp(cur)},16);
+    const target=parseFloat(n.dataset.count);let v=0;const step=target/22;
+    const t=setInterval(()=>{v+=step;if(v>=target){v=target;clearInterval(t)}n.textContent=gbp(v)},16);
   });
 }
 
-/* ============================================================
-   BOOT
-   ============================================================ */
+/* ---------- boot ---------- */
 (function boot(){
   if(location.search.includes('reset=1')){localStorage.removeItem(KEY);history.replaceState({},'',location.pathname)}
   load();
-  const p=new URLSearchParams(location.search);
-  if(p.get('screen'))stack=[p.get('screen')];
+  const q=new URLSearchParams(location.search);
+  if(q.get('screen'))stack=[q.get('screen')];
   if(S.sec.bio&&!sessionStorage.getItem('unlocked')){lockScreen();sessionStorage.setItem('unlocked','1')}
   else render();
 })();
