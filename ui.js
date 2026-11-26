@@ -3,7 +3,6 @@
 import { esc, fmt, pct } from './core.js';
 import { DOMAINS } from './data.js';
 
-/* ---------------- router ---------------- */
 const registry = new Map();
 let cleanup = null;
 let current = null;
@@ -13,9 +12,22 @@ export function initRouter(root){ mountRoot = root; }
 export function register(name, mount){ registry.set(name, mount); }
 export function currentScreen(){ return current; }
 
+const sheetEl = () => document.getElementById('sheet');
+export function sheet(html){
+  const s = sheetEl();
+  if (!s) return;
+  s.querySelector('.panel').innerHTML = `<div class="grab"></div>` + html;
+  s.classList.add('on');
+}
+export function closeSheet(){ sheetEl()?.classList.remove('on'); }
+
 export function go(name, params = {}){
   const mount = registry.get(name);
   if (!mount || !mountRoot) return;
+
+  /* a sheet opened from the previous screen must not survive navigation */
+  closeSheet();
+
   if (cleanup){ try { cleanup(); } catch {} cleanup = null; }
 
   document.querySelectorAll('section[data-screen]').forEach(s =>
@@ -32,17 +44,6 @@ export function go(name, params = {}){
   window.scrollTo(0, 0);
 }
 
-/* ---------------- sheet ---------------- */
-const sheetEl = () => document.getElementById('sheet');
-export function sheet(html){
-  const s = sheetEl();
-  if (!s) return;
-  s.querySelector('.panel').innerHTML = `<div class="grab"></div>` + html;
-  s.classList.add('on');
-}
-export function closeSheet(){ sheetEl()?.classList.remove('on'); }
-
-/* ---------------- toast ---------------- */
 let toastTimer = null;
 export function toast(msg){
   const t = document.getElementById('toast');
@@ -53,7 +54,6 @@ export function toast(msg){
   toastTimer = setTimeout(() => t.classList.remove('on'), 2200);
 }
 
-/* ---------------- logo ---------------- */
 export function logo(name){
   const domain = DOMAINS[name];
   const initials = String(name).split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -62,7 +62,6 @@ export function logo(name){
     onerror="this.parentNode.textContent='${esc(initials)}'"></span>`;
 }
 
-/* ---------------- charts ---------------- */
 export function lineChart(host, series, opts = {}){
   if (!host) return;
   const W = 640, H = opts.h || 160, padB = 22, padT = 10;
@@ -122,14 +121,12 @@ export function heatmap(host, counts, days = 56){
   host.innerHTML = html;
 }
 
-/* ---------------- components ---------------- */
 export function meter(value, total, tone){
   const width = pct(value, total);
   const colour = tone || (width > 95 ? 'var(--bad)' : width > 75 ? 'var(--warn)' : 'var(--ok)');
   return `<div class="meter"><i style="width:${width}%;background:${colour}"></i></div>`;
 }
 
-/* values are coerced to strings so numeric and dotted keys both read back cleanly */
 export function chipRow(items, active, attr){
   const activeKey = active == null ? null : String(active);
   return `<div class="pill-row">${items.map(item => {
@@ -142,11 +139,9 @@ export function chipRow(items, active, attr){
 export function kv(k, v){
   return `<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`;
 }
-
 export function badge(text, tone){
   return `<span class="badge ${tone || ''}">${esc(text)}</span>`;
 }
-
 export function empty(msg){
   return `<div class="empty">${esc(msg)}</div>`;
 }
@@ -194,16 +189,10 @@ export function sectionHead(title, actionLabel, actionAttrs = ''){
     ${actionLabel ? `<button ${actionAttrs}>${esc(actionLabel)}</button>` : ''}</div>`;
 }
 
-/* One delegated listener for navigation and sheet dismissal.
-   Marks the event so row-level listeners can skip work they'd duplicate. */
 export function bindGlobalChrome(){
   document.addEventListener('click', e => {
     const nav = e.target.closest('[data-go]');
-    if (nav){
-      e.monzoHandled = true;
-      go(nav.dataset.go);
-      return;
-    }
+    if (nav){ go(nav.dataset.go); return; }
     if (e.target.matches('[data-close]') || e.target.id === 'sheet' ||
         e.target.classList.contains('scrim')){
       closeSheet();
