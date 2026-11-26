@@ -1,14 +1,14 @@
-/* src/screens-a.js — daily surfaces with real depth. */
+/* src/screens-a.js — daily surfaces. */
 
 import {
-  getState, esc, fmt, TODAY, THIS_YM, MONTHS, round2, plan, planPrice,
+  getState, commit, esc, fmt, TODAY, THIS_YM, MONTHS, round2, plan, planPrice,
   balNow, isaBal, growTotal, savingsTotal, homeEquity, connTotal, loanOwed,
   spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend,
-  daysToPayday, balanceSeries, tyUsed, TARGET_ISA, addTx,
+  daysToPayday, balanceSeries, tyUsed, TARGET_ISA, addTx, notif,
   moveToPot, createPot, updatePot, deletePot, togglePotLock,
-  setHomeEstimate, setPension, setPensionMonthly, setTarget, setActiveAccount,
+  setHomeEstimate, setPensionMonthly, setTarget, setActiveAccount,
   moveLayoutSection, toggleLayoutSection, addStandingOrder, addSharedTab,
-  toggleStandingOrder, settleTab, notif, CATS, FLEX
+  toggleStandingOrder, settleTab, CATS, FLEX
 } from './core.js';
 
 import {
@@ -16,7 +16,6 @@ import {
   empty, txRow, potRow, meter, chipRow, accCard, spotCard, sectionHead
 } from './ui.js';
 
-/* ---------- home ---------- */
 const LAYOUT_NAMES = { spotlights: 'Spotlights', personal: 'Personal account', joint: 'Joint account',
   pots: 'Pots', invest: 'Investments', latest: 'Latest activity' };
 
@@ -26,7 +25,7 @@ const sections = {
     return `<div class="spot">
       ${spotCard({ label: 'Left to spend', value: fmt(lt),
         note: d === 0 ? 'Payday today' : d + ' days to payday',
-        tone: lt < 100 ? 'bad' : lt < 300 ? 'warn' : 'ok', go: 'trends' })}
+        tone: lt < 150 ? 'bad' : lt < 450 ? 'warn' : 'ok', go: 'trends' })}
       ${spotCard({ label: 'Spent today', value: fmt(spentToday()),
         note: getState().tx.filter(t => t.date === TODAY && t.amt < 0).length + ' payments', go: 'acc' })}
       ${spotCard({ label: 'Bills left', value: fmt(committedLeft()), note: 'Before payday', go: 'trends' })}
@@ -39,9 +38,9 @@ const sections = {
   },
   joint(){
     const s = getState();
-    const income = s.tx.filter(t => t.date.slice(0, 7) === THIS_YM && t.cat === 'Income').reduce((a, t) => a + t.amt, 0);
+    const bal = s.jointBal || 0;
     return accCard({ label: 'Joint account', meta: 'With ' + esc(s.partner),
-      balance: fmt(round2(income * 0.35)), tag: badge('Joint'), go: 'joint' });
+      balance: fmt(bal), tag: badge('Joint'), go: 'joint' });
   },
   pots(){
     const s = getState();
@@ -70,12 +69,10 @@ export function mountHome(root){
     root.innerHTML = s.layout.filter(x => x.on).map(sec => sections[sec.id] ? sections[sec.id]() : '').join('') +
       `<div class="row2" style="margin:12px 0">
         <button class="btn" data-go="payees">Send</button>
-        <button class="btn ghost" data-go="pots">Move to pot</button>
-      </div>
+        <button class="btn ghost" data-go="pots">Move to pot</button></div>
       <div class="row2" style="margin:12px 0">
         <button class="btn ghost" data-go="flex">Pay with Flex</button>
-        <button class="btn ghost" data-go="search">Search</button>
-      </div>
+        <button class="btn ghost" data-go="search">Search</button></div>
       <button class="btn ghost sm" data-layout style="margin:8px 0 20px;width:100%">Edit layout</button>`;
     const feed = root.querySelector('#feed');
     if (feed){
@@ -86,9 +83,8 @@ export function mountHome(root){
   };
   const layoutSheet = () => {
     const s = getState();
-    sheet(`<h2>Edit layout</h2><div class="sub">Reorder or hide sections</div>` +
-      s.layout.map((sec, i) => `<div class="layoutrow"><span class="mini">${i + 1}</span>
-        <span class="mid">${LAYOUT_NAMES[sec.id]}</span>
+    sheet(`<h2>Edit layout</h2>` + s.layout.map((sec, i) =>
+      `<div class="layoutrow"><span class="mini">${i + 1}</span><span class="mid">${LAYOUT_NAMES[sec.id]}</span>
         <button class="iconbtn" data-up="${sec.id}">↑</button>
         <button class="iconbtn" data-down="${sec.id}">↓</button>
         <button class="sw ${sec.on ? 'on' : ''}" data-eye="${sec.id}"></button></div>`).join('') +
@@ -127,25 +123,24 @@ function addTxSheet(){
   };
 }
 
-/* ---------- grow ---------- */
 export function mountGrow(root){
   const render = () => {
     const s = getState();
-    const savers = s.pots.filter(p => p.type === 'savings');
     root.innerHTML = `<div class="h-sec"><h2>Grow</h2></div>
       <div class="card"><div class="sub">Everything you're building</div>
         <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(growTotal())}</div>
         <div class="sub" style="margin:0">Net of ${fmt(loanOwed())} owed</div></div>
-      <div class="card"><h2>Savings · ${plan().ia}% AER</h2><div class="sub">${savers.length} pots</div>
-        ${savers.length ? savers.map(p => kv(esc(p.name), `<span class="rev">${fmt(p.bal)}</span>`)).join('') : empty('No savings pots')}
-        <button class="btn ghost sm" data-go="pots" style="margin-top:10px">Manage pots</button></div>
+      <button class="accard" data-go="pots"><div class="accrow"><div><div class="accname">Savings</div>
+        <div class="accmeta">${s.pots.filter(p => p.type === 'savings').length} pots · ${plan().ia}% AER</div></div>
+        <span class="badge coral">${fmt(savingsTotal())}</span></div></button>
       ${accCard({ label: 'Investments', meta: 'Stocks &amp; shares ISA', balance: fmt(isaBal()), tag: badge('ISA', 'coral'), go: 'invest' })}
       <div class="card"><h2>Pension</h2><div class="sub">SIPP · ${fmt(s.pensionMonthly)}/month</div>
         <div class="balance rev" style="font-size:24px;margin:4px 0">${fmt(s.pension)}</div>
         <div class="field"><label>Monthly contribution</label><input id="pm" type="number" min="0" value="${s.pensionMonthly}"></div>
-        <button class="btn" data-pen>Update</button></div>
+        <button class="btn" data-pen>Update contribution</button></div>
       ${accCard({ label: 'Home equity', meta: 'Value ' + fmt(s.homeValue) + ' − mortgage ' + fmt(s.mortgage), balance: fmt(homeEquity()), tag: badge('Est.') })}
-      <div class="card"><h2>Home</h2><div class="field"><label>Property value</label><input id="hv" type="number" value="${s.homeValue}"></div>
+      <div class="card"><h2>Home</h2>
+        <div class="field"><label>Property value</label><input id="hv" type="number" value="${s.homeValue}"></div>
         <div class="field"><label>Mortgage owed</label><input id="hm" type="number" value="${s.mortgage}"></div>
         <button class="btn" data-save>Save</button></div>
       <div class="card"><h2>Connected</h2><div class="sub">${s.connected.length} accounts · ${fmt(connTotal())}</div>
@@ -164,29 +159,27 @@ export function mountGrow(root){
   render();
 }
 
-/* ---------- pay ---------- */
 export function mountPay(root){
   const render = () => {
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Pay</h2></div>
       <div class="card" style="padding:6px 8px">
         <button class="pot" data-go="payees"><span class="lg">SND</span><span class="mid">
-          <span class="nm">Send money</span><span class="sub">To a saved payee</span></span></button>
+          <span class="nm">Send money</span><span class="sub">To a saved payee</span></span><span class="amt">›</span></button>
         <button class="pot" data-so><span class="lg">SO</span><span class="mid">
-          <span class="nm">Standing orders</span><span class="sub">${s.sos.filter(x => x.active).length} active</span></span></button>
+          <span class="nm">Standing orders</span><span class="sub">${s.sos.filter(x => x.active).length} active</span></span><span class="amt">›</span></button>
         <button class="pot" data-tabs><span class="lg">TAB</span><span class="mid">
-          <span class="nm">Shared tabs</span><span class="sub">${s.tabs.length} open</span></span></button>
+          <span class="nm">Shared tabs</span><span class="sub">${s.tabs.length} open</span></span><span class="amt">›</span></button>
         <button class="pot" data-go="joint"><span class="lg">JNT</span><span class="mid">
-          <span class="nm">Joint account</span><span class="sub">With ${esc(s.partner)}</span></span></button>
+          <span class="nm">Joint account</span><span class="sub">With ${esc(s.partner)}</span></span><span class="amt">›</span></button>
         <button class="pot" data-sorter><span class="lg">SRT</span><span class="mid">
-          <span class="nm">Salary sorter</span><span class="sub">Split your pay</span></span></button>
+          <span class="nm">Salary sorter</span><span class="sub">Split your pay</span></span><span class="amt">›</span></button>
         <button class="pot" data-gpe><span class="lg">GPE</span><span class="mid">
-          <span class="nm">Get paid early</span><span class="sub">4pm the day before</span></span></button>
+          <span class="nm">Get paid early</span><span class="sub">4pm the day before</span></span><span class="amt">›</span></button>
       </div>
       <div class="card"><h2>Standing orders</h2>
         ${s.sos.length ? s.sos.map(x => `<div class="pot"><span class="lg">${esc(x.name[0])}</span>
-          <span class="mid"><span class="nm">${esc(x.name)}</span><span class="sub">Day ${x.day}</span></span>
-          <span class="amt rev">${fmt(x.amt)}</span>
+          <span class="mid"><span class="nm">${esc(x.name)}</span><span class="sub">Day ${x.day} · ${fmt(x.amt)}</span></span>
           <button class="sw ${x.active ? 'on' : ''}" data-toggle-so="${x.id}"></button></div>`).join('')
           : empty('None set up')}</div>
       <div class="card"><h2>Shared tabs</h2>
@@ -230,7 +223,7 @@ export function mountPay(root){
       };
     }
     if (e.target.closest('[data-sorter]')){
-      sheet(`<h2>Salary sorter</h2><div class="sub">Split your next pay automatically</div>
+      sheet(`<h2>Salary sorter</h2><div class="sub">Split your next pay</div>
         ${getState().pots.map(p => kv(esc(p.name), '<span class="rev">£100.00</span>')).join('')}
         <button class="btn" id="sorterSave" style="margin-top:12px">Save sorter</button>`);
       document.getElementById('sorterSave').onclick = () => {
@@ -239,7 +232,7 @@ export function mountPay(root){
       };
     }
     if (e.target.closest('[data-gpe]')){
-      sheet(`<h2>Get paid early</h2><div class="sub">Salary lands at 4pm the day before it's due.</div>
+      sheet(`<h2>Get paid early</h2><div class="sub">Salary lands at 4pm the day before.</div>
         <button class="btn" id="gpeGo">Claim early</button>`);
       document.getElementById('gpeGo').onclick = () => {
         notif('Paid early', 'Your salary is available now');
@@ -250,9 +243,8 @@ export function mountPay(root){
   render();
 }
 
-/* ---------- trends ---------- */
 export function mountTrends(root){
-  let view = 'balance', period = 'month';
+  let view = 'balance';
   const render = () => {
     const s = getState();
     let body = '';
@@ -270,7 +262,7 @@ export function mountTrends(root){
             <span class="mid"><span class="nm">${c}</span><span class="sub">${fmt(spentCat(c))}</span></span>
             <span class="amt">›</span></button>`).join('')}</div>`;
     } else {
-      body = `<div class="card"><h2>Targets</h2><div class="sub">Flexible categories only</div>
+      body = `<div class="card"><h2>Targets</h2><div class="sub">Flexible categories</div>
         ${FLEX.map(c => `<div style="margin:10px 0">
           <div style="display:flex;justify-content:space-between;font-size:13px">
             <span>${c}</span><span class="rev">${fmt(spentCat(c))} / ${fmt(s.targets[c] || 0)}</span></div>
@@ -281,7 +273,7 @@ export function mountTrends(root){
     root.innerHTML = `<div class="h-sec"><h2>Trends</h2></div>
       ${chipRow([{ value: 'balance', label: 'Balance' }, { value: 'spending', label: 'Spending' },
         { value: 'targets', label: 'Targets' }], view, 'tv')}${body}`;
-    if (view === 'balance') lineChart(root.querySelector('#tbChart'), balanceSeries(period === 'year' ? 365 : 90));
+    if (view === 'balance') lineChart(root.querySelector('#tbChart'), balanceSeries(90));
     if (view === 'spending'){
       const parts = FLEX.map(c => ({ k: c, v: spentCat(c) })).filter(p => p.v > 0).sort((a, b) => b.v - a.v);
       donut(root.querySelector('#tbDonut'), parts.length ? parts : [{ k: 'Nothing yet', v: 1 }]);
@@ -303,7 +295,6 @@ export function mountTrends(root){
   render();
 }
 
-/* ---------- account hub ---------- */
 export function mountAccount(root){
   const s = getState();
   const row = (label, sub, attrs) => `<button class="pot" ${attrs}><span class="lg">${label.replace(/&amp;/g, '').slice(0, 3)}</span>
@@ -330,18 +321,20 @@ export function mountAccount(root){
     </div>
     <button class="btn ghost" data-logout style="margin:0 0 20px">Log out of all devices</button>`;
   root.addEventListener('click', e => {
-    if (e.target.closest('[data-logout]')) toast('Logged out of all other devices');
+    if (!e.target.closest('[data-logout]')) return;
+    sessionStorage.removeItem('unlocked');
+    document.body.classList.add('locked');
+    toast('Logged out everywhere');
   });
 }
 
-/* ---------- current account ---------- */
 export function mountAcc(root){
   let limit = 40, filter = 'All';
   const render = () => {
     const s = getState();
     const list = filter === 'All' ? s.tx : s.tx.filter(t => t.cat === filter);
     root.innerHTML = `<div class="h-sec"><h2>Current account</h2><button data-add>Add</button></div>
-      ${chipRow(['All', 'Groceries', 'Eating out', 'Bills', 'Income'], filter, 'filter')}
+      ${chipRow(['All', 'Groceries', 'Bills', 'Kids', 'Income'], filter, 'filter')}
       <div class="card" style="padding:4px 14px"><ul class="txlist">
         ${list.slice(0, limit).map(txRow).join('') || '<li class="empty">Nothing here</li>'}</ul>
         <button class="btn ghost sm" data-more style="margin:8px 0 12px;width:100%">Load more</button></div>`;
@@ -355,7 +348,6 @@ export function mountAcc(root){
   render();
 }
 
-/* ---------- pots ---------- */
 export function mountPots(root){
   const render = () => {
     const s = getState();
@@ -381,7 +373,6 @@ export function mountPots(root){
   render();
 }
 
-/* ---------- pot detail ---------- */
 export function mountPotDetail(root, params){
   const render = () => {
     const p = getState().pots.find(x => x.id === params.id);
@@ -393,6 +384,7 @@ export function mountPotDetail(root, params){
         ${meter(p.bal, p.goal)}
         ${p.type === 'savings' ? kv('Interest', plan().ia + '% AER') : ''}
         ${kv('Status', p.locked ? badge('Locked', 'warn') : badge('Unlocked', 'ok'))}
+        ${p.autoSave ? kv('Auto-save', fmt(p.autoSave) + ' / month') : ''}
         <div class="row2" style="margin-top:12px"><button class="btn" data-in>Add money</button>
           <button class="btn ghost" data-out ${p.locked ? 'disabled' : ''}>Withdraw</button></div>
         <div class="row2" style="margin-top:10px">
@@ -436,7 +428,7 @@ export function mountPotDetail(root, params){
     if (e.target.closest('[data-edit]')) return editSheet();
     if (e.target.closest('[data-lock]')){
       const res = togglePotLock(params.id);
-      if (res.ok) { render(); toast(res.locked ? 'Pot locked' : 'Pot unlocked'); }
+      if (res.ok){ render(); toast(res.locked ? 'Pot locked' : 'Pot unlocked'); }
     }
     if (e.target.closest('[data-del]')){
       const res = deletePot(params.id);
@@ -447,7 +439,6 @@ export function mountPotDetail(root, params){
   render();
 }
 
-/* ---------- invest ---------- */
 export function mountInvest(root){
   const render = () => {
     const s = getState();
@@ -489,13 +480,12 @@ export function mountInvest(root){
       const s = getState();
       s.isa.unshift({ id: 'c' + Date.now(), date: TODAY, type: 'ISA', contrib: v, growth: 0,
         value: round2(isaBal() + v), note: 'ISA subscription' });
-      closeSheet(); render(); toast('Added to ISA');
+      commit(); closeSheet(); render(); toast('Added to ISA');
     };
   });
   render();
 }
 
-/* ---------- statements ---------- */
 export function mountStatements(root){
   let kind = 'acc';
   const render = () => {
