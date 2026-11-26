@@ -89,6 +89,8 @@ a{color:inherit;text-decoration:none}
 
 .ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:0 0 auto;font-size:16px;font-weight:800;color:var(--ink)}
 .ico.coral{background:var(--coral);color:#fff}
+.ico.lg{background:#fff!important;border:1px solid var(--line);overflow:hidden;padding:6px}
+.ico.lg img{display:block;width:100%;height:100%;object-fit:contain}
 
 #tabbar{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--bar);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border-top:1px solid var(--line);display:flex;padding:8px 8px calc(8px + var(--safeb));z-index:40;transition:background .28s}
 #tabbar button{flex:1;display:grid;place-items:center;gap:3px;padding:6px 0;font-size:10.5px;font-weight:700;color:var(--muted);transition:color .2s,transform .16s var(--snap)}
@@ -159,8 +161,42 @@ const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
 const STANDALONE=matchMedia('(display-mode:standalone)').matches;
 const MARKS={tile:1,mark:1,white:1};
 
-/* exact Monzo glyph path from monzo-mark.svg */
 const MONZO_PATH='M4.244 1.174a.44.44 0 0 0-.271.13l-3.97 3.97l-.001.001c3.884 3.882 8.093 8.092 11.748 11.748v-8.57L4.602 1.305a.44.44 0 0 0-.358-.131m15.483 0a.44.44 0 0 0-.329.13L12.25 8.456v8.568L24 5.275c-1.316-1.322-2.647-2.648-3.97-3.97a.44.44 0 0 0-.301-.131zM0 5.979l.002 10.955c0 .294.118.577.326.785l4.973 4.976c.28.282.76.083.758-.314V12.037zm23.998.003l-6.06 6.061v10.338c-.004.399.48.6.76.314l4.974-4.976a1.1 1.1 0 0 0 .326-.785z';
+
+/* real domains for every merchant, bill and holding */
+const DOMAINS={
+ 'Arriva North East':'arrivabus.co.uk','Stagecoach Teesside':'stagecoachbus.com','Northern Rail':'northernrailway.co.uk',
+ 'National Rail':'nationalrail.co.uk','Tesco Extra Stockton':'tesco.com','Aldi Billingham':'aldi.co.uk',
+ 'Lidl Norton':'lidl.co.uk','Sainsbury’s Whitehouse Farm':'sainsburys.co.uk','Wellington Square':'wellingtonsquare.co.uk',
+ 'Teesside Park':'teessidepark.co.uk','Cleveland Centre':'clevelandcentre.co.uk','The Thomas Sheraton':'jdwetherspoon.com',
+ 'Costa Stockton High St':'costa.co.uk','Greggs':'greggs.co.uk','Nando’s Teesside Park':'nandos.co.uk',
+ 'Butterfly World':'butterflyworld.co.uk','Preston Park Museum':'prestonparkmuseum.co.uk','Stewart Park Cafe':'stewartpark.co.uk',
+ 'Ropner Park':'stockton.gov.uk','Middlesbrough FC':'mfc.co.uk','Stockton Town FC':'stocktontownfc.co.uk',
+ 'Billingham Forum':'billinghamforum.co.uk','Teesside Airport':'teessideairport.com','Boots Stockton':'boots.com',
+ 'Specsavers':'specsavers.co.uk','Hays Travel':'haystravel.co.uk','B&Q Portrack':'diy.com','Screwfix':'screwfix.com',
+ 'Shell A19':'shell.co.uk','BP Wolviston':'bp.com','Cineworld Teesside':'cineworld.co.uk','Amazon UK':'amazon.co.uk',
+ 'Smyths Toys':'smythstoys.com','Argos Stockton':'argos.co.uk','Wilko':'wilko.com',
+ 'Northumbrian Water':'nwl.co.uk','British Gas':'britishgas.co.uk','TV Licence':'tvlicensing.co.uk',
+ 'BT Broadband':'bt.com','Vodafone':'vodafone.co.uk','Sky':'sky.com','EE Mobile':'ee.co.uk','Three':'three.co.uk',
+ 'Cleveland Pottery Ltd':'clevelandpottery.co.uk',
+ 'Vanguard FTSE Global All Cap':'vanguard.com','Vanguard FTSE Dev World ex-UK':'vanguard.com','Vanguard US Equity Index':'vanguard.com',
+ 'iShares Core MSCI World':'ishares.com','iShares Core FTSE 100':'ishares.com','SPDR S&P 500':'ssga.com',
+ 'Legal & General UK Index':'legalandgeneral.com','Legal & General International Index':'legalandgeneral.com','HSBC FTSE All-World':'hsbc.com',
+ 'Fidelity Index World':'fidelity.co.uk','Fidelity Index Emerging Markets':'fidelity.co.uk','Royal London Global Equity':'royallondon.com',
+ 'Scottish Mortgage Inv Trust':'bailliegifford.com','Alliance Trust':'alliancetrust.co.uk','F&C Investment Trust':'columbiathreadneedle.com',
+ 'City of London Inv Trust':'janushenderson.com','Bankers Inv Trust':'janushenderson.com','Temple Bar Inv Trust':'redwheel.com',
+ 'Murray International':'abrdn.com','Monks Inv Trust':'bailliegifford.com','Law Debenture Corp':'lawdeb.com',
+ 'Witan Inv Trust':'witan.com','TR Property Inv Trust':'columbiathreadneedle.com','Edinburgh Worldwide':'bailliegifford.com',
+ 'UK Gilt 2035':'dmo.gov.uk','UK Gilt 2045':'dmo.gov.uk','UK Index-Linked Gilt 2030':'dmo.gov.uk',
+ 'iShares Core UK Gilts':'ishares.com','iShares Physical Gold':'ishares.com','WisdomTree Physical Gold':'wisdomtree.com',
+ 'iShares Global Clean Energy':'ishares.com','Legal & General Clean Energy':'legalandgeneral.com','Impax Environmental Markets':'impaxam.com',
+ 'iShares Global Infrastructure':'ishares.com','First Sentier Global Listed Infra':'firstsentier.com',
+ 'iShares UK Property':'ishares.com','Legal & General UK Property':'legalandgeneral.com','Tritax Big Box REIT':'tritaxbigbox.co.uk',
+ 'SEGRO':'segro.com','British Land':'britishland.com','Land Securities':'landsec.com',
+ 'iShares Global Water':'ishares.com','Pictet Water':'pictet.com','iShares Healthcare Innovation':'ishares.com',
+ 'AstraZeneca':'astrazeneca.com','Unilever':'unilever.com','HSBC Holdings':'hsbc.com','Shell':'shell.com',
+ 'Diageo':'diageo.com','RELX':'relx.com','BAE Systems':'baesystems.com'
+};
 
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
@@ -223,6 +259,23 @@ const INSTR=[
  ['AstraZeneca','Stock'],['Unilever','Stock'],['HSBC Holdings','Stock'],['Shell','Stock'],
  ['Diageo','Stock'],['RELX','Stock'],['BAE Systems','Stock']
 ];
+
+/* ---------- logos ---------- */
+function logoFail(img){
+  const d=img.dataset.d||'';
+  if(!img.dataset.f){img.dataset.f='1';img.src='https://www.google.com/s2/favicons?domain='+d+'&sz=128';return}
+  const p=img.parentNode;
+  p.classList.remove('lg');
+  p.style.padding='0';
+  p.style.background='var(--surface)';
+  p.innerHTML='<span style="font-weight:800;font-size:15px">'+esc(img.dataset.c||'?')+'</span>';
+}
+function logo(name,size=40){
+  const d=DOMAINS[name];
+  const chip=`width:${size}px;height:${size}px;border-radius:${Math.round(size/2)}px`;
+  if(!d)return `<span class="ico" style="${chip}">${esc((name||'?')[0])}</span>`;
+  return `<span class="ico lg" style="${chip};padding:${Math.round(size*0.15)}px"><img src="https://logo.clearbit.com/${d}" alt="" loading="lazy" decoding="async" data-d="${d}" data-c="${esc((name||'?')[0])}" onerror="logoFail(this)" style="width:100%;height:100%;object-fit:contain"/></span>`;
+}
 
 function buildLedger(rnd,target){
   const rows=[];let bal=0;let d=new Date(1992,9,1);const end=new Date();end.setDate(1);
@@ -364,7 +417,6 @@ const tyUsed=()=>{
   return S.ledger.isa.filter(r=>{const dt=new Date(r.y,r.m,1);return dt>=a&&dt<b}).reduce((s,r)=>s+r.contrib,0);
 };
 
-/* mark — inline, exact path from the repo SVGs */
 function mark(size=26,v){
   const k=v||S.prefs.mark||'tile';
   if(k==='tile'){
@@ -464,7 +516,7 @@ function heatmap(cells){
 
 function txRow(t,i){
   return `<button class="row stag" style="animation-delay:${Math.min(i*9,150)}ms;width:100%;text-align:left" onclick="go('tx','${t.id}')">
-    <span class="ico ${t.amt>0?'coral':''}">${esc(t.amt>0?'↓':(t.n[0]||'?'))}</span>
+    ${t.amt>0?'<span class="ico coral">↓</span>':logo(t.n,40)}
     <span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}${t.pend?' · Pending':''}${t.dd?' · Direct Debit':''}</span></span>
     <span class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${gbp(t.amt)}</span></button>`;
 }
@@ -610,14 +662,15 @@ function vInv(){
       <span class="t"><b>Reinvested dividends</b><span>Automatic · last paid 1 Dec</span></span><span class="badge ok">On</span></div></div>
     <div class="sec" style="padding:0;margin-top:22px">Holdings · ${S.holdings.length}</div>
     ${S.holdings.slice().sort((a,b)=>b.v-a.v).map(h=>`<button class="row" style="width:100%;text-align:left" onclick="go('hold','${encodeURIComponent(h.n)}')">
-      <span class="ico" style="font-size:11px">${esc(h.k.slice(0,3).toUpperCase())}</span>
+      ${logo(h.n,40)}
       <span class="t"><b>${esc(h.n)}</b><span>${esc(h.k)} · cost ${gbp(h.cost)}</span></span>
       <span class="amt">${gbp(h.v)}</span></button>`).join('')}</div>`;
 }
 function vHold(name){
   const h=S.holdings.find(x=>x.n===decodeURIComponent(name||''))||S.holdings[0];
   return topbar(h.n,{back:true})+`<div class="pad">
-    <div class="card w"><div class="tiny muted">VALUE</div><div style="font-size:30px;font-weight:800" class="mono">${gbp(h.v)}</div>
+    <div class="card w">${logo(h.n,52)}<div class="tiny muted" style="margin-top:12px">VALUE</div>
+      <div style="font-size:30px;font-weight:800" class="mono">${gbp(h.v)}</div>
       <div class="small"><span class="${h.v-h.cost>=0?'pos':''}">${h.v-h.cost>=0?'+':''}${gbp(h.v-h.cost)}</span> <span class="muted">(${((h.v-h.cost)/h.cost*100).toFixed(1)}%)</span></div></div>
     <div class="card w" style="margin-top:12px"><div class="small muted">Cost basis ${gbp(h.cost)} · ${esc(h.k)} · held in the 1992 wrapper</div></div>
     <button class="btn" style="margin-top:14px" onclick="toast('Order ticket opened')">Buy more</button>
@@ -645,7 +698,7 @@ function vTx(id){
   const t=S.tx.find(x=>x.id===id);if(!t)return vHome();
   return topbar('Transaction',{back:true})+`<div class="pad">
     <div class="card" style="text-align:center;padding:26px">
-      <div class="ico ${t.amt>0?'coral':''}" style="margin:0 auto 12px;width:56px;height:56px;font-size:20px">${esc(t.n[0])}</div>
+      <div style="display:grid;place-items:center;margin-bottom:12px">${t.amt>0?'<span class="ico coral" style="width:56px;height:56px;font-size:20px">↓</span>':logo(t.n,56)}</div>
       <div style="font-size:28px;font-weight:800" class="mono">${t.amt>0?'+':''}${gbp(t.amt)}</div>
       <div style="font-weight:700;margin-top:6px">${esc(t.n)}</div>
       <div class="small muted">${new Date(t.t).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
@@ -690,7 +743,7 @@ function vDD(){
   return topbar('Direct Debits',{back:true})+`<div class="pad">
     <div class="card w small muted">${S.dd.length} active mandates</div>
     ${S.dd.map(d=>`<button class="row" style="width:100%;text-align:left" onclick="ddSheet('${d.id}')">
-      <span class="ico">${esc(d.n[0])}</span><span class="t"><b>${esc(d.n)}</b><span>Monthly · day ${d.day} · ref ${esc(d.ref)}</span></span>
+      ${logo(d.n,40)}<span class="t"><b>${esc(d.n)}</b><span>Monthly · day ${d.day} · ref ${esc(d.ref)}</span></span>
       <span class="amt">${gbp(d.a)}</span></button>`).join('')}</div>`;
 }
 function vSched(){
@@ -708,7 +761,7 @@ function searchResults(){
   const res=S.tx.filter(t=>t.n.toLowerCase().includes(q)||t.c.toLowerCase().includes(q)).slice(0,60);
   const led=S.ledger.isa.filter(r=>ymLabel(r.ym).toLowerCase().includes(q)||r.ym.includes(q)).slice(-24);
   return `<div class="sec" style="padding:0">${res.length} transactions</div>
-    ${res.map(t=>`<button class="row" style="width:100%;text-align:left" onclick="go('tx','${t.id}')"><span class="ico">${esc(t.n[0])}</span><span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB')}</span></span><span class="amt">${gbp(t.amt)}</span></button>`).join('')||'<div class="empty"><b>No matches</b></div>'}
+    ${res.map(t=>`<button class="row" style="width:100%;text-align:left" onclick="go('tx','${t.id}')">${t.amt>0?'<span class="ico coral">↓</span>':logo(t.n,40)}<span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB')}</span></span><span class="amt">${gbp(t.amt)}</span></button>`).join('')||'<div class="empty"><b>No matches</b></div>'}
     ${led.length?`<div class="sec" style="padding:0;margin-top:20px">ISA ledger</div>${led.map(r=>`<div class="row"><span class="t"><b>${ymLabel(r.ym)}</b><span>closing balance</span></span><span class="amt">${gbp(r.closing)}</span></div>`).join('')}`:''}`;
 }
 function vSearch(){
@@ -765,7 +818,7 @@ function vProfile(){
     <button class="row" style="width:100%;text-align:left" onclick="toast('Chat opening…')"><span class="t"><b>Chat with us</b><span>Usually replies in 2 minutes</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('help')"><span class="t"><b>Help centre</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="toast('All systems operational')"><span class="t"><b>Service status</b></span><span class="badge ok">Operational</span></button>
-    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 4.3.0</div></div>`;
+    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 4.4.0</div></div>`;
 }
 function cycleTheme(){
   const o=['auto','light','dark'],i=o.indexOf(S.prefs.theme||'auto');
