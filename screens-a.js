@@ -5,11 +5,12 @@ import {
   balNow, isaBal, growTotal, savingsTotal, homeEquity, connTotal, loanOwed,
   spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend, interestThisMonth,
   daysToPayday, balanceSeries, tyUsed, TARGET_ISA, addTx, notif,
+  jointBills, jointContribution,
   moveToPot, createPot, updatePot, deletePot, togglePotLock, setRoundupPot, clearRoundupPot,
   setHomeEstimate, setPensionMonthly, setTarget, setActiveAccount,
   moveLayoutSection, toggleLayoutSection, addStandingOrder, addSharedTab,
-  toggleStandingOrder, settleTab, salaryAmount, setSorter, setSorterOn, sorterTotal,
-  getPaidEarly, gpeClaimed, CATS, FLEX
+  toggleStandingOrder, settleTab, salaryAmount, salaryIsEstimate, setSorter, setSorterOn,
+  sorterTotal, getPaidEarly, gpeClaimed, CATS, FLEX
 } from './core.js';
 
 import {
@@ -247,6 +248,7 @@ export function mountPay(root){
     };
     sheet(`<h2>Salary sorter</h2>
       <div class="sub">Your next pay is ${fmt(salary)}. Choose what goes where.</div>
+      ${salaryIsEstimate() ? `<p class="note">No salary in your history to read, so ${fmt(salary)} is an estimate.</p>` : ''}
       <div class="toggle"><div><div class="t">Split automatically</div>
         <div class="d">Runs when your pay lands</div></div>
         <button class="sw ${s.sorter.on ? 'on' : ''}" data-sorter-on aria-label="Enable sorter"></button></div>
@@ -313,11 +315,12 @@ export function mountPay(root){
     }
     if (e.target.closest('[data-sorter]')) return sorterSheet();
     if (e.target.closest('[data-gpe]')){
-      const claimed = gpeClaimed();
+      const claimed = gpeClaimed(), est = salaryIsEstimate();
       sheet(`<h2>Get paid early</h2>
         <div class="sub">${claimed
           ? 'You have already claimed this month. It resets after payday.'
           : `Bring ${fmt(salaryAmount())} forward to now.`}</div>
+        ${est ? `<p class="note">No salary in your history to read, so ${fmt(salaryAmount())} is an estimate.</p>` : ''}
         ${kv('Salary', `<span class="rev">${fmt(salaryAmount())}</span>`)}
         ${getState().sorter.on ? kv('Sorter', 'Runs on credit') : ''}
         <button class="btn" id="gpeGo" ${claimed ? 'disabled' : ''} style="margin-top:14px">Claim early</button>`);
