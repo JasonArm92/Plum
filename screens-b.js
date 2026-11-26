@@ -1,13 +1,12 @@
 /* src/screens-b.js — settings and one-off surfaces. */
 
 import {
-  getState, esc, fmt, TODAY, MONTHS, prettyDate, round2, plan, PLANS_BANK,
+  getState, esc, fmt, TODAY, round2, plan, PLANS_BANK, CATS, BANKS, BB_CAP,
   setProfile, setPin, setCredId, setTheme, setZoom, setMotion, togglePriv, toggleRoundups,
-  addPayee, updatePayee, deletePayee, addVirtualCard, toggleFreeze, setPlan,
+  addPayee, updatePayee, deletePayee, sendMoney, addVirtualCard, toggleFreeze, setPlan,
   flexAvail, flexPurchase, flexMonthly, arrangeOverdraft, takeLoan, loanMonthly, aprForLoan,
-  challengeSave, billsbackOptIn, billsbackDraw, bbBills, BB_CAP, connectBank,
-  addExtraAccount, takeAura, setAura, raiseDispute, pushChat, clearNotifs, getState as S,
-  BANKS, CATS, setTarget
+  challengeSave, billsbackOptIn, billsbackDraw, bbBills, connectBank,
+  addExtraAccount, takeAura, setAura, raiseDispute, pushChat, clearNotifs
 } from './core.js';
 
 import {
@@ -62,7 +61,6 @@ export function mountPayees(root){
       const v = +document.getElementById('sdAmt').value;
       const ref = document.getElementById('sdRef').value || 'Payment';
       if (!v || v <= 0) return toast('Enter an amount');
-      if (v > getState().tx[0].bal) return toast('Not enough in your balance');
       sheet(`<h2>Confirm</h2><div class="sub">Check the details before sending</div>
         ${kv('To', esc(p.name))}${kv('Sort code', esc(p.sc))}${kv('Account', esc(p.ac))}
         ${kv('Reference', esc(ref))}${kv('Amount', `<span class="rev">${fmt(v)}</span>`)}
@@ -70,7 +68,7 @@ export function mountPayees(root){
         <button class="btn ghost" id="sdBack" style="margin-top:8px">Back</button>`);
       document.getElementById('sdBack').onclick = () => sendForm(id);
       document.getElementById('sdGo').onclick = () => {
-        const res = sendMoneyGuard(id, v, ref);
+        const res = sendMoney(id, v, ref);
         if (!res.ok) return toast(res.msg);
         closeSheet(); go('home'); toast('Sent');
       };
@@ -91,12 +89,6 @@ export function mountPayees(root){
   });
 
   render();
-}
-
-/* small guard so the screen file doesn't import sendMoney twice */
-import { sendMoney } from './core.js';
-function sendMoneyGuard(id, amount, ref){
-  return sendMoney(id, amount, ref);
 }
 
 /* ---------- cards ---------- */
@@ -286,7 +278,7 @@ export function mountOverdraft(root){
         <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(o.limit)}</div>
         ${kv('Rate', o.rate ? o.rate + '% EAR' : '—')}
         ${kv('Used', `<span class="rev">${fmt(Math.max(0, -bal))}</span>`)}
-        ${chipRow([250, 500, 1000, 2000].map(v => ({ value: v, label: '£' + v })), pending, 'od')}
+        ${chipRow([250, 500, 1000, 2000].map(v => ({ value: v, label: '£' + v })), pending || null, 'od')}
         <button class="btn" data-apply style="margin-top:12px">Apply</button></div>
       <p class="note">19%, 29% or 39% EAR variable depending on your credit file.</p>`;
   };
@@ -304,8 +296,10 @@ export function mountOverdraft(root){
 /* ---------- loans ---------- */
 export function mountLoans(root){
   const render = () => {
-    const amt = +((root.querySelector('#lnAmt') || {}).value) || 8000;
-    const term = +((root.querySelector('#lnTerm') || {}).value) || 24;
+    const amtInput = root.querySelector('#lnAmt');
+    const termSel = root.querySelector('#lnTerm');
+    const amt = +(amtInput ? amtInput.value : 8000) || 8000;
+    const term = +(termSel ? termSel.value : 24) || 24;
     const apr = aprForLoan(amt), monthly = loanMonthly(amt, term);
     root.innerHTML = `<div class="h-sec"><h2>Loans</h2></div>
       <div class="card"><div class="sub">Borrow £1,000 to £35,000</div>
@@ -326,10 +320,8 @@ export function mountLoans(root){
             <div style="font-size:12.5px;color:var(--muted)">${l.paid} of ${l.term} payments · ${fmt(l.monthly)}/mo</div>
           </div>`).join('') : empty('No loans')}</div>`;
 
-    const amtInput = root.querySelector('#lnAmt');
-    const termSel = root.querySelector('#lnTerm');
-    if (amtInput) amtInput.onchange = render;
-    if (termSel) termSel.onchange = render;
+    root.querySelector('#lnAmt').oninput = render;
+    root.querySelector('#lnTerm').onchange = render;
   };
   root.addEventListener('click', e => {
     if (!e.target.closest('[data-apply]')) return;
@@ -391,7 +383,7 @@ export function mountChallenge(root){
         <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(c.saved)}</div>
         ${meter(c.saved, 667.95)}
         ${kv('Day', `${c.day} of 365`)}
-        ${kv('Today's amount', `<span class="rev">${fmt(round2((c.day + 1) / 100))}</span>`)}
+        ${kv("Today's amount", `<span class="rev">${fmt(round2((c.day + 1) / 100))}</span>`)}
         ${kv('Interest', plan().price ? '5% AER' : 'No interest')}
         <button class="btn" data-save style="margin-top:12px">Save today's amount</button></div>
       <p class="note">5% AER variable on challenge savings for Extra, Perks and Max.</p>`;
@@ -523,23 +515,34 @@ export function mountAppearance(root){
 /* ---------- search ---------- */
 export function mountSearch(root){
   let cat = 'All', q = '';
-  const render = () => {
-    const s = getState();
-    const results = s.tx.filter(t => (cat === 'All' || t.cat === cat) &&
+  root.innerHTML = `<div class="h-sec"><h2>Search</h2></div>
+    <div class="field"><input id="sq" placeholder="Search transactions" autocomplete="off"></div>
+    <div id="schips"></div>
+    <div class="card" style="padding:4px 14px"><ul class="txlist" id="sres"></ul></div>`;
+
+  const chips = root.querySelector('#schips');
+  const list = root.querySelector('#sres');
+  const input = root.querySelector('#sq');
+
+  const paintChips = () => { chips.innerHTML = chipRow(['All', ...CATS], cat, 'cat'); };
+  const paintList = () => {
+    const res = getState().tx.filter(t => (cat === 'All' || t.cat === cat) &&
       (!q || t.name.toLowerCase().includes(q) || t.note.toLowerCase().includes(q))).slice(0, 60);
-    root.innerHTML = `<div class="h-sec"><h2>Search</h2></div>
-      <div class="field"><input id="sq" placeholder="Search transactions" value="${esc(q)}" autocomplete="off"></div>
-      ${chipRow(['All', ...CATS], cat, 'cat')}
-      <div class="card" style="padding:4px 14px"><ul class="txlist">
-        ${results.length ? results.map(txRow).join('') : '<li class="empty">No matches</li>'}</ul></div>`;
-    const input = root.querySelector('#sq');
-    input.oninput = () => { q = input.value.toLowerCase(); render(); input.focus(); };
+    list.innerHTML = res.length ? res.map(txRow).join('') : '<li class="empty">No matches</li>';
   };
+
+  /* only the list is rewritten, so the caret stays put */
+  input.addEventListener('input', () => { q = input.value.toLowerCase(); paintList(); });
   root.addEventListener('click', e => {
     const chip = e.target.closest('[data-cat]');
-    if (chip){ cat = chip.dataset.cat; render(); }
+    if (!chip) return;
+    cat = chip.dataset.cat;
+    paintChips();
+    paintList();
   });
-  render();
+
+  paintChips();
+  paintList();
 }
 
 /* ---------- notifications ---------- */
@@ -683,12 +686,12 @@ export function mountSecurity(root){
 /* ---------- transaction detail ---------- */
 export function mountTxDetail(root, params){
   const t = getState().tx.find(x => x.id === params.id);
-  if (!t) { root.innerHTML = empty('Transaction not found'); return; }
+  if (!t){ root.innerHTML = empty('Transaction not found'); return; }
   root.innerHTML = `<div class="h-sec"><h2>Transaction</h2></div><div class="card">
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">${logo(t.name)}
       <div><div style="font-weight:700">${esc(t.name)}</div><div class="sub" style="margin:0">${esc(t.cat)}</div></div></div>
     <div class="balance rev" style="font-size:28px;margin:0 0 12px">${t.amt > 0 ? '+' : ''}${fmt(t.amt)}</div>
-    ${kv('Date', prettyDate(t.date))}${kv('Time', esc(t.time))}
+    ${kv('Date', prettyDateOf(t.date))}${kv('Time', esc(t.time))}
     ${kv('Balance after', `<span class="rev">${fmt(t.bal)}</span>`)}
     ${t.note ? kv('Note', esc(t.note)) : ''}
     <button class="btn ghost" data-dispute style="margin-top:14px">Something wrong? Raise a dispute</button></div>`;
@@ -697,4 +700,13 @@ export function mountTxDetail(root, params){
     raiseDispute(t.name, 'Query raised from transaction');
     toast('Dispute raised'); go('disputes');
   });
-  }
+}
+
+/* local helper so the import block stays flat */
+function prettyDateOf(date){
+  const diff = Math.round((new Date(TODAY + 'T12:00:00') - new Date(date + 'T12:00:00')) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  const d = new Date(date + 'T12:00:00');
+  return `${d.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]} ${d.getFullYear()}`;
+}
