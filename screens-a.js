@@ -5,7 +5,7 @@ import {
   balNow, isaBal, growTotal, savingsTotal, homeEquity, connTotal, loanOwed,
   spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend, interestThisMonth,
   daysToPayday, balanceSeries, tyUsed, TARGET_ISA, addTx, notif,
-  moveToPot, createPot, updatePot, deletePot, togglePotLock,
+  moveToPot, createPot, updatePot, deletePot, togglePotLock, setRoundupPot, clearRoundupPot,
   setHomeEstimate, setPensionMonthly, setTarget, setActiveAccount,
   moveLayoutSection, toggleLayoutSection, addStandingOrder, addSharedTab,
   toggleStandingOrder, settleTab, salaryAmount, setSorter, setSorterOn, sorterTotal,
@@ -258,7 +258,8 @@ export function mountPay(root){
       ${kv('Left in account', '<span class="rev" id="stLeft">—</span>')}
       <button class="btn" id="stSave" style="margin-top:14px">Save sorter</button>`);
     totals();
-    root.querySelectorAll('[data-split]').forEach(i => i.oninput = () => {
+    /* the sheet panel lives outside the view node, so this is a document query */
+    document.querySelectorAll('[data-split]').forEach(i => i.oninput = () => {
       draft[i.dataset.split] = Math.max(0, +i.value || 0);
       totals();
     });
@@ -456,6 +457,7 @@ export function mountPotDetail(root, params){
     const p = getState().pots.find(x => x.id === params.id);
     if (!p){ root.innerHTML = empty('Pot not found'); return; }
     const history = getState().tx.filter(t => t.name === p.name).slice(0, 15);
+    const isRoundup = getState().roundupPotId === p.id;
     root.innerHTML = `<div class="h-sec"><h2>${esc(p.name)}</h2><button data-edit>Edit</button></div>
       <div class="card"><div class="balance rev" style="font-size:30px;margin:0 0 4px">${fmt(p.bal)}</div>
         <div class="sub">${Math.round(p.bal / p.goal * 100)}% of ${fmt(p.goal)}</div>
@@ -463,6 +465,9 @@ export function mountPotDetail(root, params){
         ${p.type === 'savings' ? kv('Interest', plan().ia + '% AER') : ''}
         ${kv('Status', p.locked ? badge('Locked', 'warn') : badge('Unlocked', 'ok'))}
         ${p.autoSave ? kv('Auto-save', fmt(p.autoSave) + ' / month') : ''}
+        ${kv('Round-ups', isRoundup
+          ? `${badge('This pot', 'ok')} <button class="btn ghost sm" data-roundup-off>Stop</button>`
+          : `<button class="btn ghost sm" data-roundup-on>Send here</button>`)}
         <div class="row2" style="margin-top:12px"><button class="btn" data-in>Add money</button>
           <button class="btn ghost" data-out ${p.locked ? 'disabled' : ''}>Withdraw</button></div>
         <div class="row2" style="margin-top:10px">
@@ -508,6 +513,12 @@ export function mountPotDetail(root, params){
     if (e.target.closest('[data-in]')) return amountSheet('in');
     if (e.target.closest('[data-out]')) return amountSheet('out');
     if (e.target.closest('[data-edit]')) return editSheet();
+    if (e.target.closest('[data-roundup-on]')){
+      const r = setRoundupPot(params.id);
+      if (!r.ok) return toast(r.msg);
+      render(); return toast('Round-ups go to ' + r.name);
+    }
+    if (e.target.closest('[data-roundup-off]')){ clearRoundupPot(); return render(); }
     if (e.target.closest('[data-lock]')){
       const res = togglePotLock(params.id);
       if (res.ok){ render(); toast(res.locked ? 'Pot locked' : 'Pot unlocked'); }
