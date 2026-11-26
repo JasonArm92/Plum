@@ -71,7 +71,10 @@ const p2 = n => String(n).padStart(2, '0');
 const isoS = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 const asDate = s => new Date(s + 'T12:00:00');
 const monthLen = (y, m) => new Date(y, m + 1, 0).getDate();
-const domS = (y, m, day) => `${y}-${p2(m + 1)}-${p2(Math.min(day, monthLen(y, m)))}`;
+const domS = (y, m, day) => {
+  const d = new Date(y, m, 1);
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(Math.min(day, monthLen(d.getFullYear(), d.getMonth())))}`;
+};
 
 export function buildISA(now){
   const months = [];
@@ -129,8 +132,10 @@ export function buildAccount(now, isaByMonth = {}){
       const client = pick(['Halcyon Digital','Bede & Co','Northgate Studio','Teesside Tyres',
         'Cleveland Vets','Kirkby Web','Quayside Media']);
       projects.push({ date, amt: ri(2000, 8000), client });
+      /* retainers stop when the year's work stops */
       for (let r = 1; r <= 12; r++){
         const rd = new Date(y, m + r, day);
+        if (rd > now) break;
         projects.push({ date: isoS(rd), amt: ri(120, 350), client: client + ' retainer', retainer: true });
       }
     }
@@ -145,7 +150,8 @@ export function buildAccount(now, isaByMonth = {}){
   while (d <= now){ months.push(new Date(d.getFullYear(), d.getMonth(), 1)); d = new Date(d.getFullYear(), d.getMonth() + 1, 1); }
 
   months.forEach(m0 => {
-    const y = m0.getFullYear(), m = m0.getMonth(), last = domS(y, m, 31), ym = m0.toISOString().slice(0, 7);
+    const y = m0.getFullYear(), m = m0.getMonth(), last = domS(y, m, 31);
+    const ym = `${y}-${p2(m + 1)}`;
     const day = (n, time, name, cat, amt, note) => {
       const date = domS(y, m, n);
       if (asDate(date) > now) return;
