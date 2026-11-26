@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest"/>
 <link rel="icon" href="monzo-mark.svg?v=2"/>
 <link rel="apple-touch-icon" href="monzo-tile.svg?v=2"/>
-<script>try{var _t=JSON.parse(localStorage.getItem('monzo_v4')||'{}');document.documentElement.dataset.theme=(_t.prefs&&_t.prefs.theme)||'auto'}catch(e){}</script>
+<script>try{var _t=JSON.parse(localStorage.getItem('monzo_v5')||'{}');document.documentElement.dataset.theme=(_t.prefs&&_t.prefs.theme)||'auto'}catch(e){}</script>
 <style>
 html{
 --coral:#FF4F40;--navy:#091723;--ink:#091723;--muted:#6B7480;--line:#E7E9EB;
@@ -45,7 +45,6 @@ a{color:inherit;text-decoration:none}
 :focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:6px}
 .hide{display:none!important}
 #app{max-width:520px;margin:0 auto;min-height:100%;padding-bottom:calc(104px + var(--safeb));position:relative}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 #view.anim{animation:viewIn .3s var(--ease) both}
 @keyframes viewIn{from{opacity:.35;transform:translateY(8px)}to{opacity:1;transform:none}}
 
@@ -143,6 +142,20 @@ label.f{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}
 .swatch{padding:16px;border-radius:20px;background:var(--surface);border:2px solid transparent;transition:border-color .2s,transform .16s var(--snap)}
 .swatch:active{transform:scale(.95)}
 .swatch.on{border-color:var(--coral)}
+
+.lock{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:56px 26px calc(26px + var(--safeb));max-width:520px;margin:0 auto}
+.lock h2{font-size:22px;font-weight:800;letter-spacing:-.5px;margin:26px 0 4px;text-align:center}
+.lock .sub{color:var(--muted);font-size:14px}
+.dots{display:flex;gap:15px;margin:26px 0 10px}
+.dots i{width:14px;height:14px;border-radius:50%;background:var(--line);transition:background .18s,transform .18s var(--snap)}
+.dots i.on{background:var(--coral);transform:scale(1.18)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:290px;margin:auto 0 0}
+.key{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-size:23px;font-weight:600;background:var(--surface);transition:transform .14s var(--snap),background .2s}
+.key:active{transform:scale(.92);background:var(--line)}
+.key.ghost{background:transparent}
+.key svg{width:26px;height:26px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(4px)}}
+.lock.shake{animation:shake .42s var(--ease)}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}}
 </style>
 </head>
@@ -153,7 +166,7 @@ label.f{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}
 <div id="sheet" role="dialog" aria-modal="true" aria-label="Sheet"></div>
 <div id="toast" aria-live="assertive"></div>
 <script>
-const KEY='monzo_v4';
+const KEY='monzo_v5';
 const TARGET=934745.32;
 const PORT_TARGET=922628.93;
 const ISA_CASH=+(TARGET-PORT_TARGET).toFixed(2);
@@ -163,22 +176,30 @@ const MARKS={tile:1,mark:1,white:1};
 
 const MONZO_PATH='M4.244 1.174a.44.44 0 0 0-.271.13l-3.97 3.97l-.001.001c3.884 3.882 8.093 8.092 11.748 11.748v-8.57L4.602 1.305a.44.44 0 0 0-.358-.131m15.483 0a.44.44 0 0 0-.329.13L12.25 8.456v8.568L24 5.275c-1.316-1.322-2.647-2.648-3.97-3.97a.44.44 0 0 0-.301-.131zM0 5.979l.002 10.955c0 .294.118.577.326.785l4.973 4.976c.28.282.76.083.758-.314V12.037zm23.998.003l-6.06 6.061v10.338c-.004.399.48.6.76.314l4.974-4.976a1.1 1.1 0 0 0 .326-.785z';
 
-/* real domains for every merchant, bill and holding */
+const TIERS={free:{n:'Free',atm:200,p:0},plus:{n:'Plus',atm:400,p:5},premium:{n:'Premium',atm:600,p:15},max:{n:'Max',atm:600,p:17}};
+
 const DOMAINS={
  'Arriva North East':'arrivabus.co.uk','Stagecoach Teesside':'stagecoachbus.com','Northern Rail':'northernrailway.co.uk',
  'National Rail':'nationalrail.co.uk','Tesco Extra Stockton':'tesco.com','Aldi Billingham':'aldi.co.uk',
- 'Lidl Norton':'lidl.co.uk','Sainsbury’s Whitehouse Farm':'sainsburys.co.uk','Wellington Square':'wellingtonsquare.co.uk',
- 'Teesside Park':'teessidepark.co.uk','Cleveland Centre':'clevelandcentre.co.uk','The Thomas Sheraton':'jdwetherspoon.com',
- 'Costa Stockton High St':'costa.co.uk','Greggs':'greggs.co.uk','Nando’s Teesside Park':'nandos.co.uk',
- 'Butterfly World':'butterflyworld.co.uk','Preston Park Museum':'prestonparkmuseum.co.uk','Stewart Park Cafe':'stewartpark.co.uk',
- 'Ropner Park':'stockton.gov.uk','Middlesbrough FC':'mfc.co.uk','Stockton Town FC':'stocktontownfc.co.uk',
- 'Billingham Forum':'billinghamforum.co.uk','Teesside Airport':'teessideairport.com','Boots Stockton':'boots.com',
- 'Specsavers':'specsavers.co.uk','Hays Travel':'haystravel.co.uk','B&Q Portrack':'diy.com','Screwfix':'screwfix.com',
- 'Shell A19':'shell.co.uk','BP Wolviston':'bp.com','Cineworld Teesside':'cineworld.co.uk','Amazon UK':'amazon.co.uk',
- 'Smyths Toys':'smythstoys.com','Argos Stockton':'argos.co.uk','Wilko':'wilko.com',
+ 'Lidl Norton':'lidl.co.uk','Sainsbury’s Whitehouse Farm':'sainsburys.co.uk','Iceland':'iceland.co.uk',
+ 'Farmfoods':'farmfoods.co.uk','Asda Living':'asda.com','B&M Bargains':'bmstores.co.uk','Poundland':'poundland.co.uk',
+ 'Home Bargains':'homebargains.co.uk','Wellington Square':'wellingtonsquare.co.uk','Teesside Park':'teessidepark.co.uk',
+ 'Cleveland Centre':'clevelandcentre.co.uk','The Thomas Sheraton':'jdwetherspoon.com','Costa Stockton High St':'costa.co.uk',
+ 'Greggs':'greggs.co.uk','Nando’s Teesside Park':'nandos.co.uk','Pizza Hut':'pizzahut.co.uk','McDonald’s':'mcdonalds.com',
+ 'KFC':'kfc.co.uk','Bella Italia':'bellaitalia.co.uk','Butterfly World':'butterflyworld.co.uk',
+ 'Preston Park Museum':'prestonparkmuseum.co.uk','Stewart Park Cafe':'stewartpark.co.uk','Ropner Park':'stockton.gov.uk',
+ 'Middlesbrough FC':'mfc.co.uk','Stockton Town FC':'stocktontownfc.co.uk','Billingham Forum':'billinghamforum.co.uk',
+ 'Jump 360':'jump360.co.uk','Hollywood Bowl':'hollywoodbowl.co.uk','Blue Reef Aquarium':'bluereefaquarium.co.uk',
+ 'National Trust':'nationaltrust.org.uk','Center Parcs':'centerparcs.co.uk','Haven Holidays':'haven.com','TUI':'tui.co.uk',
+ 'Teesside Airport':'teessideairport.com','Boots Stockton':'boots.com','Superdrug':'superdrug.com','Specsavers':'specsavers.co.uk',
+ 'Hays Travel':'haystravel.co.uk','B&Q Portrack':'diy.com','Screwfix':'screwfix.com','Shell A19':'shell.co.uk',
+ 'BP Wolviston':'bp.com','Cineworld Teesside':'cineworld.co.uk','Amazon UK':'amazon.co.uk','Smyths Toys':'smythstoys.com',
+ 'The Entertainer':'thetoyshop.com','Argos Stockton':'argos.co.uk','Wilko':'wilko.com','Clarks Teesside Park':'clarks.co.uk',
+ 'Matalan':'matalan.co.uk','St Aidan’s Primary':'stockton.gov.uk','Little Rascals Soft Play':'littlerascals.co.uk',
  'Northumbrian Water':'nwl.co.uk','British Gas':'britishgas.co.uk','TV Licence':'tvlicensing.co.uk',
  'BT Broadband':'bt.com','Vodafone':'vodafone.co.uk','Sky':'sky.com','EE Mobile':'ee.co.uk','Three':'three.co.uk',
- 'Cleveland Pottery Ltd':'clevelandpottery.co.uk',
+ 'Cleveland Pottery Ltd':'clevelandpottery.co.uk','HMRC Child Benefit':'gov.uk',
+ 'Blue Skies Lets':'blueskieslets.co.uk','OpenRent':'openrent.co.uk','Pointens Estate Agents':'pointens.co.uk',
  'Vanguard FTSE Global All Cap':'vanguard.com','Vanguard FTSE Dev World ex-UK':'vanguard.com','Vanguard US Equity Index':'vanguard.com',
  'iShares Core MSCI World':'ishares.com','iShares Core FTSE 100':'ishares.com','SPDR S&P 500':'ssga.com',
  'Legal & General UK Index':'legalandgeneral.com','Legal & General International Index':'legalandgeneral.com','HSBC FTSE All-World':'hsbc.com',
@@ -208,37 +229,56 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a
 const dstr=d=>d.toISOString().slice(0,10);
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const ymLabel=ym=>MON[+ym.slice(5,7)-1]+' '+ym.slice(0,4);
+const ymOf=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
 
 const ISA_LIMITS={1999:7000,2000:7000,2001:7000,2002:7000,2003:7000,2004:7000,2005:7000,2006:7000,2007:7000,2008:7200,2009:7200,2010:10200,2011:10680,2012:11280,2013:11520,2014:11880,2015:15240,2016:15240,2017:20000,2018:20000,2019:20000,2020:20000,2021:20000,2022:20000,2023:20000,2024:20000,2025:20000,2026:20000};
 const taxYear=()=>{const d=new Date();return (d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6))?d.getFullYear()-1:d.getFullYear()};
 const tyLabel=y=>`${y}/${String(y+1).slice(2)}`;
 const SOURCES=['Halifax','Lloyds Bank','Barclays','Hargreaves Lansdown','Legal & General','AJ Bell','Barclays Stockbrokers','Cheltenham & Gloucester','Alliance Trust'];
 
+const RENT=[
+ {from:'2024-03',to:'2025-02',n:'Pointens Estate Agents',a:1300,day:1},
+ {from:'2025-03',to:'2026-08',n:'OpenRent',a:799,day:1},
+ {from:'2026-09',to:'9999-12',n:'Blue Skies Lets',a:850,day:12}
+];
+const rentFor=ym=>RENT.find(x=>ym>=x.from&&ym<=x.to)||null;
+
 const MERCH=[
- {n:'Arriva North East',c:'Transport',lo:[2,6],cad:.55},{n:'Stagecoach Teesside',c:'Transport',lo:[2,5],cad:.4},
- {n:'Northern Rail',c:'Transport',lo:[3,14],cad:.2},{n:'National Rail',c:'Transport',lo:[8,42],cad:.12},
- {n:'Tesco Extra Stockton',c:'Groceries',lo:[6,54],cad:.75},{n:'Aldi Billingham',c:'Groceries',lo:[5,38],cad:.5},
- {n:'Lidl Norton',c:'Groceries',lo:[4,31],cad:.35},{n:'Sainsbury’s Whitehouse Farm',c:'Groceries',lo:[7,46],cad:.3},
- {n:'Wellington Square',c:'Shopping',lo:[8,64],cad:.3},{n:'Teesside Park',c:'Shopping',lo:[12,120],cad:.22},
- {n:'Cleveland Centre',c:'Shopping',lo:[5,48],cad:.26},{n:'The Thomas Sheraton',c:'Eating out',lo:[9,34],cad:.3},
- {n:'Costa Stockton High St',c:'Eating out',lo:[2,7],cad:.5},{n:'Greggs',c:'Eating out',lo:[1,6],cad:.55},
- {n:'Nando’s Teesside Park',c:'Eating out',lo:[14,42],cad:.14},{n:'Butterfly World',c:'Leisure',lo:[9,26],cad:.05},
- {n:'Preston Park Museum',c:'Leisure',lo:[4,18],cad:.05},{n:'Stewart Park Cafe',c:'Eating out',lo:[3,12],cad:.12},
- {n:'Ropner Park',c:'Leisure',lo:[2,8],cad:.08},{n:'Middlesbrough FC',c:'Leisure',lo:[22,58],cad:.06},
- {n:'Stockton Town FC',c:'Leisure',lo:[8,16],cad:.05},{n:'Billingham Forum',c:'Leisure',lo:[5,22],cad:.08},
- {n:'Teesside Airport',c:'Travel',lo:[48,220],cad:.03},{n:'Boots Stockton',c:'Health',lo:[4,29],cad:.14},
+ {n:'Arriva North East',c:'Transport',lo:[2,6],cad:.5},{n:'Stagecoach Teesside',c:'Transport',lo:[2,5],cad:.36},
+ {n:'Northern Rail',c:'Transport',lo:[3,14],cad:.18},{n:'National Rail',c:'Transport',lo:[8,42],cad:.1},
+ {n:'Tesco Extra Stockton',c:'Groceries',lo:[8,68],cad:.9},{n:'Aldi Billingham',c:'Groceries',lo:[6,48],cad:.62},
+ {n:'Lidl Norton',c:'Groceries',lo:[5,40],cad:.45},{n:'Sainsbury’s Whitehouse Farm',c:'Groceries',lo:[9,58],cad:.38},
+ {n:'Iceland',c:'Groceries',lo:[4,26],cad:.22},{n:'Farmfoods',c:'Groceries',lo:[3,19],cad:.16},
+ {n:'Asda Living',c:'Home',lo:[8,52],cad:.18},{n:'B&M Bargains',c:'Home',lo:[3,28],cad:.28},
+ {n:'Poundland',c:'Home',lo:[2,14],cad:.26},{n:'Home Bargains',c:'Home',lo:[3,22],cad:.22},
+ {n:'Wellington Square',c:'Shopping',lo:[8,64],cad:.26},{n:'Teesside Park',c:'Shopping',lo:[12,120],cad:.2},
+ {n:'Cleveland Centre',c:'Shopping',lo:[5,48],cad:.22},{n:'The Thomas Sheraton',c:'Eating out',lo:[18,62],cad:.24},
+ {n:'Costa Stockton High St',c:'Eating out',lo:[3,11],cad:.4},{n:'Greggs',c:'Eating out',lo:[2,9],cad:.45},
+ {n:'Nando’s Teesside Park',c:'Eating out',lo:[22,58],cad:.14},{n:'Pizza Hut',c:'Eating out',lo:[18,44],cad:.1},
+ {n:'McDonald’s',c:'Eating out',lo:[6,21],cad:.32},{n:'KFC',c:'Eating out',lo:[6,19],cad:.2},
+ {n:'Bella Italia',c:'Eating out',lo:[20,48],cad:.07},{n:'Butterfly World',c:'Kids',lo:[9,26],cad:.07},
+ {n:'Preston Park Museum',c:'Kids',lo:[4,18],cad:.07},{n:'Stewart Park Cafe',c:'Eating out',lo:[4,14],cad:.12},
+ {n:'Ropner Park',c:'Kids',lo:[2,8],cad:.09},{n:'Middlesbrough FC',c:'Leisure',lo:[22,58],cad:.06},
+ {n:'Stockton Town FC',c:'Kids',lo:[8,16],cad:.06},{n:'Billingham Forum',c:'Kids',lo:[5,22],cad:.09},
+ {n:'Jump 360',c:'Kids',lo:[8,18],cad:.07},{n:'Hollywood Bowl',c:'Kids',lo:[14,36],cad:.06},
+ {n:'Blue Reef Aquarium',c:'Kids',lo:[10,32],cad:.03},{n:'National Trust',c:'Leisure',lo:[6,24],cad:.05},
+ {n:'Center Parcs',c:'Travel',lo:[60,240],cad:.02},{n:'Haven Holidays',c:'Travel',lo:[80,260],cad:.02},
+ {n:'TUI',c:'Travel',lo:[180,620],cad:.02},{n:'Teesside Airport',c:'Travel',lo:[48,220],cad:.03},
+ {n:'Boots Stockton',c:'Health',lo:[4,29],cad:.14},{n:'Superdrug',c:'Health',lo:[3,18],cad:.12},
  {n:'Specsavers',c:'Health',lo:[25,180],cad:.03},{n:'Hays Travel',c:'Travel',lo:[180,640],cad:.02},
  {n:'B&Q Portrack',c:'Home',lo:[8,86],cad:.12},{n:'Screwfix',c:'Home',lo:[4,52],cad:.1},
  {n:'Shell A19',c:'Transport',lo:[28,62],cad:.16},{n:'BP Wolviston',c:'Transport',lo:[26,58],cad:.12},
- {n:'Cineworld Teesside',c:'Leisure',lo:[9,28],cad:.06},{n:'Amazon UK',c:'Shopping',lo:[6,74],cad:.3},
- {n:'Smyths Toys',c:'Shopping',lo:[9,64],cad:.05},{n:'Argos Stockton',c:'Shopping',lo:[12,92],cad:.05},
- {n:'Wilko',c:'Home',lo:[4,34],cad:.1}
+ {n:'Cineworld Teesside',c:'Kids',lo:[9,28],cad:.07},{n:'Amazon UK',c:'Shopping',lo:[6,74],cad:.3},
+ {n:'Smyths Toys',c:'Kids',lo:[9,64],cad:.09},{n:'The Entertainer',c:'Kids',lo:[6,38],cad:.05},
+ {n:'Argos Stockton',c:'Shopping',lo:[12,92],cad:.05},{n:'Wilko',c:'Home',lo:[4,34],cad:.1},
+ {n:'Clarks Teesside Park',c:'Kids',lo:[18,58],cad:.04},{n:'Matalan',c:'Kids',lo:[8,44],cad:.05},
+ {n:'St Aidan’s Primary',c:'Kids',lo:[3,24],cad:.09},{n:'Little Rascals Soft Play',c:'Kids',lo:[5,16],cad:.05}
 ];
 const BILLS=[
- {n:'Northumbrian Water',c:'Bills',a:41.00,day:4},{n:'British Gas',c:'Bills',a:96.40,day:8},
+ {n:'Northumbrian Water',c:'Bills',a:52.00,day:4},{n:'British Gas',c:'Bills',a:148.40,day:8},
  {n:'TV Licence',c:'Bills',a:14.45,day:12},{n:'BT Broadband',c:'Bills',a:38.99,day:17},
- {n:'Vodafone',c:'Bills',a:28.00,day:21},{n:'Sky',c:'Bills',a:52.00,day:25},
- {n:'EE Mobile',c:'Bills',a:18.50,day:2},{n:'Three',c:'Bills',a:16.00,day:14}
+ {n:'Vodafone',c:'Bills',a:38.00,day:21},{n:'Sky',c:'Bills',a:62.00,day:25},
+ {n:'EE Mobile',c:'Bills',a:24.50,day:2},{n:'Three',c:'Bills',a:21.00,day:14}
 ];
 const INSTR=[
  ['Vanguard FTSE Global All Cap','Fund'],['Vanguard FTSE Dev World ex-UK','Fund'],['Vanguard US Equity Index','Fund'],
@@ -260,14 +300,11 @@ const INSTR=[
  ['Diageo','Stock'],['RELX','Stock'],['BAE Systems','Stock']
 ];
 
-/* ---------- logos ---------- */
 function logoFail(img){
   const d=img.dataset.d||'';
   if(!img.dataset.f){img.dataset.f='1';img.src='https://www.google.com/s2/favicons?domain='+d+'&sz=128';return}
   const p=img.parentNode;
-  p.classList.remove('lg');
-  p.style.padding='0';
-  p.style.background='var(--surface)';
+  p.classList.remove('lg');p.style.padding='0';p.style.background='var(--surface)';
   p.innerHTML='<span style="font-weight:800;font-size:15px">'+esc(img.dataset.c||'?')+'</span>';
 }
 function logo(name,size=40){
@@ -277,6 +314,7 @@ function logo(name,size=40){
   return `<span class="ico lg" style="${chip};padding:${Math.round(size*0.15)}px"><img src="https://logo.clearbit.com/${d}" alt="" loading="lazy" decoding="async" data-d="${d}" data-c="${esc((name||'?')[0])}" onerror="logoFail(this)" style="width:100%;height:100%;object-fit:contain"/></span>`;
 }
 
+/* ---------- ISA ledger ---------- */
 function buildLedger(rnd,target){
   const rows=[];let bal=0;let d=new Date(1992,9,1);const end=new Date();end.setDate(1);
   while(d<=end){
@@ -313,13 +351,38 @@ function buildLedger(rnd,target){
   }
   return rows;
 }
+
+/* ---------- current account history (monthly) ---------- */
+const TX_DAYS=548;
+function buildHist(rnd){
+  const rows=[];let bal=620;
+  let d=new Date(2015,9,1);
+  const s=new Date();s.setDate(s.getDate()-TX_DAYS);
+  const end=new Date(s.getFullYear(),s.getMonth(),1);
+  while(d<end){
+    const ym=ymOf(d);
+    const f=(d.getFullYear()-2015)+(d.getMonth()/12);
+    const sal=Math.round(2980+f*66);
+    const rent=rentFor(ym);
+    const household=Math.round(1180+f*44+(rnd()-.5)*190);
+    const kids=d.getFullYear()>=2018?Math.round(210+(d.getFullYear()-2018)*30+(rnd()-.5)*70):0;
+    const inc=sal+(d.getMonth()%1===0&&d.getFullYear()>=2019?102.40:0);
+    const out=household+kids+(rent?rent.a:0);
+    bal=Math.max(-520,bal+inc-out);
+    rows.push({ym,in:inc,out,closing:+bal.toFixed(2),rent:rent?rent.n:null});
+    d=new Date(d.getFullYear(),d.getMonth()+1,1);
+  }
+  return rows;
+}
+
 function buildTx(rnd,startBal){
   const out=[];const today=new Date();today.setHours(0,0,0,0);
-  const from=new Date(today);from.setDate(from.getDate()-548);let bal=startBal;
+  const from=new Date(today);from.setDate(from.getDate()-TX_DAYS);let bal=startBal;
+  const epoch=new Date(2019,0,4);
   for(let d=new Date(from);d<=today;d.setDate(d.getDate()+1)){
-    const day=new Date(d);
+    const day=new Date(d),ym=ymOf(day);
     for(const m of MERCH){
-      if(rnd()<m.cad*0.42){
+      if(rnd()<m.cad*0.44){
         const amt=+(m.lo[0]+rnd()*(m.lo[1]-m.lo[0])).toFixed(2);
         bal=+(bal-amt).toFixed(2);
         out.push({id:'t'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:m.n,c:m.c,amt:-amt,bal,pend:rnd()<0.04});
@@ -329,17 +392,32 @@ function buildTx(rnd,startBal){
       bal=+(bal-b.a).toFixed(2);
       out.push({id:'b'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:b.n,c:'Bills',amt:-b.a,bal,dd:true});
     }
+    const r=rentFor(ym);
+    if(r&&day.getDate()===r.day){
+      bal=+(bal-r.a).toFixed(2);
+      out.push({id:'r'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:r.n,c:'Rent',amt:-r.a,bal,dd:true});
+    }
+    if(Math.round((day-epoch)/864e5)%28===0){
+      bal=+(bal+102.40).toFixed(2);
+      out.push({id:'c'+day.getTime(),d:dstr(day),t:day.getTime(),n:'HMRC Child Benefit',c:'Income',amt:102.40,bal});
+    }
     if(day.getDate()===26){
-      bal=+(bal+3120.44).toFixed(2);
-      out.push({id:'s'+day.getTime(),d:dstr(day),t:day.getTime(),n:'Cleveland Pottery Ltd',c:'Income',amt:3120.44,bal,sal:true});
+      bal=+(bal+4080).toFixed(2);
+      out.push({id:'s'+day.getTime(),d:dstr(day),t:day.getTime(),n:'Cleveland Pottery Ltd',c:'Income',amt:4080,bal,sal:true});
     }
   }
   return out.sort((a,b)=>b.t-a.t);
 }
+
 function fresh(){
   const rnd=mulberry32(19921024);
   const isa=buildLedger(rnd,TARGET);
-  const tx=buildTx(mulberry32(77021),2847.19);
+  const hist=buildHist(mulberry32(4411));
+  const startBal=hist.length?hist[hist.length-1].closing:1800;
+  const tx=buildTx(mulberry32(77021),startBal);
+  const delta=+(2380-(tx[0]?tx[0].bal:startBal)).toFixed(2);
+  tx.forEach(t=>t.bal=+(t.bal+delta).toFixed(2));
+  hist.forEach(h=>h.closing=+(h.closing+delta).toFixed(2));
   const pots=[
     {id:'p1',n:'Emergency Fund',a:12480.00,rate:4.10,goal:15000,lock:'2027-03-01',ico:'🛟',col:'#0E9F6E'},
     {id:'p2',n:'House Deposit',a:18250.00,rate:3.80,goal:40000,lock:null,ico:'🏡',col:'#3538CD'},
@@ -355,17 +433,19 @@ function fresh(){
   const holdings=raw.map(h=>({n:h.n,k:h.k,v:+(h.w/sum*PORT_TARGET).toFixed(2),cost:+(h.w/sum*PORT_TARGET*(0.42+rnd()*0.55)).toFixed(2)}));
   holdings[0].v=+(holdings[0].v+(PORT_TARGET-holdings.reduce((s,h)=>s+h.v,0))).toFixed(2);
   return {
-    v:4,
-    profile:{name:'Jason Armstrong',addr:'259 Piper Knowle Road',city:'Stockton-on-Tees',pc:'TS19 8JQ',email:'jasonarm82@gmail.com',phone:'07356170033',idv:'Verified',taxres:'United Kingdom',since:'14 October 2015',dob:'1982-04-11'},
-    acct:{current:2847.19,savings:potTotal,isaCash:ISA_CASH,flexUsed:412.50,flexLimit:3000,odLimit:2000,odDrawn:340},
-    pots,tx,ledger:{isa},holdings,
+    v:5,
+    profile:{name:'Jason Armstrong',addr:'259 Piper Knowle Road',city:'Stockton-on-Tees',pc:'TS19 8JQ',email:'jasonarm82@gmail.com',phone:'07356170033',idv:'Verified',taxres:'United Kingdom',since:'14 October 2015',dob:'1992-10-07'},
+    acct:{current:+(tx[0]?tx[0].bal:2380).toFixed(2),savings:potTotal,isaCash:ISA_CASH,flexUsed:412.50,flexLimit:3000,odLimit:2000,odDrawn:0},
+    sub:'max',
+    pots,tx,hist,ledger:{isa},holdings,
+    targets:{Groceries:560,Transport:180,'Eating out':160,Shopping:200,Bills:480,Leisure:140,Kids:260,Rent:850,Health:60,Home:120},
     dd:BILLS.map((b,i)=>({id:'dd'+i,n:b.n,c:b.c,a:b.a,day:b.day,ref:'MZ'+String(4820011+i).slice(0,6),since:'2019-0'+(1+i%8)+'-1'+(i%9)})),
     sched:[{id:'sc1',n:'Mum',a:150,to:'Mum · 40-11-22 · 7341',freq:'Monthly',next:'2026-01-03',out:true}],
     payees:[{id:'py1',n:'Mum',s:'40-11-22',a:'73412200',i:'M'},{id:'py2',n:'Dan Whitfield',s:'04-00-04',a:'55120987',i:'D'},{id:'py3',n:'Cleveland Pottery Ltd',s:'20-33-87',a:'44210933',i:'C'}],
-    notifs:[],card:{frozen:false,online:true,atm:200,mag:true},
-    sec:{bio:true,pin:'4821',lock:true,privacy:false},
+    notifs:[],card:{frozen:false,online:true,atm:600,mag:true},
+    sec:{bio:true,pin:'4821',lock:true,privacy:false,credId:null},
     prefs:{theme:'auto',mark:'tile',motion:!REDUCED,notif:{tx:true,dd:true,pot:true,market:false}},
-    cats:['Groceries','Transport','Eating out','Shopping','Bills','Leisure','Health','Home','Travel','Income','Transfers'],
+    cats:['Groceries','Transport','Eating out','Shopping','Bills','Leisure','Kids','Health','Home','Travel','Rent','Income','Transfers'],
     importLog:[{d:'2015-10-14',src:'Halifax',n:'ISA transfer-in'},{d:'2015-10-14',src:'Hargreaves Lansdown',n:'Investment account transfer'},{d:'2016-04-06',src:'Legal & General',n:'PEP consolidation'}],
     seen:{}
   };
@@ -377,15 +457,15 @@ function load(){
     const raw=localStorage.getItem(KEY);
     if(raw){
       const p=JSON.parse(raw);
-      if(p&&p.v===4&&p.ledger&&p.ledger.isa&&p.ledger.isa.length>300){
+      if(p&&p.v===5&&p.ledger&&p.ledger.isa&&p.ledger.isa.length>300&&p.hist){
         S=p;
-        S.prefs=S.prefs||{};
-        S.prefs.theme=S.prefs.theme||'auto';
+        S.prefs=S.prefs||{};S.prefs.theme=S.prefs.theme||'auto';
         S.prefs.mark=MARKS[S.prefs.mark]?S.prefs.mark:'tile';
         S.prefs.notif=S.prefs.notif||{tx:true,dd:true,pot:true,market:false};
         S.seen=S.seen||{};S.notifs=S.notifs||[];
-        S.card=S.card||{frozen:false,online:true,atm:200,mag:true};
-        S.sec=S.sec||{bio:true,pin:'4821',lock:true,privacy:false};
+        S.card=S.card||{frozen:false,online:true,atm:600,mag:true};
+        S.sec=S.sec||{bio:true,pin:'4821',lock:true,privacy:false,credId:null};
+        S.targets=S.targets||{};S.sub=S.sub||'max';
         applyTheme();return;
       }
     }
@@ -398,8 +478,7 @@ function applyTheme(){
   const t=S?.prefs?.theme||'auto';
   document.documentElement.dataset.theme=t;
   const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);
-  const m=$('meta[name="theme-color"]');
-  if(m)m.setAttribute('content',dark?'#0B0F14':'#FF4F40');
+  const m=$('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#0B0F14':'#FF4F40');
 }
 function setTheme(t){S.prefs.theme=t;save();applyTheme();render();toast('Appearance updated')}
 function setMark(k){S.prefs.mark=k;save();render();toast('App icon updated')}
@@ -407,10 +486,11 @@ function setMark(k){S.prefs.mark=k;save();render();toast('App icon updated')}
 const isaBal=()=>S.ledger.isa[S.ledger.isa.length-1].closing;
 const portVal=()=>S.holdings.reduce((s,h)=>s+h.v,0);
 const netWorth=()=>S.acct.current+S.acct.savings+isaBal();
+const budgetTotal=()=>Object.values(S.targets||{}).reduce((a,b)=>a+ +b,0);
 const leftToSpend=()=>{
   const d=new Date(),m=d.getMonth(),y=d.getFullYear();
   const spent=S.tx.filter(t=>t.amt<0&&!t.sal&&new Date(t.d).getMonth()===m&&new Date(t.d).getFullYear()===y).reduce((s,t)=>s-t.amt,0);
-  return Math.max(0,+(2600-spent).toFixed(2));
+  return Math.max(0,+(budgetTotal()-spent).toFixed(2));
 };
 const tyUsed=()=>{
   const y=taxYear(),a=new Date(y,3,6),b=new Date(y+1,3,6);
@@ -419,16 +499,8 @@ const tyUsed=()=>{
 
 function mark(size=26,v){
   const k=v||S.prefs.mark||'tile';
-  if(k==='tile'){
-    return `<svg width="${size}" height="${size}" viewBox="0 0 512 512" aria-hidden="true" style="display:block">
-      <rect width="512" height="512" rx="100" fill="#FF4F40"/>
-      <g transform="translate(96 96) scale(13.333)"><path fill="#FFFFFF" d="${MONZO_PATH}"/></g></svg>`;
-  }
-  if(k==='white'){
-    const s=Math.round(size*.66);
-    return `<span class="mk" style="width:${size}px;height:${size}px;border-radius:${Math.round(size*.26)}px;background:var(--navy)">
-      <svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path fill="#FFFFFF" d="${MONZO_PATH}"/></svg></span>`;
-  }
+  if(k==='tile')return `<svg width="${size}" height="${size}" viewBox="0 0 512 512" aria-hidden="true" style="display:block"><rect width="512" height="512" rx="100" fill="#FF4F40"/><g transform="translate(96 96) scale(13.333)"><path fill="#FFFFFF" d="${MONZO_PATH}"/></g></svg>`;
+  if(k==='white'){const s=Math.round(size*.66);return `<span class="mk" style="width:${size}px;height:${size}px;border-radius:${Math.round(size*.26)}px;background:var(--navy)"><svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path fill="#FFFFFF" d="${MONZO_PATH}"/></svg></span>`}
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true" style="display:block"><path fill="#FF4F40" d="${MONZO_PATH}"/></svg>`;
 }
 function toast(msg){
@@ -452,11 +524,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 })();
 
 let stack=['home'];
-function go(r,p){
-  const next=r+(p?':'+p:'');
-  if(cur()===next)return;
-  stack.push(next);render();window.scrollTo(0,0);
-}
+function go(r,p){const n=r+(p?':'+p:'');if(cur()===n)return;stack.push(n);render();window.scrollTo(0,0)}
 function back(){closeSheet();if(stack.length>1)stack.pop();else stack=['home'];render();window.scrollTo(0,0)}
 function reset(r){stack=[r];render();window.scrollTo(0,0)}
 const cur=()=>stack[stack.length-1];
@@ -470,19 +538,14 @@ const TABDEF=[['home','Home','<path d="M3 10.5L12 3l9 7.5"/><path d="M5.5 9.5V21
  ['trends','Trends','<path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/>'],
  ['savings','Save','<path d="M12 3v18"/><path d="M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'],
  ['profile','You','<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/>']];
-function buildTabs(){
-  $('#tabbar').innerHTML=TABDEF.map(([k,l,ic])=>
-    `<button data-t="${k}" onclick="reset('${k}')"><svg viewBox="0 0 24 24">${ic}</svg>${l}</button>`).join('');
-}
-function syncTabs(){
-  const c=cur().split(':')[0];
-  $$('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.t===c));
-}
+function buildTabs(){$('#tabbar').innerHTML=TABDEF.map(([k,l,ic])=>`<button data-t="${k}" onclick="reset('${k}')"><svg viewBox="0 0 24 24">${ic}</svg>${l}</button>`).join('')}
+function syncTabs(){const c=cur().split(':')[0];$$('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.t===c))}
 
+/* ---------- charts ---------- */
 function lineChart(pts,w,h,opt={}){
-  if(!pts.length)return '';
+  if(pts.length<2)return '<div class="empty">Not enough data</div>';
   const min=Math.min(...pts),max=Math.max(...pts),pad=(max-min)||1;
-  const X=i=>i/(pts.length-1||1)*w,Y=v=>h-((v-min)/pad)*h;
+  const X=i=>i/(pts.length-1)*w,Y=v=>h-((v-min)/pad)*h;
   const d=pts.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
   return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="height:${opt.h||140}px" aria-hidden="true">
     <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF4F40" stop-opacity=".3"/><stop offset="1" stop-color="#FF4F40" stop-opacity="0"/></linearGradient></defs>
@@ -494,8 +557,7 @@ function barChart(vals,labels,w,h){
   const max=Math.max(...vals)||1,bw=w/vals.length;
   return `<svg class="chart" viewBox="0 0 ${w} ${h+18}" style="height:${h+18}px" aria-hidden="true">
     ${vals.map((v,i)=>`<rect x="${(i*bw+bw*.18).toFixed(1)}" y="${(h-(v/max)*h).toFixed(1)}" width="${(bw*.64).toFixed(1)}" height="${Math.max(1,(v/max)*h).toFixed(1)}" rx="3" fill="${v===max?'#FF4F40':'currentColor'}" opacity="${v===max?1:.8}"/>`).join('')}
-    ${labels.map((l,i)=>l?`<text class="axis" x="${(i*bw+bw/2).toFixed(1)}" y="${h+13}" text-anchor="middle">${esc(l)}</text>`:'').join('')}
-  </svg>`;
+    ${labels.map((l,i)=>l?`<text class="axis" x="${(i*bw+bw/2).toFixed(1)}" y="${h+13}" text-anchor="middle">${esc(l)}</text>`:'').join('')}</svg>`;
 }
 function donut(data,w=150){
   const total=data.reduce((s,d)=>s+d.v,0)||1;let a=-Math.PI/2;
@@ -511,7 +573,59 @@ function donut(data,w=150){
 }
 function heatmap(cells){
   return `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${cells.map(c=>
-    `<div title="${c.d}: ${gbp(c.v)}" style="aspect-ratio:1;border-radius:6px;background:${c.v?`rgba(255,79,64,${clamp(c.v/120,.12,1).toFixed(2)})`:'var(--surface)'}"></div>`).join('')}</div>`;
+    `<div title="${c.d}: ${gbp(c.v)}" style="aspect-ratio:1;border-radius:6px;background:${c.v?`rgba(255,79,64,${clamp(c.v/160,.12,1).toFixed(2)})`:'var(--surface)'}"></div>`).join('')}</div>`;
+}
+
+/* ---------- trend series ---------- */
+function monthSpend(ym){
+  const h=S.hist.find(r=>r.ym===ym);
+  const t=S.tx.filter(x=>x.d.slice(0,7)===ym&&x.amt<0).reduce((s,x)=>s-x.amt,0);
+  return (h?h.out:0)+t;
+}
+function spendSeries(range){
+  const now=new Date();
+  if(range==='week'||range==='month'){
+    const n=range==='week'?7:30,vals=Array(n).fill(0),labels=Array(n).fill('');
+    for(let i=0;i<n;i++){
+      const d=new Date();d.setDate(d.getDate()-(n-1-i));
+      vals[i]=S.tx.filter(t=>t.d===dstr(d)&&t.amt<0).reduce((s,t)=>s-t.amt,0);
+      labels[i]=range==='week'?['S','M','T','W','T','F','S'][d.getDay()]:(i%5===0?String(d.getDate()):'');
+    }
+    return {vals,labels};
+  }
+  if(range==='year'){
+    const vals=Array(12).fill(0),labels=Array(12).fill('');
+    for(let i=0;i<12;i++){
+      const d=new Date(now.getFullYear(),now.getMonth()-(11-i),1);
+      vals[i]=monthSpend(ymOf(d));labels[i]=MON[d.getMonth()];
+    }
+    return {vals,labels};
+  }
+  const y0=2015,y1=now.getFullYear(),vals=[],labels=[];
+  for(let y=y0;y<=y1;y++){
+    const h=S.hist.filter(r=>r.ym.slice(0,4)===String(y)).reduce((s,r)=>s+r.out,0);
+    const t=S.tx.filter(x=>x.d.slice(0,4)===String(y)&&x.amt<0).reduce((s,x)=>s-x.amt,0);
+    vals.push(h+t);labels.push(String(y).slice(2));
+  }
+  return {vals,labels};
+}
+function balanceSeries(range){
+  const now=new Date();
+  if(range==='week'||range==='month'){
+    const n=range==='week'?7:30,out=[];
+    for(let i=n-1;i>=0;i--){
+      const d=new Date();d.setDate(d.getDate()-i);
+      const hit=S.tx.find(t=>t.d===dstr(d));
+      out.push(hit?hit.bal:(out.length?out[out.length-1]:S.acct.current));
+    }
+    return out;
+  }
+  const months=S.hist.map(h=>h.closing);
+  const byMonth={};
+  S.tx.slice().reverse().forEach(t=>{byMonth[t.d.slice(0,7)]=t.bal});
+  Object.keys(byMonth).sort().forEach(k=>months.push(byMonth[k]));
+  if(range==='year')return months.slice(-12);
+  return months.slice(-132);
 }
 
 function txRow(t,i){
@@ -521,7 +635,7 @@ function txRow(t,i){
     <span class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${gbp(t.amt)}</span></button>`;
 }
 function vHome(){
-  const lts=leftToSpend();
+  const lts=leftToSpend(),bud=budgetTotal();
   return `<div class="top">
     <div class="avatar" role="button" tabindex="0" onclick="go('hub')" aria-label="Accounts">JA</div>
     <h1 style="font-size:17px">${esc(S.profile.name.split(' ')[0])}</h1>
@@ -531,8 +645,8 @@ function vHome(){
     <div class="hero">
       <div class="lbl">Left to spend</div>
       <div class="bal mono" data-count="${lts}">${gbp(lts)}</div>
-      <div class="sub">of £2,600 monthly budget · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long'})}</div>
-      <div class="prog navy" style="margin:14px 0 16px"><i style="width:${clamp((1-lts/2600)*100,0,100)}%;background:#FF4F40"></i></div>
+      <div class="sub">of ${gbp0(bud)} monthly budget · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long'})}</div>
+      <div class="prog navy" style="margin:14px 0 16px"><i style="width:${clamp((1-lts/bud)*100,0,100)}%;background:#FF4F40"></i></div>
       <div style="display:flex;gap:10px">
         <button class="btn coral sm" style="flex:1" onclick="go('move')">Move money</button>
         <button class="btn ghost sm" style="flex:1;background:rgba(255,255,255,.14);color:#fff" onclick="go('pay')">Pay</button>
@@ -547,7 +661,7 @@ function vHome(){
       <div class="mono" style="font-weight:800;font-size:14px;margin-top:4px">${gbp(p.a)}</div></button>`).join('')}
     <button class="card" style="flex:0 0 132px;border:1.5px dashed var(--line);background:var(--card);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)" onclick="newPot()">+ New pot</button></div>
   <div class="sec">Transactions</div>
-  <div class="list">${S.tx.slice(0,28).map(txRow).join('')||'<div class="empty"><b>Nothing yet</b>Your spending will appear here.</div>'}</div>`;
+  <div class="list">${S.tx.slice(0,28).map(txRow).join('')||'<div class="empty"><b>Nothing yet</b></div>'}</div>`;
 }
 function vHub(){
   return topbar('Accounts',{back:true})+`<div class="pad">
@@ -565,34 +679,23 @@ function vHub(){
 }
 function vTrends(){
   const range=S.seen.trendRange||'month';
+  const sp=spendSeries(range);
+  const total=sp.vals.reduce((a,b)=>a+b,0);
   const cats={};
-  const from=new Date();from.setDate(from.getDate()-(range==='week'?7:range==='month'?30:range==='year'?365:1095));
+  const cut=range==='week'?7:range==='month'?30:range==='year'?365:4000;
+  const from=new Date();from.setDate(from.getDate()-cut);
   S.tx.filter(t=>t.amt<0&&new Date(t.d)>=from).forEach(t=>{cats[t.c]=(cats[t.c]||0)+(-t.amt)});
   const pal=['#FF4F40','#091723','#7A5AF8','#0BA5EC','#0E9F6E','#B54708','#D92D20','#475467'];
   const cd=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([k,v],i)=>({k,v,c:pal[i%pal.length]}));
-  const days=range==='week'?7:range==='month'?30:range==='year'?12:36;
-  const buckets=Array(days).fill(0);
-  S.tx.filter(t=>t.amt<0).forEach(t=>{
-    const dt=new Date(t.d);let i;
-    if(range==='year')i=11-dt.getMonth();
-    else if(range==='all')i=35-(new Date().getFullYear()-dt.getFullYear())*12-dt.getMonth();
-    else i=days-1-Math.floor((Date.now()-dt.getTime())/864e5);
-    if(i>=0&&i<days)buckets[i]+=-t.amt;
-  });
-  const labels=Array(days).fill('');
-  if(range==='week')labels.splice(0,7,...['M','T','W','T','F','S','S']);
-  else if(range==='month')for(let i=0;i<days;i+=5)labels[i]=String(i+1);
-  else if(range==='year')labels.splice(0,12,...MON);
-  else for(let i=0;i<days;i+=6)labels[i]=String(new Date().getFullYear()-2+Math.floor(i/12));
-  const bal=[];for(let i=Math.min(29,S.tx.length);i>=0;i--)bal.push(S.tx[i]?.bal||0);
+  const bal=balanceSeries(range);
   const cells=[];
   for(let i=34;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=dstr(d);cells.push({d:ds,v:S.tx.filter(t=>t.d===ds&&t.amt<0).reduce((s,t)=>s-t.amt,0)})}
   return topbar('Trends')+`<div class="pad">
     <div class="seg" style="margin-bottom:16px">${[['week','Week'],['month','Month'],['year','Year'],['all','All time']].map(([k,l])=>`<button class="${range===k?'on':''}" onclick="S.seen.trendRange='${k}';save();render()">${l}</button>`).join('')}</div>
     <div class="card w"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Balance trend</div>
       <div style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px" class="mono">${gbp(S.acct.current)}</div>${lineChart(bal,320,120)}</div>
-    <div class="card w" style="margin-top:12px"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Spending</div>
-      <div style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px" class="mono">${gbp(buckets.reduce((a,b)=>a+b,0))}</div>${barChart(buckets,labels,320,110)}</div>
+    <div class="card w" style="margin-top:12px"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Spending · ${range==='all'?'since 2015':range}</div>
+      <div style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px" class="mono">${gbp(total)}</div>${barChart(sp.vals,sp.labels,320,110)}</div>
     <div class="card w" style="margin-top:12px;display:flex;gap:16px;align-items:center">${donut(cd,132)}
       <div style="flex:1">${cd.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px">
         <span style="width:9px;height:9px;border-radius:3px;background:${d.c};flex:0 0 auto"></span>
@@ -772,11 +875,7 @@ function vSearch(){
 let sTimer;
 function bindSearch(){
   const q=$('#q');if(!q)return;
-  q.addEventListener('input',()=>{
-    S.seen.q=q.value;
-    clearTimeout(sTimer);
-    sTimer=setTimeout(()=>{const r=$('#results');if(r)r.innerHTML=searchResults();save()},110);
-  });
+  q.addEventListener('input',()=>{S.seen.q=q.value;clearTimeout(sTimer);sTimer=setTimeout(()=>{const r=$('#results');if(r)r.innerHTML=searchResults();save()},110)});
 }
 function vStmts(kind){
   const isa=kind==='isa',rows=isa?S.ledger.isa:[];
@@ -796,11 +895,26 @@ function vNotifs(){
 }
 function vBudgets(){
   const m=new Date().getMonth();
+  const keys=Object.keys(S.targets);
   return topbar('Targets',{back:true})+`<div class="pad">
-    <div class="card w small muted">Set a monthly target per category. Trends and Left to Spend use these.</div>
-    ${['Groceries','Transport','Eating out','Shopping','Bills','Leisure'].map((c,i)=>{
-      const sp=S.tx.filter(t=>t.c===c&&new Date(t.d).getMonth()===m).reduce((s,t)=>s-t.amt,0),cap=[420,120,180,200,320,90][i];
-      return `<div class="row"><span class="t"><b>${c}</b><span>${gbp(sp)} of ${gbp(cap)}</span><div class="prog" style="margin-top:6px"><i style="width:${clamp(sp/cap*100,0,100)}%"></i></div></span></div>`}).join('')}</div>`;
+    <div class="card w"><div style="display:flex;justify-content:space-between"><b>Total monthly</b><b class="mono">${gbp(budgetTotal())}</b></div>
+      <div class="tiny muted" style="margin-top:6px">Tap any category to change its target. Left to Spend uses this total.</div></div>
+    ${keys.map(c=>{
+      const sp=S.tx.filter(t=>t.c===c&&new Date(t.d).getMonth()===m).reduce((s,t)=>s-t.amt,0),cap=S.targets[c]||0;
+      return `<button class="row" style="width:100%;text-align:left" onclick="editTarget('${esc(c)}')">
+        <span class="t"><b>${esc(c)}</b><span>${gbp(sp)} of ${gbp(cap)}</span>
+        <div class="prog" style="margin-top:6px"><i style="width:${cap?clamp(sp/cap*100,0,100):0}%"></i></div></span>
+        <span class="muted">›</span></button>`}).join('')}</div>`;
+}
+function editTarget(c){
+  sheet(`<h2>${esc(c)}</h2><p class="small muted">Monthly target</p>
+    <input id="tg" type="number" inputmode="decimal" value="${S.targets[c]||0}"/>
+    <button class="btn" style="margin-top:16px" onclick="setTarget('${esc(c)}')">Save target</button>`);
+}
+function setTarget(c){
+  const v=parseFloat($('#tg').value||'0');
+  if(isNaN(v)||v<0){toast('Enter a number');return}
+  S.targets[c]=+v.toFixed(2);save();closeSheet();render();toast('Target updated');
 }
 function vProfile(){
   const p=S.profile,t=S.prefs.theme;
@@ -811,6 +925,9 @@ function vProfile(){
       <div style="font-weight:800;font-size:18px;margin-top:10px">${esc(p.name)}</div>
       <div class="small muted">${esc(p.email)}</div>
       <div class="badge ok" style="margin-top:10px">${esc(p.idv)}</div></div>
+    <button class="card w" style="width:100%;text-align:left;margin-top:12px" onclick="go('plan')">
+      <div style="display:flex;justify-content:space-between;align-items:center"><b>Monzo ${TIERS[S.sub].n}</b><span class="badge ok">Active</span></div>
+      <div class="small muted" style="margin-top:4px">£${TIERS[S.sub].p} a month · £${TIERS[S.sub].atm} ATM limit</div></button>
     <div class="sec" style="padding:0;margin-top:22px">Account</div>
     ${[['Personal details','pd'],['Security &amp; privacy','security'],['Card controls','card'],['Notifications','notifprefs'],['Direct Debits','dd'],['Scheduled payments','sched'],['Targets','budgets'],['Statements','stmts']].map(([l,r])=>
       `<button class="row" style="width:100%;text-align:left" onclick="go('${r}')"><span class="t"><b>${l}</b></span><span class="muted">›</span></button>`).join('')}
@@ -818,35 +935,72 @@ function vProfile(){
     <button class="row" style="width:100%;text-align:left" onclick="toast('Chat opening…')"><span class="t"><b>Chat with us</b><span>Usually replies in 2 minutes</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('help')"><span class="t"><b>Help centre</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="toast('All systems operational')"><span class="t"><b>Service status</b></span><span class="badge ok">Operational</span></button>
-    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 4.4.0</div></div>`;
+    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 5.0.0</div></div>`;
 }
-function cycleTheme(){
-  const o=['auto','light','dark'],i=o.indexOf(S.prefs.theme||'auto');
-  setTheme(o[(i+1)%3]);
+function cycleTheme(){const o=['auto','light','dark'],i=o.indexOf(S.prefs.theme||'auto');setTheme(o[(i+1)%3])}
+function vPlan(){
+  return topbar('Plans',{back:true})+`<div class="pad">
+    <div class="hc"><b style="font-size:20px">Monzo ${TIERS[S.sub].n}</b>
+      <div class="small" style="opacity:.85;margin-top:4px">£${TIERS[S.sub].p} a month · renews 12 Jan</div></div>
+    <div class="sec" style="padding:0;margin-top:22px">Included</div>
+    ${['Fee-free ATM withdrawals up to £600 per 30 days','Worldwide card use at the Mastercard rate','Travel insurance for the household','Mobile phone insurance','Breakdown cover','Airport lounge access'].map(f=>
+      `<div class="row"><span class="ico">✓</span><span class="t"><b style="font-weight:600">${f}</b></span></div>`).join('')}
+    <div class="sec" style="padding:0;margin-top:22px">Compare plans</div>
+    ${Object.entries(TIERS).map(([k,t])=>`<button class="row" style="width:100%;text-align:left" onclick="pickTier('${k}')">
+      <span class="t"><b>${t.n}</b><span>£${t.p} a month · £${t.atm} ATM limit</span></span>
+      ${S.sub===k?'<span class="badge ok">Current</span>':'<span class="muted">›</span>'}</button>`).join('')}
+    <div class="card small muted" style="margin-top:16px">Your daily ATM limit is set from your plan and can't exceed £${TIERS[S.sub].atm}.</div></div>`;
+}
+function pickTier(k){
+  S.sub=k;S.card.atm=TIERS[k].atm;save();render();toast('Switched to Monzo '+TIERS[k].n);
 }
 function vPD(){
   const p=S.profile;
   return topbar('Personal details',{back:true})+`<div class="pad">
-    <label class="f">Legal name</label><input value="${esc(p.name)}" readonly/>
-    <label class="f">Address</label><input value="${esc(p.addr+', '+p.city+', '+p.pc)}" readonly/>
-    <label class="f">Email</label><input value="${esc(p.email)}" readonly/>
-    <label class="f">Phone</label><input value="${esc(p.phone)}" readonly/>
-    <label class="f">Date of birth</label><input value="${esc(new Date(p.dob).toLocaleDateString('en-GB'))}" readonly/>
-    <label class="f">Tax residency</label><input value="${esc(p.taxres)}" readonly/>
+    <label class="f">Legal name</label><input id="pdName" value="${esc(p.name)}"/>
+    <label class="f">Address</label><input id="pdAddr" value="${esc(p.addr)}"/>
+    <label class="f">Town</label><input id="pdCity" value="${esc(p.city)}"/>
+    <label class="f">Postcode</label><input id="pdPc" value="${esc(p.pc)}"/>
+    <label class="f">Email</label><input id="pdEmail" type="email" value="${esc(p.email)}"/>
+    <label class="f">Phone</label><input id="pdPhone" inputmode="tel" value="${esc(p.phone)}"/>
+    <label class="f">Date of birth</label><input id="pdDob" type="date" value="${esc(p.dob)}"/>
+    <label class="f">Tax residency</label><input id="pdTax" value="${esc(p.taxres)}"/>
     <div class="card small muted" style="margin-top:16px">Member since ${esc(p.since)} · identity ${esc(p.idv.toLowerCase())}</div>
-    <button class="btn" style="margin-top:16px" onclick="toast('Changes saved')">Save changes</button></div>`;
+    <button class="btn" style="margin-top:16px" onclick="savePD()">Save changes</button></div>`;
+}
+function savePD(){
+  const g=id=>{const e=$('#'+id);return e?e.value.trim():''};
+  const n=g('pdName'),e2=g('pdEmail');
+  if(!n){toast('Name is required');return}
+  if(!/^\S+@\S+\.\S+$/.test(e2)){toast('Check the email address');return}
+  Object.assign(S.profile,{name:n,addr:g('pdAddr'),city:g('pdCity'),pc:g('pdPc'),email:e2,phone:g('pdPhone'),dob:g('pdDob'),taxres:g('pdTax')});
+  save();toast('Details saved');
 }
 function vSecurity(){
+  const canBio='PublicKeyCredential' in window;
   return topbar('Security & privacy',{back:true})+`<div class="pad">
-    <div class="row"><span class="t"><b>Fingerprint unlock</b><span>Use the sensor on your S24 Ultra</span></span><button class="badge ${S.sec.bio?'ok':''}" onclick="S.sec.bio=!S.sec.bio;save();render()">${S.sec.bio?'On':'Off'}</button></div>
+    <div class="row"><span class="t"><b>Fingerprint unlock</b><span>${S.sec.credId?'Enrolled on this device':'Use the sensor on your S24 Ultra'}</span></span>
+      <button class="badge ${S.sec.bio?'ok':''}" onclick="toggleBio()">${S.sec.bio?'On':'Off'}</button></div>
     <div class="row"><span class="t"><b>Privacy mode</b><span>Hide balances until tapped</span></span><button class="badge ${S.sec.privacy?'ok':''}" onclick="S.sec.privacy=!S.sec.privacy;save();render()">${S.sec.privacy?'On':'Off'}</button></div>
     <div class="row"><span class="t"><b>App PIN</b><span>${'•'.repeat(S.sec.pin.length)}</span></span><button class="badge" onclick="changePin()">Change</button></div>
     <div class="row"><span class="t"><b>Log out of all devices</b></span><span class="muted">›</span></div>
     <div class="sec" style="padding:0;margin-top:20px">Trusted devices</div>
-    <div class="row"><span class="ico">📱</span><span class="t"><b>Samsung Galaxy S24 Ultra</b><span>Stockton-on-Tees · this device</span></span><span class="badge ok">Current</span></div></div>`;
+    <div class="row"><span class="ico">📱</span><span class="t"><b>Samsung Galaxy S24 Ultra</b><span>Stockton-on-Tees · this device</span></span><span class="badge ok">Current</span></div>
+    ${canBio?'':'<div class="card small muted" style="margin-top:16px">This browser has no platform authenticator, so the PIN is used instead.</div>'}</div>`;
+}
+async function toggleBio(){
+  if(S.sec.bio){
+    if(S.sec.credId&&window.PublicKeyCredential){
+      try{const ok=await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if(ok){S.sec.bio=false;S.sec.credId=null;save();render();toast('Fingerprint off');return}}catch(e){}
+    }
+    S.sec.bio=false;S.sec.credId=null;save();render();toast('Fingerprint off');return;
+  }
+  try{await bioEnrol();S.sec.bio=true;save();render();toast('Fingerprint enabled')}
+  catch(e){S.sec.bio=false;save();render();toast('Could not enrol this device')}
 }
 function vCard(){
-  const c=S.card;
+  const c=S.card,t=TIERS[S.sub];
   return topbar('Card controls',{back:true})+`<div class="pad">
     <div style="background:linear-gradient(135deg,#FF4F40,#FF7A5C);border-radius:22px;padding:20px;color:#fff;margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">${mark(26,'tile')}<b style="font-size:13px;letter-spacing:1px">MONZO</b></div>
@@ -856,9 +1010,22 @@ function vCard(){
     <div class="row"><span class="t"><b>Reveal PIN</b></span><button class="badge" onclick="toast('PIN ${S.sec.pin}')">Show</button></div>
     <div class="row"><span class="t"><b>Online payments</b></span><button class="badge ${c.online?'ok':''}" onclick="S.card.online=!S.card.online;save();render()">${c.online?'On':'Off'}</button></div>
     <div class="row"><span class="t"><b>Magnetic stripe</b></span><button class="badge ${c.mag?'ok':''}" onclick="S.card.mag=!S.card.mag;save();render()">${c.mag?'On':'Off'}</button></div>
-    <div class="row"><span class="t"><b>ATM limit</b><span>Daily</span></span><span class="amt small">${gbp0(c.atm)}</span></div>
+    <div class="row"><span class="t"><b>ATM daily limit</b><span>Set by your ${t.n} plan · max £${t.atm}</span></span>
+      <button class="badge" onclick="editAtm()">${gbp0(c.atm)}</button></div>
     <button class="btn ghost" style="margin-top:14px" onclick="toast('Virtual card created')">Create virtual card</button>
     <button class="btn ghost" style="margin-top:8px" onclick="toast('Added to Google Wallet')">Add to Google Wallet</button></div>`;
+}
+function editAtm(){
+  const max=TIERS[S.sub].atm;
+  sheet(`<h2>ATM daily limit</h2><p class="small muted">Your ${TIERS[S.sub].n} plan allows up to ${gbp0(max)} a day.</p>
+    <input id="atmIn" type="number" inputmode="decimal" value="${S.card.atm}"/>
+    <button class="btn" style="margin-top:16px" onclick="setAtm(${max})">Save limit</button>`);
+}
+function setAtm(max){
+  let v=parseFloat($('#atmIn').value||'0');
+  if(!(v>0)){toast('Enter an amount');return}
+  if(v>max){v=max;toast('Capped at your plan limit')}
+  S.card.atm=+v.toFixed(2);save();closeSheet();render();toast('ATM limit updated');
 }
 function vNotifPrefs(){
   return topbar('Notifications',{back:true})+`<div class="pad">
@@ -906,6 +1073,7 @@ function vPay(){
 }
 function vSettings(){
   return topbar('Settings',{back:true})+`<div class="pad">
+    <button class="row" style="width:100%;text-align:left" onclick="go('plan')"><span class="t"><b>Your plan</b><span>Monzo ${TIERS[S.sub].n}</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('appearance')"><span class="t"><b>Appearance</b><span>Light, dark or match device</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('mark')"><span class="t"><b>App icon</b><span>Mark variant</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="installApp()"><span class="t"><b>Install app</b><span>Add to home screen</span></span>${STANDALONE?'<span class="badge ok">Installed</span>':'<span class="muted">›</span>'}</button>
@@ -1004,7 +1172,8 @@ function splitTx(id){
   sheet(`<h2>Split bill</h2><p class="small muted">Choose a contact to split with.</p>
     ${S.payees.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="toast('Split request sent to ${esc(p.n)}');closeSheet()"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b></span></button>`).join('')}`);
 }
-function changePin(){sheet(`<h2>Change PIN</h2><input id="npin" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN"/><button class="btn" style="margin-top:14px" onclick="S.sec.pin=document.getElementById('npin').value||S.sec.pin;save();closeSheet();toast('PIN changed')">Save</button>`)}
+function changePin(){sheet(`<h2>Change PIN</h2><input id="npin" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN"/><button class="btn" style="margin-top:14px" onclick="doPin()">Save</button>`)}
+function doPin(){const v=$('#npin').value.trim();if(!/^\d{4}$/.test(v)){toast('Enter 4 digits');return}S.sec.pin=v;save();closeSheet();toast('PIN changed')}
 function exportAll(){
   const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='monzo-backup.json';a.click();toast('Backup downloaded');
@@ -1018,24 +1187,73 @@ function dlYear(y){
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`isa-${y}.csv`;a.click();toast(`${y} statement downloaded`);
 }
 
+/* ---------- lock ---------- */
+let pinBuf='';
+const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
+const ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function bioEnrol(){
+  const cred=await navigator.credentials.create({publicKey:{
+    challenge:crypto.getRandomValues(new Uint8Array(32)),
+    rp:{name:'Monzo',id:location.hostname},
+    user:{id:crypto.getRandomValues(new Uint8Array(16)),name:S.profile.email,displayName:S.profile.name},
+    pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+    authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
+    timeout:60000,attestation:'none'
+  }});
+  S.sec.credId=b64(cred.rawId);save();
+}
+async function bioUnlock(){
+  if(!S.sec.credId){try{await bioEnrol();unlock()}catch(e){toast('Fingerprint not set up')}return}
+  try{
+    await navigator.credentials.get({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rpId:location.hostname,
+      allowCredentials:[{type:'public-key',id:ub64(S.sec.credId)}],
+      userVerification:'required',timeout:60000
+    }});
+    unlock();
+  }catch(e){toast('Fingerprint not recognised')}
+}
 function lockScreen(){
-  $('#view').innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;padding:40px 24px">
-    <div class="center"><div style="margin-bottom:22px">${mark(56)}</div>
-      <div style="font-size:22px;font-weight:800;letter-spacing:-.5px">Welcome back, Jason</div>
-      <div class="small muted" style="margin-top:4px">Touch the sensor to unlock</div>
-      <button onclick="unlock()" aria-label="Unlock with fingerprint" style="margin:26px auto 0;width:104px;height:104px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center;transition:transform .18s var(--snap)">
-        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#FF4F40" stroke-width="1.6" stroke-linecap="round">
-          <path d="M12 4c-4.4 0-8 3.6-8 8v1"/><path d="M20 13v-1c0-4.4-3.6-8-8-8"/>
-          <path d="M8.5 12a3.5 3.5 0 0 1 7 0v3.5"/><path d="M12 12v6"/><path d="M15.5 18.5V19"/><path d="M8.5 15.5V19"/></svg></button>
-      <button class="btn ghost sm" style="margin-top:22px" onclick="unlock()">Use passcode</button></div></div>`;
+  pinBuf='';
+  $('#view').innerHTML=`<div class="lock" id="lock">
+    <div style="margin-top:8px">${mark(58)}</div>
+    <h2>Welcome back, Jason</h2>
+    <div class="sub">Enter your passcode</div>
+    <div class="dots" id="dots">${'<i></i>'.repeat(4)}</div>
+    <div class="keys">
+      ${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="key" onclick="pinKey('${n}')">${n}</button>`).join('')}
+      ${S.sec.bio?'<button class="key ghost" onclick="bioUnlock()" aria-label="Use fingerprint"><svg viewBox="0 0 24 24"><path d="M12 4c-4.4 0-8 3.6-8 8v1"/><path d="M20 13v-1c0-4.4-3.6-8-8-8"/><path d="M8.5 12a3.5 3.5 0 0 1 7 0v3.5"/><path d="M12 12v6"/><path d="M15.5 18.5V19"/><path d="M8.5 15.5V19"/></svg></button>':'<span></span>'}
+      <button class="key" onclick="pinKey('0')">0</button>
+      <button class="key ghost" onclick="pinDel()" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M20 6H9l-5 6 5 6h11z"/><path d="M13 10l4 4M17 10l-4 4"/></svg></button>
+    </div>
+    <button class="btn ghost sm" style="margin-top:18px" onclick="toast('Passcode is ${S.sec.pin}')">Forgot passcode?</button>
+  </div>`;
   $('#tabbar').classList.add('hide');
+}
+function pinKey(n){
+  if(pinBuf.length>=4)return;
+  pinBuf+=n;
+  $$('#dots i').forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length));
+  if(pinBuf.length===4)setTimeout(checkPin,140);
+}
+function pinDel(){
+  pinBuf=pinBuf.slice(0,-1);
+  $$('#dots i').forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length));
+}
+function checkPin(){
+  if(pinBuf===S.sec.pin){unlock();return}
+  const l=$('#lock');if(l){l.classList.add('shake');setTimeout(()=>l.classList.remove('shake'),450)}
+  pinBuf='';
+  setTimeout(()=>$$('#dots i').forEach(d=>d.classList.remove('on')),260);
+  toast('Wrong passcode');
 }
 function unlock(){render()}
 
 const VIEWS={home:vHome,hub:vHub,trends:vTrends,savings:vSavings,isa:vISA,inv:vInv,hold:vHold,pot:vPot,tx:vTx,
   flex:vFlex,od:vOD,dd:vDD,sched:vSched,search:vSearch,stmts:vStmts,notifs:vNotifs,budgets:vBudgets,
   profile:vProfile,pd:vPD,security:vSecurity,card:vCard,notifprefs:vNotifPrefs,help:vHelp,move:vMove,pay:vPay,
-  settings:vSettings,appearance:vAppearance,mark:vMark};
+  settings:vSettings,appearance:vAppearance,mark:vMark,plan:vPlan};
 
 function render(){
   const c=cur(),i=c.indexOf(':'),r=i<0?c:c.slice(0,i),p=i<0?null:c.slice(i+1);
@@ -1061,7 +1279,7 @@ function countUp(){
   const q=new URLSearchParams(location.search);
   if(q.get('screen'))stack=[q.get('screen')];
   matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{if(S.prefs.theme==='auto')applyTheme()});
-  if(S.sec.bio&&!sessionStorage.getItem('unlocked')){lockScreen();sessionStorage.setItem('unlocked','1')}
+  if(S.sec.lock&&!sessionStorage.getItem('unlocked')){lockScreen();sessionStorage.setItem('unlocked','1')}
   else render();
 })();
 </script>
