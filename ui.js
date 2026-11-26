@@ -13,11 +13,13 @@ const TITLES = {
   billsback:'Billsback', insurance:'Insurance', personal:'Personal details', security:'Security',
   appearance:'Appearance', cards:'Cards', plan:'Plans', limits:'Limits', payees:'Payees',
   search:'Search', notifs:'Notifications', chat:'Support', disputes:'Disputes',
-  joint:'Joint account', potdetail:'Pot', txdetail:'Transaction', request:'Request money'
+  joint:'Joint account', potdetail:'Pot', txdetail:'Transaction', request:'Request money',
+  backup:'Backup'
 };
 
 let cleanup = null;
 let current = null;
+let currentParams = {};
 let mountRoot = null;
 let stack = [];
 
@@ -72,9 +74,17 @@ export function go(name, params = {}, back = false){
   view.className = 'view';
   host.replaceChildren(view);
 
-  cleanup = mount(view, params) || null;
   current = name;
+  currentParams = params;
+  cleanup = mount(view, params) || null;
   window.scrollTo(0, 0);
+}
+
+/* Re-renders wherever the user was, params included. Used by the lock screen so
+   unlocking puts you back rather than sending you home. */
+export function reload(){
+  if (!current) return go('home');
+  go(current, currentParams, true);
 }
 
 export function goBack(){
