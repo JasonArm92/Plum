@@ -5,9 +5,9 @@ import {
   DOMAINS, POTS0, TARGET_ISA, buildSeed, uid
 } from './data.js';
 
-export const VERSION = 17;
-export const KEY = 'monzo_v17';
-const LEGACY_KEYS = ['monzo_v16', 'monzo_v15', 'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
+export const VERSION = 18;
+export const KEY = 'monzo_v18';
+const LEGACY_KEYS = ['monzo_v17', 'monzo_v16', 'monzo_v15', 'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
 
 export const NOW = new Date();
 export const TODAY = iso(NOW);
@@ -19,7 +19,12 @@ export const TAX_START = `${NOW.getMonth() >= 3 ? NOW.getFullYear() : NOW.getFul
 
 export const CASHBACK_RATE = 0.01;
 export const CASHBACK_MIN = 1;
-const MAX_CATCHUP_DAYS = 400;
+export const JOINT_SHARE = 0.35;
+export const FALLBACK_SALARY = 2480;
+
+/* The replay window. Longer absences are clipped rather than replayed against
+   today's balance, which would invent a history that never happened. */
+const MAX_CATCHUP_DAYS = 35;
 
 function p2(n){ return String(n).padStart(2, '0'); }
 export function iso(d){ return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; }
@@ -115,7 +120,7 @@ export function freshState(){
     plan: 'max', family: false, priv: false, roundups: true, credId: null, pin: '2580', frozen: false,
     theme: 'auto', zoom: 1, motion: true,
     activeAccount: 'personal', acctName: 'Personal current account', acctClosed: false,
-    atmLimit: 400, potSort: 'name', jointBal: 0,
+    atmLimit: 400, jointBal: 0,
     pension: 41250.18, pensionMonthly: 180, homeValue: 168000, mortgage: 100000,
     flex: { limit: 4000, used: 0, plans: [] },
     aura: { active: true, auto: true, lounge: 2, fast: 2, cashback: 0 },
@@ -131,7 +136,7 @@ export function freshState(){
     challenge: { day: 0, saved: 0, level: '1p' },
     billsback: { optIn: false, history: [] },
     lastInterest: '', lastTick: '', notifsCleared: false,
-    notifs: [], chat: [], disputes: [], revealed: []
+    notifs: [], chat: [], disputes: []
   };
 }
 
@@ -173,7 +178,6 @@ const migrations = [
     s.acctName ||= 'Personal current account';
     s.acctClosed ??= false;
     s.atmLimit ||= 400;
-    s.potSort ||= 'name';
     s.jointBal ||= 0;
     s.notifsCleared ??= false;
     s.tx = (s.tx || []).slice().sort((a, b) =>
@@ -218,6 +222,13 @@ const migrations = [
     s.v = 17;
     s.lastBackup ||= '';
     return s;
+  },
+  /* 17 -> 18: drop the dead fields */
+  s => {
+    s.v = 18;
+    delete s.revealed;
+    delete s.potSort;
+    return s;
   }
 ];
 
@@ -252,7 +263,6 @@ export function load(){
   if (!raw) raw = readLegacy();
 
   S = (!raw || (raw.v || 0) > VERSION) ? freshState() : migrate(raw);
-  S.revealed = new Set(S.revealed || []);
   if (!S.notifs.length && !S.notifsCleared) seedNotifs();
   recompute();
   save();
@@ -263,7 +273,7 @@ let saveTimer = null;
 export function save(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    try { localStorage.setItem(KEY, JSON.stringify({ ...S, revealed: [...S.revealed] })); } catch {}
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
   }, 60);
 }
 export function commit(){ save(); notify(S); }
@@ -275,7 +285,7 @@ export function exportState(){
   S.lastBackup = TODAY;
   save();
   notify(S);
-  return JSON.stringify({ ...S, revealed: [...S.revealed], exported: NOW.toISOString() }, null, 2);
+  return JSON.stringify({ ...S, exported: NOW.toISOString() }, null, 2);
 }
 
 /* Import is deliberately strict about shape and version, then fills any gaps
@@ -290,7 +300,6 @@ export function importState(text){
   const migrated = migrate(raw);
   const base = freshState();
   S = { ...base, ...migrated, v: VERSION, lastBackup: TODAY };
-  S.revealed = new Set(S.revealed || []);
   if (!S.notifs.length && !S.notifsCleared) seedNotifs();
   recompute();
   save();
@@ -312,7 +321,6 @@ export const loanOwed = () => S.loans.reduce((a, l) => a + l.outstanding, 0);
 export const growTotal = () => savingsTotal() + isaBal() + (S.pension || 0) + homeEquity() + connTotal() - loanOwed();
 export const flexAvail = () => Math.max(0, round2(S.flex.limit - S.flex.used));
 
-export const budgetTotal = () => FLEX.reduce((a, c) => a + (S.targets[c] || 0), 0);
 export const spentThisMonth = () => S.tx
   .filter(t => t.date.slice(0, 7) === THIS_YM && FLEX.includes(t.cat))
   .reduce((a, t) => a + Math.abs(t.amt), 0);
@@ -343,6 +351,14 @@ export function committedLeft(){
   return round2(sum);
 }
 export const leftToSpend = () => Math.max(0, round2(balNow() - committedLeft()));
+
+/* Joint bills and the split ratio both come off the ledger now. */
+export const jointBills = () => round2(S.tx
+  .filter(t => t.date.slice(0, 7) === THIS_YM && t.amt < 0 && (t.cat === 'Rent' || t.cat === 'Bills'))
+  .reduce((a, t) => a + Math.abs(t.amt), 0));
+export const jointContribution = () => round2(S.tx
+  .filter(t => t.date.slice(0, 7) === THIS_YM && t.cat === 'Income')
+  .reduce((a, t) => a + t.amt, 0) * JOINT_SHARE);
 
 export function balanceSeries(days){
   const map = {};
@@ -561,11 +577,14 @@ export function cancelRequest(id){
 export const sorterTotal = () =>
   round2(Object.values(S.sorter.splits || {}).reduce((a, v) => a + (Number(v) || 0), 0));
 
-/* The salary figure comes off the last real pay, so a raise or a cut moves it. */
+/* The salary figure comes off the last real pay, so a raise or a cut moves it.
+   With no history it falls back to a stated estimate, flagged by salaryIsEstimate. */
 export function salaryAmount(){
   const t = S.tx.find(x => x.cat === 'Income' && /kingdom/i.test(x.name) && x.date < TODAY);
-  return t ? Math.abs(t.amt) : 2480;
+  return t ? Math.abs(t.amt) : FALLBACK_SALARY;
 }
+export const salaryIsEstimate = () =>
+  !S.tx.some(x => x.cat === 'Income' && /kingdom/i.test(x.name) && x.date < TODAY);
 
 export function setSorter(splits, on = true){
   const clean = {};
@@ -636,9 +655,9 @@ function autoSavePots(date){
   return done;
 }
 
-/* Replays every day between the watermark and `until`, applying salary, sorter,
-   standing orders and pot auto-save in day order. Idempotent per day because the
-   watermark only ever moves forward. */
+/* Replays up to MAX_CATCHUP_DAYS ending at `until`. A longer absence is clipped
+   to the tail and reported, rather than replayed against today's balance across
+   months of history. Idempotent per day: the watermark only moves forward. */
 export function runScheduled(until = TODAY){
   if (!S) return [];
   const from = S.lastRun || TODAY;
@@ -646,16 +665,20 @@ export function runScheduled(until = TODAY){
     if (until > (S.lastRun || '')){ S.lastRun = until; commit(); }
     return [];
   }
-  const start = asDate(from);
-  const end = asDate(until);
-  const span = Math.min(MAX_CATCHUP_DAYS, Math.round((end - start) / 86400000));
+
+  const gap = Math.round((asDate(until) - asDate(from)) / 86400000);
+  const span = Math.min(MAX_CATCHUP_DAYS, gap);
+  const skipped = gap - span;
+
+  const endD = asDate(until);
+  const startD = new Date(endD.getFullYear(), endD.getMonth(), endD.getDate() - span);
 
   runBal = balNow();
   const applied = [];
   let short = 0;
 
   for (let i = 1; i <= span; i++){
-    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const d = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate() + i);
     const date = iso(d), day = d.getDate();
 
     if (day === 28) applied.push(...paySalary(date));
@@ -675,6 +698,7 @@ export function runScheduled(until = TODAY){
   commit();
   if (applied.length) notif('Scheduled payments', `${applied.length} applied to your account`);
   if (short) notif('Standing orders', `${short} skipped — not enough in your balance`);
+  if (skipped) notif('Scheduler', `${skipped} day${skipped === 1 ? '' : 's'} not replayed — showed the last ${span}`);
   return applied;
 }
 
