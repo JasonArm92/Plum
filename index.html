@@ -82,9 +82,12 @@ body:not(.locked) #lock{display:none}
 .hdr--sub .hdr__spacer,.hdr--sub .avatar,.hdr--sub #searchBtn,.hdr--sub #bellBtn,.hdr--sub #plusBtn{display:none}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 auto;border:2px solid transparent}
 .avatar:active{border-color:var(--line2)}
-.iconbtn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--ink);flex:0 0 auto;transition:background .14s}
+.iconbtn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--ink);flex:0 0 auto;transition:background .14s;position:relative}
 .iconbtn:active{background:var(--card2)}
 .iconbtn svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.hdr__dot{position:absolute;top:5px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--coral);
+ border:1.5px solid var(--bg);display:none}
+.hdr__dot.on{display:block}
 .pull{display:flex;justify-content:center;padding:2px 0 8px}
 .pull button{width:52px;height:20px;border-radius:var(--pill);background:var(--card3);display:grid;place-items:center}
 .pull svg{width:15px;height:15px;stroke:var(--ink3);fill:none;stroke-width:2.4;stroke-linecap:round}
@@ -143,6 +146,7 @@ section.on{display:block;animation:fade .2s ease}
 .lg{width:44px;height:44px;border-radius:50%;flex:0 0 auto;overflow:hidden;background:var(--card2);
  display:grid;place-items:center;font-size:12.5px;font-weight:700;color:var(--ink2)}
 .lg img{width:100%;height:100%;object-fit:cover;background:#fff}
+.lg--lg{width:64px;height:64px;border-radius:18px;font-size:17px}
 .tx .mid{flex:1;min-width:0}
 .tx .nm{font-weight:500;font-size:16px;letter-spacing:-.012em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 .tx .mt{font-size:12.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
@@ -259,6 +263,16 @@ body.locked .tabbar{display:none}
 .layoutrow .mid{flex:1;font-weight:600;font-size:14.5px}
 .mini{width:30px;height:30px;border-radius:9px;background:var(--card3);display:grid;place-items:center;font-size:13px}
 
+.txhead{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 0 4px}
+.txhead .nm{font-weight:600;font-size:17px;margin-top:10px}
+.txhead .cat{font-size:13px;color:var(--ink2);margin-top:2px}
+.txhead .amt{font-size:34px;font-weight:700;letter-spacing:-.035em;margin:12px 0 0;font-variant-numeric:tabular-nums}
+.txacts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0 6px}
+.txact{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:var(--r3);
+ background:var(--card2);font-size:11px;font-weight:600;text-align:center;line-height:1.2;color:var(--ink)}
+.txact:active{background:var(--card3)}
+.txact svg{width:21px;height:21px;stroke:var(--ink2);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
 .chart{width:100%;height:auto;display:block;overflow:visible}
 .axis{font-size:10px;fill:var(--ink3)}
 .grid{stroke:var(--line);stroke-width:1}
@@ -307,7 +321,8 @@ window.onerror = (m, s, l, c) => {
   <button class="iconbtn" id="searchBtn" aria-label="Search">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></button>
   <button class="iconbtn" id="bellBtn" aria-label="Notifications">
-    <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M13.7 20a2 2 0 01-3.4 0"/></svg></button>
+    <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 6-2 7-2 7h16s-2-1-2-7"/><path d="M13.7 20a2 2 0 01-3.4 0"/></svg>
+    <i class="hdr__dot" id="bellDot"></i></button>
   <button class="iconbtn" id="plusBtn" aria-label="Add">
     <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
 </header>
@@ -604,12 +619,13 @@ window.onerror = (m, s, l, c) => {
   <div class="h-sec"><h2>Search</h2></div>
   <div class="field"><input id="q" placeholder="Search transactions" autocomplete="off"></div>
   <div class="pill-row" id="catChips"></div>
-  <ul class="txlist" id="results"></ul>
+  <div class="pill-row" id="rangeChips"></div>
+  <div id="results"></div>
 </section>
 
 <section data-screen="notifs">
-  <div class="h-sec"><h2>Notifications</h2><button id="clearNotifs">Clear</button></div>
-  <div class="card" id="notifList"></div>
+  <div class="h-sec"><h2>Notifications</h2><button id="readAll">Mark all read</button></div>
+  <div id="notifList"></div>
 </section>
 
 <section data-screen="chat">
@@ -644,8 +660,7 @@ window.onerror = (m, s, l, c) => {
 </section>
 
 <section data-screen="txdetail">
-  <div class="h-sec"><h2>Transaction</h2></div>
-  <div class="card" id="txDetail"></div>
+  <div id="txDetail"></div>
 </section>
 </main>
 
@@ -723,11 +738,12 @@ const DOMAINS = {'Tesco':'tesco.com','Aldi':'aldi.co.uk','Asda':'asda.com','Morr
   'Barclays':'barclays.co.uk','HSBC':'hsbc.co.uk','Lloyds':'lloydsbank.com','NatWest':'natwest.com',
   'Santander':'santander.co.uk','Nationwide':'nationwide.co.uk','Starling':'starlingbank.com','Chase':'chase.co.uk',
   'Monzo Flex':'monzo.com','Monzo Aura':'monzo.com','Monzo Loans':'monzo.com'};
-function logo(name){
+function logo(name, big){
   const d = DOMAINS[name];
   const ini = initials(name);
-  if (!d) return `<span class="lg">${esc(ini)}</span>`;
-  return `<span class="lg"><img src="https://logo.clearbit.com/${d}" alt="" loading="lazy"
+  const cls = big ? 'lg lg--lg' : 'lg';
+  if (!d) return `<span class="${cls}">${esc(ini)}</span>`;
+  return `<span class="${cls}"><img src="https://logo.clearbit.com/${d}" alt="" loading="lazy"
     onerror="this.parentNode.textContent='${esc(ini)}'"></span>`;
 }
 const CATS = ['Groceries','Eating out','Transport','Shopping','Bills','Rent','Health','Education','Subscriptions','Entertainment','Fitness','Income','Transfers','Savings','Investments'];
@@ -851,6 +867,7 @@ function load(){
   if (!Array.isArray(S.tx)) S.tx = seedAccount().reverse();
   if (!Array.isArray(S.isa) || !S.isa.length) S.isa = seedISA();
   if (!S.notifs || !S.notifs.length) seedNotifs();
+  S.notifs.forEach(n => { if (n.read === undefined) n.read = true; });
   if (!S.acctName) S.acctName = 'Personal current account';
   if (!S.atmLimit) S.atmLimit = 400;
   if (!S.potSort) S.potSort = 'name';
@@ -866,6 +883,12 @@ function pushTx(name, cat, amt, note, dateOverride){
   S.tx.unshift({id:uid(),date,time,name,cat,amt:round2(amt),bal:round2(balNow()+amt),note:note||''});
   save();
 }
+function recompute(){
+  const asc = S.tx.slice().reverse(); if (!asc.length) return;
+  let bal = round2(asc[0].bal - asc[0].amt);
+  asc.forEach(t => { bal = round2(bal + t.amt); t.bal = bal; });
+  save();
+}
 const isaBal = () => S.isa.length ? S.isa[0].value : 0;
 const savingsTotal = () => S.pots.filter(p=>p.type==='savings').reduce((a,p)=>a+p.bal,0);
 const homeEquity = () => Math.max(0, (S.homeValue||0) - (S.mortgage||0));
@@ -876,6 +899,8 @@ const flexAvail = () => Math.max(0, round2(S.flex.limit - S.flex.used));
 const sortedPots = () => S.pots.slice().sort((a,b)=>
   S.potSort === 'balance' ? b.bal - a.bal : a.name.localeCompare(b.name));
 const interestThisMonth = () => round2(S.pots.filter(p=>p.type==='savings').reduce((a,p)=>a+p.bal,0) * (plan().ia/100/12));
+const unread = () => S.notifs.filter(n=>!n.read).length;
+function syncBell(){ const d = document.getElementById('bellDot'); if (d) d.classList.toggle('on', unread() > 0); }
 
 function runInterest(){
   if (S.lastInterest === THIS_YM) return;
@@ -884,7 +909,7 @@ function runInterest(){
     const int = round2(p.bal * (plan().ia/100/12));
     if (int > 0){ p.bal = round2(p.bal + int); paid = round2(paid + int); } });
   S.lastInterest = THIS_YM;
-  if (paid > 0) S.notifs.unshift({title:'Interest paid', body:`${fmt(paid)} across your savings pots`, date:TODAY, time:NOWT});
+  if (paid > 0) S.notifs.unshift({title:'Interest paid', body:`${fmt(paid)} across your savings pots`, date:TODAY, time:NOWT, read:false});
   save();
 }
 function runTick(){
@@ -911,8 +936,8 @@ function runTick(){
     loanPaid = round2(loanPaid + pay);
   });
   S.loans = S.loans.filter(l => l.outstanding > 0.01);
-  if (flexPaid) S.notifs.unshift({title:'Flex instalment', body:`${fmt(flexPaid)} taken`, date:TODAY, time:NOWT});
-  if (loanPaid) S.notifs.unshift({title:'Loan repayment', body:`${fmt(loanPaid)} taken`, date:TODAY, time:NOWT});
+  if (flexPaid) S.notifs.unshift({title:'Flex instalment', body:`${fmt(flexPaid)} taken`, date:TODAY, time:NOWT, read:false});
+  if (loanPaid) S.notifs.unshift({title:'Loan repayment', body:`${fmt(loanPaid)} taken`, date:TODAY, time:NOWT, read:false});
   save();
 }
 
@@ -984,7 +1009,7 @@ function donut(host, parts){
       <b class="rev">${fmt(p.v)}</b></div>`).join('')}</div></div>`;
 }
 
-let feedLimit = 12, accLimit = 40, stmtKind = 'acc', catFilter = 'All', trendView = 'balance';
+let feedLimit = 12, accLimit = 40, stmtKind = 'acc', catFilter = 'All', trendView = 'balance', searchRange = 'all';
 
 const LAYOUT_NAMES = {personal:'Personal account',joint:'Joint account',pots:'Pots',invest:'Investments',latest:'Activity'};
 const TABS = ['home','save','grow','pay','account'];
@@ -1260,9 +1285,16 @@ function renderPayees(){
 }
 function renderNotifs(){
   const host = document.getElementById('notifList'); if (!host) return;
-  host.innerHTML = S.notifs.length ? S.notifs.map(n=>`<div class="kv">
-    <span class="k">${esc(n.title)}<br><span style="font-size:12.5px">${esc(n.body)}</span></span>
-    <span class="v" style="font-size:12px;color:var(--ink3)">${esc(n.date)} ${esc(n.time)}</span></div>`).join('') : '<div class="empty">Nothing new</div>';
+  if (!S.notifs.length){ host.innerHTML = '<div class="empty">Nothing new</div>'; syncBell(); return; }
+  const days = [...new Set(S.notifs.map(n=>n.date))];
+  host.innerHTML = days.map(d=>`<div class="day__l">${prettyDate(d)}</div>
+    <div class="card" style="padding:2px 16px">${S.notifs.filter(n=>n.date===d).map(n=>`
+      <div class="kv" style="align-items:flex-start">
+        <span class="k">${n.read?'':'<i style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--coral);margin-right:6px"></i>'}${esc(n.title)}
+          <br><span style="font-size:12.5px">${esc(n.body)}</span></span>
+        <span class="v" style="font-size:12px;color:var(--ink3);white-space:nowrap">${esc(n.time)}</span>
+      </div>`).join('')}</div>`).join('');
+  syncBell();
 }
 function renderChat(){
   const host = document.getElementById('chatList'); if (!host) return;
@@ -1277,7 +1309,8 @@ function renderDisputes(){
   const host = document.getElementById('dispList'); if (!host) return;
   host.innerHTML = S.disputes.length ? S.disputes.map(d=>`<div class="kv">
     <span class="k">${esc(d.name)}<br><span style="font-size:12.5px">${esc(d.reason)}</span></span>
-    <span class="v"><span class="badge warn">Open</span><br><span style="font-size:12px;color:var(--ink3)">${d.date}</span></span></div>`).join('')
+    <span class="v"><span class="badge ${d.status==='Resolved'?'ok':'warn'}">${d.status||'Open'}</span><br>
+      <span style="font-size:12px;color:var(--ink3)">${d.date}</span></span></div>`).join('')
     : '<div class="empty">No open disputes</div>';
 }
 function renderCards(){
@@ -1529,6 +1562,7 @@ function go(name, back){
   if (name==='personal') fillPersonal();
   if (name==='security') syncSecurity();
   if (name==='appearance') syncAppearance();
+  if (name==='notifs'){ S.notifs.forEach(n=>{ n.read = true; }); save(); syncBell(); }
   window.scrollTo(0,0);
 }
 function goBack(){ const prev = navStack.pop(); go(prev || 'home', true); }
@@ -1559,11 +1593,12 @@ function sheet(html){ const p = document.getElementById('panel'); if (!p) return
 const closeSheet = () => { const s = document.getElementById('sheet'); if (s) s.classList.remove('on'); };
 const closeDrawer = () => { const d = document.getElementById('drawer'); if (d) d.classList.remove('on'); };
 function openDrawer(){ renderSpotlights(); document.getElementById('drawer').classList.add('on'); }
-function notif(title, body){ S.notifs.unshift({title, body, date:TODAY, time:NOWT}); S.notifs = S.notifs.slice(0,40); save(); }
+function notif(title, body){ S.notifs.unshift({title, body, date:TODAY, time:NOWT, read:false});
+  S.notifs = S.notifs.slice(0,40); save(); syncBell(); }
 function seedNotifs(){ const d = n => iso(new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate()-n));
-  S.notifs = [{title:'Left to spend updated', body:'Recalculated for the days before payday', date:TODAY, time:NOWT},
-    {title:'Salary received', body:'£2,850.00 from Kingdom Services Group', date:d(1), time:'06:00'},
-    {title:'Round-ups', body:'£1.42 moved to Rainy Day', date:d(2), time:'18:24'}]; save(); }
+  S.notifs = [{title:'Left to spend updated', body:'Recalculated for the days before payday', date:TODAY, time:NOWT, read:false},
+    {title:'Salary received', body:'£2,850.00 from Kingdom Services Group', date:d(1), time:'06:00', read:true},
+    {title:'Round-ups', body:'£1.42 moved to Rainy Day', date:d(2), time:'18:24', read:true}]; save(); }
 
 function moveToPot(potId, amt, dir){
   const p = S.pots.find(x=>x.id===potId); if (!p) return;
@@ -1592,7 +1627,7 @@ function addTxSheet(){
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-go],[data-pot],[data-tx],[data-send],[data-fav],[data-editpay],[data-dl],[data-pdf],[data-stmt],[data-tv],[data-plan],[data-theme],[data-zoom],[data-up],[data-down],[data-eye],[data-close],[data-od],[data-bank],[data-pol],[data-term],[data-amenu],[data-tmenu],[data-pmenu],[data-dclose],[data-act],[data-atm]');
+  const t = e.target.closest('[data-go],[data-pot],[data-tx],[data-send],[data-fav],[data-editpay],[data-dl],[data-pdf],[data-stmt],[data-tv],[data-plan],[data-theme],[data-zoom],[data-up],[data-down],[data-eye],[data-close],[data-od],[data-bank],[data-pol],[data-term],[data-amenu],[data-tmenu],[data-pmenu],[data-dclose],[data-act],[data-atm],[data-cat],[data-range],[data-txact]');
   if (t){
     if (t.dataset.go) return go(t.dataset.go);
     if (t.dataset.dclose !== undefined) closeDrawer();
@@ -1601,6 +1636,9 @@ document.addEventListener('click', e => {
     if (t.dataset.tmenu !== undefined) return activityMenu();
     if (t.dataset.pmenu !== undefined) return potsMenu();
     if (t.dataset.atm){ S.atmLimit = +t.dataset.atm; save(); return renderLimits(); }
+    if (t.dataset.cat){ catFilter = t.dataset.cat; renderChips(); runSearch(); return; }
+    if (t.dataset.range){ searchRange = t.dataset.range; renderRanges(); runSearch(); return; }
+    if (t.dataset.txact) return txAction(t.dataset.txact);
     if (t.dataset.act){
       const a = t.dataset.act;
       if (a==='add') return addTxSheet();
@@ -1651,7 +1689,7 @@ document.addEventListener('click', e => {
     if (S.vcards.length >= p.vcLive) return toast(`Limit of ${p.vcLive} live virtual cards`);
     S.vcards.push({id:uid(), label:'Virtual card ' + (S.vcards.length+1), frozen:false, num:'4000 '+ri(1000,9999), created:TODAY});
     save(); renderCards(); toast('Virtual card created'); }
-  if (id === 'clearNotifs'){ S.notifs = []; save(); renderNotifs(); }
+  if (id === 'readAll'){ S.notifs.forEach(n=>{ n.read = true; }); save(); renderNotifs(); toast('All marked read'); }
   if (id === 'logoutAll') toast('Logged out of all other devices');
   if (id === 'addAcc') sheet(`<div class="grab"></div><h2>Add an account</h2><div class="field"><label>Type</label>
     <select id="aaType"><option>Under 16</option><option>16-17</option><option>Business</option></select></div>
@@ -1723,184 +1761,87 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => { if (e.target.id === 'lnTerm') renderLoans(); });
 
-function requestSheet(){
-  sheet(`<div class="grab"></div><h2>Request money</h2><div class="sub">Ask someone to pay you</div>
-    <div class="field"><label>From</label><select id="rqWho">${S.payees.map(p=>`<option>${esc(p.name)}</option>`).join('')}</select></div>
-    <div class="field"><label>Amount</label><input id="rqAmt" type="number" min="1" step="1"></div>
-    <div class="field"><label>What for</label><input id="rqRef" value="Split"></div>
-    <button class="btn" id="rqGo">Send request</button>`);
-  on('rqGo', () => {
-    const who = document.getElementById('rqWho').value;
-    const amt = +document.getElementById('rqAmt').value;
-    const ref = document.getElementById('rqRef').value || 'Split';
-    if (!amt || amt <= 0) return toast('Enter an amount');
-    notif('Request sent', `${fmt(amt)} from ${who} — ${ref}`);
-    closeSheet(); toast('Request sent'); go(screen, true);
+let curTx = null;
+function txAction(a){
+  if (!curTx) return;
+  if (a === 'cat') return categorySheet();
+  if (a === 'note') return noteSheet();
+  if (a === 'split') return splitTxSheet();
+  if (a === 'repeat'){ pushTx(curTx.name, curTx.cat, curTx.amt, 'Repeat payment');
+    notif('Payment repeated', `${curTx.name} — ${fmt(curTx.amt)}`); toast('Repeated'); go(screen, true); return; }
+  if (a === 'receipt'){ curTx.receipt = !curTx.receipt; save(); openTx(curTx.id);
+    return toast(curTx.receipt ? 'Receipt attached' : 'Receipt removed'); }
+  if (a === 'delete') return deleteTxSheet();
+}
+function categorySheet(){
+  sheet(`<div class="grab"></div><h2>Change category</h2><div class="sub">Pick a better fit</div>
+    <div class="pill-row" style="flex-wrap:wrap">${CATS.map(c=>
+      `<button class="chip ${c===curTx.cat?'on':''}" data-txcat="${c}">${c}</button>`).join('')}</div>`);
+  document.querySelectorAll('[data-txcat]').forEach(b => b.onclick = () => {
+    curTx.cat = b.dataset.txcat; save(); closeSheet(); openTx(curTx.id); toast('Category updated');
   });
 }
-function splitSheet(){
-  sheet(`<div class="grab"></div><h2>Split a bill</h2><div class="sub">Everyone gets their own share</div>
-    <div class="field"><label>What for</label><input id="spName" placeholder="e.g. Steak night"></div>
-    <div class="field"><label>Total</label><input id="spTot" type="number" min="1" step="1"></div>
-    <div class="field"><label>People</label><input id="spPpl" type="number" min="2" value="2"></div>
-    <div class="kv"><span class="k">Each pays</span><span class="v rev" id="spEach">—</span></div>
-    <button class="btn" id="spGo" style="margin-top:12px">Create split</button>`);
-  const calc = () => {
-    const tot = +document.getElementById('spTot').value || 0;
-    const ppl = Math.max(2, +document.getElementById('spPpl').value || 2);
-    setTxt('spEach', tot ? fmt(round2(tot/ppl)) : '—');
-  };
-  const tEl = document.getElementById('spTot'), pEl = document.getElementById('spPpl');
-  if (tEl) tEl.oninput = calc; if (pEl) pEl.oninput = calc;
-  on('spGo', () => {
-    const n = document.getElementById('spName').value.trim();
-    const tot = +document.getElementById('spTot').value;
-    const ppl = Math.max(2, +document.getElementById('spPpl').value || 2);
-    if (!n || !tot) return toast('Fill in both fields');
-    S.tabs.push({id:uid(), name:n, total:tot, mine:round2(tot/ppl), people:ppl});
-    save(); closeSheet(); renderPay(); notif('Split created', `${n} — ${fmt(tot)} between ${ppl}`); toast('Split created');
+function noteSheet(){
+  sheet(`<div class="grab"></div><h2>Note</h2><div class="sub">Only you can see this</div>
+    <div class="field"><label>Note</label><textarea id="ntVal" rows="3">${esc(curTx.note||'')}</textarea></div>
+    <button class="btn" id="ntGo">Save note</button>`);
+  on('ntGo', () => { curTx.note = document.getElementById('ntVal').value.trim();
+    save(); closeSheet(); openTx(curTx.id); toast('Note saved'); });
+}
+function splitTxSheet(){
+  sheet(`<div class="grab"></div><h2>Split this payment</h2><div class="sub">${esc(curTx.name)} · ${fmt(curTx.amt)}</div>
+    <div class="field"><label>People</label><input id="sxPpl" type="number" min="2" value="2"></div>
+    <div class="kv"><span class="k">Each pays</span><span class="v rev" id="sxEach">${fmt(round2(Math.abs(curTx.amt)/2))}</span></div>
+    <button class="btn" id="sxGo" style="margin-top:12px">Create split</button>`);
+  const pEl = document.getElementById('sxPpl');
+  if (pEl) pEl.oninput = () => setTxt('sxEach', fmt(round2(Math.abs(curTx.amt) / Math.max(2, +pEl.value || 2))));
+  on('sxGo', () => {
+    const ppl = Math.max(2, +document.getElementById('sxPpl').value || 2);
+    const total = Math.abs(curTx.amt);
+    S.tabs.push({id:uid(), name:curTx.name, total, mine:round2(total/ppl), people:ppl});
+    save(); closeSheet(); notif('Split created', `${curTx.name} — ${fmt(total)} between ${ppl}`); toast('Split created'); go('pay');
   });
 }
-function renameSheet(){
-  sheet(`<div class="grab"></div><h2>Rename account</h2><div class="sub">Only you see this name</div>
-    <div class="field"><label>Account name</label><input id="rnName" value="${esc(S.acctName)}" maxlength="28"></div>
-    <button class="btn" id="rnGo">Save name</button>`);
-  on('rnGo', () => { const v = document.getElementById('rnName').value.trim();
-    if (!v) return toast('Enter a name'); S.acctName = v; save(); closeSheet(); renderHome();
-    if (screen === 'accounts') renderAccounts(); toast('Account renamed'); });
-}
-function closeSheetConfirm(){
-  sheet(`<div class="grab"></div><h2>Close this account?</h2>
-    <div class="sub">Your balance must be moved out first. This cannot be undone.</div>
-    <div class="kv"><span class="k">Balance to move</span><span class="v rev">${fmt(balNow())}</span></div>
-    <div class="kv"><span class="k">Open pots</span><span class="v">${S.pots.length}</span></div>
-    <button class="btn red" id="clGo" style="margin-top:14px">Close account</button>
-    <button class="btn ghost" id="clBack" style="margin-top:8px">Keep it open</button>`);
-  on('clBack', closeSheet);
-  on('clGo', () => { S.acctClosed = true; save(); closeSheet(); renderHome();
-    if (screen === 'accounts') renderAccounts(); notif('Account closing', 'We will confirm by email'); toast('Account closing'); });
-}
-function newPotSheet(){
-  sheet(`<div class="grab"></div><h2>New pot</h2><div class="field"><label>Name</label><input id="npName"></div>
-    <div class="field"><label>Type</label><select id="npType"><option value="regular">Regular</option>
-      <option value="savings">Savings (earns interest)</option><option value="bills">Bills (holds direct debits)</option></select></div>
-    <div class="field"><label>Goal</label><input id="npGoal" type="number" min="1" value="500"></div>
-    <button class="btn" id="npGo">Create pot</button>`);
-  on('npGo', () => {
-    const n = document.getElementById('npName').value.trim(); if (!n) return toast('Name your pot');
-    S.pots.push({id:uid(), name:n, type:document.getElementById('npType').value,
-      goal:Math.max(1,+document.getElementById('npGoal').value||500), bal:0});
-    save(); closeSheet(); renderPots(); renderHome(); toast('Pot created');
-  });
-}
-function connectBank(bank){
-  if (S.connected.some(c=>c.bank===bank)) return toast('Already connected');
-  S.connected.push({id:uid(), bank, kind:'Current account', bal: ri(120,3400)});
-  notif('Account connected', bank + ' added'); save(); renderConnected(); renderGrow(); toast('Connected to ' + bank);
-}
-
-let flexTerm = 3;
-function flexMonthly(amount, term){
-  if (term === 3) return round2(amount/3);
-  return round2(amount * (1 + 0.29*term/12) / term);
-}
-function flexSheet(){
-  flexTerm = 3;
-  sheet(`<div class="grab"></div><h2>Pay with Flex</h2><div class="sub">${fmt(flexAvail())} available · 3 months interest free</div>
-    <div class="field"><label>Where</label><input id="fxName" placeholder="e.g. Currys"></div>
-    <div class="field"><label>Amount</label><input id="fxAmt" type="number" min="1" step="0.01"></div>
-    <div class="field"><label>Spread over</label>
-      <div class="pill-row">${[3,6,12].map(v=>`<button class="chip ${v===3?'on':''}" data-term="${v}">${v} months${v===3?' · 0%':' · 29%'}</button>`).join('')}</div></div>
-    <div class="kv"><span class="k">Monthly</span><span class="v rev" id="fxMonthly">—</span></div>
-    <button class="btn" id="fxGo" style="margin-top:12px">Confirm</button>`);
-  const amtEl = document.getElementById('fxAmt'); if (amtEl) amtEl.oninput = flexQuote;
-  flexQuote();
-  on('fxGo', () => {
-    const name = document.getElementById('fxName').value.trim(), amt = +document.getElementById('fxAmt').value;
-    if (!name) return toast('Where was it?');
-    if (!amt || amt <= 0) return toast('Enter an amount');
-    if (amt > flexAvail()) return toast('Over your available limit');
-    const monthly = flexMonthly(amt, flexTerm);
-    S.flex.used = round2(S.flex.used + amt);
-    S.flex.plans.unshift({id:uid(), name, amount:amt, remaining:amt, term:flexTerm, monthly});
-    notif('Paid with Flex', `${name} — ${fmt(amt)} over ${flexTerm} months`);
-    save(); closeSheet(); renderFlex(); toast('Flexed over ' + flexTerm + ' months');
-  });
-}
-function flexQuote(){
-  const amtEl = document.getElementById('fxAmt');
-  const amt = amtEl ? (+amtEl.value || 0) : 0;
-  const m = document.getElementById('fxMonthly');
-  if (m) m.textContent = amt ? fmt(flexMonthly(amt, flexTerm)) : '—';
-  document.querySelectorAll('[data-term]').forEach(b=>b.classList.toggle('on', +b.dataset.term === flexTerm));
-}
-function switchPlan(k){
-  const cur = plan(), next = PLANS[k]; if (!next || k === S.plan) return;
-  const diff = next.price - cur.price;
-  sheet(`<div class="grab"></div><h2>Switch to ${next.name}</h2><div class="sub">${next.price?'£'+next.price+' per month':'Free'}${next.min?' · '+next.min+' month minimum':''}</div>
-    ${diff>0?`<div class="kv"><span class="k">Charged today</span><span class="v rev">${fmt(diff)}</span></div>`:''}
-    <button class="btn" id="spGo">Confirm</button>`);
-  on('spGo', () => {
-    S.plan = k; if (diff > 0) pushTx('Monzo','Subscriptions',-diff,`${next.name} plan`);
-    notif('Plan changed', `You're now on ${next.name}`); save(); closeSheet(); renderPlan(); renderHome(); toast('Plan updated');
-  });
-}
-function moveLayout(id, dir){
-  const i = S.layout.findIndex(x=>x.id===id); if (i < 0) return;
-  const j = i + dir; if (j < 0 || j >= S.layout.length) return;
-  const tmp = S.layout[i]; S.layout[i] = S.layout[j]; S.layout[j] = tmp;
-  save(); renderLayout();
-}
-let curPot = null;
-function openPot(id){
-  const p = S.pots.find(x=>x.id===id); if (!p) return; curPot = p;
-  setTxt('pdName', p.name);
-  setTxt('pdBal', fmt(p.bal));
-  setTxt('pdGoal', `${Math.round(p.bal/p.goal*100)}% of ${fmt(p.goal)} goal`);
-  const bar = document.getElementById('pdBar'); if (bar) bar.style.width = Math.min(100, p.bal/p.goal*100) + '%';
-  const rr = document.getElementById('pdRateRow'); if (rr) rr.classList.toggle('hide', p.type !== 'savings');
-  setTxt('pdRate', plan().ia + '% AER (variable)');
-  const hist = document.getElementById('pdHist');
-  if (hist) hist.innerHTML = S.tx.filter(t=>t.name===p.name).slice(0,15)
-    .map(t=>`<div class="kv"><span class="k">${esc(t.note||'Move')}</span>
-      <span class="v rev">${t.amt>0?'+':''}${fmt(t.amt)}</span></div>`).join('') || '<div class="empty">No activity</div>';
-  go('potdetail');
-}
-on('pdAdd', () => amountSheet('in'));
-on('pdWithdraw', () => amountSheet('out'));
-on('pdEdit', () => {
-  sheet(`<div class="grab"></div><h2>Edit pot</h2><div class="field"><label>Name</label><input id="epName" value="${esc(curPot.name)}"></div>
-    <div class="field"><label>Goal</label><input id="epGoal" type="number" min="1" value="${curPot.goal}"></div>
-    <button class="btn" id="epSave">Save</button>`);
-  on('epSave', () => {
-    curPot.name = document.getElementById('epName').value.trim() || curPot.name;
-    curPot.goal = Math.max(1, +document.getElementById('epGoal').value || curPot.goal);
-    save(); closeSheet(); openPot(curPot.id); toast('Pot updated');
-  });
-});
-function amountSheet(dir){
-  sheet(`<div class="grab"></div><h2>${dir==='in'?'Add to':'Withdraw from'} ${esc(curPot.name)}</h2>
-    <div class="sub">Balance ${fmt(balNow())} · Pot ${fmt(curPot.bal)}</div>
-    <div class="field"><label>Amount</label><input id="amAmt" type="number" min="1" step="1"></div>
-    <div class="pill-row">${[10,25,50,100].map(v=>`<button class="chip" data-quick="${v}">£${v}</button>`).join('')}</div>
-    <button class="btn" id="amGo">Confirm</button>`);
-  document.querySelectorAll('[data-quick]').forEach(b=>b.onclick=()=>{document.getElementById('amAmt').value=b.dataset.quick;});
-  on('amGo', () => { const v = +document.getElementById('amAmt').value;
-    if (!v || v <= 0) return toast('Enter an amount'); moveToPot(curPot.id, round2(v), dir); });
+function deleteTxSheet(){
+  sheet(`<div class="grab"></div><h2>Delete transaction?</h2>
+    <div class="sub">${esc(curTx.name)} · ${fmt(curTx.amt)}</div>
+    <div class="kv"><span class="k">Balance will change by</span>
+      <span class="v ${curTx.amt>0?'v--neg':'v--pos'}">${curTx.amt>0?'−':'+'}${fmt(curTx.amt)}</span></div>
+    <button class="btn red" id="dlGo" style="margin-top:14px">Delete</button>
+    <button class="btn ghost" id="dlBack" style="margin-top:8px">Keep it</button>`);
+  on('dlBack', () => openTx(curTx.id));
+  on('dlGo', () => { S.tx = S.tx.filter(t=>t.id!==curTx.id); recompute(); save();
+    closeSheet(); toast('Deleted'); go('home'); });
 }
 function openTx(id){
-  const t = S.tx.find(x=>x.id===id); if (!t) return;
+  const t = S.tx.find(x=>x.id===id); if (!t) return; curTx = t;
   const host = document.getElementById('txDetail'); if (!host) return;
-  host.innerHTML = `<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
-    ${logo(t.name)}<div><div style="font-weight:700">${esc(t.name)}</div><div class="sub" style="margin:0">${esc(t.cat)}</div></div></div>
-    <div class="balance rev" style="margin:0 0 12px">${t.amt>0?'+':''}${fmt(t.amt)}</div>
-    <div class="kv"><span class="k">Date</span><span class="v">${prettyDate(t.date)}</span></div>
-    <div class="kv"><span class="k">Time</span><span class="v">${t.time}</span></div>
-    <div class="kv"><span class="k">Balance after</span><span class="v rev">${fmt(t.bal)}</span></div>
-    ${t.note?`<div class="kv"><span class="k">Note</span><span class="v">${esc(t.note)}</span></div>`:''}
-    <button class="btn ghost" id="dispBtn" style="margin-top:14px">Something wrong? Raise a dispute</button>`;
+  host.innerHTML = `<div class="txhead">${logo(t.name, true)}
+    <div class="nm">${esc(t.name)}</div>
+    <div class="cat">${esc(t.cat)}</div>
+    <div class="amt ${t.amt>0?'in':''} rev">${t.amt>0?'+':''}${fmt(t.amt)}</div></div>
+    <div class="txacts">
+      <button class="txact" data-txact="cat"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h6"/></svg>Category</button>
+      <button class="txact" data-txact="note"><svg viewBox="0 0 24 24"><path d="M5 4h14v16l-7-4-7 4z"/></svg>Note</button>
+      <button class="txact" data-txact="split"><svg viewBox="0 0 24 24"><path d="M4 6h6l4 6-4 6H4"/><path d="M14 12h6"/></svg>Split</button>
+      <button class="txact" data-txact="repeat"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0113.6-5.7L20 8"/><path d="M20 4v4h-4"/><path d="M20 12a8 8 0 01-13.6 5.7L4 16"/></svg>Repeat</button>
+    </div>
+    <div class="card">
+      <div class="kv"><span class="k">Date</span><span class="v">${prettyDate(t.date)}</span></div>
+      <div class="kv"><span class="k">Time</span><span class="v">${t.time}</span></div>
+      <div class="kv"><span class="k">Balance after</span><span class="v rev">${fmt(t.bal)}</span></div>
+      <div class="kv"><span class="k">Receipt</span><span class="v">${t.receipt?'<span class="badge ok">Attached</span>':'<span class="badge">None</span>'}</span></div>
+      ${t.note?`<div class="kv"><span class="k">Note</span><span class="v">${esc(t.note)}</span></div>`:''}
+    </div>
+    <div class="card card--list">
+      <button class="sheetrow" data-txact="receipt"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>
+        <span>${t.receipt?'Remove receipt':'Attach receipt'}</span></button>
+      <button class="sheetrow" data-txact="split"><svg viewBox="0 0 24 24"><path d="M4 6h6l4 6-4 6H4"/><path d="M14 12h6"/></svg><span>Split with people</span></button>
+      <button class="sheetrow" data-go="disputes" id="dispBtn"><svg viewBox="0 0 24 24"><path d="M12 8v6M12 17v.5"/><circle cx="12" cy="12" r="9"/></svg><span>Something wrong?</span></button>
+      <button class="sheetrow danger" data-txact="delete"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Delete transaction</span></button>
+    </div>`;
   on('dispBtn', () => {
-    S.disputes.unshift({id:uid(), name:t.name, reason:'Query raised from transaction', date:TODAY});
+    S.disputes.unshift({id:uid(), name:t.name, reason:'Query raised from transaction', date:TODAY, status:'Open'});
     notif('Dispute raised', t.name + " — we'll look into it"); save(); toast('Dispute raised'); go('disputes');
   });
   go('txdetail');
@@ -1994,17 +1935,24 @@ window.addEventListener('scroll', () => {
 
 function renderChips(){ const c = document.getElementById('catChips'); if (!c) return;
   c.innerHTML = ['All', ...CATS].map(x=>`<button class="chip ${x===catFilter?'on':''}" data-cat="${x}">${x}</button>`).join(''); }
+function renderRanges(){ const c = document.getElementById('rangeChips'); if (!c) return;
+  const opts = [['all','Any time'],['week','This week'],['month','This month']];
+  c.innerHTML = opts.map(([k,l])=>`<button class="chip ${searchRange===k?'on':''}" data-range="${k}">${l}</button>`).join(''); }
 const chipsEl = document.getElementById('catChips');
 if (chipsEl) chipsEl.addEventListener('click', e => { const b = e.target.closest('[data-cat]');
   if (!b) return; catFilter = b.dataset.cat; renderChips(); runSearch(); });
 const qEl = document.getElementById('q'); if (qEl) qEl.addEventListener('input', runSearch);
 function runSearch(){
   const q = (document.getElementById('q')||{}).value || '';
-  const res = S.tx.filter(t=>(catFilter==='All' || t.cat===catFilter) &&
+  const from = searchRange === 'week' ? iso(new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate()-7))
+    : searchRange === 'month' ? `${THIS_YM}-01` : '0000-01-01';
+  const res = S.tx.filter(t => t.date >= from && (catFilter==='All' || t.cat===catFilter) &&
     (!q || t.name.toLowerCase().includes(q.toLowerCase()) || (t.note||'').toLowerCase().includes(q.toLowerCase()))).slice(0,60);
-  const host = document.getElementById('results'); if (!host) return; host.innerHTML = '';
-  res.forEach(t=>host.insertAdjacentHTML('beforeend', `<li>${txHtml(t)}</li>`));
-  if (!res.length) host.innerHTML = '<li class="empty">No matches</li>';
+  const host = document.getElementById('results'); if (!host) return;
+  if (!res.length){ host.innerHTML = '<div class="empty">No matches</div>'; return; }
+  const days = [...new Set(res.map(t=>t.date))];
+  host.innerHTML = days.map(d=>`<div class="day__l">${prettyDate(d)}</div>
+    <ul class="txlist">${res.filter(t=>t.date===d).map(t=>`<li>${txHtml(t)}</li>`).join('')}</ul>`).join('');
 }
 on('chatSend', () => { const i = document.getElementById('chatIn'); const v = i.value.trim();
   if (!v) return; S.chat.push({who:'me', text:v, time:NOWT}); i.value=''; save(); renderChat();
@@ -2072,7 +2020,7 @@ function plusSheet(){
 try { load(); } catch(e){ window.onerror('boot: ' + e.message, 'script', 0, 0); }
 if (!S) S = freshState();
 applyPriv(); applyTheme(); applyZoom(); applyMotion();
-paintAvatar(); buildKeys(); paintDots(); renderChips();
+paintAvatar(); buildKeys(); paintDots(); renderChips(); renderRanges(); syncBell();
 try { renderHome(); } catch(e){ window.onerror('home: ' + e.message, 'script', 0, 0); }
 if (sessionStorage.getItem('unlocked') === '1') document.body.classList.remove('locked');
 window.addEventListener('online', ()=>document.body.classList.remove('is-offline'));
