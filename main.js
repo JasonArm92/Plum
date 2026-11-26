@@ -1,12 +1,12 @@
 /* src/main.js — boot: hydrate state, apply appearance, wire chrome and lock, register screens. */
 
 import {
-  load, getState, subscribe, runInterest, runTick, togglePriv
+  load, getState, subscribe, runInterest, runTick, togglePriv, syncBell
 } from './core.js';
-import { initRouter, register, go, bindGlobalChrome, toast } from './ui.js';
+import { initRouter, register, go, goBack, bindGlobalChrome, toast } from './ui.js';
 
 import {
-  mountHome, mountGrow, mountPay, mountTrends, mountAccount, mountAcc, mountPots,
+  mountHome, mountSave, mountGrow, mountPay, mountTrends, mountAccount, mountAcc, mountPots,
   mountPotDetail, mountInvest, mountStatements
 } from './screens-a.js';
 
@@ -24,10 +24,9 @@ function applyPrivacy(){ document.documentElement.dataset.priv = getState().priv
 function applyAll(){ applyTheme(); applyZoom(); applyMotion(); applyPrivacy(); }
 
 function paintAvatar(){
-  const s = getState();
-  document.getElementById('avatarBtn').textContent =
-    s.profile.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  document.getElementById('hName').textContent = s.profile.name.split(' ')[0];
+  const name = getState().profile.name;
+  const el = document.getElementById('avatarBtn');
+  if (el) el.textContent = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
 let pinBuffer = '';
@@ -42,8 +41,9 @@ function paintDots(){
 function buildKeys(){
   const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
   const host = document.getElementById('keys');
+  if (!host) return;
   host.innerHTML = keys.map(k => k === '' ? '<span></span>'
-    : `<button class="key" data-k="${k}">${k}</button>`).join('');
+    : `<button class="key" data-k="${k}" aria-label="${k === '⌫' ? 'Delete' : k}">${k}</button>`).join('');
   host.addEventListener('click', e => {
     const btn = e.target.closest('[data-k]');
     if (!btn) return;
@@ -58,10 +58,10 @@ function buildKeys(){
 function checkPin(){
   if (pinBuffer === getState().pin) return unlock();
   const err = document.getElementById('pinErr');
-  err.classList.add('on');
+  if (err) err.classList.add('on');
   pinBuffer = '';
   paintDots();
-  setTimeout(() => err.classList.remove('on'), 1600);
+  setTimeout(() => { if (err) err.classList.remove('on'); }, 1600);
 }
 
 function unlock(){
@@ -69,12 +69,14 @@ function unlock(){
   document.body.classList.remove('locked');
   pinBuffer = '';
   paintDots();
-  document.getElementById('pinpad').classList.remove('on');
+  const pad = document.getElementById('pinpad');
+  if (pad) pad.classList.remove('on');
   go('home');
 }
 
 function showPinPad(){
-  document.getElementById('pinpad').classList.add('on');
+  const pad = document.getElementById('pinpad');
+  if (pad) pad.classList.add('on');
   paintDots();
 }
 
@@ -103,10 +105,10 @@ function boot(){
   bindGlobalChrome();
 
   const screens = {
-    home: mountHome, grow: mountGrow, pay: mountPay, trends: mountTrends, account: mountAccount,
-    acc: mountAcc, pots: mountPots, potdetail: mountPotDetail, invest: mountInvest,
-    statements: mountStatements, payees: mountPayees, cards: mountCards, plan: mountPlan,
-    limits: mountLimits, borrow: mountBorrow, flex: mountFlex, aura: mountAura,
+    home: mountHome, save: mountSave, grow: mountGrow, pay: mountPay, trends: mountTrends,
+    account: mountAccount, acc: mountAcc, pots: mountPots, potdetail: mountPotDetail,
+    invest: mountInvest, statements: mountStatements, payees: mountPayees, cards: mountCards,
+    plan: mountPlan, limits: mountLimits, borrow: mountBorrow, flex: mountFlex, aura: mountAura,
     overdraft: mountOverdraft, loans: mountLoans, connected: mountConnected, credit: mountCredit,
     challenge: mountChallenge, billsback: mountBillsback, insurance: mountInsurance,
     accounts: mountAccounts, appearance: mountAppearance, search: mountSearch,
@@ -118,22 +120,26 @@ function boot(){
   buildKeys();
   paintDots();
 
-  document.getElementById('usePin').onclick = showPinPad;
-  document.getElementById('bioBtn').onclick = biometricUnlock;
-  document.getElementById('avatarBtn').onclick = () => go('account');
-  document.getElementById('bellBtn').onclick = () => go('notifs');
+  const on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
+  on('usePin', showPinPad);
+  on('bioBtn', biometricUnlock);
+  on('avatarBtn', () => go('account'));
+  on('bellBtn', () => go('notifs'));
+  on('searchBtn', () => go('search'));
+  on('backBtn', goBack);
 
-  document.getElementById('privBtn').onclick = () => {
-    const on = togglePriv();
+  on('privBtn', () => {
+    const on_ = togglePriv();
     applyPrivacy();
-    toast(on ? 'Privacy mode on' : 'Privacy mode off');
-  };
+    toast(on_ ? 'Privacy mode on' : 'Privacy mode off');
+  });
 
   document.addEventListener('click', e => {
     const node = e.target.closest('.rev');
     if (node && getState().priv) node.classList.toggle('open');
   });
 
+  /* cross-screen delegation: rows produced by shared components */
   document.getElementById('main').addEventListener('click', e => {
     if (e.target.closest('[data-go]')) return;
     const tx = e.target.closest('[data-tx]');
@@ -142,7 +148,7 @@ function boot(){
     if (pot) return go('potdetail', { id: pot.dataset.pot });
   });
 
-  subscribe(() => { paintAvatar(); applyAll(); });
+  subscribe(() => { paintAvatar(); applyAll(); syncBell(); });
 
   if (sessionStorage.getItem('unlocked') === '1') document.body.classList.remove('locked');
   go('home');
@@ -153,7 +159,7 @@ function boot(){
 
   if ('serviceWorker' in navigator){
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=13').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=17').catch(() => {});
     });
   }
 }
