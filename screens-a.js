@@ -3,7 +3,7 @@
 import {
   getState, commit, esc, fmt, TODAY, THIS_YM, MONTHS, round2, plan, planPrice,
   balNow, isaBal, growTotal, savingsTotal, homeEquity, connTotal, loanOwed,
-  spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend,
+  spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend, interestThisMonth,
   daysToPayday, balanceSeries, tyUsed, TARGET_ISA, addTx, notif,
   moveToPot, createPot, updatePot, deletePot, togglePotLock,
   setHomeEstimate, setPensionMonthly, setTarget, setActiveAccount,
@@ -12,7 +12,7 @@ import {
 } from './core.js';
 
 import {
-  go, toast, sheet, closeSheet, lineChart, donut, heatmap, logo, kv, badge,
+  go, currentScreen, toast, sheet, closeSheet, lineChart, donut, heatmap, logo, kv, badge,
   empty, txRow, potRow, meter, chipRow, accCard, spotCard, sectionHead
 } from './ui.js';
 
@@ -38,9 +38,8 @@ const sections = {
   },
   joint(){
     const s = getState();
-    const bal = s.jointBal || 0;
     return accCard({ label: 'Joint account', meta: 'With ' + esc(s.partner),
-      balance: fmt(bal), tag: badge('Joint'), go: 'joint' });
+      balance: fmt(s.jointBal || 0), tag: badge('Joint'), go: 'joint' });
   },
   pots(){
     const s = getState();
@@ -61,6 +60,21 @@ const sections = {
         <button class="btn ghost sm" data-more style="margin:8px 0 12px;width:100%">Load more</button></div>`;
   }
 };
+
+function newPotSheet(){
+  sheet(`<h2>New pot</h2><div class="field"><label>Name</label><input id="npName"></div>
+    <div class="field"><label>Type</label><select id="npType">
+      <option value="regular">Regular</option><option value="savings">Savings (earns interest)</option>
+      <option value="bills">Bills (holds direct debits)</option></select></div>
+    <div class="field"><label>Goal</label><input id="npGoal" type="number" min="1" value="500"></div>
+    <button class="btn" id="npGo">Create pot</button>`);
+  document.getElementById('npGo').onclick = () => {
+    const name = document.getElementById('npName').value.trim();
+    if (!name) return toast('Name your pot');
+    createPot(name, document.getElementById('npType').value, +document.getElementById('npGoal').value || 500);
+    closeSheet(); go(currentScreen() || 'pots'); toast('Pot created');
+  };
+}
 
 export function mountHome(root){
   let limit = 12;
@@ -85,9 +99,9 @@ export function mountHome(root){
     const s = getState();
     sheet(`<h2>Edit layout</h2>` + s.layout.map((sec, i) =>
       `<div class="layoutrow"><span class="mini">${i + 1}</span><span class="mid">${LAYOUT_NAMES[sec.id]}</span>
-        <button class="iconbtn" data-up="${sec.id}">↑</button>
-        <button class="iconbtn" data-down="${sec.id}">↓</button>
-        <button class="sw ${sec.on ? 'on' : ''}" data-eye="${sec.id}"></button></div>`).join('') +
+        <button class="iconbtn" data-up="${sec.id}" aria-label="Move up">↑</button>
+        <button class="iconbtn" data-down="${sec.id}" aria-label="Move down">↓</button>
+        <button class="sw ${sec.on ? 'on' : ''}" data-eye="${sec.id}" aria-label="Show section"></button></div>`).join('') +
       `<button class="btn" style="margin-top:16px" data-close>Done</button>`);
     document.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { moveLayoutSection(b.dataset.up, -1); layoutSheet(); render(); });
     document.querySelectorAll('[data-down]').forEach(b => b.onclick = () => { moveLayoutSection(b.dataset.down, 1); layoutSheet(); render(); });
@@ -119,8 +133,36 @@ function addTxSheet(){
     const signed = cat === 'Income' || cat === 'Investments' ? amt : -amt;
     if (signed < 0 && Math.abs(signed) > balNow()) return toast('Not enough in your balance');
     addTx(name, cat, signed, document.getElementById('atNote').value, document.getElementById('atDate').value || TODAY);
-    closeSheet(); go('home'); toast('Added');
+    closeSheet(); go(currentScreen() || 'home'); toast('Added');
   };
+}
+
+export function mountSave(root){
+  const render = () => {
+    const s = getState();
+    const groups = [
+      ['Savings pots', 'savings', 'Earns interest at your plan rate'],
+      ['Bills pots', 'bills', 'Money set aside for direct debits'],
+      ['Regular pots', 'regular', 'Goals without interest']
+    ];
+    const body = groups.map(([label, type, blurb]) => {
+      const items = s.pots.filter(p => p.type === type);
+      if (!items.length) return '';
+      return `<div class="h-sec"><h2 class="sm">${label}</h2></div>
+        <p class="note">${blurb}</p>
+        <div class="card" style="padding:6px 14px">${items.map(p => potRow(p, plan().ia)).join('')}</div>`;
+    }).join('');
+    root.innerHTML = `<div class="h-sec"><h2>Save</h2><button data-new>Create</button></div>
+      <div class="card"><div class="sub">Interest this month</div>
+        <div class="balance rev">${fmt(interestThisMonth())}</div>
+        <div class="sub" style="margin:6px 0 0">${plan().ia}% AER variable on ${s.pots.filter(p => p.type === 'savings').length} savings pots</div></div>
+      ${body || empty('No pots yet')}
+      <p class="note">Savings pots earn your plan rate. Bills pots hold direct debits. Regular pots are for goals.</p>`;
+  };
+  root.addEventListener('click', e => {
+    if (e.target.closest('[data-new]')) newPotSheet();
+  });
+  render();
 }
 
 export function mountGrow(root){
@@ -164,26 +206,26 @@ export function mountPay(root){
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Pay</h2></div>
       <div class="card" style="padding:6px 8px">
-        <button class="pot" data-go="payees"><span class="lg">SND</span><span class="mid">
+        <button class="pot" data-go="payees"><span class="lg"><span class="lg__i">SND</span></span><span class="mid">
           <span class="nm">Send money</span><span class="sub">To a saved payee</span></span><span class="amt">›</span></button>
-        <button class="pot" data-so><span class="lg">SO</span><span class="mid">
+        <button class="pot" data-so><span class="lg"><span class="lg__i">SO</span></span><span class="mid">
           <span class="nm">Standing orders</span><span class="sub">${s.sos.filter(x => x.active).length} active</span></span><span class="amt">›</span></button>
-        <button class="pot" data-tabs><span class="lg">TAB</span><span class="mid">
+        <button class="pot" data-tabs><span class="lg"><span class="lg__i">TAB</span></span><span class="mid">
           <span class="nm">Shared tabs</span><span class="sub">${s.tabs.length} open</span></span><span class="amt">›</span></button>
-        <button class="pot" data-go="joint"><span class="lg">JNT</span><span class="mid">
+        <button class="pot" data-go="joint"><span class="lg"><span class="lg__i">JNT</span></span><span class="mid">
           <span class="nm">Joint account</span><span class="sub">With ${esc(s.partner)}</span></span><span class="amt">›</span></button>
-        <button class="pot" data-sorter><span class="lg">SRT</span><span class="mid">
+        <button class="pot" data-sorter><span class="lg"><span class="lg__i">SRT</span></span><span class="mid">
           <span class="nm">Salary sorter</span><span class="sub">Split your pay</span></span><span class="amt">›</span></button>
-        <button class="pot" data-gpe><span class="lg">GPE</span><span class="mid">
+        <button class="pot" data-gpe><span class="lg"><span class="lg__i">GPE</span></span><span class="mid">
           <span class="nm">Get paid early</span><span class="sub">4pm the day before</span></span><span class="amt">›</span></button>
       </div>
       <div class="card"><h2>Standing orders</h2>
-        ${s.sos.length ? s.sos.map(x => `<div class="pot"><span class="lg">${esc(x.name[0])}</span>
+        ${s.sos.length ? s.sos.map(x => `<div class="pot"><span class="lg"><span class="lg__i">${esc(x.name[0])}</span></span>
           <span class="mid"><span class="nm">${esc(x.name)}</span><span class="sub">Day ${x.day} · ${fmt(x.amt)}</span></span>
-          <button class="sw ${x.active ? 'on' : ''}" data-toggle-so="${x.id}"></button></div>`).join('')
+          <button class="sw ${x.active ? 'on' : ''}" data-toggle-so="${x.id}" aria-label="Toggle ${esc(x.name)}"></button></div>`).join('')
           : empty('None set up')}</div>
       <div class="card"><h2>Shared tabs</h2>
-        ${s.tabs.length ? s.tabs.map(t => `<div class="pot"><span class="lg">${esc(t.name[0])}</span>
+        ${s.tabs.length ? s.tabs.map(t => `<div class="pot"><span class="lg"><span class="lg__i">${esc(t.name[0])}</span></span>
           <span class="mid"><span class="nm">${esc(t.name)}</span><span class="sub">${t.people} people · your share ${fmt(t.mine)}</span></span>
           <button class="btn ghost sm" data-settle="${t.id}">Settle</button></div>`).join('')
           : empty('No open tabs')}</div>`;
@@ -258,7 +300,7 @@ export function mountTrends(root){
         <div id="tbDonut"></div></div>
         <div class="card"><h2>Daily activity</h2><div class="heat" id="tbHeat"></div></div>
         <div class="card"><h2>Categories</h2>
-          ${FLEX.map(c => `<button class="pot" data-drill="${c}"><span class="lg">${c[0]}</span>
+          ${FLEX.map(c => `<button class="pot" data-drill="${c}"><span class="lg"><span class="lg__i">${c[0]}</span></span>
             <span class="mid"><span class="nm">${c}</span><span class="sub">${fmt(spentCat(c))}</span></span>
             <span class="amt">›</span></button>`).join('')}</div>`;
     } else {
@@ -297,12 +339,12 @@ export function mountTrends(root){
 
 export function mountAccount(root){
   const s = getState();
-  const row = (label, sub, attrs) => `<button class="pot" ${attrs}><span class="lg">${label.replace(/&amp;/g, '').slice(0, 3)}</span>
+  const row = (label, sub, attrs) => `<button class="pot" ${attrs}><span class="lg"><span class="lg__i">${label.replace(/&amp;/g, '').slice(0, 3)}</span></span>
     <span class="mid"><span class="nm">${label}</span><span class="sub">${sub}</span></span><span class="amt">›</span></button>`;
   root.innerHTML = `<div class="h-sec"><h2>Account</h2></div>
     <div class="card" style="padding:6px 8px">
       ${row('Your accounts', (1 + s.extraAccounts.length) + ' accounts', 'data-go="accounts"')}
-      ${row('Personal details', s.profile.name, 'data-go="personal"')}
+      ${row('Personal details', esc(s.profile.name), 'data-go="personal"')}
       ${row('Security &amp; privacy', s.credId ? 'Biometrics on' : 'Passcode only', 'data-go="security"')}
       ${row('Statements', 'PDF and CSV', 'data-go="statements"')}
       ${row('Payees', s.payees.length + ' saved', 'data-go="payees"')}
@@ -356,19 +398,7 @@ export function mountPots(root){
       <p class="note">Savings pots earn ${plan().ia}% AER. Locked pots can't be withdrawn from.</p>`;
   };
   root.addEventListener('click', e => {
-    if (!e.target.closest('[data-new]')) return;
-    sheet(`<h2>New pot</h2><div class="field"><label>Name</label><input id="npName"></div>
-      <div class="field"><label>Type</label><select id="npType">
-        <option value="regular">Regular</option><option value="savings">Savings (earns interest)</option>
-        <option value="bills">Bills (holds direct debits)</option></select></div>
-      <div class="field"><label>Goal</label><input id="npGoal" type="number" min="1" value="500"></div>
-      <button class="btn" id="npGo">Create pot</button>`);
-    document.getElementById('npGo').onclick = () => {
-      const name = document.getElementById('npName').value.trim();
-      if (!name) return toast('Name your pot');
-      createPot(name, document.getElementById('npType').value, +document.getElementById('npGoal').value || 500);
-      closeSheet(); render(); toast('Pot created');
-    };
+    if (e.target.closest('[data-new]')) newPotSheet();
   });
   render();
 }
@@ -395,12 +425,15 @@ export function mountPotDetail(root, params){
   };
   const amountSheet = dir => {
     const p = getState().pots.find(x => x.id === params.id);
+    if (!p) return;
     sheet(`<h2>${dir === 'in' ? 'Add to' : 'Withdraw from'} ${esc(p.name)}</h2>
       <div class="sub">Balance ${fmt(balNow())} · Pot ${fmt(p.bal)}</div>
       <div class="field"><label>Amount</label><input id="amAmt" type="number" min="1"></div>
       ${chipRow([10, 25, 50, 100].map(v => ({ value: v, label: '£' + v })), null, 'quick')}
       <button class="btn" id="amGo">Confirm</button>`);
-    document.querySelectorAll('[data-quick]').forEach(b => b.onclick = () => { document.getElementById('amAmt').value = b.dataset.quick; });
+    document.querySelectorAll('[data-quick]').forEach(b => b.onclick = () => {
+      const i = document.getElementById('amAmt'); if (i) i.value = b.dataset.quick;
+    });
     document.getElementById('amGo').onclick = () => {
       const v = +document.getElementById('amAmt').value;
       if (!v || v <= 0) return toast('Enter an amount');
@@ -411,6 +444,7 @@ export function mountPotDetail(root, params){
   };
   const editSheet = () => {
     const p = getState().pots.find(x => x.id === params.id);
+    if (!p) return;
     sheet(`<h2>Edit pot</h2><div class="field"><label>Name</label><input id="epName" value="${esc(p.name)}"></div>
       <div class="field"><label>Goal</label><input id="epGoal" type="number" min="1" value="${p.goal}"></div>
       <div class="field"><label>Monthly auto-save</label><input id="epAuto" type="number" min="0" value="${p.autoSave}"></div>
@@ -447,7 +481,7 @@ export function mountInvest(root){
         <div class="sub">Stocks &amp; shares ISA · transferred in October 1992</div>
         <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(isaBal())}</div>
         ${meter(isaBal(), TARGET_ISA)}
-        <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">${share.toFixed(2)}% of target</div>
+        <div style="font-size:12.5px;color:var(--ink3);margin-bottom:8px">${share.toFixed(2)}% of target</div>
         ${kv('Allowance used', `<span class="rev">${fmt(tyUsed())}</span>`)}
         ${kv('Allowance remaining', `<span class="rev">${fmt(Math.max(0, 20000 - tyUsed()))}</span>`)}
         ${kv('Platform fee', plan().cover ? '0.20%' : '0.25%')}
@@ -460,7 +494,7 @@ export function mountInvest(root){
       <div class="card"><h2>Value over time</h2><div id="isaChart"></div></div>
       <div class="h-sec"><h2>Ledger</h2><button data-go="statements">Statements</button></div>
       <div class="card" style="padding:4px 14px"><ul class="txlist">
-        ${s.isa.slice(0, 40).map(r => `<li class="tx"><span class="lg">${r.type[0]}</span>
+        ${s.isa.slice(0, 40).map(r => `<li class="tx"><span class="lg"><span class="lg__i">${r.type[0]}</span></span>
           <span class="mid"><span class="nm">${esc(r.note)}</span><span class="mt">${r.date} · ${r.type}</span></span>
           <span class="amt rev">${fmt(r.value)}</span></li>`).join('')}</ul></div>`;
     const asc = s.isa.slice().reverse(), step = Math.max(1, Math.floor(asc.length / 140));
@@ -468,19 +502,20 @@ export function mountInvest(root){
   };
   root.addEventListener('click', e => {
     if (!e.target.closest('[data-contrib]')) return;
-    sheet(`<h2>Add to ISA</h2><div class="sub">Remaining allowance ${fmt(Math.max(0, 20000 - tyUsed()))}</div>
+    const left = Math.max(0, 20000 - tyUsed());
+    sheet(`<h2>Add to ISA</h2><div class="sub">Remaining allowance ${fmt(left)}</div>
       <div class="field"><label>Amount</label><input id="isaAmt" type="number" min="1"></div>
       <button class="btn" id="isaGo">Move to ISA</button>`);
     document.getElementById('isaGo').onclick = () => {
       const v = +document.getElementById('isaAmt').value;
       if (!v || v <= 0) return toast('Enter an amount');
       if (v > balNow()) return toast('Not enough in your balance');
-      if (v > 20000 - tyUsed()) return toast('Over your ISA allowance');
-      addTx('Vanguard', 'Investments', -v, 'ISA subscription');
+      if (v > left) return toast('Over your ISA allowance');
       const s = getState();
       s.isa.unshift({ id: 'c' + Date.now(), date: TODAY, type: 'ISA', contrib: v, growth: 0,
         value: round2(isaBal() + v), note: 'ISA subscription' });
-      commit(); closeSheet(); render(); toast('Added to ISA');
+      addTx('Vanguard', 'Investments', -v, 'ISA subscription');
+      closeSheet(); render(); toast('Added to ISA');
     };
   });
   render();
@@ -527,6 +562,7 @@ function download(kind, ym, asPdf){
   }
   const [y, m] = ym.split('-');
   const w = window.open('', '_blank');
+  if (!w) return toast('Allow pop-ups to print');
   w.document.write(`<title>${name}</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#0b1a26}
     h1{font-size:20px;margin:0 0 2px}.sub{color:#6b7c8a;font-size:13px;margin-bottom:18px}
     table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:6px 4px;border-bottom:1px solid #e6ebef}
