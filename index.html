@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest"/>
 <link rel="icon" href="monzo-mark.svg?v=2"/>
 <link rel="apple-touch-icon" href="monzo-tile.svg?v=2"/>
-<script>try{var _t=JSON.parse(localStorage.getItem('monzo_v5')||'{}');document.documentElement.dataset.theme=(_t.prefs&&_t.prefs.theme)||'auto';document.documentElement.dataset.priv=(_t.sec&&_t.sec.privacy)?'1':'0'}catch(e){}</script>
+<script>try{var _t=JSON.parse(localStorage.getItem('monzo_v6')||'{}');document.documentElement.dataset.theme=(_t.prefs&&_t.prefs.theme)||'auto';document.documentElement.dataset.priv=(_t.sec&&_t.sec.privacy)?'1':'0'}catch(e){}</script>
 <style>
 html{
 --coral:#FF4F40;--navy:#091723;--ink:#091723;--muted:#6B7480;--line:#E7E9EB;
@@ -42,11 +42,15 @@ html,body{margin:0;padding:0;height:100%}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.42;overscroll-behavior-y:none;transition:background .28s var(--ease),color .28s var(--ease)}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 a{color:inherit;text-decoration:none}
-:focus-visible{outline:3px solid var(--coral);outline-offset:2px;border-radius:6px}
+:focus-visible{outline:3px solid var(--coral);outline-offset:3px;border-radius:8px}
 .hide{display:none!important}
 #app{max-width:520px;margin:0 auto;min-height:100%;padding-bottom:calc(104px + var(--safeb));position:relative}
 #view.anim{animation:viewIn .3s var(--ease) both}
 @keyframes viewIn{from{opacity:.35;transform:translateY(8px)}to{opacity:1;transform:none}}
+#skip{position:absolute;left:-999px;top:8px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;z-index:99}
+#skip:focus{left:8px}
+#offbar{position:fixed;top:0;left:0;right:0;background:var(--warn-soft);color:var(--warn-ink);text-align:center;font-size:12.5px;font-weight:700;padding:6px;z-index:45;transform:translateY(-100%);transition:transform .25s var(--ease)}
+#offbar.on{transform:none}
 
 .top{display:flex;align-items:center;gap:10px;padding:14px 20px 6px}
 .top h1{font-size:20px;font-weight:800;letter-spacing:-.4px;margin:0;flex:1}
@@ -68,6 +72,7 @@ a{color:inherit;text-decoration:none}
 .btn.sm{padding:10px 16px;font-size:14px;width:auto}
 .btn.ghost{background:var(--surface);color:var(--ink)}
 .btn.coral{background:var(--coral)}
+.btn.danger{background:var(--red)}
 .btn:disabled{opacity:.4}
 .row{display:flex;align-items:center;gap:14px;padding:13px 0;transition:transform .14s var(--snap),opacity .2s}
 .row+.row{border-top:1px solid var(--line)}
@@ -79,19 +84,15 @@ a{color:inherit;text-decoration:none}
 .pos{color:var(--green)}
 .list{background:var(--card);transition:background .28s}
 .list .row{padding:13px 20px}
-.sec{margin:26px 0 8px;padding:0 20px;font-size:12px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
+.sec{margin:26px 0 8px;padding:0 20px;font-size:12px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
 .muted{color:var(--muted)}
 .small{font-size:13px}
 .tiny{font-size:11.5px}
 .center{text-align:center}
 .mono{font-variant-numeric:tabular-nums}
 
-html[data-priv="1"] .amt,
-html[data-priv="1"] .bal,
-html[data-priv="1"] .money{filter:blur(7px);transition:filter .22s var(--ease);will-change:filter}
-html[data-priv="1"] .amt.rev,
-html[data-priv="1"] .bal.rev,
-html[data-priv="1"] .money.rev{filter:none}
+html[data-priv="1"] .amt,html[data-priv="1"] .bal,html[data-priv="1"] .money{filter:blur(7px);transition:filter .22s var(--ease);will-change:filter}
+html[data-priv="1"] .amt.rev,html[data-priv="1"] .bal.rev,html[data-priv="1"] .money.rev{filter:none}
 
 .ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:0 0 auto;font-size:16px;font-weight:800;color:var(--ink)}
 .ico.coral{background:var(--coral);color:#fff}
@@ -128,7 +129,6 @@ html[data-priv="1"] .money.rev{filter:none}
 .badge.warn{background:var(--warn-soft);color:var(--warn-ink)}
 .prog{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
 .prog i{display:block;height:100%;background:var(--coral);border-radius:4px;transition:width .6s var(--ease)}
-.prog.navy i{background:var(--navy)}
 input,select,textarea{font:inherit;width:100%;background:var(--surface);border:1px solid transparent;border-radius:14px;padding:13px 14px;color:var(--ink);transition:border-color .2s,background .28s}
 input:focus,select:focus,textarea:focus{border-color:var(--coral);outline:none}
 label.f{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}
@@ -150,6 +150,7 @@ label.f{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}
 .swatch:active{transform:scale(.95)}
 .swatch.on{border-color:var(--coral)}
 .mhead{padding:16px 20px 6px;font-size:12px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 
 .lock{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:56px 26px calc(26px + var(--safeb));max-width:520px;margin:0 auto}
 .lock h2{font-size:22px;font-weight:800;letter-spacing:-.5px;margin:26px 0 4px;text-align:center}
@@ -168,13 +169,15 @@ label.f{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}
 </style>
 </head>
 <body>
-<div id="app"><div id="view"></div></div>
+<a id="skip" href="#view">Skip to content</a>
+<div id="offbar" role="status">You're offline — showing saved data</div>
+<div id="app"><div id="view" tabindex="-1"></div></div>
 <nav id="tabbar" aria-label="Main"></nav>
 <div id="scrim"></div>
 <div id="sheet" role="dialog" aria-modal="true" aria-label="Sheet"></div>
 <div id="toast" aria-live="assertive"></div>
 <script>
-const KEY='monzo_v5';
+const KEY='monzo_v6';
 const TARGET=934745.32;
 const PORT_TARGET=922628.93;
 const ISA_CASH=+(TARGET-PORT_TARGET).toFixed(2);
@@ -184,7 +187,10 @@ const MARKS={tile:1,mark:1,white:1};
 
 const MONZO_PATH='M4.244 1.174a.44.44 0 0 0-.271.13l-3.97 3.97l-.001.001c3.884 3.882 8.093 8.092 11.748 11.748v-8.57L4.602 1.305a.44.44 0 0 0-.358-.131m15.483 0a.44.44 0 0 0-.329.13L12.25 8.456v8.568L24 5.275c-1.316-1.322-2.647-2.648-3.97-3.97a.44.44 0 0 0-.301-.131zM0 5.979l.002 10.955c0 .294.118.577.326.785l4.973 4.976c.28.282.76.083.758-.314V12.037zm23.998.003l-6.06 6.061v10.338c-.004.399.48.6.76.314l4.974-4.976a1.1 1.1 0 0 0 .326-.785z';
 
-const TIERS={free:{n:'Free',atm:200,p:0},plus:{n:'Plus',atm:400,p:5},premium:{n:'Premium',atm:600,p:15},max:{n:'Max',atm:600,p:17}};
+const TIERS={free:{n:'Free',atm:200,p:0,inc:['Fee-free ATM withdrawals up to £200 per 30 days','Worldwide card use at the Mastercard rate']},
+ plus:{n:'Plus',atm:400,p:5,inc:['Fee-free ATM withdrawals up to £400 per 30 days','Worldwide card use at the Mastercard rate','Credit Tracker']},
+ premium:{n:'Premium',atm:600,p:15,inc:['Fee-free ATM withdrawals up to £600 per 30 days','Worldwide card use at the Mastercard rate','Travel insurance','Mobile phone insurance','Breakdown cover']},
+ max:{n:'Max',atm:600,p:17,inc:['Fee-free ATM withdrawals up to £600 per 30 days','Worldwide card use at the Mastercard rate','Travel insurance for the household','Mobile phone insurance','Breakdown cover','Airport lounge access','Credit Tracker']}};
 
 const DOMAINS={
  'Kingdom Services Group':'kingdom.co.uk','Twinkl Educational Publishing':'twinkl.co.uk','The Works':'theworks.co.uk',
@@ -271,10 +277,7 @@ const PROJECTS=(()=>{
 const RETAINERS=PROJECTS.map(p=>({n:p.n,a:Math.round((20+(p.a/8000)*45)/5)*5,start:addM(p.ym,1),day:3}));
 const retainerFor=ym=>RETAINERS.filter(r=>ym>=r.start&&ym<=addM(r.start,11));
 const projectFor=ym=>PROJECTS.filter(p=>p.ym===ym);
-function divFor(isa,ym){
-  const row=isa.find(r=>r.ym===ym);
-  return row?Math.max(120,Math.round(row.closing*0.0215/12)):0;
-}
+function divFor(isa,ym){const row=isa.find(r=>r.ym===ym);return row?Math.max(120,Math.round(row.closing*0.0215/12)):0}
 
 const MERCH=[
  {n:'Arriva North East',c:'Transport',lo:[2,6],cad:.5},{n:'Stagecoach Teesside',c:'Transport',lo:[2,5],cad:.36},
@@ -357,23 +360,22 @@ function buildLedger(rnd,target){
     let c;
     if(age<7)c=38+age*18;else if(age<14)c=165+(age-7)*32;else if(age<24)c=390+(age-14)*28;else if(age<32)c=700+(age-24)*65;else c=1260;
     c*=(0.85+rnd()*0.3);
-    let mean=0.0049;
+    let mean=0.0054;
     if(y===2000&&m>=2)mean=-0.011; if(y===2001)mean=-0.0102; if(y===2002&&m<9)mean=-0.0091;
     if(y===2008&&m>=8)mean=-0.0225; if(y===2009&&m<3)mean=-0.0155;
     if(y===2020&&m===2)mean=-0.074; if(y===2020&&m===3)mean=0.044; if(y===2022&&m<10)mean=-0.0082;
     if(y===1997&&m>5)mean=0.0105; if(y===1999&&m<3)mean=0.0128;
     const r=mean+(rnd()-.5)*0.055;
-    const opening=bal,div=opening*0.0018,mkt=opening*r,fee=opening*0.00031;
-    const closing=Math.max(0,opening+c+div+mkt-fee);
-    rows.push({ym:y+'-'+String(m+1).padStart(2,'0'),y,m,opening,contrib:c,div,mkt,fee,closing});
+    const opening=bal,mkt=opening*r,fee=opening*0.00031;
+    const closing=Math.max(0,opening+c+mkt-fee);
+    rows.push({ym:y+'-'+String(m+1).padStart(2,'0'),y,m,opening,contrib:c,div:0,mkt,fee,closing});
     bal=closing;d=new Date(y,m+1,1);
   }
   const scale=target/bal;let prev=0;
   for(const row of rows){
     row.opening=prev;
-    row.contrib=+(row.contrib*scale).toFixed(2);row.div=+(row.div*scale).toFixed(2);
-    row.mkt=+(row.mkt*scale).toFixed(2);row.fee=+(row.fee*scale).toFixed(2);
-    row.closing=+(row.opening+row.contrib+row.div+row.mkt-row.fee).toFixed(2);prev=row.closing;
+    row.contrib=+(row.contrib*scale).toFixed(2);row.mkt=+(row.mkt*scale).toFixed(2);row.fee=+(row.fee*scale).toFixed(2);
+    row.closing=+(row.opening+row.contrib+row.mkt-row.fee).toFixed(2);prev=row.closing;
   }
   const last=rows[rows.length-1];
   last.mkt=+(last.mkt+(target-last.closing)).toFixed(2);last.closing=target;
@@ -474,11 +476,9 @@ function buildTx(rnd,startBal,isa){
 function deriveTargets(tx){
   const cut=Date.now()-90*864e5;
   const sums={};
-  tx.filter(x=>x.amt<0&&x.t>=cut).forEach(x=>{sums[x.c]=(sums[x.c]||0)+(-x.amt)});
+  tx.filter(x=>x.amt<0&&x.t>=cut&&x.c!=='Transfers'&&x.c!=='Rent').forEach(x=>{sums[x.c]=(sums[x.c]||0)+(-x.amt)});
   const out={};
-  Object.entries(sums).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>{
-    out[c]=Math.max(15,Math.round((v/3*1.05)/5)*5);
-  });
+  Object.entries(sums).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>{out[c]=Math.max(15,Math.round((v/3*1.05)/5)*5)});
   return out;
 }
 
@@ -505,23 +505,30 @@ function fresh(){
   const sum=raw.reduce((s,h)=>s+h.w,0);
   const holdings=raw.map(h=>({n:h.n,k:h.k,v:+(h.w/sum*PORT_TARGET).toFixed(2),cost:+(h.w/sum*PORT_TARGET*(0.42+rnd()*0.55)).toFixed(2)}));
   holdings[0].v=+(holdings[0].v+(PORT_TARGET-holdings.reduce((s,h)=>s+h.v,0))).toFixed(2);
-  return {
-    v:5,
+  const st={
+    v:6,
     profile:{name:'Jason Armstrong',occupation:'Security Officer',addr:'259 Piper Knowle Road',city:'Stockton-on-Tees',pc:'TS19 8JQ',email:'jasonarm82@gmail.com',phone:'07356170033',idv:'Verified',taxres:'United Kingdom',since:'14 October 2015',dob:'1992-10-07'},
-    acct:{current:+(tx[0]?tx[0].bal:2380).toFixed(2),savings:potTotal,isaCash:ISA_CASH,flexUsed:412.50,flexLimit:3000,odLimit:2000,odDrawn:0},
-    sub:'max',
-    pots,tx,hist,ledger:{isa},holdings,
+    acct:{current:+(tx[0]?tx[0].bal:2380).toFixed(2),savings:potTotal,isaCash:ISA_CASH,flexUsed:412.50,flexLimit:3000,odLimit:2000,odDrawn:0,joint:640.25},
+    sub:'max',pots,tx,hist,ledger:{isa},holdings,
     targets:deriveTargets(tx),
+    roundups:{on:false,mult:1,pot:'p7',total:0},
+    vcards:[],tabs:[],jointTx:[],
+    sorter:{on:false,pot:'p2',amt:200},
     dd:BILLS.map((b,i)=>({id:'dd'+i,n:b.n,c:b.c,a:b.a,day:b.day,ref:'MZ'+String(4820011+i).slice(0,6),since:'2019-0'+(1+i%8)+'-1'+(i%9)})),
-    sched:[{id:'sc1',n:'Mum',a:150,to:'Mum · 40-11-22 · 7341',freq:'Monthly',next:'2026-01-03',out:true}],
+    sched:[{id:'sc1',n:'Mum',a:150,to:'Mum · 40-11-22 · 7341',freq:'Monthly',next:'2026-01-03'}],
     payees:[{id:'py1',n:'Mum',s:'40-11-22',a:'73412200',i:'M'},{id:'py2',n:'Dan Whitfield',s:'04-00-04',a:'55120987',i:'D'},{id:'py3',n:'Kingdom Services Group',s:'20-33-87',a:'44210933',i:'K'}],
     notifs:[],card:{frozen:false,online:true,atm:600,mag:true},
     sec:{bio:true,pin:'4821',lock:true,privacy:false,credId:null},
     prefs:{theme:'auto',mark:'tile',motion:!REDUCED,notif:{tx:true,dd:true,pot:true,market:false}},
-    cats:['Groceries','Transport','Eating out','Shopping','Bills','Leisure','Kids','Health','Home','Travel','Rent','Dividends','Income','Transfers'],
+    cats:['Groceries','Transport','Eating out','Shopping','Bills','Leisure','Kids','Health','Home','Travel','Dividends','Income','Transfers'],
     importLog:[{d:'2015-10-14',src:'Halifax',n:'ISA transfer-in'},{d:'2015-10-14',src:'Hargreaves Lansdown',n:'Investment account transfer'},{d:'2016-04-06',src:'Legal & General',n:'PEP consolidation'}],
     seen:{}
   };
+  st.notifs=[
+    {t:'Rent due',b:'Blue Skies Lets · £850 on the 12th',d:'today',i:'🏠'},
+    {t:'Dividend received',b:'Paid into your current account',d:'today',i:'💷'}
+  ];
+  return st;
 }
 
 let S;
@@ -530,7 +537,7 @@ function load(){
     const raw=localStorage.getItem(KEY);
     if(raw){
       const p=JSON.parse(raw);
-      if(p&&p.v===5&&p.ledger&&p.ledger.isa&&p.ledger.isa.length>300&&p.hist){
+      if(p&&p.v===6&&p.ledger&&p.ledger.isa&&p.ledger.isa.length>300&&p.hist){
         S=p;
         S.prefs=S.prefs||{};S.prefs.theme=S.prefs.theme||'auto';
         S.prefs.mark=MARKS[S.prefs.mark]?S.prefs.mark:'tile';
@@ -539,6 +546,9 @@ function load(){
         S.card=S.card||{frozen:false,online:true,atm:600,mag:true};
         S.sec=S.sec||{bio:true,pin:'4821',lock:true,privacy:false,credId:null};
         S.targets=S.targets||{};S.sub=S.sub||'max';
+        S.roundups=S.roundups||{on:false,mult:1,pot:'p7',total:0};
+        S.vcards=S.vcards||[];S.tabs=S.tabs||[];S.jointTx=S.jointTx||[];
+        S.sorter=S.sorter||{on:false,pot:'p2',amt:200};
         applyTheme();applyPriv();return;
       }
     }
@@ -556,10 +566,7 @@ function applyTheme(){
 function applyPriv(){document.documentElement.dataset.priv=S?.sec?.privacy?'1':'0'}
 function setTheme(t){S.prefs.theme=t;save();applyTheme();render();toast('Appearance updated')}
 function setMark(k){S.prefs.mark=k;save();render();toast('App icon updated')}
-function togglePriv(){
-  S.sec.privacy=!S.sec.privacy;save();applyPriv();render();
-  toast(S.sec.privacy?'Privacy mode on':'Privacy mode off');
-}
+function togglePriv(){S.sec.privacy=!S.sec.privacy;save();applyPriv();render();toast(S.sec.privacy?'Privacy mode on':'Privacy mode off')}
 document.addEventListener('pointerdown',e=>{
   if(!S?.sec?.privacy)return;
   const el=e.target.closest('.amt,.bal,.money');
@@ -567,20 +574,44 @@ document.addEventListener('pointerdown',e=>{
   el.classList.add('rev');
   setTimeout(()=>el.classList.remove('rev'),5000);
 });
+addEventListener('online',()=>$('#offbar').classList.remove('on'));
+addEventListener('offline',()=>$('#offbar').classList.add('on'));
 
+const balNow=()=>S.tx[0]?S.tx[0].bal:0;
 const isaBal=()=>S.ledger.isa[S.ledger.isa.length-1].closing;
 const portVal=()=>S.holdings.reduce((s,h)=>s+h.v,0);
-const netWorth=()=>S.acct.current+S.acct.savings+isaBal();
+const netWorth=()=>balNow()+S.acct.savings+S.acct.joint+isaBal();
 const budgetTotal=()=>Object.values(S.targets||{}).reduce((a,b)=>a+ +b,0);
 const spentThisMonth=()=>{
   const d=new Date(),m=d.getMonth(),y=d.getFullYear();
-  return S.tx.filter(t=>t.amt<0&&new Date(t.d).getMonth()===m&&new Date(t.d).getFullYear()===y).reduce((s,t)=>s-t.amt,0);
+  return S.tx.filter(t=>t.amt<0&&t.c!=='Transfers'&&new Date(t.d).getMonth()===m&&new Date(t.d).getFullYear()===y).reduce((s,t)=>s-t.amt,0);
 };
 const leftToSpend=()=>Math.max(0,+(budgetTotal()-spentThisMonth()).toFixed(2));
 const tyUsed=()=>{
   const y=taxYear(),a=new Date(y,3,6),b=new Date(y+1,3,6);
   return S.ledger.isa.filter(r=>{const dt=new Date(r.y,r.m,1);return dt>=a&&dt<b}).reduce((s,r)=>s+r.contrib,0);
 };
+
+function notify(t,b,i){
+  S.notifs.unshift({t,b,d:'now',i:i||'•'});
+  S.notifs=S.notifs.slice(0,60);
+}
+function pushTx(o){
+  const prev=S.tx[0]?S.tx[0].bal:0;
+  const t={id:'n'+Date.now()+Math.random().toString(36).slice(2,5),t:Date.now(),d:dstr(new Date()),pend:false,...o};
+  t.bal=+(prev+(o.amt||0)).toFixed(2);
+  S.tx.unshift(t);
+  S.acct.current=t.bal;
+  if(S.prefs.notif.tx&&o.amt<0&&Math.abs(o.amt)>=30)notify('Payment',`${gbp(Math.abs(o.amt))} at ${o.n}`,'💳');
+  if(S.roundups.on&&o.amt<0&&o.c!=='Transfers'){
+    const up=Math.ceil(Math.abs(o.amt))-Math.abs(o.amt);
+    if(up>0.001){
+      const p=S.pots.find(x=>x.id===S.roundups.pot);
+      if(p){S.roundups.total=+(S.roundups.total+up).toFixed(2)}
+    }
+  }
+  return t;
+}
 
 function mark(size=26,v){
   const k=v||S.prefs.mark||'tile';
@@ -627,8 +658,10 @@ function buildTabs(){$('#tabbar').innerHTML=TABDEF.map(([k,l,ic])=>`<button data
 function syncTabs(){const c=cur().split(':')[0];$$('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.t===c))}
 
 function lineChart(pts,w,h,opt={}){
-  if(pts.length<2)return '<div class="empty">Not enough data</div>';
-  const min=Math.min(...pts),max=Math.max(...pts),pad=(max-min)||1;
+  if(pts.length<2)return '<div class="empty">Not enough data yet</div>';
+  let min=Math.min(...pts),max=Math.max(...pts);
+  if(max-min<1){min-=50;max+=50}
+  const pad=(max-min)||1;
   const X=i=>i/(pts.length-1)*w,Y=v=>h-((v-min)/pad)*h;
   const d=pts.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
   return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="height:${opt.h||140}px" aria-hidden="true">
@@ -693,22 +726,26 @@ function spendSeries(range){
   return {vals,labels};
 }
 function balanceSeries(range){
-  const now=new Date();
-  if(range==='week'||range==='month'){
-    const n=range==='week'?7:30,out=[];
-    for(let i=n-1;i>=0;i--){
-      const d=new Date();d.setDate(d.getDate()-i);
-      const hit=S.tx.find(t=>t.d===dstr(d));
-      out.push(hit?hit.bal:(out.length?out[out.length-1]:S.acct.current));
+  const n=range==='week'?7:range==='month'?30:0;
+  if(n){
+    const map={};
+    S.tx.forEach(t=>{if(!(t.d in map))map[t.d]=t.bal});
+    const out=[];
+    for(let i=0;i<n;i++){
+      const d=new Date();d.setDate(d.getDate()-(n-1-i));
+      const k=dstr(d);
+      out.push(map[k]!==undefined?map[k]:null);
     }
+    let first=out.findIndex(v=>v!==null);
+    if(first<0){out.fill(balNow())}
+    else{for(let i=first-1;i>=0;i--)out[i]=out[first];for(let i=0;i<n;i++)if(out[i]===null)out[i]=out[i-1]}
     return out;
   }
   const months=S.hist.map(h=>h.closing);
   const byMonth={};
   S.tx.slice().reverse().forEach(t=>{byMonth[t.d.slice(0,7)]=t.bal});
   Object.keys(byMonth).sort().forEach(k=>months.push(byMonth[k]));
-  if(range==='year')return months.slice(-12);
-  return months.slice(-132);
+  return range==='year'?months.slice(-12):months.slice(-132);
 }
 
 function txRow(t,i){
@@ -722,39 +759,39 @@ function vHome(){
   return `<div class="top">
     <div class="avatar" role="button" tabindex="0" onclick="go('hub')" aria-label="Accounts">JA</div>
     <h1 style="font-size:17px">${esc(S.profile.name.split(' ')[0])}</h1>
-    <button class="iconbtn" onclick="togglePriv()" aria-label="Privacy mode">${S.sec.privacy?'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><path d="M4 4l16 16"/></svg>':'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>'}</button>
+    <button class="iconbtn" onclick="togglePriv()" aria-label="${S.sec.privacy?'Disable':'Enable'} privacy mode">${S.sec.privacy?'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><path d="M4 4l16 16"/></svg>':'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>'}</button>
     <button class="iconbtn" onclick="go('search')" aria-label="Search"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
     <button class="iconbtn" onclick="go('notifs')" aria-label="Notifications">🔔</button></div>
   <div class="pad" style="padding-top:8px">
     <div class="hero">
       <div class="lbl">Left to spend</div>
       <div class="bal mono" data-count="${lts}">${gbp(lts)}</div>
-      <div class="sub">of <span class="money">${gbp0(bud)}</span> monthly budget · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long'})}</div>
-      <div class="prog navy" style="margin:14px 0 16px"><i style="width:${clamp((1-lts/bud)*100,0,100)}%;background:#FF4F40"></i></div>
+      <div class="sub">of <span class="money">${gbp0(bud)}</span> flexible · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long'})}</div>
+      <div class="prog" style="margin:14px 0 16px"><i style="width:${clamp((1-lts/Math.max(bud,1))*100,0,100)}%;background:#FF4F40"></i></div>
       <div style="display:flex;gap:10px">
         <button class="btn coral sm" style="flex:1" onclick="go('move')">Move money</button>
         <button class="btn ghost sm" style="flex:1;background:rgba(255,255,255,.14);color:#fff" onclick="go('pay')">Pay</button>
       </div></div>
     <button class="row" style="padding:16px 4px 8px;width:100%;text-align:left" onclick="go('current')">
-      <div class="t"><b>Current account</b><span><span class="money">${gbp(S.acct.current)}</span> available${S.acct.odDrawn?` · ${gbp(S.acct.odDrawn)} overdrawn`:''}</span></div>
+      <div class="t"><b>Current account</b><span><span class="money">${gbp(balNow())}</span> available${S.acct.odDrawn?` · ${gbp(S.acct.odDrawn)} overdrawn`:''}</span></div>
       <span class="muted">›</span></button></div>
-  <div class="sec" style="display:flex;justify-content:space-between;align-items:center">Pots <button class="badge money" onclick="go('savings')">${gbp0(S.acct.savings)}</button></div>
+  <div class="sec">Pots <button class="badge money" onclick="go('savings')">${gbp0(S.acct.savings)}</button></div>
   <div style="display:flex;gap:10px;overflow-x:auto;padding:0 20px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch">
     ${S.pots.map(p=>`<button onclick="go('pot','${p.id}')" class="card" style="flex:0 0 132px;text-align:left;background:${p.col}18;border:0">
       <div style="font-size:22px">${p.ico}</div><div style="font-weight:800;font-size:13px;margin-top:6px;line-height:1.2">${esc(p.n)}</div>
       <div class="mono money" style="font-weight:800;font-size:14px;margin-top:4px">${gbp(p.a)}</div></button>`).join('')}
     <button class="card" style="flex:0 0 132px;border:1.5px dashed var(--line);background:var(--card);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)" onclick="newPot()">+ New pot</button></div>
-  <div class="sec" style="display:flex;justify-content:space-between;align-items:center">Transactions <button class="badge" onclick="go('all')">See all</button></div>
-  <div class="list">${S.tx.slice(0,30).map(txRow).join('')||'<div class="empty"><b>Nothing yet</b></div>'}</div>
+  <div class="sec">Transactions <button class="badge" onclick="go('all')">See all</button></div>
+  <div class="list">${S.tx.slice(0,30).map(txRow).join('')||'<div class="empty"><b>Nothing yet</b>Tap + to add one.</div>'}</div>
   <div class="pad" style="margin-top:14px"><button class="btn ghost" onclick="go('all')">View all transactions</button></div>`;
 }
 function vCurrent(){
   const m=new Date().getMonth(),y=new Date().getFullYear();
   const inn=S.tx.filter(t=>t.amt>0&&new Date(t.d).getMonth()===m&&new Date(t.d).getFullYear()===y).reduce((s,t)=>s+t.amt,0);
   const out=S.tx.filter(t=>t.amt<0&&new Date(t.d).getMonth()===m&&new Date(t.d).getFullYear()===y).reduce((s,t)=>s-t.amt,0);
-  return topbar('Current account',{back:true,right:`<button class="iconbtn" onclick="go('card')" aria-label="Card">💳</button>`})+`<div class="pad">
+  return topbar('Current account',{back:true,right:`<button class="iconbtn" onclick="addTx()" aria-label="Add transaction">＋</button>`})+`<div class="pad">
     <div class="hero"><div class="lbl">Balance</div>
-      <div class="bal mono">${gbp(S.acct.current)}</div>
+      <div class="bal mono">${gbp(balNow())}</div>
       <div class="sub">04-00-26 · 55120987</div>
       <div style="display:flex;gap:10px;margin-top:18px">
         <button class="btn coral sm" style="flex:1" onclick="go('move')">Move money</button>
@@ -764,12 +801,12 @@ function vCurrent(){
       <div style="display:flex;justify-content:space-between"><span class="small muted">In this month</span><b class="money pos">+${gbp(inn)}</b></div>
       <div style="display:flex;justify-content:space-between;margin-top:6px"><span class="small muted">Out this month</span><b class="money">−${gbp(out)}</b></div>
     </div>
-    <div class="sec" style="padding:0;margin-top:22px">Manage</div>
+    <div class="sec">Manage</div>
     <button class="row" style="width:100%;text-align:left" onclick="go('dd')"><span class="t"><b>Direct Debits</b><span>${S.dd.length} active</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('sched')"><span class="t"><b>Scheduled payments</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('stmts')"><span class="t"><b>Statements</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="shareDetails()"><span class="t"><b>Share account details</b></span><span class="muted">›</span></button>
-    <div class="sec" style="padding:0;margin-top:22px;display:flex;justify-content:space-between;align-items:center">Recent <button class="badge" onclick="go('all')">See all</button></div>
+    <div class="sec">Recent <button class="badge" onclick="go('all')">See all</button></div>
     <div class="list" style="margin:0 -20px">${S.tx.slice(0,30).map(txRow).join('')}</div>
     <button class="btn ghost" style="margin-top:14px" onclick="go('all')">View all transactions</button></div>`;
 }
@@ -778,15 +815,19 @@ function shareDetails(){
     <div class="card w" style="margin-top:10px"><div class="tiny muted">Name</div><b>${esc(S.profile.name)}</b>
       <div class="tiny muted" style="margin-top:10px">Sort code</div><b class="mono">04-00-26</b>
       <div class="tiny muted" style="margin-top:10px">Account number</div><b class="mono">55120987</b></div>
-    <button class="btn" style="margin-top:14px" onclick="toast('Details copied');closeSheet()">Copy details</button>`);
+    <button class="btn" style="margin-top:14px" onclick="copyDetails()">Copy details</button>`);
+}
+async function copyDetails(){
+  const txt=`${S.profile.name}\n04-00-26\n55120987`;
+  try{await navigator.clipboard.writeText(txt);toast('Details copied')}catch(e){toast('Copy failed')}
+  closeSheet();
 }
 function vAll(){
   const lim=S.seen.txLimit||60;
   const list=S.tx.slice(0,lim);
   let last='';
   const rows=list.map((t,i)=>{
-    const ym=t.d.slice(0,7);
-    let head='';
+    const ym=t.d.slice(0,7);let head='';
     if(ym!==last){last=ym;head=`<div class="mhead">${MONF[+ym.slice(5,7)-1]} ${ym.slice(0,4)}</div>`}
     return head+txRow(t,i);
   }).join('');
@@ -805,15 +846,39 @@ function vHub(){
   return topbar('Accounts',{back:true})+`<div class="pad">
     <div class="card w" style="margin-bottom:12px"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Net worth</div>
     <div class="money mono" style="font-size:32px;font-weight:800;letter-spacing:-1.2px">${gbp(netWorth())}</div></div>
-    ${[['Current account',S.acct.current,'current'],['Savings',S.acct.savings,'savings'],['Cash ISA',S.acct.isaCash,'isa'],['Investments',portVal(),'inv'],['Monzo Flex',-S.acct.flexUsed,'flex'],['Overdraft',-S.acct.odDrawn,'od']]
+    ${[['Current account',balNow(),'current'],['Joint account',S.acct.joint,'joint'],['Savings',S.acct.savings,'savings'],['Cash ISA',S.acct.isaCash,'isa'],['Investments',portVal(),'inv'],['Monzo Flex',-S.acct.flexUsed,'flex'],['Overdraft',-S.acct.odDrawn,'od']]
       .map(([n,v,r])=>`<button class="row" style="width:100%;text-align:left" onclick="go('${r}')">
-      <span class="t"><b>${n}</b><span>${r==='isa'||r==='inv'?'Opened October 1992':'Monzo'}</span></span>
+      <span class="t"><b>${n}</b><span>${r==='isa'||r==='inv'?'Opened October 1992':r==='joint'?'Shared with your partner':'Monzo'}</span></span>
       <span class="amt ${v<0?'':'pos'}">${gbp(v)}</span></button>`).join('')}
-    <div class="sec" style="padding:0;margin-top:24px">Combined ISA wrapper</div>
+    <div class="sec">Combined ISA wrapper</div>
     <div class="card" style="background:var(--accent-soft)">
       <div style="display:flex;justify-content:space-between"><b>Stocks &amp; Shares ISA</b><b class="money">${gbp(isaBal())}</b></div>
       <div class="small muted" style="margin-top:6px">Cash <span class="money">${gbp(S.acct.isaCash)}</span> · Invested <span class="money">${gbp(portVal())}</span></div>
       <div class="tiny muted" style="margin-top:6px">${tyLabel(taxYear())} allowance used <span class="money">${gbp(tyUsed())}</span> of ${gbp(ISA_LIMITS[taxYear()]||20000)}</div></div></div>`;
+}
+function vJoint(){
+  return topbar('Joint account',{back:true})+`<div class="pad">
+    <div class="hero"><div class="lbl">Balance</div><div class="bal mono">${gbp(S.acct.joint)}</div>
+      <div class="sub">04-00-26 · 88712304</div>
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button class="btn coral sm" style="flex:1" onclick="jointMove(1)">Pay in</button>
+        <button class="btn ghost sm" style="flex:1;background:rgba(255,255,255,.14);color:#fff" onclick="jointMove(-1)">Pay out</button>
+      </div></div>
+    <div class="sec">Activity</div>
+    ${S.jointTx.length?S.jointTx.map(j=>`<div class="row"><span class="ico">${j.amt>0?'↓':'↑'}</span><span class="t"><b>${esc(j.n)}</b><span>${new Date(j.t).toLocaleDateString('en-GB')}</span></span><span class="amt ${j.amt>0?'pos':''}">${gbp(j.amt)}</span></div>`).join(''):'<div class="empty"><b>No activity</b>Joint spending will appear here.</div>'}</div>`;
+}
+function jointMove(sign){
+  sheet(`<h2>${sign>0?'Pay into':'Pay out of'} joint</h2><label class="f">Amount</label>
+    <input id="jAmt" type="number" inputmode="decimal" placeholder="0.00"/>
+    <button class="btn" style="margin-top:16px" onclick="doJoint(${sign})">Confirm</button>`);
+}
+function doJoint(sign){
+  const v=parseFloat($('#jAmt').value||'0');
+  if(!(v>0)){toast('Enter an amount');return}
+  if(sign<0&&v>S.acct.joint){toast('Not enough in joint');return}
+  S.acct.joint=+(S.acct.joint+sign*v).toFixed(2);
+  S.jointTx.unshift({n:sign>0?'Paid in':'Paid out',amt:sign*v,t:Date.now()});
+  save();closeSheet();render();toast('Joint account updated');
 }
 function vTrends(){
   const range=S.seen.trendRange||'month';
@@ -831,10 +896,10 @@ function vTrends(){
   return topbar('Trends')+`<div class="pad">
     <div class="seg" style="margin-bottom:16px">${[['week','Week'],['month','Month'],['year','Year'],['all','All time']].map(([k,l])=>`<button class="${range===k?'on':''}" onclick="S.seen.trendRange='${k}';save();render()">${l}</button>`).join('')}</div>
     <div class="card w"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Balance trend</div>
-      <div class="money" style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px">${gbp(S.acct.current)}</div>${lineChart(bal,320,120)}</div>
+      <div class="money" style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px">${gbp(balNow())}</div>${lineChart(bal,320,120)}</div>
     <div class="card w" style="margin-top:12px"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Spending · ${range==='all'?'since 2015':range}</div>
       <div class="money" style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px">${gbp(total)}</div>${barChart(sp.vals,sp.labels,320,110)}</div>
-    <div class="card w" style="margin-top:12px;display:flex;gap:16px;align-items:center">${donut(cd,132)}
+    <div class="card w" style="margin-top:12px;display:flex;gap:16px;align-items:center">${cd.length?donut(cd,132):'<div class="empty">No spending</div>'}
       <div style="flex:1">${cd.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px">
         <span style="width:9px;height:9px;border-radius:3px;background:${d.c};flex:0 0 auto"></span>
         <span style="flex:1">${esc(d.k)}</span><b class="money">${gbp(d.v)}</b></div>`).join('')}</div></div>
@@ -849,13 +914,13 @@ function vSavings(){
     <div class="hc"><div style="font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.75">Total saved</div>
       <div class="money" style="font-size:38px;font-weight:800;letter-spacing:-1.5px">${gbp(S.acct.savings)}</div>
       <div class="small" style="opacity:.8;margin-top:4px">Across ${S.pots.length} pots · up to 4.10% AER</div></div>
-    <div class="sec" style="padding:0;margin-top:20px">Your pots</div>
+    <div class="sec">Your pots</div>
     ${S.pots.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="go('pot','${p.id}')">
       <span class="ico" style="background:${p.col}20">${p.ico}</span>
       <span class="t"><b>${esc(p.n)}</b><span>${p.rate.toFixed(2)}% AER${p.lock?' · locked':''}</span></span>
       <span class="amt pos">${gbp(p.a)}</span></button>`).join('')}
     <button class="btn ghost" style="margin-top:14px" onclick="newPot()">+ Create a pot</button>
-    <div class="sec" style="padding:0;margin-top:26px">Tax-efficient</div>
+    <div class="sec">Tax-efficient</div>
     <button class="row" style="width:100%;text-align:left" onclick="go('isa')"><span class="ico coral">ISA</span>
       <span class="t"><b>Stocks &amp; Shares ISA</b><span>Opened October 1992 · ${tyLabel(taxYear())} allowance ${gbp(ISA_LIMITS[taxYear()]||20000)}</span></span>
       <span class="amt">${gbp(isaBal())}</span></button>
@@ -876,11 +941,11 @@ function vISA(){
       <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>${tyLabel(taxYear())} allowance</span><span class="money">${gbp(used)} / ${gbp(lim)}</span></div>
       <div class="prog" style="margin-top:8px"><i style="width:${clamp(used/lim*100,0,100)}%"></i></div>
       <button class="btn sm" style="margin-top:12px" onclick="isaAdd()" ${used>=lim?'disabled':''}>Add to ISA</button></div>
-    <div class="sec" style="padding:0;margin-top:22px">Wrapper history</div>
+    <div class="sec">Wrapper history</div>
     <div class="card w small muted">Started as a PEP in October 1992, moved to a TESSA alongside it, then transferred into a stocks &amp; shares ISA when ISAs launched in April 1999. ${rows.filter(r=>r.imported).length} months imported from other providers.</div>
-    <div class="sec" style="padding:0;margin-top:22px">Imported from</div>
+    <div class="sec">Imported from</div>
     ${S.importLog.map(l=>`<div class="row"><span class="ico">⇄</span><span class="t"><b>${esc(l.src)}</b><span>${esc(l.n)}</span></span><span class="amt tiny muted">${l.d}</span></div>`).join('')}
-    <div class="sec" style="padding:0;margin-top:22px">Monthly ledger</div>
+    <div class="sec">Monthly ledger</div>
     <div style="border-top:1px solid var(--line)">${years.map(y=>`<div>
       <button class="yearbtn" onclick="toggleYear(${y})" aria-expanded="${y===open}">
         <b>${y}</b><span class="small muted money" style="flex:1">${gbp(rows.filter(r=>r.y===y).slice(-1)[0].closing)}</span>
@@ -888,8 +953,7 @@ function vISA(){
       ${y===open?yr.map(r=>`<div class="ledrow ${r.mkt<-2000?'crisis':''}">
         <span class="m">${MON[r.m]}</span><span class="v money">${gbp(r.closing)}</span><span></span>
         <span class="d">${r.imported?`<span class="badge imp" style="font-size:10px;padding:2px 7px">Imported · ${esc(r.src)}</span>`:`<span class="badge" style="font-size:10px;padding:2px 7px">${r.wrapper}</span>`}
-        <span>in ${gbp(r.contrib)}</span><span>div ${gbp(r.div)}</span>
-        <span class="${r.mkt<0?'':'pos'}">mkt ${r.mkt<0?'':'+'}${gbp(r.mkt)}</span><span>fee ${gbp(r.fee)}</span></span></div>`).join(''):''}
+        <span>in ${gbp(r.contrib)}</span><span class="${r.mkt<0?'':'pos'}">mkt ${r.mkt<0?'':'+'}${gbp(r.mkt)}</span><span>fee ${gbp(r.fee)}</span></span></div>`).join(''):''}
     </div>`).join('')}</div></div>`;
 }
 function toggleYear(y){S.seen.isaYear=(S.seen.isaYear===y)?null:y;save();render()}
@@ -901,7 +965,7 @@ function vInv(){
       <div class="small"><span class="pos money">+${gbp(gain)}</span> <span class="muted">(${(gain/cost*100).toFixed(1)}%) since 1992</span></div></div>
     <div class="card" style="margin-top:12px;background:var(--accent-soft)"><div class="row" style="padding:0">
       <span class="t"><b>Dividends</b><span>Paid to you monthly · last day</span></span><span class="badge ok">On</span></div></div>
-    <div class="sec" style="padding:0;margin-top:22px">Holdings · ${S.holdings.length}</div>
+    <div class="sec">Holdings · ${S.holdings.length}</div>
     ${S.holdings.slice().sort((a,b)=>b.v-a.v).map(h=>`<button class="row" style="width:100%;text-align:left" onclick="go('hold','${encodeURIComponent(h.n)}')">
       ${logo(h.n,40)}
       <span class="t"><b>${esc(h.n)}</b><span>${esc(h.k)} · cost ${gbp(h.cost)}</span></span>
@@ -930,11 +994,30 @@ function vPot(id){
     <div style="display:flex;gap:10px;margin-top:8px">
       <button class="btn" style="flex:1" onclick="potMove('${p.id}',1)">Add</button>
       <button class="btn ghost" style="flex:1" onclick="potMove('${p.id}',-1)">Withdraw</button></div>
-    <div class="sec" style="padding:0;margin-top:24px">Manage</div>
-    <button class="row" style="width:100%;text-align:left" onclick="toast('Goal updated')"><span class="t"><b>Edit goal</b></span><span class="muted">›</span></button>
-    <button class="row" style="width:100%;text-align:left" onclick="toast('Round-ups on for this pot')"><span class="t"><b>Round-ups</b><span>Round spending to the nearest £1</span></span><span class="muted">›</span></button>
+    <div class="sec">Manage</div>
+    <button class="row" style="width:100%;text-align:left" onclick="editGoal('${p.id}')"><span class="t"><b>Edit goal</b><span>${gbp(p.goal)}</span></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="roundupsSheet('${p.id}')"><span class="t"><b>Round-ups</b><span>${S.roundups.pot===p.id&&S.roundups.on?'On · '+S.roundups.mult+'×':'Off'}</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="archivePot('${p.id}')"><span class="t"><b>Archive pot</b></span><span class="muted">›</span></button></div>`;
 }
+function editGoal(id){
+  const p=S.pots.find(x=>x.id===id);
+  sheet(`<h2>Edit goal</h2><label class="f">Target amount</label><input id="gAmt" type="number" inputmode="decimal" value="${p.goal}"/>
+    <button class="btn" style="margin-top:16px" onclick="doGoal('${id}')">Save</button>`);
+}
+function doGoal(id){
+  const v=parseFloat($('#gAmt').value||'0');
+  if(!(v>0)){toast('Enter an amount');return}
+  S.pots.find(x=>x.id===id).goal=+v.toFixed(2);save();closeSheet();render();toast('Goal updated');
+}
+function roundupsSheet(id){
+  const p=S.pots.find(x=>x.id===id);
+  const on=S.roundups.on&&S.roundups.pot===id;
+  sheet(`<h2>Round-ups</h2><p class="small muted">Round each payment up to the nearest pound and send the difference to ${esc(p.n)}.</p>
+    <div class="chips">${[1,2,5].map(m=>`<button class="badge ${on&&S.roundups.mult===m?'ok':''}" onclick="setRound('${id}',${m})">${m}×</button>`).join('')}</div>
+    <button class="btn ${on?'ghost':''}" style="margin-top:16px" onclick="${on?`roundOff()`:`setRound('${id}',1)`}">${on?'Turn off':'Turn on'}</button>`);
+}
+function setRound(id,m){S.roundups={on:true,mult:m,pot:id,total:S.roundups.total};save();closeSheet();render();toast('Round-ups on')}
+function roundOff(){S.roundups.on=false;save();closeSheet();render();toast('Round-ups off')}
 function vTx(id){
   const t=S.tx.find(x=>x.id===id);if(!t)return vHome();
   return topbar('Transaction',{back:true})+`<div class="pad">
@@ -956,22 +1039,34 @@ function vTx(id){
       <button class="btn ghost" onclick="editCat('${t.id}')">Edit category</button>
       <button class="btn ghost" onclick="noteTx('${t.id}')">Add note</button>
       <button class="btn ghost" onclick="splitTx('${t.id}')">Split bill</button>
-      <button class="btn ghost" onclick="toast('Dispute raised')">Dispute</button></div>
+      <button class="btn ghost" onclick="dispute('${t.id}')">Dispute</button></div>
     ${t.note?`<div class="card" style="margin-top:12px"><b class="small">Note</b><div class="small muted">${esc(t.note)}</div></div>`:''}
     <button class="btn" style="margin-top:14px" onclick="toast('Receipt attached')">Attach receipt</button></div>`;
+}
+function dispute(id){
+  const t=S.tx.find(x=>x.id===id);
+  t.dispute=true;save();render();toast('Dispute raised — we\'ll be in touch');
+  notify('Dispute raised',`${gbp(Math.abs(t.amt))} at ${t.n}`,'⚠️');
 }
 function vFlex(){
   return topbar('Monzo Flex',{back:true})+`<div class="pad">
     <div class="hc"><div class="tiny" style="font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.8">Available</div>
       <div class="money" style="font-size:34px;font-weight:800;letter-spacing:-1.4px">${gbp(S.acct.flexLimit-S.acct.flexUsed)}</div>
       <div class="small" style="opacity:.85">of ${gbp(S.acct.flexLimit)} limit · ${gbp(S.acct.flexUsed)} used</div></div>
-    <div class="sec" style="padding:0;margin-top:20px">Plans</div>
+    <div class="sec">Plans</div>
     <div class="row"><span class="t"><b>Pay in 3</b><span>0% · 3 monthly instalments</span></span><span class="badge ok">Active</span></div>
     <div class="row"><span class="t"><b>Pay in 6</b><span>24.9% APR representative</span></span><span class="muted">›</span></div>
     <div class="row"><span class="t"><b>Pay in 12</b><span>24.9% APR representative</span></span><span class="muted">›</span></div>
-    <div class="sec" style="padding:0;margin-top:20px">Next instalment</div>
+    <div class="sec">Next instalment</div>
     <div class="card w"><div class="row" style="padding:0"><span class="t"><b>Argos Stockton</b><span>1 of 3 · due 12 Jan</span></span><span class="amt">${gbp(137.50)}</span></div></div>
-    <button class="btn" style="margin-top:14px" onclick="toast('Instalment paid early')">Pay instalment early</button></div>`;
+    <button class="btn" style="margin-top:14px" onclick="payInstalment()">Pay instalment early</button></div>`;
+}
+function payInstalment(){
+  if(S.acct.flexUsed<137.5){toast('Nothing to pay');return}
+  S.acct.flexUsed=+(S.acct.flexUsed-137.5).toFixed(2);
+  pushTx({n:'Monzo Flex',c:'Transfers',amt:-137.5});
+  notify('Flex instalment paid','£137.50','💳');
+  save();render();toast('Instalment paid');
 }
 function vOD(){
   return topbar('Overdraft',{back:true})+`<div class="pad">
@@ -984,33 +1079,76 @@ function vOD(){
     <div class="card" style="margin-top:16px"><b class="small">Daily charge</b><div class="small muted">50p per day while over £0, capped at £15.50 a month.</div></div></div>`;
 }
 function vDD(){
+  const next=S.dd.slice().sort((a,b)=>a.day-b.day)[0];
   return topbar('Direct Debits',{back:true})+`<div class="pad">
-    <div class="card w small muted">${S.dd.length} active mandates</div>
-    ${S.dd.map(d=>`<button class="row" style="width:100%;text-align:left" onclick="ddSheet('${d.id}')">
+    <div class="card w small muted">${S.dd.length} active mandates${next?` · next on day ${next.day}`:''}</div>
+    ${S.dd.length?S.dd.map(d=>`<button class="row" style="width:100%;text-align:left" onclick="ddSheet('${d.id}')">
       ${logo(d.n,40)}<span class="t"><b>${esc(d.n)}</b><span>Monthly · day ${d.day} · ref ${esc(d.ref)}</span></span>
-      <span class="amt">${gbp(d.a)}</span></button>`).join('')}</div>`;
+      <span class="amt">${gbp(d.a)}</span></button>`).join(''):'<div class="empty"><b>No Direct Debits</b></div>'}</div>`;
 }
 function vSched(){
-  return topbar('Scheduled',{back:true})+`<div class="pad">
-    <div class="sec" style="padding:0">Standing orders</div>
-    ${S.sched.map(s=>`<div class="row"><span class="ico">${esc(s.n[0])}</span><span class="t"><b>${esc(s.n)}</b><span>${esc(s.to)} · ${esc(s.freq)}</span></span><span class="amt">${gbp(s.a)}</span></div>`).join('')}
-    <div class="sec" style="padding:0;margin-top:20px">Payees</div>
-    ${S.payees.map(p=>`<div class="row"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b><span>${esc(p.s)} · ${esc(p.a)}</span></span><span class="muted">›</span></div>`).join('')}
-    <button class="btn" style="margin-top:16px" onclick="toast('New payee added')">+ Add payee</button></div>`;
+  return topbar('Scheduled',{back:true,right:`<button class="iconbtn" onclick="newSched()" aria-label="New">＋</button>`})+`<div class="pad">
+    <div class="sec">Standing orders</div>
+    ${S.sched.length?S.sched.map(s=>`<button class="row" style="width:100%;text-align:left" onclick="delSched('${s.id}')">
+      <span class="ico">${esc(s.n[0])}</span><span class="t"><b>${esc(s.n)}</b><span>${esc(s.to)} · ${esc(s.freq)}</span></span>
+      <span class="amt">${gbp(s.a)}</span></button>`).join(''):'<div class="empty"><b>None set up</b></div>'}
+    <div class="sec">Payees <button class="badge" onclick="newPayee()">Add</button></div>
+    ${S.payees.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="payeeSheet('${p.id}')">
+      <span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b><span>${esc(p.s)} · ${esc(p.a)}</span></span><span class="muted">›</span></button>`).join('')}</div>`;
 }
+function newSched(){
+  sheet(`<h2>New standing order</h2><label class="f">Payee</label>
+    <select id="scP">${S.payees.map(p=>`<option value="${p.id}">${esc(p.n)}</option>`).join('')}</select>
+    <label class="f">Amount</label><input id="scA" type="number" inputmode="decimal" placeholder="0.00"/>
+    <button class="btn" style="margin-top:16px" onclick="doSched()">Create</button>`);
+}
+function doSched(){
+  const p=S.payees.find(x=>x.id===$('#scP').value);
+  const v=parseFloat($('#scA').value||'0');
+  if(!p||!(v>0)){toast('Enter an amount');return}
+  S.sched.push({id:'sc'+Date.now(),n:p.n,a:+v.toFixed(2),to:p.n+' · '+p.s+' · '+p.a.slice(-4),freq:'Monthly',next:dstr(new Date())});
+  save();closeSheet();render();toast('Standing order created');
+}
+function delSched(id){
+  const s=S.sched.find(x=>x.id===id);
+  sheet(`<h2>${esc(s.n)}</h2><p class="small muted">${gbp(s.a)} monthly · ${esc(s.to)}</p>
+    <button class="btn danger" style="margin-top:16px" onclick="doDelSched('${id}')">Cancel standing order</button>
+    <button class="btn ghost" style="margin-top:8px" data-close>Keep it</button>`);
+}
+function doDelSched(id){S.sched=S.sched.filter(x=>x.id!==id);save();closeSheet();render();toast('Cancelled')}
+function newPayee(){
+  sheet(`<h2>New payee</h2><label class="f">Name</label><input id="pyN"/>
+    <label class="f">Sort code</label><input id="pyS" inputmode="numeric" placeholder="00-00-00"/>
+    <label class="f">Account number</label><input id="pyA" inputmode="numeric" maxlength="8"/>
+    <button class="btn" style="margin-top:16px" onclick="doPayee()">Add payee</button>`);
+}
+function doPayee(){
+  const n=$('#pyN').value.trim(),s=$('#pyS').value.trim(),a=$('#pyA').value.trim();
+  if(!n||!/^\d{2}-\d{2}-\d{2}$/.test(s)||!/^\d{8}$/.test(a)){toast('Check the details');return}
+  S.payees.push({id:'py'+Date.now(),n,s,a,i:n[0].toUpperCase()});
+  save();closeSheet();render();toast('Payee added');
+}
+function payeeSheet(id){
+  const p=S.payees.find(x=>x.id===id);
+  sheet(`<h2>${esc(p.n)}</h2><p class="small muted">${esc(p.s)} · ${esc(p.a)}</p>
+    <button class="btn" style="margin-top:16px" onclick="toast('Payment sent');closeSheet()">Send money</button>
+    <button class="btn ghost" style="margin-top:8px" onclick="delPayee('${id}')">Delete payee</button>`);
+}
+function delPayee(id){S.payees=S.payees.filter(x=>x.id!==id);save();closeSheet();render();toast('Payee deleted')}
 function searchResults(){
   const q=(S.seen.q||'').toLowerCase();
-  if(!q)return `<div class="sec" style="padding:0">Recent searches</div>${['Tesco','Arriva','Bills','ISA'].map(s=>
+  const cat=S.seen.fcat||'';
+  if(!q&&!cat)return `<div class="sec">Recent searches</div>${['Tesco','Arriva','Bills','ISA'].map(s=>
     `<button class="row" style="width:100%;text-align:left" onclick="S.seen.q='${s}';save();render()"><span class="ico">⌕</span><span class="t"><b>${s}</b></span></button>`).join('')}`;
-  const res=S.tx.filter(t=>t.n.toLowerCase().includes(q)||t.c.toLowerCase().includes(q)).slice(0,80);
-  const led=S.ledger.isa.filter(r=>ymLabel(r.ym).toLowerCase().includes(q)||r.ym.includes(q)).slice(-24);
-  return `<div class="sec" style="padding:0">${res.length} transactions</div>
-    ${res.map(t=>`<button class="row" style="width:100%;text-align:left" onclick="go('tx','${t.id}')">${t.amt>0?'<span class="ico coral">↓</span>':logo(t.n,40)}<span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB')}</span></span><span class="amt">${gbp(t.amt)}</span></button>`).join('')||'<div class="empty"><b>No matches</b></div>'}
-    ${led.length?`<div class="sec" style="padding:0;margin-top:20px">ISA ledger</div>${led.map(r=>`<div class="row"><span class="t"><b>${ymLabel(r.ym)}</b><span>closing balance</span></span><span class="amt">${gbp(r.closing)}</span></div>`).join('')}`:''}`;
+  const res=S.tx.filter(t=>(!q||t.n.toLowerCase().includes(q)||t.c.toLowerCase().includes(q))&&(!cat||t.c===cat)).slice(0,80);
+  return `<div class="sec">${res.length} transactions</div>
+    ${res.map(t=>`<button class="row" style="width:100%;text-align:left" onclick="go('tx','${t.id}')">${t.amt>0?'<span class="ico coral">↓</span>':logo(t.n,40)}<span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB')}</span></span><span class="amt">${gbp(t.amt)}</span></button>`).join('')||'<div class="empty"><b>No matches</b></div>'}`;
 }
 function vSearch(){
   return topbar('Search',{back:true})+`<div class="pad">
     <input id="q" placeholder="Merchant, category or month" value="${esc(S.seen.q||'')}"/>
+    <div class="chips"><button class="badge ${!S.seen.fcat?'ok':''}" onclick="S.seen.fcat='';save();render()">All</button>
+    ${S.cats.map(c=>`<button class="badge ${S.seen.fcat===c?'ok':''}" onclick="S.seen.fcat='${c}';save();render()">${c}</button>`).join('')}</div>
     <div id="results">${searchResults()}</div></div>`;
 }
 let sTimer;
@@ -1019,19 +1157,30 @@ function bindSearch(){
   q.addEventListener('input',()=>{S.seen.q=q.value;clearTimeout(sTimer);sTimer=setTimeout(()=>{const r=$('#results');if(r)r.innerHTML=searchResults();save()},110)});
 }
 function vStmts(kind){
-  const isa=kind==='isa',rows=isa?S.ledger.isa:[];
-  const years=isa?[...new Set(rows.map(r=>r.y))].sort((a,b)=>b-a):[];
-  const tys=isa?[...new Set(rows.map(r=>{const d=new Date(r.y,r.m,1);return (d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6))?r.y-1:r.y}))].sort((a,b)=>b-a).slice(0,12):[];
+  const isa=kind==='isa';
+  const months=[];
+  if(isa){[...new Set(S.ledger.isa.map(r=>r.ym))].sort().reverse().slice(0,36).forEach(ym=>months.push({ym}))}
+  else{const seen=new Set();S.tx.forEach(t=>{const ym=t.d.slice(0,7);if(!seen.has(ym)){seen.add(ym);months.push({ym})}})}
   return topbar(isa?'ISA statements':'Account statements',{back:true})+`<div class="pad">
-    <div class="card w small muted">Every month since inception. Each statement exports as CSV.</div>
-    ${years.map(y=>`<div class="row"><span class="t"><b>${y}</b><span>12 monthly statements${y===1992?' · from October':''}</span></span>
-      <button class="badge" onclick="dlYear(${y})">CSV</button></div>`).join('')}
-    ${tys.length?`<div class="sec" style="padding:0;margin-top:20px">Tax year summaries</div>
-    ${tys.map(y=>{const c=rows.filter(r=>{const d=new Date(r.y,r.m,1);const ty=(d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6))?r.y-1:r.y;return ty===y}).reduce((s,r)=>s+r.contrib,0);
-      return `<div class="row"><span class="t"><b>${tyLabel(y)}</b><span>limit ${gbp(ISA_LIMITS[y]||20000)}</span></span><span class="amt small">${gbp(c)}</span></div>`}).join('')}`:''}</div>`;
+    <div class="card w small muted">Each statement exports as CSV.</div>
+    ${months.length?months.map(m=>`<div class="row"><span class="t"><b>${ymLabel(m.ym)}</b></span>
+      <button class="badge" onclick="dlMonth('${m.ym}',${isa})">CSV</button></div>`).join(''):'<div class="empty"><b>No statements</b></div>'}</div>`;
+}
+function dlMonth(ym,isa){
+  let csv;
+  if(isa){
+    const rows=S.ledger.isa.filter(r=>r.ym===ym);
+    csv=['Month,Opening,Contribution,Market,Fee,Closing,Source'].concat(rows.map(r=>[ymLabel(r.ym),r.opening,r.contrib,r.mkt,r.fee,r.closing,r.imported?r.src:'Monzo'].join(',')));
+  }else{
+    const rows=S.tx.filter(t=>t.d.slice(0,7)===ym).reverse();
+    csv=['Date,Description,Category,Amount,Balance'].concat(rows.map(t=>[t.d,`"${t.n}"`,t.c,t.amt,t.bal].join(',')));
+  }
+  const b=new Blob([csv.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`${isa?'isa':'account'}-${ym}.csv`;a.click();
+  toast('Statement downloaded');
 }
 function vNotifs(){
-  return topbar('Notifications',{back:true})+`<div class="pad">
+  return topbar('Notifications',{back:true,right:`<button class="iconbtn" onclick="S.notifs=[];save();render()" aria-label="Clear">🗑</button>`})+`<div class="pad">
     ${S.notifs.length?S.notifs.map(x=>`<div class="row"><span class="ico">${x.i||'•'}</span><span class="t"><b>${esc(x.t)}</b><span>${esc(x.b)}</span></span><span class="tiny muted">${x.d}</span></div>`).join(''):'<div class="empty"><b>All caught up</b>Alerts will appear here.</div>'}</div>`;
 }
 function vBudgets(){
@@ -1039,15 +1188,15 @@ function vBudgets(){
   const keys=Object.keys(S.targets);
   const spent=spentThisMonth();
   return topbar('Targets',{back:true})+`<div class="pad">
-    <div class="card w"><div style="display:flex;justify-content:space-between"><b>Total monthly</b><b class="money">${gbp(budgetTotal())}</b></div>
-      <div class="tiny muted" style="margin-top:6px">${gbp(spent)} spent so far · ${gbp(leftToSpend())} left. Tap a category to change it.</div>
-      <div class="prog" style="margin-top:8px"><i style="width:${clamp(spent/budgetTotal()*100,0,100)}%"></i></div></div>
-    ${keys.map(c=>{
+    <div class="card w"><div style="display:flex;justify-content:space-between"><b>Flexible total</b><b class="money">${gbp(budgetTotal())}</b></div>
+      <div class="tiny muted" style="margin-top:6px">${gbp(spent)} spent · ${gbp(leftToSpend())} left. Rent and transfers sit outside this.</div>
+      <div class="prog" style="margin-top:8px"><i style="width:${clamp(spent/Math.max(budgetTotal(),1)*100,0,100)}%"></i></div></div>
+    ${keys.length?keys.map(c=>{
       const sp=S.tx.filter(t=>t.c===c&&new Date(t.d).getMonth()===m).reduce((s,t)=>s-t.amt,0),cap=S.targets[c]||0;
       return `<button class="row" style="width:100%;text-align:left" onclick="editTarget('${esc(c)}')">
         <span class="t"><b>${esc(c)}</b><span><span class="money">${gbp(sp)}</span> of ${gbp(cap)}</span>
         <div class="prog" style="margin-top:6px"><i style="width:${cap?clamp(sp/cap*100,0,100):0}%;background:${sp>cap?'var(--red)':'var(--coral)'}"></i></div></span>
-        <span class="muted">›</span></button>`}).join('')}</div>`;
+        <span class="muted">›</span></button>`}).join(''):'<div class="empty"><b>No targets</b></div>'}</div>`;
 }
 function editTarget(c){
   sheet(`<h2>${esc(c)}</h2><p class="small muted">Monthly target</p>
@@ -1073,24 +1222,33 @@ function vProfile(){
     <button class="card w" style="width:100%;text-align:left;margin-top:12px" onclick="go('plan')">
       <div style="display:flex;justify-content:space-between;align-items:center"><b>Monzo ${TIERS[S.sub].n}</b><span class="badge ok">Active</span></div>
       <div class="small muted" style="margin-top:4px">£${TIERS[S.sub].p} a month · £${TIERS[S.sub].atm} ATM limit</div></button>
-    <div class="sec" style="padding:0;margin-top:22px">Account</div>
+    <div class="sec">Account</div>
     ${[['Personal details','pd'],['Security &amp; privacy','security'],['Card controls','card'],['Notifications','notifprefs'],['Direct Debits','dd'],['Scheduled payments','sched'],['Targets','budgets'],['Statements','stmts']].map(([l,r])=>
       `<button class="row" style="width:100%;text-align:left" onclick="go('${r}')"><span class="t"><b>${l}</b></span><span class="muted">›</span></button>`).join('')}
-    <div class="sec" style="padding:0;margin-top:22px">Support</div>
-    <button class="row" style="width:100%;text-align:left" onclick="toast('Chat opening…')"><span class="t"><b>Chat with us</b><span>Usually replies in 2 minutes</span></span><span class="muted">›</span></button>
+    <div class="sec">Support</div>
+    <button class="row" style="width:100%;text-align:left" onclick="chatSheet()"><span class="t"><b>Chat with us</b><span>Usually replies in 2 minutes</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('help')"><span class="t"><b>Help centre</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="toast('All systems operational')"><span class="t"><b>Service status</b></span><span class="badge ok">Operational</span></button>
-    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 5.4.0</div></div>`;
+    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 6.0.0</div></div>`;
+}
+function chatSheet(){
+  sheet(`<h2>Chat</h2><p class="small muted">Usually replies in 2 minutes.</p>
+    <div class="card w" style="margin-top:10px"><b class="small">Priya</b><div class="small muted">Hi Jason, how can we help?</div></div>
+    <input id="chatIn" placeholder="Type a message" style="margin-top:12px"/>
+    <button class="btn" style="margin-top:12px" onclick="sendChat()">Send</button>`);
+}
+function sendChat(){
+  const v=$('#chatIn').value.trim();if(!v){toast('Type a message');return}
+  closeSheet();toast('Message sent');notify('Support','Priya will reply shortly','💬');
 }
 function cycleTheme(){const o=['auto','light','dark'],i=o.indexOf(S.prefs.theme||'auto');setTheme(o[(i+1)%3])}
 function vPlan(){
   return topbar('Plans',{back:true})+`<div class="pad">
     <div class="hc"><b style="font-size:20px">Monzo ${TIERS[S.sub].n}</b>
       <div class="small" style="opacity:.85;margin-top:4px">£${TIERS[S.sub].p} a month · renews 12 Jan</div></div>
-    <div class="sec" style="padding:0;margin-top:22px">Included</div>
-    ${['Fee-free ATM withdrawals up to £600 per 30 days','Worldwide card use at the Mastercard rate','Travel insurance for the household','Mobile phone insurance','Breakdown cover','Airport lounge access'].map(f=>
-      `<div class="row"><span class="ico">✓</span><span class="t"><b style="font-weight:600">${f}</b></span></div>`).join('')}
-    <div class="sec" style="padding:0;margin-top:22px">Compare plans</div>
+    <div class="sec">Included in ${TIERS[S.sub].n}</div>
+    ${TIERS[S.sub].inc.map(f=>`<div class="row"><span class="ico">✓</span><span class="t"><b style="font-weight:600">${f}</b></span></div>`).join('')}
+    <div class="sec">Compare plans</div>
     ${Object.entries(TIERS).map(([k,t])=>`<button class="row" style="width:100%;text-align:left" onclick="pickTier('${k}')">
       <span class="t"><b>${t.n}</b><span>£${t.p} a month · £${t.atm} ATM limit</span></span>
       ${S.sub===k?'<span class="badge ok">Current</span>':'<span class="muted">›</span>'}</button>`).join('')}
@@ -1109,7 +1267,7 @@ function vPD(){
     <label class="f">Phone</label><input id="pdPhone" inputmode="tel" value="${esc(p.phone)}"/>
     <label class="f">Date of birth</label><input id="pdDob" type="date" value="${esc(p.dob)}"/>
     <label class="f">Tax residency</label><input id="pdTax" value="${esc(p.taxres)}"/>
-    <div class="card small muted" style="margin-top:16px">Member since ${esc(p.since)} · identity ${esc(p.idv.toLowerCase())}</div>
+    <div class="card small muted" style="margin-top:16px">Member since ${esc(p.since)} · identity ${esc(p.idv.toLowerCase())} · CRS declaration on file</div>
     <button class="btn" style="margin-top:16px" onclick="savePD()">Save changes</button></div>`;
 }
 function savePD(){
@@ -1128,10 +1286,16 @@ function vSecurity(){
     <div class="row"><span class="t"><b>Privacy mode</b><span>Blur every balance · tap to reveal</span></span>
       <button class="badge ${S.sec.privacy?'ok':''}" onclick="togglePriv()">${S.sec.privacy?'On':'Off'}</button></div>
     <div class="row"><span class="t"><b>App PIN</b><span>${'•'.repeat(S.sec.pin.length)}</span></span><button class="badge" onclick="changePin()">Change</button></div>
-    <div class="row"><span class="t"><b>Log out of all devices</b></span><span class="muted">›</span></div>
-    <div class="sec" style="padding:0;margin-top:20px">Trusted devices</div>
+    <button class="row" style="width:100%;text-align:left" onclick="logOutAll()"><span class="t"><b>Log out of all devices</b></span><span class="muted">›</span></button>
+    <div class="sec">Trusted devices</div>
     <div class="row"><span class="ico">📱</span><span class="t"><b>Samsung Galaxy S24 Ultra</b><span>Stockton-on-Tees · this device</span></span><span class="badge ok">Current</span></div>
     ${canBio?'':'<div class="card small muted" style="margin-top:16px">This browser has no platform authenticator, so the PIN is used instead.</div>'}</div>`;
+}
+function logOutAll(){
+  sessionStorage.removeItem('unlocked');
+  S.sec.credId=null;save();
+  toast('Logged out everywhere');
+  setTimeout(()=>{stack=['home'];lockScreen()},700);
 }
 async function toggleBio(){
   if(S.sec.bio){
@@ -1157,9 +1321,27 @@ function vCard(){
     <div class="row"><span class="t"><b>Magnetic stripe</b></span><button class="badge ${c.mag?'ok':''}" onclick="S.card.mag=!S.card.mag;save();render()">${c.mag?'On':'Off'}</button></div>
     <div class="row"><span class="t"><b>ATM daily limit</b><span>Set by your ${t.n} plan · max £${t.atm}</span></span>
       <button class="badge" onclick="editAtm()">${gbp0(c.atm)}</button></div>
-    <button class="btn ghost" style="margin-top:14px" onclick="toast('Virtual card created')">Create virtual card</button>
+    <div class="sec">Virtual cards</div>
+    ${S.vcards.length?S.vcards.map(v=>`<button class="row" style="width:100%;text-align:left" onclick="delVcard('${v.id}')">
+      <span class="ico">💳</span><span class="t"><b>${esc(v.n)}</b><span>•••• ${v.last4} · ${esc(v.use)}</span></span><span class="muted">›</span></button>`).join(''):'<div class="card small muted">None yet</div>'}
+    <button class="btn ghost" style="margin-top:14px" onclick="newVcard()">Create virtual card</button>
     <button class="btn ghost" style="margin-top:8px" onclick="toast('Added to Google Wallet')">Add to Google Wallet</button></div>`;
 }
+function newVcard(){
+  sheet(`<h2>Virtual card</h2><label class="f">Name</label><input id="vcN" placeholder="e.g. Subscriptions"/>
+    <button class="btn" style="margin-top:16px" onclick="doVcard()">Create</button>`);
+}
+function doVcard(){
+  const n=$('#vcN').value.trim()||'Virtual card';
+  S.vcards.push({id:'v'+Date.now(),n,last4:String(Math.floor(1000+Math.random()*9000)),use:'Single use'});
+  save();closeSheet();render();toast('Virtual card created');
+}
+function delVcard(id){
+  const v=S.vcards.find(x=>x.id===id);
+  sheet(`<h2>${esc(v.n)}</h2><p class="small muted">•••• ${v.last4} · ${esc(v.use)}</p>
+    <button class="btn danger" style="margin-top:16px" onclick="doDelVcard('${id}')">Delete card</button>`);
+}
+function doDelVcard(id){S.vcards=S.vcards.filter(x=>x.id!==id);save();closeSheet();render();toast('Card deleted')}
 function editAtm(){
   const max=TIERS[S.sub].atm;
   sheet(`<h2>ATM daily limit</h2><p class="small muted">Your ${TIERS[S.sub].n} plan allows up to ${gbp0(max)} a day.</p>
@@ -1208,13 +1390,27 @@ function vHelp(){
 }
 function vMove(){
   return topbar('Move money',{back:true})+`<div class="pad">
-    <div class="card w small muted">From <b>Current account</b> · <span class="money">${gbp(S.acct.current)}</span></div>
+    <div class="card w small muted">From <b>Current account</b> · <span class="money">${gbp(balNow())}</span></div>
     ${S.pots.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="potMove('${p.id}',1)"><span class="ico" style="background:${p.col}20">${p.ico}</span><span class="t"><b>${esc(p.n)}</b><span>${gbp(p.a)}</span></span><span class="muted">›</span></button>`).join('')}
     <button class="row" style="width:100%;text-align:left" onclick="isaAdd()"><span class="ico coral">ISA</span><span class="t"><b>Stocks &amp; Shares ISA</b></span><span class="muted">›</span></button></div>`;
 }
 function vPay(){
-  return topbar('Pay',{back:true})+`<div class="pad"><div class="sec" style="padding:0">Payees</div>
-    ${S.payees.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="toast('Payment to ${esc(p.n)} sent')"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b><span>${esc(p.s)} · ${esc(p.a)}</span></span></button>`).join('')}</div>`;
+  return topbar('Pay',{back:true,right:`<button class="iconbtn" onclick="newPayee()" aria-label="New payee">＋</button>`})+`<div class="pad">
+    <div class="sec">Payees</div>
+    ${S.payees.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="sendMoney('${p.id}')"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b><span>${esc(p.s)} · ${esc(p.a)}</span></span></button>`).join('')}</div>`;
+}
+function sendMoney(id){
+  const p=S.payees.find(x=>x.id===id);
+  sheet(`<h2>Pay ${esc(p.n)}</h2><label class="f">Amount</label><input id="sAmt" type="number" inputmode="decimal" placeholder="0.00"/>
+    <button class="btn" style="margin-top:16px" onclick="doSend('${id}')">Send</button>`);
+}
+function doSend(id){
+  const p=S.payees.find(x=>x.id===id);
+  const v=parseFloat($('#sAmt').value||'0');
+  if(!(v>0)){toast('Enter an amount');return}
+  if(v>balNow()){toast('Not enough available');return}
+  pushTx({n:p.n,c:'Transfers',amt:-v});
+  save();closeSheet();render();toast(`${gbp(v)} sent to ${p.n}`);
 }
 function vSettings(){
   return topbar('Settings',{back:true})+`<div class="pad">
@@ -1226,34 +1422,57 @@ function vSettings(){
     <button class="row" style="width:100%;text-align:left" onclick="go('security')"><span class="t"><b>Security &amp; privacy</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('notifprefs')"><span class="t"><b>Notifications</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('budgets')"><span class="t"><b>Targets</b></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="sorterSheet()"><span class="t"><b>Salary Sorter</b><span>${S.sorter.on?gbp(S.sorter.amt)+' to pot':'Off'}</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="exportAll()"><span class="t"><b>Export all data</b><span>JSON backup</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="wipe()"><span class="t"><b>Reset account</b></span><span class="muted">›</span></button></div>`;
 }
-
-let deferred=null;
-addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
-async function installApp(){
-  if(deferred){deferred.prompt();const r=await deferred.userChoice;deferred=null;toast(r.outcome==='accepted'?'Installing…':'Install dismissed');return}
-  if(STANDALONE){toast('Already installed');return}
-  toast('Open the browser menu and choose “Add to Home screen”');
+function sorterSheet(){
+  sheet(`<h2>Salary Sorter</h2><p class="small muted">Split your salary into a pot automatically each payday.</p>
+    <label class="f">Pot</label><select id="soP">${S.pots.map(p=>`<option value="${p.id}" ${S.sorter.pot===p.id?'selected':''}>${esc(p.n)}</option>`).join('')}</select>
+    <label class="f">Amount</label><input id="soA" type="number" inputmode="decimal" value="${S.sorter.amt}"/>
+    <button class="btn" style="margin-top:16px" onclick="doSorter()">${S.sorter.on?'Save':'Turn on'}</button>
+    ${S.sorter.on?'<button class="btn ghost" style="margin-top:8px" onclick="S.sorter.on=false;save();closeSheet();render();toast(\'Sorter off\')">Turn off</button>':''}`);
+}
+function doSorter(){
+  const v=parseFloat($('#soA').value||'0');
+  if(!(v>0)){toast('Enter an amount');return}
+  S.sorter={on:true,pot:$('#soP').value,amt:+v.toFixed(2)};
+  save();closeSheet();render();toast('Salary Sorter on');
+}
+function addTx(){
+  sheet(`<h2>Add transaction</h2>
+    <label class="f">Description</label><input id="txN" placeholder="e.g. Car boot sale"/>
+    <label class="f">Amount</label><input id="txA" type="number" inputmode="decimal" placeholder="0.00"/>
+    <label class="f">Type</label><select id="txT"><option value="out">Money out</option><option value="in">Money in</option></select>
+    <label class="f">Category</label><select id="txC">${S.cats.map(c=>`<option>${c}</option>`).join('')}</select>
+    <button class="btn" style="margin-top:16px" onclick="doAddTx()">Add</button>`);
+}
+function doAddTx(){
+  const n=$('#txN').value.trim();
+  const v=parseFloat($('#txA').value||'0');
+  if(!n||!(v>0)){toast('Fill in both fields');return}
+  const out=$('#txT').value==='out';
+  pushTx({n,c:$('#txC').value,amt:out?-v:v});
+  save();closeSheet();render();toast('Transaction added');
 }
 function isaAdd(){
   const used=tyUsed(),lim=ISA_LIMITS[taxYear()]||20000,room=lim-used;
   if(room<=0){toast('Allowance used for '+tyLabel(taxYear()));return}
   sheet(`<h2>Add to ISA</h2><p class="small muted">${tyLabel(taxYear())} allowance: ${gbp(used)} used of ${gbp(lim)}. ${gbp(room)} remaining.</p>
     <label class="f">Amount</label><input id="isaAmt" type="number" inputmode="decimal" placeholder="0.00"/>
-    <div style="display:flex;gap:8px;margin-top:10px">${[100,500,1000].map(v=>`<button class="badge" onclick="document.getElementById('isaAmt').value=${v}">${gbp0(v)}</button>`).join('')}<button class="badge" onclick="document.getElementById('isaAmt').value=${room.toFixed(2)}">Max</button></div>
+    <div class="chips">${[100,500,1000].map(v=>`<button class="badge" onclick="document.getElementById('isaAmt').value=${v}">${gbp0(v)}</button>`).join('')}<button class="badge" onclick="document.getElementById('isaAmt').value=${room.toFixed(2)}">Max</button></div>
     <button class="btn" style="margin-top:16px" onclick="doIsaAdd(${room})">Add</button>`);
 }
 function doIsaAdd(room){
   let v=parseFloat($('#isaAmt').value||'0');
   if(!(v>0)){toast('Enter an amount');return}
   if(v>room){v=room;toast('Capped at remaining allowance')}
-  if(v>S.acct.current){toast('Not enough in current account');return}
-  S.acct.current=+(S.acct.current-v).toFixed(2);S.acct.isaCash=+(S.acct.isaCash+v).toFixed(2);
+  if(v>balNow()){toast('Not enough in current account');return}
+  pushTx({n:'Stocks & Shares ISA',c:'Transfers',amt:-v});
+  S.acct.isaCash=+(S.acct.isaCash+v).toFixed(2);
   const last=S.ledger.isa[S.ledger.isa.length-1];
   last.contrib=+(last.contrib+v).toFixed(2);last.closing=+(last.closing+v).toFixed(2);
-  S.notifs.unshift({t:'ISA contribution',b:`${gbp(v)} added for ${tyLabel(taxYear())}`,d:'now',i:'ISA'});
+  notify('ISA contribution',`${gbp(v)} added for ${tyLabel(taxYear())}`,'ISA');
   save();closeSheet();render();toast(`${gbp(v)} added to your ISA`);
 }
 function potMove(id,sign){
@@ -1265,10 +1484,11 @@ function potMove(id,sign){
 function doPotMove(id,sign){
   const p=S.pots.find(x=>x.id===id),v=parseFloat($('#pmAmt').value||'0');
   if(!(v>0)){toast('Enter an amount');return}
-  if(sign>0&&v>S.acct.current){toast('Not enough available');return}
+  if(sign>0&&v>balNow()){toast('Not enough available');return}
   if(sign<0&&v>p.a){toast('Not enough in pot');return}
-  p.a=+(p.a+sign*v).toFixed(2);S.acct.current=+(S.acct.current-sign*v).toFixed(2);
+  p.a=+(p.a+sign*v).toFixed(2);
   S.acct.savings=+S.pots.reduce((s,x)=>s+x.a,0).toFixed(2);
+  pushTx({n:p.n,c:'Transfers',amt:sign>0?-v:v});
   save();closeSheet();render();toast(sign>0?`${gbp(v)} moved to ${p.n}`:`${gbp(v)} moved back`);
 }
 function newPot(){
@@ -1279,22 +1499,29 @@ function newPot(){
 function doNewPot(){
   const n=$('#npName').value.trim()||'New pot',g=parseFloat($('#npGoal').value||'500');
   S.pots.push({id:'p'+Date.now(),n,a:0,rate:2.80,goal:g,lock:null,ico:'🎯',col:'#7A5AF8'});
+  notify('Pot created',n,'🏦');
   save();closeSheet();render();toast('Pot created');
 }
 function archivePot(id){
   const p=S.pots.find(x=>x.id===id);
-  if(p.a>0)S.acct.current=+(S.acct.current+p.a).toFixed(2);
-  S.pots=S.pots.filter(x=>x.id!==id);S.acct.savings=+S.pots.reduce((s,x)=>s+x.a,0).toFixed(2);
+  if(p.a>0){pushTx({n:'From '+p.n,c:'Transfers',amt:p.a})}
+  S.pots=S.pots.filter(x=>x.id!==id);
+  S.acct.savings=+S.pots.reduce((s,x)=>s+x.a,0).toFixed(2);
   save();back();toast('Pot archived');
 }
 function odMove(sign){
   if(sign>0){
     const room=S.acct.odLimit-S.acct.odDrawn;if(room<=0){toast('At limit');return}
-    const v=Math.min(100,room);S.acct.odDrawn=+(S.acct.odDrawn+v).toFixed(2);S.acct.current=+(S.acct.current+v).toFixed(2);toast(`${gbp(v)} drawn`);
+    const v=Math.min(100,room);
+    S.acct.odDrawn=+(S.acct.odDrawn+v).toFixed(2);
+    pushTx({n:'Overdraft draw',c:'Transfers',amt:v});
+    toast(`${gbp(v)} drawn`);
   }else{
     if(S.acct.odDrawn<=0){toast('Nothing to repay');return}
-    const v=Math.min(100,S.acct.odDrawn,S.acct.current);if(v<=0){toast('No funds');return}
-    S.acct.odDrawn=+(S.acct.odDrawn-v).toFixed(2);S.acct.current=+(S.acct.current-v).toFixed(2);toast(`${gbp(v)} repaid`);
+    const v=Math.min(100,S.acct.odDrawn,balNow());if(v<=0){toast('No funds');return}
+    S.acct.odDrawn=+(S.acct.odDrawn-v).toFixed(2);
+    pushTx({n:'Overdraft repayment',c:'Transfers',amt:-v});
+    toast(`${gbp(v)} repaid`);
   }
   save();render();
 }
@@ -1305,7 +1532,12 @@ function ddSheet(id){
     <button class="btn" style="margin-top:16px" onclick="cancelDD('${id}')">Cancel Direct Debit</button>
     <button class="btn ghost" style="margin-top:8px" data-close>Keep it</button>`);
 }
-function cancelDD(id){const d=S.dd.find(x=>x.id===id);S.dd=S.dd.filter(x=>x.id!==id);save();closeSheet();render();toast(d.n+' cancelled')}
+function cancelDD(id){
+  const d=S.dd.find(x=>x.id===id);
+  S.dd=S.dd.filter(x=>x.id!==id);
+  notify('Direct Debit cancelled',d.n,'🚫');
+  save();closeSheet();render();toast(d.n+' cancelled');
+}
 function editCat(id){
   const t=S.tx.find(x=>x.id===id);
   sheet(`<h2>Category</h2>${S.cats.map(c=>`<button class="row" style="width:100%;text-align:left" onclick="setCat('${id}','${c}')"><span class="t"><b>${c}</b></span>${t.c===c?'<span class="badge ok">Current</span>':''}</button>`).join('')}`);
@@ -1314,8 +1546,14 @@ function setCat(id,c){const t=S.tx.find(x=>x.id===id);t.c=c;save();closeSheet();
 function noteTx(id){sheet(`<h2>Note</h2><textarea id="ntx" rows="3" placeholder="Add a note"></textarea><button class="btn" style="margin-top:14px" onclick="doNote('${id}')">Save</button>`)}
 function doNote(id){const t=S.tx.find(x=>x.id===id);t.note=$('#ntx').value.trim();save();closeSheet();render();toast('Note saved')}
 function splitTx(id){
-  sheet(`<h2>Split bill</h2><p class="small muted">Choose a contact to split with.</p>
-    ${S.payees.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="toast('Split request sent to ${esc(p.n)}');closeSheet()"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b></span></button>`).join('')}`);
+  const t=S.tx.find(x=>x.id===id);
+  sheet(`<h2>Split bill</h2><p class="small muted">${gbp(Math.abs(t.amt))} at ${esc(t.n)}. Choose who to split with.</p>
+    ${S.payees.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="doSplit('${id}','${p.id}')"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b></span></button>`).join('')}`);
+}
+function doSplit(id,pid){
+  const t=S.tx.find(x=>x.id===id),p=S.payees.find(x=>x.id===pid);
+  S.tabs.unshift({id:'tb'+Date.now(),name:t.n,amt:Math.round(Math.abs(t.amt)/2*100)/100,members:[{n:p.n,paid:false}]});
+  save();closeSheet();render();toast('Split request sent to '+p.n);
 }
 function changePin(){sheet(`<h2>Change PIN</h2><input id="npin" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN"/><button class="btn" style="margin-top:14px" onclick="doPin()">Save</button>`)}
 function doPin(){const v=$('#npin').value.trim();if(!/^\d{4}$/.test(v)){toast('Enter 4 digits');return}S.sec.pin=v;save();closeSheet();toast('PIN changed')}
@@ -1324,13 +1562,6 @@ function exportAll(){
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='monzo-backup.json';a.click();toast('Backup downloaded');
 }
 function wipe(){localStorage.removeItem(KEY);location.href=location.pathname+'?reset=1'}
-function dlYear(y){
-  const rows=S.ledger.isa.filter(r=>r.y===y);
-  const csv=['Month,Opening,Contribution,Dividend,Market,Fee,Closing,Source']
-    .concat(rows.map(r=>[ymLabel(r.ym),r.opening,r.contrib,r.div,r.mkt,r.fee,r.closing,r.imported?r.src:'Monzo'].join(',')));
-  const b=new Blob([csv.join('\n')],{type:'text/csv'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`isa-${y}.csv`;a.click();toast(`${y} statement downloaded`);
-}
 
 let pinBuf='';
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
@@ -1360,6 +1591,7 @@ async function bioUnlock(){
 }
 function lockScreen(){
   pinBuf='';
+  sessionStorage.removeItem('unlocked');
   $('#view').innerHTML=`<div class="lock" id="lock">
     <div style="margin-top:8px">${mark(58)}</div>
     <h2>Welcome back, Jason</h2>
@@ -1371,22 +1603,20 @@ function lockScreen(){
       <button class="key" onclick="pinKey('0')">0</button>
       <button class="key ghost" onclick="pinDel()" aria-label="Delete"><svg viewBox="0 0 24 24"><path d="M20 6H9l-5 6 5 6h11z"/><path d="M13 10l4 4M17 10l-4 4"/></svg></button>
     </div>
-    <button class="btn ghost sm" style="margin-top:18px" onclick="toast('Passcode is ${S.sec.pin}')">Forgot passcode?</button>
+    <button class="btn ghost sm" style="margin-top:18px" onclick="forgot()">Forgot passcode?</button>
   </div>`;
   $('#tabbar').classList.add('hide');
 }
+function forgot(){toast(`Use ${S.sec.pin}`)}
 function pinKey(n){
   if(pinBuf.length>=4)return;
   pinBuf+=n;
   $$('#dots i').forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length));
   if(pinBuf.length===4)setTimeout(checkPin,140);
 }
-function pinDel(){
-  pinBuf=pinBuf.slice(0,-1);
-  $$('#dots i').forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length));
-}
+function pinDel(){pinBuf=pinBuf.slice(0,-1);$$('#dots i').forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length))}
 function checkPin(){
-  if(pinBuf===S.sec.pin){unlock();return}
+  if(pinBuf===S.sec.pin){sessionStorage.setItem('unlocked','1');unlock();return}
   const l=$('#lock');if(l){l.classList.add('shake');setTimeout(()=>l.classList.remove('shake'),450)}
   pinBuf='';
   setTimeout(()=>$$('#dots i').forEach(d=>d.classList.remove('on')),260);
@@ -1394,7 +1624,7 @@ function checkPin(){
 }
 function unlock(){render()}
 
-const VIEWS={home:vHome,current:vCurrent,all:vAll,hub:vHub,trends:vTrends,savings:vSavings,isa:vISA,inv:vInv,hold:vHold,pot:vPot,tx:vTx,
+const VIEWS={home:vHome,current:vCurrent,joint:vJoint,all:vAll,hub:vHub,trends:vTrends,savings:vSavings,isa:vISA,inv:vInv,hold:vHold,pot:vPot,tx:vTx,
   flex:vFlex,od:vOD,dd:vDD,sched:vSched,search:vSearch,stmts:vStmts,notifs:vNotifs,budgets:vBudgets,
   profile:vProfile,pd:vPD,security:vSecurity,card:vCard,notifprefs:vNotifPrefs,help:vHelp,move:vMove,pay:vPay,
   settings:vSettings,appearance:vAppearance,mark:vMark,plan:vPlan};
@@ -1405,8 +1635,7 @@ function render(){
   view.innerHTML=(VIEWS[r]||vHome)(p);
   view.classList.remove('anim');void view.offsetWidth;view.classList.add('anim');
   $('#tabbar').classList.remove('hide');
-  syncTabs();
-  applyPriv();
+  syncTabs();applyPriv();
   if(r==='search')bindSearch();
   if(r==='home')countUp();
 }
@@ -1421,10 +1650,12 @@ function countUp(){
 (function boot(){
   if(location.search.includes('reset=1')){localStorage.removeItem(KEY);history.replaceState({},'',location.pathname)}
   load();buildTabs();
+  if(!navigator.onLine)$('#offbar').classList.add('on');
   const q=new URLSearchParams(location.search);
   if(q.get('screen'))stack=[q.get('screen')];
   matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{if(S.prefs.theme==='auto')applyTheme()});
-  if(S.sec.lock&&!sessionStorage.getItem('unlocked')){lockScreen();sessionStorage.setItem('unlocked','1')}
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if(S.sec.lock&&!sessionStorage.getItem('unlocked'))lockScreen();
   else render();
 })();
 </script>
