@@ -235,6 +235,7 @@ section[data-screen].on{display:block}
   letter-spacing:-.02em;white-space:nowrap}
 .amt.in{color:var(--ok)}
 .amt.pend{color:var(--ink3);font-weight:500}
+.txattach{font-size:11px;color:var(--ink3);margin-left:4px}
 
 /* ---------- pot rows ---------- */
 .pot{display:flex;align-items:center;gap:12px;padding:11px 4px;width:100%;
@@ -311,6 +312,20 @@ html[data-theme="dark"] .chip.on{background:var(--coral)}
   border-radius:10px;background:var(--card2);color:var(--ink)}
 .chatinput{flex:1;padding:12px 13px;border:1.5px solid transparent;border-radius:var(--r3);
   background:var(--card2);color:var(--ink)}
+
+/* ---------- receipts ---------- */
+.receipt-head{font-weight:600;font-size:14.5px;margin-bottom:2px}
+.receipt{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.receipt img{width:56px;height:56px;object-fit:cover;border-radius:10px;
+  border:1px solid var(--line);background:var(--card3);flex:0 0 auto}
+.receipt .mid{flex:1;min-width:0}
+.receipt .nm{font-weight:600;font-size:14px;display:block;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.receipt .sub{font-size:12.5px;color:var(--ink2)}
+.filebtn{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 15px;
+  border-radius:var(--pill);background:var(--card3);color:var(--ink);font-size:13px;
+  font-weight:600;cursor:pointer}
+.filebtn input{display:none}
 
 /* ---------- tab bar ---------- */
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:40;
