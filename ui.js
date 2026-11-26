@@ -4,9 +4,22 @@ import { esc, fmt, pct } from './core.js';
 import { DOMAINS } from './data.js';
 
 const registry = new Map();
+const TABS = new Set(['home', 'save', 'grow', 'pay', 'account']);
+const TITLES = {
+  grow:'Grow', save:'Save', pay:'Pay', trends:'Trends', acc:'Current account', pots:'Pots',
+  invest:'Investments', statements:'Statements', accounts:'Your accounts', borrow:'Borrowing',
+  flex:'Monzo Flex', aura:'Monzo Aura', overdraft:'Overdraft', loans:'Loans',
+  connected:'Connected accounts', credit:'Credit insights', challenge:'Saving Challenge',
+  billsback:'Billsback', insurance:'Insurance', personal:'Personal details', security:'Security',
+  appearance:'Appearance', cards:'Cards', plan:'Plans', limits:'Limits', payees:'Payees',
+  search:'Search', notifs:'Notifications', chat:'Support', disputes:'Disputes',
+  joint:'Joint account', potdetail:'Pot', txdetail:'Transaction'
+};
+
 let cleanup = null;
 let current = null;
 let mountRoot = null;
+let stack = [];
 
 export function initRouter(root){ mountRoot = root; }
 export function register(name, mount){ registry.set(name, mount); }
@@ -16,32 +29,57 @@ const sheetEl = () => document.getElementById('sheet');
 export function sheet(html){
   const s = sheetEl();
   if (!s) return;
-  s.querySelector('.panel').innerHTML = `<div class="grab"></div>` + html;
+  const panel = s.querySelector('.panel');
+  if (panel) panel.innerHTML = `<div class="grab"></div>` + html;
   s.classList.add('on');
 }
 export function closeSheet(){ sheetEl()?.classList.remove('on'); }
 
-export function go(name, params = {}){
+function paintHeader(name){
+  const sub = !TABS.has(name);
+  const hdr = document.getElementById('hdr');
+  if (hdr) hdr.classList.toggle('hdr--sub', sub);
+  const title = document.getElementById('hdrTitle');
+  if (title) title.textContent = sub ? (TITLES[name] || '') : '';
+}
+
+export function go(name, params = {}, back = false){
   const mount = registry.get(name);
   if (!mount || !mountRoot) return;
 
+  if (!back && name !== current){
+    if (TABS.has(name)) stack = [];
+    else if (current) stack.push(current);
+  }
+
   /* a sheet opened from the previous screen must not survive navigation */
   closeSheet();
-
   if (cleanup){ try { cleanup(); } catch {} cleanup = null; }
 
-  document.querySelectorAll('section[data-screen]').forEach(s =>
-    s.classList.toggle('on', s.dataset.screen === name));
-  document.querySelectorAll('.tabbar button').forEach(b =>
-    b.classList.toggle('on', b.dataset.go === name));
-
   const host = document.querySelector(`section[data-screen="${name}"]`);
-  if (host){
-    host.innerHTML = '';
-    cleanup = mount(host, params) || null;
-  }
+  if (!host) return;
+
+  document.querySelectorAll('section[data-screen]')
+    .forEach(s => s.classList.toggle('on', s === host));
+  document.querySelectorAll('.tabbar button')
+    .forEach(b => b.classList.toggle('on', b.dataset.go === name));
+
+  paintHeader(name);
+
+  /* fresh view node per navigation: every listener attached by the mount
+     is garbage-collected with it, so nothing accumulates on the section */
+  const view = document.createElement('div');
+  view.className = 'view';
+  host.replaceChildren(view);
+
+  cleanup = mount(view, params) || null;
   current = name;
   window.scrollTo(0, 0);
+}
+
+export function goBack(){
+  const prev = stack.pop();
+  go(prev || 'home', {}, true);
 }
 
 let toastTimer = null;
@@ -54,16 +92,17 @@ export function toast(msg){
   toastTimer = setTimeout(() => t.classList.remove('on'), 2200);
 }
 
-export function logo(name){
+export function logo(name, big){
   const domain = DOMAINS[name];
   const initials = String(name).split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  if (!domain) return `<span class="lg">${esc(initials)}</span>`;
-  return `<span class="lg"><img src="https://logo.clearbit.com/${domain}" alt="" loading="lazy"
-    onerror="this.parentNode.textContent='${esc(initials)}'"></span>`;
+  const cls = big ? 'lg lg--lg' : 'lg';
+  if (!domain) return `<span class="${cls}"><span class="lg__i">${esc(initials)}</span></span>`;
+  return `<span class="${cls}"><span class="lg__i">${esc(initials)}</span>
+    <img src="https://logo.clearbit.com/${domain}" alt="" loading="lazy" onerror="this.remove()"></span>`;
 }
 
 export function lineChart(host, series, opts = {}){
-  if (!host) return;
+  if (!host || !series.length) return;
   const W = 640, H = opts.h || 160, padB = 22, padT = 10;
   const values = series.map(p => p.v);
   let min = Math.min(...values), max = Math.max(...values);
@@ -79,7 +118,7 @@ export function lineChart(host, series, opts = {}){
     return `<line class="grid" x1="0" x2="${W}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>
       <text class="axis" x="2" y="${(y(v) - 4).toFixed(1)}">${fmt(v).replace('.00', '')}</text>`;
   }).join('');
-  host.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Chart">
+  host.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Balance over time">
     <defs><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#FF4F40" stop-opacity=".26"/>
       <stop offset="100%" stop-color="#FF4F40" stop-opacity="0"/>
@@ -101,7 +140,7 @@ export function donut(host, parts){
     return seg;
   }).join('');
   host.innerHTML = `<div class="donutwrap">
-    <svg viewBox="0 0 140 140" class="donutsvg">${segs}</svg>
+    <svg viewBox="0 0 140 140" class="donutsvg" role="img" aria-label="Spending by category">${segs}</svg>
     <div class="donutlegend">${parts.map((p, i) =>
       `<div class="donutrow"><span><i style="background:${DONUT_COLOURS[i % 8]}"></i>${esc(p.k)}</span>
         <b class="rev">${fmt(p.v)}</b></div>`).join('')}</div></div>`;
@@ -124,7 +163,8 @@ export function heatmap(host, counts, days = 56){
 export function meter(value, total, tone){
   const width = pct(value, total);
   const colour = tone || (width > 95 ? 'var(--bad)' : width > 75 ? 'var(--warn)' : 'var(--ok)');
-  return `<div class="meter"><i style="width:${width}%;background:${colour}"></i></div>`;
+  return `<div class="meter" role="progressbar" aria-valuenow="${Math.round(width)}"
+    aria-valuemin="0" aria-valuemax="100"><i style="width:${width}%;background:${colour}"></i></div>`;
 }
 
 export function chipRow(items, active, attr){
@@ -132,7 +172,9 @@ export function chipRow(items, active, attr){
   return `<div class="pill-row">${items.map(item => {
     const value = String(typeof item === 'string' ? item : item.value);
     const label = typeof item === 'string' ? item : item.label;
-    return `<button class="chip ${value === activeKey ? 'on' : ''}" data-${attr}="${esc(value)}">${esc(label)}</button>`;
+    const on = value === activeKey;
+    return `<button class="chip ${on ? 'on' : ''}" data-${attr}="${esc(value)}"
+      aria-pressed="${on}">${esc(label)}</button>`;
   }).join('')}</div>`;
 }
 
@@ -159,8 +201,8 @@ export function txRow(t){
 export function potRow(p, rate){
   const progress = pct(p.bal, p.goal);
   const rateNote = p.type === 'savings' && rate ? `${rate}% AER · ` : '';
-  return `<button class="pot" data-pot="${p.id}">
-    <span class="lg">${esc(p.name[0])}</span>
+  return `<button class="pot ${p.locked ? 'pot--locked' : ''}" data-pot="${p.id}">
+    <span class="lg"><span class="lg__i">${esc(p.name[0])}</span></span>
     <span class="mid"><span class="nm">${esc(p.name)}</span>
       <span class="sub">${rateNote}${Math.round(progress)}% of ${fmt(p.goal)}</span>
       <span class="bar"><i style="width:${progress}%"></i></span></span>
@@ -198,4 +240,8 @@ export function bindGlobalChrome(){
       closeSheet();
     }
   });
+  window.addEventListener('scroll', () => {
+    const h = document.getElementById('hdr');
+    if (h) h.classList.toggle('hdr--scrolled', window.scrollY > 4);
+  }, { passive: true });
 }
