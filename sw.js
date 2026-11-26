@@ -1,16 +1,16 @@
-/* sw.js — v19
+/* sw.js — v20
    Self-contained shell. Navigation is network-first with a cached shell fallback;
    same-origin assets are cache-first with a background refresh; fonts and logos are
    stale-while-revalidate. */
 
-const VERSION = 'v19';
+const VERSION = 'v20';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css?v=19',
-  './main.js?v=19',
+  './styles.css?v=20',
+  './main.js?v=20',
   './core.js',
   './data.js',
   './ui.js',
@@ -119,5 +119,5 @@ self.addEventListener('fetch', event => {
     event.respondWith(cacheFirst(request));
     return;
   }
-  if (isRemoteAsset(request.url)) event.respondWith(staleWhileRevalidate(request));
+  if (isRemoteAsset(request.url)) event.respondWith(styleWhileRevalidate(request));
 });
