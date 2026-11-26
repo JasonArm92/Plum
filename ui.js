@@ -22,20 +22,45 @@ let current = null;
 let currentParams = {};
 let mountRoot = null;
 let stack = [];
+let sheetOpener = null;
 
 export function initRouter(root){ mountRoot = root; }
 export function register(name, mount){ registry.set(name, mount); }
 export function currentScreen(){ return current; }
 
 const sheetEl = () => document.getElementById('sheet');
+
+const FOCUSABLE = 'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[href],[tabindex]:not([tabindex="-1"])';
+
 export function sheet(html){
   const s = sheetEl();
   if (!s) return;
   const panel = s.querySelector('.panel');
-  if (panel) panel.innerHTML = `<div class="grab"></div>` + html;
+  if (!panel) return;
+  if (!s.classList.contains('on')) sheetOpener = document.activeElement;
+  panel.innerHTML = `<div class="grab"></div>` + html;
   s.classList.add('on');
+  s.setAttribute('role', 'dialog');
+  s.setAttribute('aria-modal', 'true');
+  if (!panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
+  /* land inside the sheet so a keyboard user is not left behind the scrim */
+  const first = panel.querySelector(FOCUSABLE);
+  (first || panel).focus({ preventScroll: true });
 }
-export function closeSheet(){ sheetEl()?.classList.remove('on'); }
+
+export function closeSheet(){
+  const s = sheetEl();
+  if (!s) return;
+  const wasOpen = s.classList.contains('on');
+  s.classList.remove('on');
+  s.removeAttribute('role');
+  s.removeAttribute('aria-modal');
+  /* put the caret back where the sheet was opened from */
+  if (wasOpen && sheetOpener && sheetOpener.isConnected){
+    try { sheetOpener.focus({ preventScroll: true }); } catch {}
+  }
+  sheetOpener = null;
+}
 
 function paintHeader(name){
   const sub = !TABS.has(name);
@@ -61,8 +86,12 @@ export function go(name, params = {}, back = false){
   const host = document.querySelector(`section[data-screen="${name}"]`);
   if (!host) return;
 
-  document.querySelectorAll('section[data-screen]')
-    .forEach(s => s.classList.toggle('on', s === host));
+  document.querySelectorAll('section[data-screen]').forEach(s => {
+    const on = s === host;
+    s.classList.toggle('on', on);
+    if (on) s.removeAttribute('aria-hidden');
+    else s.setAttribute('aria-hidden', 'true');
+  });
   document.querySelectorAll('.tabbar button')
     .forEach(b => b.classList.toggle('on', b.dataset.go === name));
 
@@ -72,11 +101,14 @@ export function go(name, params = {}, back = false){
      is garbage-collected with it, so nothing accumulates on the section */
   const view = document.createElement('div');
   view.className = 'view';
+  view.tabIndex = -1;
   host.replaceChildren(view);
 
   current = name;
   currentParams = params;
   cleanup = mount(view, params) || null;
+  /* move focus into the new screen rather than stranding it on a dead node */
+  view.focus({ preventScroll: true });
   window.scrollTo(0, 0);
 }
 
@@ -96,6 +128,11 @@ let toastTimer = null;
 export function toast(msg){
   const t = document.getElementById('toast');
   if (!t) return;
+  if (!t.hasAttribute('role')){
+    t.setAttribute('role', 'status');
+    t.setAttribute('aria-live', 'polite');
+    t.setAttribute('aria-atomic', 'true');
+  }
   t.textContent = msg;
   t.classList.add('on');
   clearTimeout(toastTimer);
@@ -250,6 +287,21 @@ export function bindGlobalChrome(){
       closeSheet();
     }
   });
+
+  document.addEventListener('keydown', e => {
+    const s = sheetEl();
+    if (!s || !s.classList.contains('on')) return;
+    if (e.key === 'Escape'){ e.preventDefault(); closeSheet(); return; }
+    if (e.key !== 'Tab') return;
+    const panel = s.querySelector('.panel');
+    if (!panel) return;
+    const items = [...panel.querySelectorAll(FOCUSABLE)].filter(el => el.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  });
+
   window.addEventListener('scroll', () => {
     const h = document.getElementById('hdr');
     if (h) h.classList.toggle('hdr--scrolled', window.scrollY > 4);
