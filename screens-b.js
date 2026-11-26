@@ -3,6 +3,7 @@
 import {
   getState, commit, esc, fmt, TODAY, round2, plan, PLANS_BANK, CATS, BANKS, BB_CAP,
   setProfile, setPin, setCredId, setTheme, setZoom, setMotion, togglePriv, toggleRoundups,
+  roundupPotName,
   addPayee, updatePayee, deletePayee, sendMoney, requestMoney, settleRequest, cancelRequest,
   addVirtualCard, freezeVCard, renameVCard,
   deleteVCard, toggleFreeze, setPlan, setFamily, flexAvail, flexPurchase, flexMonthly,
@@ -663,7 +664,7 @@ export function mountSearch(root, params){
 export function mountNotifs(root){
   const render = () => {
     const s = getState();
-    const target = n => /salary|paid early/i.test(n.title) ? 'acc'
+    const target = n => /salary|paid early|scheduled/i.test(n.title) ? 'acc'
       : /interest/i.test(n.title) ? 'pots'
       : /flex/i.test(n.title) ? 'flex'
       : /loan/i.test(n.title) ? 'loans'
@@ -788,10 +789,12 @@ export function mountSecurity(root){
         <button class="sw ${s.credId ? 'on' : ''}" data-bio aria-label="Fingerprint"></button></div>
       <div class="toggle"><div><div class="t">Privacy mode</div></div>
         <button class="sw ${s.priv ? 'on' : ''}" data-priv aria-label="Privacy mode"></button></div>
-      <div class="toggle"><div><div class="t">Round-ups</div></div>
+      <div class="toggle"><div><div class="t">Round-ups</div>
+        <div class="d">${roundupPotName() || 'No pot selected'}</div></div>
         <button class="sw ${s.roundups ? 'on' : ''}" data-round aria-label="Round-ups"></button></div>
       <div class="field"><label for="newPin">New passcode</label><input id="newPin" maxlength="4" inputmode="numeric"></div>
-      <button class="btn" data-pin>Update</button></div>`;
+      <button class="btn" data-pin>Update</button></div>
+      <p class="note">Round-ups go to ${esc(roundupPotName() || 'whichever pot you choose on its page')}. Spare change only, never more than your balance.</p>`;
   };
   root.addEventListener('click', async e => {
     if (e.target.closest('[data-priv]')){ togglePriv(); return render(); }
@@ -902,4 +905,4 @@ export function mountTxDetail(root, params){
     if (e.target.closest('[data-del]')){ deleteTx(t.id); toast('Deleted'); go('acc'); }
   });
   render();
-            }
+    }
