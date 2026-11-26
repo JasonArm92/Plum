@@ -6,8 +6,8 @@
 <title>Monzo</title>
 <meta name="theme-color" content="#FF4F40">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="monzo-tile.svg?v=15" type="image/svg+xml">
-<link rel="apple-touch-icon" href="monzo-maskable.svg?v=15">
+<link rel="icon" href="monzo-tile.svg?v=16" type="image/svg+xml">
+<link rel="apple-touch-icon" href="monzo-maskable.svg?v=16">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Monzo">
@@ -100,9 +100,24 @@ section.on{display:block;animation:fade .2s ease}
 .h-sec h2{font-size:25px;font-weight:700;letter-spacing:-.035em;flex:1;margin:0;line-height:1.2}
 .h-sec h2.sm{font-size:18px;letter-spacing:-.02em}
 .h-sec button{font-size:13.5px;font-weight:600;color:var(--coral-d)}
+.h-sec .more{color:var(--ink2)}
 .more{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--ink2);flex:0 0 auto}
 .more:active{background:var(--card2)}
 .more svg{width:18px;height:18px;fill:currentColor}
+
+.panel{background:var(--card2);border:1px solid var(--line);border-radius:var(--r5);padding:18px;box-shadow:var(--sh1);margin:12px 0}
+.panel--list{padding:2px 16px}
+.panel--plain{background:var(--card)}
+.panel h2{font-size:18px;font-weight:700;letter-spacing:-.02em;margin:0 0 3px}
+.panel .sub{font-size:14px;color:var(--ink2);margin:0 0 12px}
+.bal-title{font-size:34px;font-weight:700;letter-spacing:-.035em;line-height:1.1;margin:4px 0 10px;font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:center;gap:13px;width:100%;text-align:left;padding:14px 2px;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.row:active{background:var(--card3)}
+.row .mid{flex:1;min-width:0}
+.row .nm{font-weight:600;font-size:16px;display:block;letter-spacing:-.012em}
+.row .sub{font-size:13px;color:var(--ink2);margin:0;display:block}
+.row > svg{width:21px;height:21px;stroke:var(--ink2);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 
 .acct{position:relative;display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
  border-radius:var(--r5);padding:16px;margin:12px 0;box-shadow:var(--sh1)}
@@ -142,8 +157,8 @@ section.on{display:block;animation:fade .2s ease}
 .day__l{font-size:12.5px;font-weight:600;color:var(--ink3);padding:10px 0 4px}
 .txlist{list-style:none;margin:0;padding:0}
 .tx{display:flex;align-items:center;gap:12px;padding:10px 4px;width:100%;text-align:left;border-radius:var(--r2)}
-.tx:active{background:var(--card2)}
-.lg{width:44px;height:44px;border-radius:50%;flex:0 0 auto;overflow:hidden;background:var(--card2);
+.tx:active{background:var(--card3)}
+.lg{width:44px;height:44px;border-radius:50%;flex:0 0 auto;overflow:hidden;background:var(--card3);
  display:grid;place-items:center;font-size:12.5px;font-weight:700;color:var(--ink2)}
 .lg img{width:100%;height:100%;object-fit:cover;background:#fff}
 .lg--lg{width:64px;height:64px;border-radius:18px;font-size:17px}
@@ -155,13 +170,13 @@ section.on{display:block;animation:fade .2s ease}
 .amt.pend{color:var(--ink3);font-weight:500}
 
 .pot{display:flex;align-items:center;gap:12px;padding:11px 4px;width:100%;text-align:left;border-radius:var(--r2)}
-.pot:active{background:var(--card2)}
+.pot:active{background:var(--card3)}
 .pot .art{width:44px;height:44px;border-radius:var(--r2);flex:0 0 auto;display:grid;place-items:center;background:var(--card3);font-size:19px}
 .pot .mid{flex:1;min-width:0}
 .pot .nm{font-weight:500;font-size:16px;display:block}
 .pot .sub{font-size:12.5px;color:var(--ink2)}
 .pot .amt{font-weight:600;font-variant-numeric:tabular-nums;font-size:16px}
-.pot .bar{height:6px;border-radius:var(--pill);background:var(--card3);overflow:hidden;margin-top:6px}
+.pot .bar{height:6px;border-radius:var(--pill);background:var(--card3);overflow:hidden;margin-top:6px;display:block}
 .pot .bar i{display:block;height:100%;background:var(--coral);border-radius:var(--pill)}
 .potstrip{display:flex;gap:10px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}
 .potstrip::-webkit-scrollbar{display:none}
@@ -180,7 +195,7 @@ section.on{display:block;animation:fade .2s ease}
 .person .n{font-size:11.5px;font-weight:600;line-height:1.2;color:var(--ink2)}
 .person--add .av{background:var(--card3);color:var(--ink3);font-size:22px;font-weight:400}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r4);padding:16px 18px;box-shadow:var(--sh1);margin:12px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r5);padding:16px 18px;box-shadow:var(--sh1);margin:12px 0}
 .card h2{font-size:15.5px;margin:0 0 3px;letter-spacing:-.01em}
 .card .sub{font-size:13px;color:var(--ink2);margin:0 0 12px}
 .card--list{padding:4px 12px}
@@ -189,6 +204,7 @@ section.on{display:block;animation:fade .2s ease}
 .kv:last-child{border:0}
 .kv .k{color:var(--ink2)}
 .kv .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.v--pos{color:var(--ok)}.v--neg{color:var(--bad)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .note{font-size:12.5px;color:var(--ink3);margin:9px 2px}
 .empty{text-align:center;color:var(--ink3);font-size:13.5px;padding:28px 12px}
@@ -221,9 +237,10 @@ html[data-theme="dark"] .btn.navy{background:var(--coral);color:#fff}
 .field input,.field select,.field textarea{width:100%;padding:12px 13px;border:1.5px solid transparent;
  border-radius:var(--r3);background:var(--card2);font-size:16px;color:var(--ink)}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--focus);background:var(--card)}
+.panel .field input,.panel .field select,.panel .field textarea{background:var(--card)}
 .pill-row{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none}
 .pill-row::-webkit-scrollbar{display:none}
-.chip{flex:0 0 auto;padding:8px 14px;border-radius:var(--pill);background:var(--card2);font-size:13px;
+.chip{flex:0 0 auto;padding:8px 14px;border-radius:var(--pill);background:var(--card3);font-size:13px;
  font-weight:600;white-space:nowrap;color:var(--ink2)}
 .chip.on{background:var(--navy);color:#fff}
 html[data-theme="dark"] .chip.on{background:var(--coral)}
@@ -249,7 +266,7 @@ body.locked .tabbar{display:none}
 .sheet.on{display:block}
 .sheet .scrim{position:absolute;inset:0;background:rgba(9,23,35,.45)}
 .sheet .panel{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:var(--r5) var(--r5) 0 0;
- padding:18px 18px calc(22px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;max-height:88vh;overflow:auto;animation:up .22s ease;box-shadow:var(--sh3)}
+ padding:18px 18px calc(22px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;max-height:88vh;overflow:auto;animation:up .22s ease;box-shadow:var(--sh3);border:0}
 @keyframes up{from{transform:translateY(18px);opacity:.5}to{transform:none;opacity:1}}
 .sheet h2{margin:0 0 4px;font-size:22px;font-weight:700;letter-spacing:-.03em}
 .sheet .sub{color:var(--ink2);font-size:13.5px;margin:0 0 14px}
@@ -302,7 +319,7 @@ window.onerror = (m, s, l, c) => {
 <div class="offline" id="offbar">You're offline — showing your last saved data</div>
 
 <div id="lock">
-  <img class="mark" src="monzo-mark-white.svg?v=15" alt="">
+  <img class="mark" src="monzo-mark-white.svg?v=16" alt="">
   <h1>Welcome back, Jason</h1><p>Unlock to see your money</p>
   <button class="bio" id="bioBtn" aria-label="Unlock with fingerprint">
     <svg viewBox="0 0 24 24"><path d="M12 3c-3 0-5.6 1.2-7.5 3.1l1.4 1.4C7.4 5.9 9.6 5 12 5s4.6.9 6.1 2.5l1.4-1.4C17.6 4.2 15 3 12 3zm0 3a6 6 0 00-4.2 1.7l1.4 1.4A4 4 0 0112 8a4 4 0 013.9 3.1l1.9-.4A6 6 0 0012 6zm0 4a2 2 0 00-1.4.6l1.4 1.4 1.4-1.4A2 2 0 0012 10zm-5.6.3l-1.9.4A8 8 0 0011 21v-2a6 6 0 00-4.6-8.7zM13 13v8h1a8 8 0 003.7-.9l-.9-1.8A6 6 0 0015 19v-6h-2z"/></svg>
@@ -394,32 +411,73 @@ window.onerror = (m, s, l, c) => {
 </section>
 
 <section data-screen="account">
-  <div class="h-sec"><h2>Account</h2></div>
-  <div class="card card--list">
-    <button class="pot" data-go="accounts"><span class="art">▤</span><span class="mid"><span class="nm">Your accounts</span><span class="sub" id="accCount">1 account</span></span></button>
-    <button class="pot" data-go="personal"><span class="art">☺</span><span class="mid"><span class="nm">Personal details</span><span class="sub">Name, address, contact</span></span></button>
-    <button class="pot" data-go="security"><span class="art">⚿</span><span class="mid"><span class="nm">Security &amp; privacy</span><span class="sub">Passcode, biometrics, sessions</span></span></button>
-    <button class="pot" data-go="statements"><span class="art">▦</span><span class="mid"><span class="nm">Statements</span><span class="sub">PDF and CSV</span></span></button>
-    <button class="pot" data-go="payees"><span class="art">☰</span><span class="mid"><span class="nm">Payees</span><span class="sub">Manage saved payees</span></span></button>
-    <button class="pot" data-go="cards"><span class="art">▭</span><span class="mid"><span class="nm">Cards</span><span class="sub">Virtual cards, freeze</span></span></button>
-    <button class="pot" data-go="credit"><span class="art">◍</span><span class="mid"><span class="nm">Credit insights</span><span class="sub" id="creditSub">Scores and factors</span></span></button>
-    <button class="pot" data-go="connected"><span class="art">⌂</span><span class="mid"><span class="nm">Connected accounts</span><span class="sub" id="connSub">Other banks</span></span></button>
-    <button class="pot" data-go="borrow"><span class="art">£</span><span class="mid"><span class="nm">Borrowing</span><span class="sub">Flex, loans, overdraft</span></span></button>
-    <button class="pot" data-go="plan"><span class="art">★</span><span class="mid"><span class="nm">Plan</span><span class="sub" id="planSub">Max</span></span></button>
-    <button class="pot" data-go="limits"><span class="art">⬍</span><span class="mid"><span class="nm">Limits</span><span class="sub">ATM and card limits</span></span></button>
-    <button class="pot" data-go="insurance"><span class="art">◈</span><span class="mid"><span class="nm">Insurance</span><span class="sub">Travel, phone, breakdown</span></span></button>
-    <button class="pot" data-go="billsback"><span class="art">↩</span><span class="mid"><span class="nm">Billsback</span><span class="sub">Your bills could be on us</span></span></button>
-    <button class="pot" data-go="challenge"><span class="art">◇</span><span class="mid"><span class="nm">Saving Challenge</span><span class="sub">1p to £667.95</span></span></button>
-    <button class="pot" data-go="disputes"><span class="art">!</span><span class="mid"><span class="nm">Disputes</span><span class="sub">Raised queries</span></span></button>
-    <button class="pot" data-go="chat"><span class="art">✉</span><span class="mid"><span class="nm">Support</span><span class="sub">Chat to us</span></span></button>
-    <button class="pot" data-go="appearance"><span class="art">◐</span><span class="mid"><span class="nm">Appearance</span><span class="sub">Theme, text size, motion</span></span></button>
-    <button class="pot" id="editLayout2"><span class="art">⇅</span><span class="mid"><span class="nm">Edit layout</span><span class="sub">Reorder your Home screen</span></span></button>
+  <div class="h-sec"><h2>Account</h2>
+    <button class="more" data-secmenu="account" aria-label="Account options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel panel--list">
+    <button class="row" data-go="accounts"><span class="mid"><span class="nm">Your accounts</span><span class="sub" id="accCount">1 account</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="personal"><span class="mid"><span class="nm">Personal details</span><span class="sub">Name, address, contact</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="joint"><span class="mid"><span class="nm">Joint account</span><span class="sub">Shared with Chloe Brown</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
-  <button class="btn ghost" id="logoutAll" style="margin-bottom:20px">Log out of all devices</button>
+
+  <div class="h-sec"><h2 class="sm">Money</h2>
+    <button class="more" data-secmenu="money" aria-label="Money options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel panel--list">
+    <button class="row" data-go="payees"><span class="mid"><span class="nm">Payees</span><span class="sub">Manage saved payees</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="cards"><span class="mid"><span class="nm">Cards</span><span class="sub">Virtual cards, freeze</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="credit"><span class="mid"><span class="nm">Credit insights</span><span class="sub" id="creditSub">Scores and factors</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="connected"><span class="mid"><span class="nm">Connected accounts</span><span class="sub" id="connSub">Other banks</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="borrow"><span class="mid"><span class="nm">Borrowing</span><span class="sub">Flex, loans, overdraft</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="statements"><span class="mid"><span class="nm">Statements</span><span class="sub">PDF and CSV</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+
+  <div class="h-sec"><h2 class="sm">Cover and extras</h2>
+    <button class="more" data-secmenu="extras" aria-label="Extras options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel panel--list">
+    <button class="row" data-go="plan"><span class="mid"><span class="nm">Plan</span><span class="sub" id="planSub">Max</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="limits"><span class="mid"><span class="nm">Limits</span><span class="sub">ATM and card limits</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="insurance"><span class="mid"><span class="nm">Insurance</span><span class="sub">Travel, phone, breakdown</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="billsback"><span class="mid"><span class="nm">Billsback</span><span class="sub">Your bills could be on us</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="challenge"><span class="mid"><span class="nm">Saving Challenge</span><span class="sub">1p to £667.95</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+
+  <div class="h-sec"><h2 class="sm">App and security</h2>
+    <button class="more" data-secmenu="app" aria-label="App options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel panel--list">
+    <button class="row" data-go="security"><span class="mid"><span class="nm">Security &amp; privacy</span><span class="sub">Passcode, biometrics, sessions</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="appearance"><span class="mid"><span class="nm">Appearance</span><span class="sub">Theme, text size, motion</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" id="editLayout2"><span class="mid"><span class="nm">Edit layout</span><span class="sub">Reorder your Home screen</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="disputes"><span class="mid"><span class="nm">Disputes</span><span class="sub">Raised queries</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
+
+  <div class="h-sec"><h2 class="sm">Support</h2></div>
+  <div class="panel panel--list" style="margin-bottom:18px">
+    <button class="row" data-go="chat"><span class="mid"><span class="nm">Chat to us</span><span class="sub">Usually replies in minutes</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" id="logoutAll"><span class="mid"><span class="nm">Log out of all devices</span><span class="sub">Ends every other session</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+  </div>
 </section>
 
 <section data-screen="acc">
-  <div class="h-sec"><h2 class="sm" id="accTitle">Current account</h2><button id="addTxBtn2">Add</button></div>
+  <div class="h-sec"><h2 id="accTitle">Current account</h2><button id="addTxBtn2">Add</button></div>
   <ul class="txlist" id="accFeed"></ul>
   <button class="btn ghost sm" id="accMore" style="width:100%;margin-top:10px">Load more</button>
 </section>
@@ -430,56 +488,75 @@ window.onerror = (m, s, l, c) => {
 </section>
 
 <section data-screen="invest">
-  <div class="card">
+  <div class="h-sec"><h2>Investments</h2>
+    <button class="more" data-secmenu="invest" aria-label="Investment options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel">
     <div class="sub">Stocks &amp; shares ISA · transferred in October 1992</div>
-    <div class="balance rev" id="isaVal">£0.00</div>
+    <div class="bal-title rev" id="isaVal">£0.00</div>
     <div id="isaProg"></div>
     <div class="kv"><span class="k">Target</span><span class="v rev">£934,745.32</span></div>
     <div class="kv"><span class="k">Allowance used</span><span class="v rev" id="isaUsed">£0.00</span></div>
     <div class="kv"><span class="k">Allowance remaining</span><span class="v rev" id="isaLeft">£20,000.00</span></div>
-    <div class="kv"><span class="k">Platform fee</span><span class="v" id="isaFee">0.25%</span></div></div>
-  <div class="card"><h2>Portfolio</h2><div class="sub">Holdings by value</div><div id="portList"></div></div>
-  <div class="card"><h2>Value over time</h2><div class="sub">Since October 1992</div><div id="isaChart"></div></div>
+    <div class="kv"><span class="k">Platform fee</span><span class="v" id="isaFee">0.25%</span></div>
+    <button class="btn" data-act="payin" style="margin-top:14px">Pay in</button></div>
+  <div class="h-sec"><h2 class="sm">Holdings</h2></div>
+  <div class="panel"><div id="portList"></div></div>
+  <div class="h-sec"><h2 class="sm">Value over time</h2></div>
+  <div class="panel"><div id="isaChart"></div></div>
   <div class="h-sec"><h2 class="sm">Ledger</h2><button data-go="statements">Statements</button></div>
-  <ul class="txlist" id="isaLedger"></ul>
+  <div class="panel panel--list"><ul class="txlist" id="isaLedger"></ul></div>
   <p class="note">Lineage: PEP contributions to April 1999, PEP→ISA transfer, TESSA rollover, then ISA subscriptions. Distributions reinvested inside the wrapper.</p>
 </section>
 
 <section data-screen="statements">
-  <div class="h-sec"><h2>Statements</h2></div>
+  <div class="h-sec"><h2>Statements</h2>
+    <button class="more" data-secmenu="statements" aria-label="Statement options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
   <div class="pill-row"><button class="chip on" data-stmt="acc">Current account</button><button class="chip" data-stmt="isa">ISA</button></div>
-  <div class="card" id="stmtList"></div>
+  <div class="panel panel--list" id="stmtList"></div>
 </section>
 
 <section data-screen="accounts">
   <div class="h-sec"><h2>Your accounts</h2><button id="addAcc">Add</button></div>
-  <div class="card card--list" id="accList"></div>
+  <div class="panel panel--list" id="accList"></div>
   <p class="note">Under-16 accounts are managed by you. Business accounts have separate Lite, Pro and Team tiers.</p>
 </section>
 
 <section data-screen="borrow">
-  <div class="h-sec"><h2>Borrowing</h2></div>
-  <div class="card card--list">
-    <button class="pot" data-go="flex"><span class="art">▰</span><span class="mid"><span class="nm">Monzo Flex</span><span class="sub" id="flexSub">Credit card</span></span></button>
-    <button class="pot" data-go="aura"><span class="art">◉</span><span class="mid"><span class="nm">Monzo Aura</span><span class="sub">Auto-investing card</span></span></button>
-    <button class="pot" data-go="overdraft"><span class="art">◌</span><span class="mid"><span class="nm">Overdraft</span><span class="sub" id="odSub">Not arranged</span></span></button>
-    <button class="pot" data-go="loans"><span class="art">▬</span><span class="mid"><span class="nm">Loans</span><span class="sub">Up to £35,000</span></span></button>
+  <div class="h-sec"><h2>Borrowing</h2>
+    <button class="more" data-secmenu="borrow" aria-label="Borrowing options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel"><div class="sub">Total owed</div>
+    <div class="bal-title rev" id="borrowOwed">£0.00</div>
+    <div class="kv"><span class="k">Flex used</span><span class="v rev" id="borrowFlex">£0.00</span></div>
+    <div class="kv"><span class="k">Loans outstanding</span><span class="v rev" id="borrowLoans">£0.00</span></div>
+    <div class="kv"><span class="k">Overdraft used</span><span class="v rev" id="borrowOd">£0.00</span></div></div>
+  <div class="h-sec"><h2 class="sm">Borrow from us</h2></div>
+  <div class="panel panel--list">
+    <button class="row" data-go="flex"><span class="mid"><span class="nm">Monzo Flex</span><span class="sub" id="flexSub">Credit card</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="aura"><span class="mid"><span class="nm">Monzo Aura</span><span class="sub">Auto-investing card</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="overdraft"><span class="mid"><span class="nm">Overdraft</span><span class="sub" id="odSub">Not arranged</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="row" data-go="loans"><span class="mid"><span class="nm">Loans</span><span class="sub">Up to £35,000</span></span>
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
 </section>
 
 <section data-screen="flex">
-  <div class="h-sec"><h2>Monzo Flex</h2></div>
-  <div class="card"><div class="sub">Available to spend</div><div class="balance rev" id="flexAvail">£0.00</div>
+  <div class="h-sec"><h2>Monzo Flex</h2>
+    <button class="more" data-secmenu="flex" aria-label="Flex options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel"><div class="sub">Available to spend</div><div class="bal-title rev" id="flexAvail">£0.00</div>
     <div class="meter"><i id="flexMeter"></i></div>
     <div class="kv"><span class="k">Limit</span><span class="v rev" id="flexLimit"></span></div>
     <div class="kv"><span class="k">Representative APR</span><span class="v">29%</span></div>
-    <button class="btn" id="flexNew" style="margin-top:12px">Pay with Flex</button></div>
-  <div class="card"><h2>Plans</h2><div class="sub">3 months interest free · 6 and 12 at 29%</div><div id="flexPlans"></div></div>
+    <button class="btn" id="flexNew" style="margin-top:14px">Pay with Flex</button></div>
+  <div class="h-sec"><h2 class="sm">Plans</h2></div>
+  <div class="panel"><div class="sub">3 months interest free · 6 and 12 at 29%</div><div id="flexPlans"></div></div>
 </section>
 
 <section data-screen="aura">
   <div class="h-sec"><h2>Monzo Aura</h2></div>
-  <div class="card"><div class="sub">£15 per month · auto-investing cashback card</div>
+  <div class="panel"><div class="sub">£15 per month · auto-investing cashback card</div>
     <div class="kv"><span class="k">Status</span><span class="v" id="auraStatus"></span></div>
     <div class="kv"><span class="k">Cashback this month</span><span class="v rev" id="auraCash"></span></div>
     <div class="kv"><span class="k">Lounge passes left</span><span class="v" id="auraLounge"></span></div>
@@ -492,69 +569,80 @@ window.onerror = (m, s, l, c) => {
 
 <section data-screen="overdraft">
   <div class="h-sec"><h2>Overdraft</h2></div>
-  <div class="card"><div class="sub">Arranged limit up to £2,000</div><div class="balance rev" id="odLimit">£0.00</div>
+  <div class="panel"><div class="sub">Arranged limit up to £2,000</div><div class="bal-title rev" id="odLimit">£0.00</div>
     <div class="kv"><span class="k">Rate</span><span class="v" id="odRate">—</span></div>
     <div class="kv"><span class="k">Used</span><span class="v rev" id="odUsed">£0.00</span></div>
-    <div id="odChoices"></div>
+    <div id="odChoices" class="pill-row"></div>
     <button class="btn" id="odApply" style="margin-top:12px">Apply</button></div>
   <p class="note">19%, 29% or 39% EAR variable depending on your credit file. No fee for rejected payments.</p>
 </section>
 
 <section data-screen="loans">
   <div class="h-sec"><h2>Loans</h2></div>
-  <div class="card"><div class="sub">Borrow £1,000 to £35,000</div>
+  <div class="panel"><div class="sub">Borrow £1,000 to £35,000</div>
     <div class="field"><label>Amount</label><input id="lnAmt" type="number" min="1000" max="35000" step="500" value="8000"></div>
     <div class="field"><label>Term (months)</label><select id="lnTerm"><option>12</option><option selected>24</option><option>36</option><option>48</option><option>60</option></select></div>
     <div class="kv"><span class="k">APR</span><span class="v" id="lnApr">—</span></div>
     <div class="kv"><span class="k">Monthly repayment</span><span class="v rev" id="lnMonth">—</span></div>
     <div class="kv"><span class="k">Total repayable</span><span class="v rev" id="lnTotal">—</span></div>
     <button class="btn" id="lnApply" style="margin-top:12px">Apply</button></div>
-  <div class="card"><h2>Your loans</h2><div class="sub">Active agreements · repaid monthly</div><div id="lnList"></div></div>
+  <div class="h-sec"><h2 class="sm">Your loans</h2></div>
+  <div class="panel"><div class="sub">Active agreements · repaid monthly</div><div id="lnList"></div></div>
 </section>
 
 <section data-screen="connected">
-  <div class="h-sec"><h2>Connected accounts</h2></div>
-  <div class="card"><h2>Add a bank</h2><div class="sub">Open Banking · renews every 90 days</div>
+  <div class="h-sec"><h2>Connected accounts</h2>
+    <button class="more" data-secmenu="connected" aria-label="Connection options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel"><h2>Add a bank</h2><div class="sub">Open Banking · renews every 90 days</div>
     <div class="pill-row" id="bankChips"></div></div>
-  <div class="card"><h2>Connected</h2><div class="sub">Balances show in Grow</div><div id="connList"></div></div>
+  <div class="h-sec"><h2 class="sm">Connected</h2></div>
+  <div class="panel"><div class="sub">Balances show in Grow</div><div id="connList"></div></div>
 </section>
 
 <section data-screen="credit">
-  <div class="h-sec"><h2>Credit insights</h2></div>
-  <div class="card" id="creditBox"></div>
-  <div class="card"><h2>What's affecting your score</h2><div id="creditFactors"></div></div>
+  <div class="h-sec"><h2>Credit insights</h2>
+    <button class="more" data-secmenu="credit" aria-label="Credit options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel" id="creditBox"></div>
+  <div class="h-sec"><h2 class="sm">What's affecting your score</h2></div>
+  <div class="panel" id="creditFactors"></div>
 </section>
 
 <section data-screen="challenge">
-  <div class="h-sec"><h2>Saving Challenge</h2></div>
-  <div class="card"><div class="sub">Start at 1p, finish at £667.95</div><div class="balance rev" id="chBal">£0.00</div>
+  <div class="h-sec"><h2>Saving Challenge</h2>
+    <button class="more" data-secmenu="challenge" aria-label="Challenge options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel"><div class="sub">Start at 1p, finish at £667.95</div><div class="bal-title rev" id="chBal">£0.00</div>
     <div class="meter"><i id="chMeter"></i></div>
     <div class="kv"><span class="k">Day</span><span class="v" id="chDay"></span></div>
     <div class="kv"><span class="k">Today's amount</span><span class="v rev" id="chToday"></span></div>
     <div class="kv"><span class="k">Interest</span><span class="v" id="chRate"></span></div>
-    <button class="btn" id="chSave" style="margin-top:12px">Save today's amount</button></div>
+    <button class="btn" id="chSave" style="margin-top:14px">Save today's amount</button></div>
   <p class="note">5% AER variable on challenge savings for Extra, Perks and Max.</p>
 </section>
 
 <section data-screen="billsback">
-  <div class="h-sec"><h2>Billsback</h2></div>
-  <div class="card"><div class="sub">Your bills could be on us — up to £150 per bill</div>
+  <div class="h-sec"><h2>Billsback</h2>
+    <button class="more" data-secmenu="billsback" aria-label="Billsback options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel"><div class="sub">Your bills could be on us — up to £150 per bill</div>
     <div class="kv"><span class="k">Eligible</span><span class="v" id="bbElig"></span></div>
     <div class="toggle"><div><div class="t">Opt in this month</div><div class="d">At least 1,000 bills paid back monthly</div></div>
       <button class="sw" id="bbSw" aria-label="Opt in"></button></div>
     <button class="btn" id="bbDraw" style="margin-top:14px">Enter this month's draw</button></div>
-  <div class="card"><h2>Eligible bills this month</h2><div class="sub">From the agreed provider list</div><div id="bbBills"></div></div>
-  <div class="card"><h2>Results</h2><div id="bbList"></div></div>
+  <div class="h-sec"><h2 class="sm">Eligible bills this month</h2></div>
+  <div class="panel"><div class="sub">From the agreed provider list</div><div id="bbBills"></div></div>
+  <div class="h-sec"><h2 class="sm">Results</h2></div>
+  <div class="panel"><div id="bbList"></div></div>
 </section>
 
 <section data-screen="insurance">
-  <div class="h-sec"><h2>Insurance</h2></div>
-  <div class="card" id="insBox"></div>
+  <div class="h-sec"><h2>Insurance</h2>
+    <button class="more" data-secmenu="insurance" aria-label="Insurance options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel" id="insBox"></div>
 </section>
 
 <section data-screen="personal">
-  <div class="h-sec"><h2>Personal details</h2></div>
-  <div class="card">
+  <div class="h-sec"><h2>Personal details</h2>
+    <button class="more" data-secmenu="personal" aria-label="Details options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel">
     <div class="field"><label for="pName">Full name</label><input id="pName"></div>
     <div class="field"><label for="pDob">Date of birth</label><input id="pDob" type="date"></div>
     <div class="field"><label for="pEmail">Email</label><input id="pEmail" type="email"></div>
@@ -569,22 +657,25 @@ window.onerror = (m, s, l, c) => {
 </section>
 
 <section data-screen="security">
-  <div class="h-sec"><h2>Security</h2></div>
-  <div class="card">
+  <div class="h-sec"><h2>Security</h2>
+    <button class="more" data-secmenu="security" aria-label="Security options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel">
     <div class="toggle"><div><div class="t">Fingerprint unlock</div><div class="d" id="bioState">Not set up</div></div><button class="sw" id="bioSw" aria-label="Biometric"></button></div>
     <div class="toggle"><div><div class="t">Privacy mode</div><div class="d">Blur balances until tapped</div></div><button class="sw" id="privSw" aria-label="Privacy"></button></div>
     <div class="toggle"><div><div class="t">Round-ups</div><div class="d">Round card spend to the nearest £1</div></div><button class="sw" id="roundSw" aria-label="Round ups"></button></div>
     <div class="field"><label for="newPin">Change passcode (4 digits)</label><input id="newPin" inputmode="numeric" maxlength="4" placeholder="••••"></div>
     <button class="btn" id="savePin">Update passcode</button></div>
-  <div class="card"><h2>Active sessions</h2><div class="sub">Where you're signed in</div>
+  <div class="h-sec"><h2 class="sm">Active sessions</h2></div>
+  <div class="panel"><div class="sub">Where you're signed in</div>
     <div class="kv"><span class="k">This device · Galaxy S24 Ultra</span><span class="v"><span class="badge ok">Current</span></span></div>
     <div class="kv"><span class="k">Chrome · Windows</span><span class="v">Stockton-on-Tees</span></div>
     <div class="kv"><span class="k">Monzo app · iPad</span><span class="v">Stockton-on-Tees</span></div></div>
 </section>
 
 <section data-screen="appearance">
-  <div class="h-sec"><h2>Appearance</h2></div>
-  <div class="card">
+  <div class="h-sec"><h2>Appearance</h2>
+    <button class="more" data-secmenu="appearance" aria-label="Appearance options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel">
     <div class="toggle"><div><div class="t">Theme</div><div class="d">Light, dark or match device</div></div>
       <div class="pill-row" style="padding:0"><button class="chip" data-theme="light">Light</button>
         <button class="chip" data-theme="dark">Dark</button><button class="chip" data-theme="auto">Auto</button></div></div>
@@ -597,22 +688,24 @@ window.onerror = (m, s, l, c) => {
 
 <section data-screen="cards">
   <div class="h-sec"><h2>Cards</h2><button id="newCard">New virtual</button></div>
-  <div class="card" id="cardList"></div><p class="note" id="vcNote"></p>
+  <div class="panel panel--list" id="cardList"></div><p class="note" id="vcNote"></p>
 </section>
 
 <section data-screen="plan">
-  <div class="h-sec"><h2>Plans</h2></div>
+  <div class="h-sec"><h2>Plans</h2>
+    <button class="more" data-secmenu="plan" aria-label="Plan options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
   <div id="planList"></div>
 </section>
 
 <section data-screen="limits">
-  <div class="h-sec"><h2>Limits</h2></div>
-  <div class="card" id="limitBox"></div>
+  <div class="h-sec"><h2>Limits</h2>
+    <button class="more" data-secmenu="limits" aria-label="Limit options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel" id="limitBox"></div>
 </section>
 
 <section data-screen="payees">
   <div class="h-sec"><h2>Payees</h2><button id="addPayee">Add</button></div>
-  <div class="card card--list" id="payeeList"></div>
+  <div class="panel panel--list" id="payeeList"></div>
 </section>
 
 <section data-screen="search">
@@ -629,34 +722,47 @@ window.onerror = (m, s, l, c) => {
 </section>
 
 <section data-screen="chat">
-  <div class="h-sec"><h2>Support</h2></div>
-  <div class="card" id="chatList"></div>
+  <div class="h-sec"><h2>Support</h2>
+    <button class="more" data-secmenu="chat" aria-label="Support options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel" id="chatList"></div>
   <div style="display:flex;gap:8px;margin-bottom:20px">
     <input id="chatIn" placeholder="Type a message" style="flex:1;padding:12px 13px;border:1.5px solid transparent;border-radius:var(--r3);background:var(--card2);color:var(--ink)">
     <button class="btn sm" id="chatSend">Send</button></div>
 </section>
 
 <section data-screen="disputes">
-  <div class="h-sec"><h2>Disputes</h2></div>
-  <div class="card" id="dispList"></div>
+  <div class="h-sec"><h2>Disputes</h2>
+    <button class="more" data-secmenu="disputes" aria-label="Dispute options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel panel--list" id="dispList"></div>
 </section>
 
 <section data-screen="joint">
-  <div class="h-sec"><h2>Joint account</h2></div>
-  <div class="card"><div class="sub">Shared with Chloe Brown · FSCS to £240,000</div>
-    <div class="balance rev" id="jointBal">£0.00</div>
+  <div class="h-sec"><h2>Joint account</h2>
+    <button class="more" data-secmenu="joint" aria-label="Joint options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel">
+    <div class="sub">Shared with Chloe Brown · FSCS to £240,000</div>
+    <div class="bal-title rev" id="jointBal">£0.00</div>
+    <div class="row2" style="margin:6px 0 14px">
+      <button class="btn" data-act="add">Add money</button>
+      <button class="btn ghost" data-go="payees">Send</button></div>
     <div class="kv"><span class="k">Contributions this month</span><span class="v rev" id="jointIn">£0.00</span></div>
     <div class="kv"><span class="k">Joint bills</span><span class="v rev" id="jointOut">£0.00</span></div></div>
+  <div class="h-sec"><h2 class="sm">Who's on it</h2></div>
+  <div class="panel panel--list">
+    <div class="row"><span class="mid"><span class="nm">Jason Armstrong</span><span class="sub">You · full access</span></span><span class="badge ok">Owner</span></div>
+    <div class="row"><span class="mid"><span class="nm">Chloe Brown</span><span class="sub">Full access</span></span><span class="badge">Joint</span></div></div>
 </section>
 
 <section data-screen="potdetail">
-  <div class="h-sec"><h2 class="sm" id="pdName">Pot</h2><button id="pdEdit">Edit</button></div>
-  <div class="card"><div class="balance rev" id="pdBal">£0.00</div>
+  <div class="h-sec"><h2 id="pdName">Pot</h2>
+    <button class="more" data-secmenu="potdetail" aria-label="Pot options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
+  <div class="panel"><div class="bal-title rev" id="pdBal">£0.00</div>
     <div class="sub" id="pdGoal"></div><div class="meter"><i id="pdBar"></i></div>
     <div class="kv" id="pdRateRow"><span class="k">Interest</span><span class="v" id="pdRate"></span></div>
-    <div class="row2" style="margin-top:12px"><button class="btn" id="pdAdd">Add money</button>
+    <div class="row2" style="margin-top:14px"><button class="btn" id="pdAdd">Add money</button>
       <button class="btn ghost" id="pdWithdraw">Withdraw</button></div></div>
-  <div id="pdHist" style="padding:4px 0"></div>
+  <div class="h-sec"><h2 class="sm">Pot activity</h2></div>
+  <div class="panel panel--list"><div id="pdHist"></div></div>
 </section>
 
 <section data-screen="txdetail">
@@ -1330,7 +1436,7 @@ function renderPlan(){
   setTxt('planSub', plan().name);
   const host = document.getElementById('planList'); if (!host) return;
   host.innerHTML = Object.entries(PLANS).map(([k,p])=>`
-    <div class="card" style="border:2px solid ${k===S.plan?'var(--coral)':'var(--line)'}">
+    <div class="panel" style="border:2px solid ${k===S.plan?'var(--coral)':'var(--line)'}">
       <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">${p.name}</h2>
         <b>${p.price?'£'+p.price+'/mo':'Free'}</b></div>
       <div class="sub">${p.age} · ${p.min?p.min+' month minimum':'No minimum'}</div>
@@ -1381,6 +1487,10 @@ function renderAccounts(){
 function renderBorrow(){
   setTxt('flexSub', `${fmt(flexAvail())} available`);
   setTxt('odSub', S.overdraft.limit ? fmt(S.overdraft.limit) + ' arranged' : 'Not arranged');
+  setTxt('borrowOwed', fmt(round2(S.flex.used + loanOwed() + Math.max(0, -balNow()))));
+  setTxt('borrowFlex', fmt(S.flex.used));
+  setTxt('borrowLoans', fmt(loanOwed()));
+  setTxt('borrowOd', fmt(Math.max(0, -balNow())));
 }
 function renderFlex(){
   setTxt('flexAvail', fmt(flexAvail()));
@@ -1539,6 +1649,60 @@ function potsMenu(){
     <button class="sheetrow" data-act="hidepots"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><path d="M3 3l18 18"/></svg><span>Hide pots from Home</span></button>`);
 }
 
+const SECMENU = {
+  account: [['go:accounts','Your accounts'],['act:editLayout','Edit layout'],['go:statements','Statements'],['act:addAcc','Open another account']],
+  money: [['go:payees','Payees'],['go:cards','Cards'],['go:credit','Credit insights'],['go:connected','Connected accounts']],
+  extras: [['go:plan','Compare plans'],['go:limits','Limits'],['go:insurance','Insurance'],['go:billsback','Billsback']],
+  app: [['go:security','Security & privacy'],['go:appearance','Appearance'],['act:logout','Log out of all devices'],['go:chat','Support']],
+  borrow: [['go:flex','Monzo Flex'],['go:loans','Loans'],['go:overdraft','Overdraft'],['go:plan','Plans']],
+  flex: [['act:flexnew','Pay with Flex'],['go:limits','Limits'],['go:plan','Plans'],['go:chat','Flex help']],
+  plan: [['go:billsback','Billsback'],['go:insurance','Insurance'],['go:limits','Limits'],['go:credit','Credit insights']],
+  limits: [['go:cards','Cards'],['go:security','Security'],['go:plan','Plans'],['go:chat','Raise a limit']],
+  insurance: [['go:plan','Plans'],['act:claim','Make a claim'],['go:chat','Policy help'],['go:personal','Personal details']],
+  billsback: [['go:plan','Plans'],['go:save','Savings pots'],['go:chat','How it works'],['go:statements','Statements']],
+  challenge: [['go:pots','All pots'],['go:save','Save'],['go:chat','How it works'],['go:trends','Trends']],
+  connected: [['go:grow','Grow'],['act:refreshconn','Refresh connections'],['go:credit','Credit insights'],['go:chat','Open Banking help']],
+  credit: [['go:plan','Plans'],['go:borrow','Borrowing'],['go:chat','Credit help'],['go:personal','Personal details']],
+  personal: [['go:security','Security'],['go:statements','Statements'],['go:appearance','Appearance'],['go:chat','Support']],
+  security: [['go:appearance','Appearance'],['go:personal','Personal details'],['act:logout','Log out of all devices'],['go:chat','Support']],
+  appearance: [['go:security','Security'],['go:chat','Accessibility help'],['act:motion','Reduce motion'],['go:personal','Personal details']],
+  cards: [['act:newCard','New virtual card'],['go:limits','Limits'],['act:freeze','Freeze card'],['go:chat','Card help']],
+  payees: [['go:pay','Send money'],['act:addPayee','Add a payee'],['go:statements','Statements'],['go:chat','Payee help']],
+  statements: [['go:chat','Email a statement'],['go:acc','Activity'],['go:invest','ISA'],['go:personal','Personal details']],
+  accounts: [['act:addAcc','Add an account'],['go:statements','Statements'],['go:personal','Personal details'],['go:chat','Support']],
+  disputes: [['go:chat','Support'],['go:search','Search activity'],['go:statements','Statements'],['go:acc','Activity']],
+  chat: [['go:disputes','Disputes'],['go:statements','Statements'],['go:security','Security'],['go:personal','Personal details']],
+  joint: [['go:payees','Send from joint'],['go:statements','Statements'],['act:add','Add money'],['go:personal','Personal details']],
+  potdetail: [['act:pdEdit','Edit pot'],['go:pots','All pots'],['act:pdAdd','Add money'],['go:save','Save']],
+  invest: [['go:statements','Statements'],['act:payin','Pay in'],['go:grow','Grow'],['go:chat','Investment help']]
+};
+function sectionMenu(k){
+  const rows = SECMENU[k]; if (!rows) return;
+  sheet(`<div class="grab"></div><h2>Options</h2>` + rows.map(([action,label])=>{
+    const icon = action.startsWith('go:') ? '<path d="M9 6l6 6-6 6"/>' : '<path d="M12 5v14M5 12h14"/>';
+    return `<button class="sheetrow" data-secact="${action}"><svg viewBox="0 0 24 24">${icon}</svg><span>${label}</span></button>`;
+  }).join(''));
+}
+function runSecAct(a){
+  const [kind, val] = a.split(':');
+  closeSheet();
+  if (kind === 'go') return go(val);
+  if (val === 'editLayout') return renderLayout();
+  if (val === 'addAcc') return addAccountSheet();
+  if (val === 'logout') return toast('Logged out of all other devices');
+  if (val === 'motion'){ S.motion = !S.motion; save(); applyMotion(); return toast(S.motion?'Motion on':'Motion off'); }
+  if (val === 'newCard') return newVirtualCard();
+  if (val === 'freeze'){ S.frozen = !S.frozen; save(); renderHome(); return toast(S.frozen?'Card frozen':'Card unfrozen'); }
+  if (val === 'addPayee') return payeeSheet(null);
+  if (val === 'pdEdit') return potEditSheet(curPot && curPot.id);
+  if (val === 'pdAdd') return potMoveSheet(curPot && curPot.id, 'in');
+  if (val === 'payin') return payInSheet();
+  if (val === 'flexnew') return flexSheet();
+  if (val === 'claim') return toast('Claim started — check your email');
+  if (val === 'refreshconn'){ S.connected = S.connected.map(c=>({...c, bal: round2(c.bal * (1 + (rnd()-0.45)/40))})); save(); return renderConnected(); }
+  if (val === 'add') return addTxSheet();
+}
+
 let screen = 'home';
 const RENDER = { home:renderHome, save:renderSave, grow:renderGrow, pay:renderPay, trends:renderTrends, account:()=>{},
   acc:renderAcc, pots:renderPots, invest:renderInvest, statements:renderStatements, payees:renderPayees,
@@ -1626,10 +1790,192 @@ function addTxSheet(){
   });
 }
 
+/* ---------- pots ---------- */
+let curPot = null;
+function openPot(id){
+  const p = S.pots.find(x=>x.id===id); if (!p) return; curPot = p;
+  setTxt('pdName', p.name);
+  setTxt('pdBal', fmt(p.bal));
+  setTxt('pdGoal', `${Math.round(p.bal/p.goal*100)}% of ${fmt(p.goal)} goal`);
+  const bar = document.getElementById('pdBar'); if (bar) bar.style.width = Math.min(100, p.bal/p.goal*100) + '%';
+  const rr = document.getElementById('pdRateRow'); if (rr) rr.style.display = p.type==='savings' ? '' : 'none';
+  setTxt('pdRate', plan().ia + '% AER');
+  const h = document.getElementById('pdHist');
+  if (h){ const rows = S.tx.filter(t=>t.name===p.name).slice(0,25);
+    h.innerHTML = rows.length ? `<ul class="txlist">${rows.map(t=>`<li>${txHtml(t)}</li>`).join('')}</ul>`
+      : '<div class="empty">No movement yet</div>'; }
+  on('pdAdd', ()=>potMoveSheet(p.id,'in'));
+  on('pdWithdraw', ()=>potMoveSheet(p.id,'out'));
+  on('pdEdit', ()=>potEditSheet(p.id));
+  go('potdetail');
+}
+function potMoveSheet(id, dir){
+  const p = S.pots.find(x=>x.id===id); if (!p) return;
+  const inDir = dir === 'in';
+  sheet(`<div class="grab"></div><h2>${inDir?'Add to':'Withdraw from'} ${esc(p.name)}</h2>
+    <div class="sub">${inDir ? fmt(balNow())+' available in your balance' : fmt(p.bal)+' in this pot'}</div>
+    <div class="field"><label>Amount</label><input id="pmAmt" type="number" min="0.01" step="0.01"></div>
+    <div class="pill-row">${[10,25,50,100].map(v=>`<button class="chip" data-pm="${v}">${fmt(v)}</button>`).join('')}</div>
+    <button class="btn" id="pmGo">${inDir?'Add money':'Withdraw'}</button>`);
+  document.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{ const i=document.getElementById('pmAmt'); if(i) i.value=b.dataset.pm; });
+  on('pmGo', ()=>{ const v = +document.getElementById('pmAmt').value;
+    if (!v || v<=0) return toast('Enter an amount');
+    moveToPot(p.id, v, inDir?'in':'out'); openPot(p.id); });
+}
+function newPotSheet(){
+  sheet(`<div class="grab"></div><h2>Create a pot</h2><div class="sub">Name it and set yourself a goal</div>
+    <div class="field"><label>Pot name</label><input id="npName" maxlength="24"></div>
+    <div class="field"><label>Goal</label><input id="npGoal" type="number" min="1" step="10" value="500"></div>
+    <div class="field"><label>Type</label><select id="npType">
+      <option value="savings">Savings — earns interest</option>
+      <option value="bills">Bills — for direct debits</option>
+      <option value="regular">Regular — a goal</option></select></div>
+    <button class="btn" id="npGo">Create pot</button>`);
+  on('npGo', ()=>{ const n = document.getElementById('npName').value.trim();
+    const g = +document.getElementById('npGoal').value || 500;
+    if (!n) return toast('Give the pot a name');
+    S.pots.push({id:uid(), name:n, goal:g, bal:0, type:document.getElementById('npType').value});
+    save(); closeSheet(); renderHome(); if (screen==='pots') renderPots(); toast('Pot created'); });
+}
+function potEditSheet(id){
+  const p = S.pots.find(x=>x.id===id); if (!p) return;
+  sheet(`<div class="grab"></div><h2>Edit pot</h2>
+    <div class="field"><label>Pot name</label><input id="peName" value="${esc(p.name)}" maxlength="24"></div>
+    <div class="field"><label>Goal</label><input id="peGoal" type="number" min="1" step="10" value="${p.goal}"></div>
+    <div class="field"><label>Type</label><select id="peType">
+      <option value="savings"${p.type==='savings'?' selected':''}>Savings</option>
+      <option value="bills"${p.type==='bills'?' selected':''}>Bills</option>
+      <option value="regular"${p.type==='regular'?' selected':''}>Regular</option></select></div>
+    <button class="btn" id="peGo">Save changes</button>
+    <button class="btn ghost" id="peDel" style="margin-top:10px">Delete pot</button>`);
+  on('peGo', ()=>{ p.name = document.getElementById('peName').value.trim() || p.name;
+    p.goal = +document.getElementById('peGoal').value || p.goal;
+    p.type = document.getElementById('peType').value;
+    save(); closeSheet(); openPot(p.id); toast('Pot updated'); });
+  on('peDel', ()=>{ if (p.bal > 0){ pushTx(p.name,'Transfers',p.bal,'Pot closed'); }
+    S.pots = S.pots.filter(x=>x.id!==p.id); save(); closeSheet(); go('pots'); toast('Pot deleted'); });
+}
+
+/* ---------- account ---------- */
+function renameSheet(){
+  sheet(`<div class="grab"></div><h2>Rename account</h2>
+    <div class="sub">Only you see this name</div>
+    <div class="field"><label>Account name</label><input id="rnVal" value="${esc(S.acctName)}" maxlength="30"></div>
+    <button class="btn" id="rnGo">Save name</button>`);
+  on('rnGo', ()=>{ const v = document.getElementById('rnVal').value.trim();
+    if (!v) return toast('Enter a name'); S.acctName = v; save(); closeSheet(); renderHome(); toast('Renamed'); });
+}
+function closeSheetConfirm(){
+  sheet(`<div class="grab"></div><h2>Close this account?</h2>
+    <div class="sub">Move your money out first — the balance goes with the account.</div>
+    <div class="kv"><span class="k">Balance</span><span class="v rev">${fmt(balNow())}</span></div>
+    <button class="btn red" id="ccGo" style="margin-top:14px">Close account</button>
+    <button class="btn ghost" id="ccBack" style="margin-top:8px">Keep it</button>`);
+  on('ccBack', ()=>closeSheet());
+  on('ccGo', ()=>{ S.acctClosed = true; save(); closeSheet(); renderHome(); toast('Account closing'); });
+}
+function addAccountSheet(){
+  sheet(`<div class="grab"></div><h2>Open an account</h2>
+    <div class="field"><label>Type</label>
+      <select id="aaType"><option>Under 16</option><option>16-17</option><option>Business</option></select></div>
+    <div class="field"><label>Name</label><input id="aaName"></div>
+    <button class="btn" id="aaGo">Open account</button>`);
+  on('aaGo', ()=>{ const n = document.getElementById('aaName').value.trim(); if (!n) return toast('Enter a name');
+    const type = document.getElementById('aaType').value;
+    S.extraAccounts.push({id:uid(), name:n, type, status:'Active'});
+    save(); closeSheet(); renderAccounts(); notif('Account opened', `${type} account for ${n}`); toast('Account opened'); });
+}
+function newVirtualCard(){
+  const p = plan();
+  if (!p.vcLive) return toast('Virtual cards need Extra, Perks or Max');
+  if (S.vcards.length >= p.vcLive) return toast(`Limit of ${p.vcLive} live virtual cards`);
+  S.vcards.push({id:uid(), label:'Virtual card ' + (S.vcards.length+1), frozen:false, num:'4000 '+ri(1000,9999), created:TODAY});
+  save(); renderCards(); toast('Virtual card created');
+}
+function payInSheet(){
+  const left = Math.max(0, 20000 - S.isa.filter(r=>r.date >= TAX_START && r.type==='ISA').reduce((a,r)=>a+r.contrib,0));
+  sheet(`<div class="grab"></div><h2>Pay into your ISA</h2>
+    <div class="sub">${fmt(left)} of your £20,000 allowance left</div>
+    <div class="field"><label>Amount</label><input id="piAmt" type="number" min="1" step="1"></div>
+    <button class="btn" id="piGo">Pay in</button>`);
+  on('piGo', ()=>{ const v = +document.getElementById('piAmt').value;
+    if (!v || v <= 0) return toast('Enter an amount');
+    if (v > left) return toast('That exceeds your allowance');
+    if (v > balNow()) return toast('Not enough in your balance');
+    pushTx('Vanguard','Investments',-v,'ISA subscription');
+    S.isa.unshift({id:uid(), date:TODAY, type:'ISA', contrib:v, growth:0, value:round2(isaBal()+v), note:'ISA subscription'});
+    save(); closeSheet(); renderInvest(); notif('ISA contribution', `${fmt(v)} paid in`); toast('Paid in'); });
+}
+
+/* ---------- borrow ---------- */
+let flexTerm = 3;
+function flexQuote(){
+  const amtEl = document.getElementById('fxAmt');
+  const amt = amtEl ? (+amtEl.value || 0) : 0;
+  const apr = flexTerm === 3 ? 0 : 29;
+  const monthly = amt ? round2(amt*(1+apr/100*flexTerm/12)/flexTerm) : 0;
+  setTxt('fxApr', flexTerm === 3 ? '0% (interest free)' : '29%');
+  setTxt('fxMonth', fmt(monthly));
+  setTxt('fxTotal', fmt(round2(monthly*flexTerm)));
+  document.querySelectorAll('[data-term]').forEach(b=>b.classList.toggle('on', +b.dataset.term===flexTerm));
+}
+function flexSheet(){
+  flexTerm = 3;
+  sheet(`<div class="grab"></div><h2>Pay with Flex</h2><div class="sub">${fmt(flexAvail())} available</div>
+    <div class="field"><label>Amount</label><input id="fxAmt" type="number" min="1" step="1" value="100"></div>
+    <div class="pill-row">${[3,6,12].map(t=>`<button class="chip ${t===3?'on':''}" data-term="${t}">${t} months</button>`).join('')}</div>
+    <div class="kv"><span class="k">APR</span><span class="v" id="fxApr">0% (interest free)</span></div>
+    <div class="kv"><span class="k">Monthly</span><span class="v rev" id="fxMonth">—</span></div>
+    <div class="kv"><span class="k">Total repayable</span><span class="v rev" id="fxTotal">—</span></div>
+    <button class="btn" id="fxGo" style="margin-top:12px">Create plan</button>`);
+  const a = document.getElementById('fxAmt'); if (a) a.oninput = flexQuote;
+  flexQuote();
+  on('fxGo', ()=>{ const amt = +document.getElementById('fxAmt').value;
+    if (!amt || amt <= 0) return toast('Enter an amount');
+    if (amt > flexAvail()) return toast('That is over your available limit');
+    const apr = flexTerm === 3 ? 0 : 29;
+    const monthly = round2(amt*(1+apr/100*flexTerm/12)/flexTerm);
+    S.flex.plans.unshift({id:uid(), name:'Flex purchase', amount:amt, remaining:round2(monthly*flexTerm),
+      term:flexTerm, monthly});
+    S.flex.used = round2(S.flex.used + amt);
+    pushTx('Monzo Flex','Transfers',-amt,'Paid with Flex');
+    save(); closeSheet(); renderFlex(); notif('Flex plan created', `${fmt(amt)} over ${flexTerm} months`); toast('Plan created'); });
+}
+
+/* ---------- pay ---------- */
+function requestSheet(){
+  if (!S.payees.length) return toast('Add a payee first');
+  sheet(`<div class="grab"></div><h2>Request money</h2><div class="sub">We'll send them a link</div>
+    <div class="field"><label>From</label><select id="rqWho">${S.payees.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></div>
+    <div class="field"><label>Amount</label><input id="rqAmt" type="number" min="1" step="1"></div>
+    <div class="field"><label>What for</label><input id="rqFor" placeholder="Dinner"></div>
+    <button class="btn" id="rqGo">Request</button>`);
+  on('rqGo', ()=>{ const v = +document.getElementById('rqAmt').value;
+    if (!v || v <= 0) return toast('Enter an amount');
+    const p = S.payees.find(x=>x.id===document.getElementById('rqWho').value);
+    const why = document.getElementById('rqFor').value.trim() || 'Payment';
+    closeSheet(); notif('Request sent', `${fmt(v)} from ${p.name} — ${why}`); toast('Request sent'); });
+}
+function splitSheet(){
+  sheet(`<div class="grab"></div><h2>Split a bill</h2><div class="sub">Share a cost with people</div>
+    <div class="field"><label>What for</label><input id="spName" placeholder="Steak night"></div>
+    <div class="field"><label>Total</label><input id="spTot" type="number" min="1" step="1"></div>
+    <div class="field"><label>People</label><input id="spPpl" type="number" min="2" value="2"></div>
+    <button class="btn" id="spGo">Create split</button>`);
+  on('spGo', ()=>{ const n = document.getElementById('spName').value.trim();
+    const tot = +document.getElementById('spTot').value;
+    const ppl = Math.max(2, +document.getElementById('spPpl').value || 2);
+    if (!n || !tot) return toast('Fill in both fields');
+    S.tabs.push({id:uid(), name:n, total:tot, mine:round2(tot/ppl), people:ppl});
+    save(); closeSheet(); renderPay(); notif('Split created', `${n} — ${fmt(tot)} between ${ppl}`); toast('Split created'); });
+}
+
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-go],[data-pot],[data-tx],[data-send],[data-fav],[data-editpay],[data-dl],[data-pdf],[data-stmt],[data-tv],[data-plan],[data-theme],[data-zoom],[data-up],[data-down],[data-eye],[data-close],[data-od],[data-bank],[data-pol],[data-term],[data-amenu],[data-tmenu],[data-pmenu],[data-dclose],[data-act],[data-atm],[data-cat],[data-range],[data-txact]');
+  const t = e.target.closest('[data-go],[data-pot],[data-tx],[data-send],[data-fav],[data-editpay],[data-dl],[data-pdf],[data-stmt],[data-tv],[data-plan],[data-theme],[data-zoom],[data-up],[data-down],[data-eye],[data-close],[data-od],[data-bank],[data-pol],[data-term],[data-amenu],[data-tmenu],[data-pmenu],[data-dclose],[data-act],[data-atm],[data-cat],[data-range],[data-txact],[data-secmenu],[data-secact]');
   if (t){
     if (t.dataset.go) return go(t.dataset.go);
+    if (t.dataset.secmenu) return sectionMenu(t.dataset.secmenu);
+    if (t.dataset.secact) return runSecAct(t.dataset.secact);
     if (t.dataset.dclose !== undefined) closeDrawer();
     if (t.dataset.close !== undefined) return closeSheet();
     if (t.dataset.amenu) return accountMenu(t.dataset.amenu);
@@ -1644,6 +1990,7 @@ document.addEventListener('click', e => {
       if (a==='add') return addTxSheet();
       if (a==='request') return requestSheet();
       if (a==='split') return splitSheet();
+      if (a==='payin') return payInSheet();
       if (a==='freeze'){ S.frozen = !S.frozen; save(); closeSheet(); renderHome();
         return toast(S.frozen?'Card frozen':'Card unfrozen'); }
       if (a==='rename'){ closeSheet(); return renameSheet(); }
@@ -1666,7 +2013,7 @@ document.addEventListener('click', e => {
     if (t.dataset.up || t.dataset.down) return moveLayout(t.dataset.up || t.dataset.down, t.dataset.up ? -1 : 1);
     if (t.dataset.eye){ const s = S.layout.find(x=>x.id===t.dataset.eye); if (s){ s.on = !s.on; save(); renderLayout(); } return; }
     if (t.dataset.send) return sendSheet(t.dataset.send);
-    if (t.dataset.fav){ const p = S.payees.find(x=>x.id===t.dataset.fav); p.fav = !p.fav; save(); return renderPayees(); }
+    if (t.dataset.fav){ const p = S.payees.find(x=>x.id===t.dataset.fav); if (p) p.fav = !p.fav; save(); return renderPayees(); }
     if (t.dataset.editpay) return payeeSheet(t.dataset.editpay);
     if (t.dataset.od){ S.overdraft.pending = +t.dataset.od; return renderOverdraft(); }
     if (t.dataset.bank) return connectBank(t.dataset.bank);
@@ -1684,21 +2031,10 @@ document.addEventListener('click', e => {
   if (id === 'saveHome'){ S.homeValue = +document.getElementById('hv').value||0;
     S.mortgage = +document.getElementById('hm').value||0; save(); renderGrow(); toast('Saved'); }
   if (id === 'newPot' || id === 'newPot2') return newPotSheet();
-  if (id === 'newCard'){ const p = plan();
-    if (!p.vcLive) return toast('Virtual cards need Extra, Perks or Max');
-    if (S.vcards.length >= p.vcLive) return toast(`Limit of ${p.vcLive} live virtual cards`);
-    S.vcards.push({id:uid(), label:'Virtual card ' + (S.vcards.length+1), frozen:false, num:'4000 '+ri(1000,9999), created:TODAY});
-    save(); renderCards(); toast('Virtual card created'); }
+  if (id === 'newCard') return newVirtualCard();
   if (id === 'readAll'){ S.notifs.forEach(n=>{ n.read = true; }); save(); renderNotifs(); toast('All marked read'); }
   if (id === 'logoutAll') toast('Logged out of all other devices');
-  if (id === 'addAcc') sheet(`<div class="grab"></div><h2>Add an account</h2><div class="field"><label>Type</label>
-    <select id="aaType"><option>Under 16</option><option>16-17</option><option>Business</option></select></div>
-    <div class="field"><label>Name</label><input id="aaName"></div>
-    <button class="btn" id="aaGo">Open account</button>`);
-  if (id === 'aaGo'){ const n = document.getElementById('aaName').value.trim(); if (!n) return toast('Enter a name');
-    const type = document.getElementById('aaType').value;
-    S.extraAccounts.push({id:uid(), name:n, type, status:'Active'});
-    save(); closeSheet(); renderAccounts(); notif('Account opened', `${type} account for ${n}`); toast('Account opened'); }
+  if (id === 'addAcc') return addAccountSheet();
   if (id === 'gpeBtn') sheet(`<div class="grab"></div><h2>Get paid early</h2><div class="sub">Salary lands at 4pm the day before it's due.</div>
     <button class="btn" id="gpeGo">Claim early</button>`);
   if (id === 'gpeGo'){ closeSheet(); notif('Paid early','Your salary is available now'); toast('Claimed'); }
@@ -1760,6 +2096,25 @@ document.addEventListener('click', e => {
     save(); renderBillsback(); toast(won ? 'You won ' + fmt(amount) : 'No win this month'); }
 });
 document.addEventListener('change', e => { if (e.target.id === 'lnTerm') renderLoans(); });
+
+function moveLayout(id, dir){
+  const i = S.layout.findIndex(x=>x.id===id); if (i < 0) return;
+  const j = i + dir; if (j < 0 || j >= S.layout.length) return;
+  const [row] = S.layout.splice(i,1); S.layout.splice(j,0,row);
+  save(); renderLayout(); renderHome();
+}
+function switchPlan(k){
+  if (!PLANS[k] || k === S.plan) return;
+  S.plan = k; save();
+  if (screen === 'plan') renderPlan();
+  notif('Plan changed', `You're now on ${PLANS[k].name}`);
+  toast('Now on ' + PLANS[k].name);
+}
+function connectBank(bank){
+  if (S.connected.some(c=>c.bank===bank)) return toast(bank + ' already connected');
+  S.connected.push({id:uid(), bank, kind:'Current account', bal: round2(ri(120,4200))});
+  save(); renderConnected(); notif('Account connected', bank + ' is now linked'); toast(bank + ' connected');
+}
 
 let curTx = null;
 function txAction(a){
@@ -2005,7 +2360,6 @@ on('searchBtn', () => go('search'));
 on('pullBtn', openDrawer);
 on('plusBtn', plusSheet);
 on('backBtn', goBack);
-on('editLayout2', renderLayout);
 
 function plusSheet(){
   sheet(`<div class="grab"></div><h2>Add</h2><div class="sub">What would you like to do?</div>
@@ -2027,7 +2381,7 @@ window.addEventListener('online', ()=>document.body.classList.remove('is-offline
 window.addEventListener('offline', ()=>document.body.classList.add('is-offline'));
 if (!navigator.onLine) document.body.classList.add('is-offline');
 if ('serviceWorker' in navigator) window.addEventListener('load', () => {
-  navigator.serviceWorker.register('sw.js?v=15').catch(()=>{}); });
+  navigator.serviceWorker.register('sw.js?v=16').catch(()=>{}); });
 </script>
 </body>
 </html>
