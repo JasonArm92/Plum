@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en-GB" data-theme="auto">
+<html lang="en-GB" data-theme="auto" data-priv="0">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.webmanifest"/>
 <link rel="icon" href="monzo-mark.svg?v=2"/>
 <link rel="apple-touch-icon" href="monzo-tile.svg?v=2"/>
-<script>try{var _t=JSON.parse(localStorage.getItem('monzo_v5')||'{}');document.documentElement.dataset.theme=(_t.prefs&&_t.prefs.theme)||'auto'}catch(e){}</script>
+<script>try{var _t=JSON.parse(localStorage.getItem('monzo_v5')||'{}');document.documentElement.dataset.theme=(_t.prefs&&_t.prefs.theme)||'auto';document.documentElement.dataset.priv=(_t.sec&&_t.sec.privacy)?'1':'0'}catch(e){}</script>
 <style>
 html{
 --coral:#FF4F40;--navy:#091723;--ink:#091723;--muted:#6B7480;--line:#E7E9EB;
@@ -85,6 +85,13 @@ a{color:inherit;text-decoration:none}
 .tiny{font-size:11.5px}
 .center{text-align:center}
 .mono{font-variant-numeric:tabular-nums}
+
+html[data-priv="1"] .amt,
+html[data-priv="1"] .bal,
+html[data-priv="1"] .money{filter:blur(7px);transition:filter .22s var(--ease);will-change:filter}
+html[data-priv="1"] .amt.rev,
+html[data-priv="1"] .bal.rev,
+html[data-priv="1"] .money.rev{filter:none}
 
 .ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:0 0 auto;font-size:16px;font-weight:800;color:var(--ink)}
 .ico.coral{background:var(--coral);color:#fff}
@@ -179,7 +186,7 @@ const MONZO_PATH='M4.244 1.174a.44.44 0 0 0-.271.13l-3.97 3.97l-.001.001c3.884 3
 const TIERS={free:{n:'Free',atm:200,p:0},plus:{n:'Plus',atm:400,p:5},premium:{n:'Premium',atm:600,p:15},max:{n:'Max',atm:600,p:17}};
 
 const DOMAINS={
- 'Kingdom Services Group':'kingdom.co.uk',
+ 'Kingdom Services Group':'kingdom.co.uk','Twinkl Educational Publishing':'twinkl.co.uk','The Works':'theworks.co.uk',
  'Arriva North East':'arrivabus.co.uk','Stagecoach Teesside':'stagecoachbus.com','Northern Rail':'northernrailway.co.uk',
  'National Rail':'nationalrail.co.uk','Tesco Extra Stockton':'tesco.com','Aldi Billingham':'aldi.co.uk',
  'Lidl Norton':'lidl.co.uk','Sainsbury’s Whitehouse Farm':'sainsburys.co.uk','Iceland':'iceland.co.uk',
@@ -245,7 +252,6 @@ const RENT=[
 ];
 const rentFor=ym=>RENT.find(x=>ym>=x.from&&ym<=x.to)||null;
 
-/* side hustle: one-off builds, each followed by a 12-month retainer */
 const PROJECTS=[
  {ym:'2024-11',n:'Stewart Park Cafe',a:600},
  {ym:'2025-01',n:'Ropner Park',a:480},
@@ -271,13 +277,13 @@ const MERCH=[
  {n:'Tesco Extra Stockton',c:'Groceries',lo:[8,68],cad:.9},{n:'Aldi Billingham',c:'Groceries',lo:[6,48],cad:.62},
  {n:'Lidl Norton',c:'Groceries',lo:[5,40],cad:.45},{n:'Sainsbury’s Whitehouse Farm',c:'Groceries',lo:[9,58],cad:.38},
  {n:'Iceland',c:'Groceries',lo:[4,26],cad:.22},{n:'Farmfoods',c:'Groceries',lo:[3,19],cad:.16},
- {n:'Asda Living',c:'Home',lo:[8,52],cad:.18},{n:'B&M Bargains',c:'Home',lo:[3,28],cad:.28},
+ {n:'Asda Living',c:'Home',lo:[8,52],cad:.12},{n:'B&M Bargains',c:'Home',lo:[3,28],cad:.2},
  {n:'Poundland',c:'Home',lo:[2,14],cad:.26},{n:'Home Bargains',c:'Home',lo:[3,22],cad:.22},
- {n:'Wellington Square',c:'Shopping',lo:[8,64],cad:.26},{n:'Teesside Park',c:'Shopping',lo:[12,120],cad:.2},
- {n:'Cleveland Centre',c:'Shopping',lo:[5,48],cad:.22},{n:'The Thomas Sheraton',c:'Eating out',lo:[18,62],cad:.24},
- {n:'Costa Stockton High St',c:'Eating out',lo:[3,11],cad:.4},{n:'Greggs',c:'Eating out',lo:[2,9],cad:.45},
+ {n:'Wellington Square',c:'Shopping',lo:[8,64],cad:.18},{n:'Teesside Park',c:'Shopping',lo:[12,120],cad:.13},
+ {n:'Cleveland Centre',c:'Shopping',lo:[5,48],cad:.15},{n:'The Thomas Sheraton',c:'Eating out',lo:[18,62],cad:.18},
+ {n:'Costa Stockton High St',c:'Eating out',lo:[3,11],cad:.3},{n:'Greggs',c:'Eating out',lo:[2,9],cad:.34},
  {n:'Nando’s Teesside Park',c:'Eating out',lo:[22,58],cad:.14},{n:'Pizza Hut',c:'Eating out',lo:[18,44],cad:.1},
- {n:'McDonald’s',c:'Eating out',lo:[6,21],cad:.32},{n:'KFC',c:'Eating out',lo:[6,19],cad:.2},
+ {n:'McDonald’s',c:'Eating out',lo:[6,21],cad:.22},{n:'KFC',c:'Eating out',lo:[6,19],cad:.2},
  {n:'Bella Italia',c:'Eating out',lo:[20,48],cad:.07},{n:'Butterfly World',c:'Kids',lo:[9,26],cad:.07},
  {n:'Preston Park Museum',c:'Kids',lo:[4,18],cad:.07},{n:'Stewart Park Cafe',c:'Eating out',lo:[4,14],cad:.12},
  {n:'Ropner Park',c:'Kids',lo:[2,8],cad:.09},{n:'Middlesbrough FC',c:'Leisure',lo:[22,58],cad:.06},
@@ -290,11 +296,14 @@ const MERCH=[
  {n:'Specsavers',c:'Health',lo:[25,180],cad:.03},{n:'Hays Travel',c:'Travel',lo:[180,640],cad:.02},
  {n:'B&Q Portrack',c:'Home',lo:[8,86],cad:.12},{n:'Screwfix',c:'Home',lo:[4,52],cad:.1},
  {n:'Shell A19',c:'Transport',lo:[28,62],cad:.16},{n:'BP Wolviston',c:'Transport',lo:[26,58],cad:.12},
- {n:'Cineworld Teesside',c:'Kids',lo:[9,28],cad:.07},{n:'Amazon UK',c:'Shopping',lo:[6,74],cad:.3},
+ {n:'Cineworld Teesside',c:'Kids',lo:[9,28],cad:.07},{n:'Amazon UK',c:'Shopping',lo:[6,74],cad:.2},
  {n:'Smyths Toys',c:'Kids',lo:[9,64],cad:.09},{n:'The Entertainer',c:'Kids',lo:[6,38],cad:.05},
  {n:'Argos Stockton',c:'Shopping',lo:[12,92],cad:.05},{n:'Wilko',c:'Home',lo:[4,34],cad:.1},
- {n:'Clarks Teesside Park',c:'Kids',lo:[18,58],cad:.04},{n:'Matalan',c:'Kids',lo:[8,44],cad:.05},
- {n:'St Aidan’s Primary',c:'Kids',lo:[3,24],cad:.09},{n:'Little Rascals Soft Play',c:'Kids',lo:[5,16],cad:.05}
+ {n:'Clarks Teesside Park',c:'Kids',lo:[18,58],cad:.04,until:'2026-07'},{n:'Matalan',c:'Kids',lo:[8,44],cad:.05},
+ {n:'St Aidan’s Primary',c:'Kids',lo:[3,24],cad:.09,until:'2026-07'},
+ {n:'Twinkl Educational Publishing',c:'Kids',lo:[8,25],cad:.14,from:'2026-07'},
+ {n:'The Works',c:'Kids',lo:[3,15],cad:.12,from:'2026-07'},
+ {n:'Little Rascals Soft Play',c:'Kids',lo:[5,16],cad:.05}
 ];
 const BILLS=[
  {n:'Northumbrian Water',c:'Bills',a:52.00,day:4},{n:'British Gas',c:'Bills',a:148.40,day:8},
@@ -382,10 +391,11 @@ function buildHist(rnd){
   while(d<end){
     const ym=ymOf(d);
     const f=(d.getFullYear()-2015)+(d.getMonth()/12);
-    const sal=Math.round(2380+f*32);
+    const sal=Math.round(2680+f*32);
     const rent=rentFor(ym);
     const household=Math.round(980+f*22+(rnd()-.5)*160);
-    const kids=d.getFullYear()>=2018?Math.round(170+(d.getFullYear()-2018)*22+(rnd()-.5)*60):0;
+    const homeEd=ym>='2026-07';
+    const kids=d.getFullYear()>=2018?Math.round((170+(d.getFullYear()-2018)*22)*(homeEd?0.85:1)+(rnd()-.5)*60):0;
     const side=projectFor(ym).reduce((s,p)=>s+p.a,0)+retainerFor(ym).reduce((s,r)=>s+r.a,0);
     const inc=sal+side+(d.getFullYear()>=2019?102.40:0);
     const out=household+kids+(rent?rent.a:0);
@@ -403,7 +413,9 @@ function buildTx(rnd,startBal){
   for(let d=new Date(from);d<=today;d.setDate(d.getDate()+1)){
     const day=new Date(d),ym=ymOf(day);
     for(const m of MERCH){
-      if(rnd()<m.cad*0.44){
+      if(m.until&&ym>=m.until)continue;
+      if(m.from&&ym<m.from)continue;
+      if(rnd()<m.cad*0.24){
         const amt=+(m.lo[0]+rnd()*(m.lo[1]-m.lo[0])).toFixed(2);
         bal=+(bal-amt).toFixed(2);
         out.push({id:'t'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:m.n,c:m.c,amt:-amt,bal,pend:rnd()<0.04});
@@ -431,12 +443,24 @@ function buildTx(rnd,startBal){
       out.push({id:'c'+day.getTime(),d:dstr(day),t:day.getTime(),n:'HMRC Child Benefit',c:'Income',amt:102.40,bal});
     }
     if(day.getDate()===28){
-      const sal=2600+Math.round(rnd()*180);
+      const sal=2680+Math.round(rnd()*180);
       bal=+(bal+sal).toFixed(2);
       out.push({id:'s'+day.getTime(),d:dstr(day),t:day.getTime(),n:'Kingdom Services Group',c:'Income',amt:sal,bal,sal:true});
     }
   }
   return out.sort((a,b)=>b.t-a.t);
+}
+
+/* targets derived from the last 90 days of real spending */
+function deriveTargets(tx){
+  const cut=Date.now()-90*864e5;
+  const sums={};
+  tx.filter(x=>x.amt<0&&x.t>=cut).forEach(x=>{sums[x.c]=(sums[x.c]||0)+(-x.amt)});
+  const out={};
+  Object.entries(sums).sort((a,b)=>b[1]-a[1]).forEach(([c,v])=>{
+    out[c]=Math.max(15,Math.round((v/3*1.05)/5)*5);
+  });
+  return out;
 }
 
 function fresh(){
@@ -468,7 +492,7 @@ function fresh(){
     acct:{current:+(tx[0]?tx[0].bal:2380).toFixed(2),savings:potTotal,isaCash:ISA_CASH,flexUsed:412.50,flexLimit:3000,odLimit:2000,odDrawn:0},
     sub:'max',
     pots,tx,hist,ledger:{isa},holdings,
-    targets:{Groceries:560,Transport:180,'Eating out':160,Shopping:160,Bills:480,Leisure:120,Kids:230,Rent:850,Health:60,Home:90},
+    targets:deriveTargets(tx),
     dd:BILLS.map((b,i)=>({id:'dd'+i,n:b.n,c:b.c,a:b.a,day:b.day,ref:'MZ'+String(4820011+i).slice(0,6),since:'2019-0'+(1+i%8)+'-1'+(i%9)})),
     sched:[{id:'sc1',n:'Mum',a:150,to:'Mum · 40-11-22 · 7341',freq:'Monthly',next:'2026-01-03',out:true}],
     payees:[{id:'py1',n:'Mum',s:'40-11-22',a:'73412200',i:'M'},{id:'py2',n:'Dan Whitfield',s:'04-00-04',a:'55120987',i:'D'},{id:'py3',n:'Kingdom Services Group',s:'20-33-87',a:'44210933',i:'K'}],
@@ -496,11 +520,11 @@ function load(){
         S.card=S.card||{frozen:false,online:true,atm:600,mag:true};
         S.sec=S.sec||{bio:true,pin:'4821',lock:true,privacy:false,credId:null};
         S.targets=S.targets||{};S.sub=S.sub||'max';
-        applyTheme();return;
+        applyTheme();applyPriv();return;
       }
     }
   }catch(e){}
-  S=fresh();save();applyTheme();
+  S=fresh();save();applyTheme();applyPriv();
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
@@ -510,18 +534,30 @@ function applyTheme(){
   const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);
   const m=$('meta[name="theme-color"]');if(m)m.setAttribute('content',dark?'#0B0F14':'#FF4F40');
 }
+function applyPriv(){document.documentElement.dataset.priv=S?.sec?.privacy?'1':'0'}
 function setTheme(t){S.prefs.theme=t;save();applyTheme();render();toast('Appearance updated')}
 function setMark(k){S.prefs.mark=k;save();render();toast('App icon updated')}
+function togglePriv(){
+  S.sec.privacy=!S.sec.privacy;save();applyPriv();render();
+  toast(S.sec.privacy?'Privacy mode on':'Privacy mode off');
+}
+document.addEventListener('pointerdown',e=>{
+  if(!S?.sec?.privacy)return;
+  const el=e.target.closest('.amt,.bal,.money');
+  if(!el||el.classList.contains('rev'))return;
+  el.classList.add('rev');
+  setTimeout(()=>el.classList.remove('rev'),5000);
+});
 
 const isaBal=()=>S.ledger.isa[S.ledger.isa.length-1].closing;
 const portVal=()=>S.holdings.reduce((s,h)=>s+h.v,0);
 const netWorth=()=>S.acct.current+S.acct.savings+isaBal();
 const budgetTotal=()=>Object.values(S.targets||{}).reduce((a,b)=>a+ +b,0);
-const leftToSpend=()=>{
+const spentThisMonth=()=>{
   const d=new Date(),m=d.getMonth(),y=d.getFullYear();
-  const spent=S.tx.filter(t=>t.amt<0&&!t.sal&&new Date(t.d).getMonth()===m&&new Date(t.d).getFullYear()===y).reduce((s,t)=>s-t.amt,0);
-  return Math.max(0,+(budgetTotal()-spent).toFixed(2));
+  return S.tx.filter(t=>t.amt<0&&new Date(t.d).getMonth()===m&&new Date(t.d).getFullYear()===y).reduce((s,t)=>s-t.amt,0);
 };
+const leftToSpend=()=>Math.max(0,+(budgetTotal()-spentThisMonth()).toFixed(2));
 const tyUsed=()=>{
   const y=taxYear(),a=new Date(y,3,6),b=new Date(y+1,3,6);
   return S.ledger.isa.filter(r=>{const dt=new Date(r.y,r.m,1);return dt>=a&&dt<b}).reduce((s,r)=>s+r.contrib,0);
@@ -667,26 +703,27 @@ function vHome(){
   return `<div class="top">
     <div class="avatar" role="button" tabindex="0" onclick="go('hub')" aria-label="Accounts">JA</div>
     <h1 style="font-size:17px">${esc(S.profile.name.split(' ')[0])}</h1>
+    <button class="iconbtn" onclick="togglePriv()" aria-label="Privacy mode">${S.sec.privacy?'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><path d="M4 4l16 16"/></svg>':'<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>'}</button>
     <button class="iconbtn" onclick="go('search')" aria-label="Search"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
     <button class="iconbtn" onclick="go('notifs')" aria-label="Notifications">🔔</button></div>
   <div class="pad" style="padding-top:8px">
     <div class="hero">
       <div class="lbl">Left to spend</div>
       <div class="bal mono" data-count="${lts}">${gbp(lts)}</div>
-      <div class="sub">of ${gbp0(bud)} monthly budget · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long'})}</div>
+      <div class="sub">of <span class="money">${gbp0(bud)}</span> monthly budget · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long'})}</div>
       <div class="prog navy" style="margin:14px 0 16px"><i style="width:${clamp((1-lts/bud)*100,0,100)}%;background:#FF4F40"></i></div>
       <div style="display:flex;gap:10px">
         <button class="btn coral sm" style="flex:1" onclick="go('move')">Move money</button>
         <button class="btn ghost sm" style="flex:1;background:rgba(255,255,255,.14);color:#fff" onclick="go('pay')">Pay</button>
       </div></div>
     <div class="row" style="padding:16px 4px 8px">
-      <div class="t"><b>Current account</b><span>${gbp(S.acct.current)} available${S.acct.odDrawn?` · ${gbp(S.acct.odDrawn)} overdrawn`:''}</span></div>
+      <div class="t"><b>Current account</b><span><span class="money">${gbp(S.acct.current)}</span> available${S.acct.odDrawn?` · ${gbp(S.acct.odDrawn)} overdrawn`:''}</span></div>
       <button class="badge" onclick="go('card')">Card</button></div></div>
-  <div class="sec" style="display:flex;justify-content:space-between;align-items:center">Pots <button class="badge" onclick="go('savings')">${gbp0(S.acct.savings)}</button></div>
+  <div class="sec" style="display:flex;justify-content:space-between;align-items:center">Pots <button class="badge money" onclick="go('savings')">${gbp0(S.acct.savings)}</button></div>
   <div style="display:flex;gap:10px;overflow-x:auto;padding:0 20px 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch">
     ${S.pots.map(p=>`<button onclick="go('pot','${p.id}')" class="card" style="flex:0 0 132px;text-align:left;background:${p.col}18;border:0">
       <div style="font-size:22px">${p.ico}</div><div style="font-weight:800;font-size:13px;margin-top:6px;line-height:1.2">${esc(p.n)}</div>
-      <div class="mono" style="font-weight:800;font-size:14px;margin-top:4px">${gbp(p.a)}</div></button>`).join('')}
+      <div class="mono money" style="font-weight:800;font-size:14px;margin-top:4px">${gbp(p.a)}</div></button>`).join('')}
     <button class="card" style="flex:0 0 132px;border:1.5px dashed var(--line);background:var(--card);display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)" onclick="newPot()">+ New pot</button></div>
   <div class="sec">Transactions</div>
   <div class="list">${S.tx.slice(0,28).map(txRow).join('')||'<div class="empty"><b>Nothing yet</b></div>'}</div>`;
@@ -694,16 +731,16 @@ function vHome(){
 function vHub(){
   return topbar('Accounts',{back:true})+`<div class="pad">
     <div class="card w" style="margin-bottom:12px"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Net worth</div>
-    <div style="font-size:32px;font-weight:800;letter-spacing:-1.2px" class="mono">${gbp(netWorth())}</div></div>
+    <div class="money" style="font-size:32px;font-weight:800;letter-spacing:-1.2px" class="mono">${gbp(netWorth())}</div></div>
     ${[['Current account',S.acct.current,'home'],['Savings',S.acct.savings,'savings'],['Cash ISA',S.acct.isaCash,'isa'],['Investments',portVal(),'inv'],['Monzo Flex',-S.acct.flexUsed,'flex'],['Overdraft',-S.acct.odDrawn,'od']]
       .map(([n,v,r])=>`<button class="row" style="width:100%;text-align:left" onclick="go('${r}')">
       <span class="t"><b>${n}</b><span>${r==='isa'||r==='inv'?'Opened October 1992':'Monzo'}</span></span>
       <span class="amt ${v<0?'':'pos'}">${gbp(v)}</span></button>`).join('')}
     <div class="sec" style="padding:0;margin-top:24px">Combined ISA wrapper</div>
     <div class="card" style="background:var(--accent-soft)">
-      <div style="display:flex;justify-content:space-between"><b>Stocks &amp; Shares ISA</b><b class="mono">${gbp(isaBal())}</b></div>
-      <div class="small muted" style="margin-top:6px">Cash ${gbp(S.acct.isaCash)} · Invested ${gbp(portVal())}</div>
-      <div class="tiny muted" style="margin-top:6px">${tyLabel(taxYear())} allowance used ${gbp(tyUsed())} of ${gbp(ISA_LIMITS[taxYear()]||20000)}</div></div></div>`;
+      <div style="display:flex;justify-content:space-between"><b>Stocks &amp; Shares ISA</b><b class="money">${gbp(isaBal())}</b></div>
+      <div class="small muted" style="margin-top:6px">Cash <span class="money">${gbp(S.acct.isaCash)}</span> · Invested <span class="money">${gbp(portVal())}</span></div>
+      <div class="tiny muted" style="margin-top:6px">${tyLabel(taxYear())} allowance used <span class="money">${gbp(tyUsed())}</span> of ${gbp(ISA_LIMITS[taxYear()]||20000)}</div></div></div>`;
 }
 function vTrends(){
   const range=S.seen.trendRange||'month';
@@ -721,23 +758,23 @@ function vTrends(){
   return topbar('Trends')+`<div class="pad">
     <div class="seg" style="margin-bottom:16px">${[['week','Week'],['month','Month'],['year','Year'],['all','All time']].map(([k,l])=>`<button class="${range===k?'on':''}" onclick="S.seen.trendRange='${k}';save();render()">${l}</button>`).join('')}</div>
     <div class="card w"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Balance trend</div>
-      <div style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px" class="mono">${gbp(S.acct.current)}</div>${lineChart(bal,320,120)}</div>
+      <div class="money" style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px">${gbp(S.acct.current)}</div>${lineChart(bal,320,120)}</div>
     <div class="card w" style="margin-top:12px"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Spending · ${range==='all'?'since 2015':range}</div>
-      <div style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px" class="mono">${gbp(total)}</div>${barChart(sp.vals,sp.labels,320,110)}</div>
+      <div class="money" style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px">${gbp(total)}</div>${barChart(sp.vals,sp.labels,320,110)}</div>
     <div class="card w" style="margin-top:12px;display:flex;gap:16px;align-items:center">${donut(cd,132)}
       <div style="flex:1">${cd.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px">
         <span style="width:9px;height:9px;border-radius:3px;background:${d.c};flex:0 0 auto"></span>
-        <span style="flex:1">${esc(d.k)}</span><b class="mono">${gbp(d.v)}</b></div>`).join('')}</div></div>
+        <span style="flex:1">${esc(d.k)}</span><b class="money">${gbp(d.v)}</b></div>`).join('')}</div></div>
     <div class="card w" style="margin-top:12px"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Last 35 days</div>${heatmap(cells)}</div>
     <div class="card" style="margin-top:12px;background:var(--accent-soft)"><b>Lifetime performance</b>
-      <div class="small muted" style="margin-top:4px">Since October 1992 · ${gbp(isaBal())} current value</div>
+      <div class="small muted" style="margin-top:4px">Since October 1992 · <span class="money">${gbp(isaBal())}</span> current value</div>
       <div style="margin-top:12px">${lineChart(S.ledger.isa.filter((_,i)=>i%3===0).map(r=>r.closing),320,90)}</div>
       <button class="btn sm" style="margin-top:12px" onclick="go('isa')">Open ISA history</button></div></div>`;
 }
 function vSavings(){
   return topbar('Save')+`<div class="pad">
     <div class="hc"><div style="font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.75">Total saved</div>
-      <div style="font-size:38px;font-weight:800;letter-spacing:-1.5px" class="mono">${gbp(S.acct.savings)}</div>
+      <div class="money" style="font-size:38px;font-weight:800;letter-spacing:-1.5px">${gbp(S.acct.savings)}</div>
       <div class="small" style="opacity:.8;margin-top:4px">Across ${S.pots.length} pots · up to 4.10% AER</div></div>
     <div class="sec" style="padding:0;margin-top:20px">Your pots</div>
     ${S.pots.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="go('pot','${p.id}')">
@@ -759,11 +796,11 @@ function vISA(){
   const used=tyUsed(),lim=ISA_LIMITS[taxYear()]||20000;
   return topbar('Cash ISA',{back:true,right:`<button class="iconbtn" onclick="go('stmts','isa')" aria-label="Statements">📄</button>`})+`<div class="pad">
     <div class="card w"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">ISA wrapper value</div>
-      <div style="font-size:34px;font-weight:800;letter-spacing:-1.4px" class="mono">${gbp(isaBal())}</div>
-      <div class="small muted">Cash ${gbp(S.acct.isaCash)} · Invested ${gbp(portVal())}</div>
+      <div class="money" style="font-size:34px;font-weight:800;letter-spacing:-1.4px">${gbp(isaBal())}</div>
+      <div class="small muted">Cash <span class="money">${gbp(S.acct.isaCash)}</span> · Invested <span class="money">${gbp(portVal())}</span></div>
       <div class="badge imp" style="margin-top:10px">Opened 6 October 1992 · PEP</div></div>
     <div class="card" style="margin-top:12px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>${tyLabel(taxYear())} allowance</span><span class="mono">${gbp(used)} / ${gbp(lim)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>${tyLabel(taxYear())} allowance</span><span class="money">${gbp(used)} / ${gbp(lim)}</span></div>
       <div class="prog" style="margin-top:8px"><i style="width:${clamp(used/lim*100,0,100)}%"></i></div>
       <button class="btn sm" style="margin-top:12px" onclick="isaAdd()" ${used>=lim?'disabled':''}>Add to ISA</button></div>
     <div class="sec" style="padding:0;margin-top:22px">Wrapper history</div>
@@ -773,10 +810,10 @@ function vISA(){
     <div class="sec" style="padding:0;margin-top:22px">Monthly ledger</div>
     <div style="border-top:1px solid var(--line)">${years.map(y=>`<div>
       <button class="yearbtn" onclick="toggleYear(${y})" aria-expanded="${y===open}">
-        <b>${y}</b><span class="small muted" style="flex:1">${gbp(rows.filter(r=>r.y===y).slice(-1)[0].closing)}</span>
+        <b>${y}</b><span class="small muted money" style="flex:1">${gbp(rows.filter(r=>r.y===y).slice(-1)[0].closing)}</span>
         <span class="muted">${y===open?'▾':'▸'}</span></button>
       ${y===open?yr.map(r=>`<div class="ledrow ${r.mkt<-2000?'crisis':''}">
-        <span class="m">${MON[r.m]}</span><span class="v">${gbp(r.closing)}</span><span></span>
+        <span class="m">${MON[r.m]}</span><span class="v money">${gbp(r.closing)}</span><span></span>
         <span class="d">${r.imported?`<span class="badge imp" style="font-size:10px;padding:2px 7px">Imported · ${esc(r.src)}</span>`:`<span class="badge" style="font-size:10px;padding:2px 7px">${r.wrapper}</span>`}
         <span>in ${gbp(r.contrib)}</span><span>div ${gbp(r.div)}</span>
         <span class="${r.mkt<0?'':'pos'}">mkt ${r.mkt<0?'':'+'}${gbp(r.mkt)}</span><span>fee ${gbp(r.fee)}</span></span></div>`).join(''):''}
@@ -787,8 +824,8 @@ function vInv(){
   const total=portVal(),cost=S.holdings.reduce((s,h)=>s+h.cost,0),gain=total-cost;
   return topbar('Investments',{back:true,right:`<button class="iconbtn" onclick="go('stmts','inv')" aria-label="Statements">📄</button>`})+`<div class="pad">
     <div class="card w"><div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Portfolio value</div>
-      <div style="font-size:34px;font-weight:800;letter-spacing:-1.4px" class="mono">${gbp(total)}</div>
-      <div class="small"><span class="pos">+${gbp(gain)}</span> <span class="muted">(${(gain/cost*100).toFixed(1)}%) since 1992</span></div></div>
+      <div class="money" style="font-size:34px;font-weight:800;letter-spacing:-1.4px">${gbp(total)}</div>
+      <div class="small"><span class="pos money">+${gbp(gain)}</span> <span class="muted">(${(gain/cost*100).toFixed(1)}%) since 1992</span></div></div>
     <div class="card" style="margin-top:12px;background:var(--accent-soft)"><div class="row" style="padding:0">
       <span class="t"><b>Reinvested dividends</b><span>Automatic · last paid 1 Dec</span></span><span class="badge ok">On</span></div></div>
     <div class="sec" style="padding:0;margin-top:22px">Holdings · ${S.holdings.length}</div>
@@ -801,8 +838,8 @@ function vHold(name){
   const h=S.holdings.find(x=>x.n===decodeURIComponent(name||''))||S.holdings[0];
   return topbar(h.n,{back:true})+`<div class="pad">
     <div class="card w">${logo(h.n,52)}<div class="tiny muted" style="margin-top:12px">VALUE</div>
-      <div style="font-size:30px;font-weight:800" class="mono">${gbp(h.v)}</div>
-      <div class="small"><span class="${h.v-h.cost>=0?'pos':''}">${h.v-h.cost>=0?'+':''}${gbp(h.v-h.cost)}</span> <span class="muted">(${((h.v-h.cost)/h.cost*100).toFixed(1)}%)</span></div></div>
+      <div class="money" style="font-size:30px;font-weight:800">${gbp(h.v)}</div>
+      <div class="small"><span class="${h.v-h.cost>=0?'pos':''} money">${h.v-h.cost>=0?'+':''}${gbp(h.v-h.cost)}</span> <span class="muted">(${((h.v-h.cost)/h.cost*100).toFixed(1)}%)</span></div></div>
     <div class="card w" style="margin-top:12px"><div class="small muted">Cost basis ${gbp(h.cost)} · ${esc(h.k)} · held in the 1992 wrapper</div></div>
     <button class="btn" style="margin-top:14px" onclick="toast('Order ticket opened')">Buy more</button>
     <button class="btn ghost" style="margin-top:8px" onclick="toast('Sell order placed')">Sell</button></div>`;
@@ -812,7 +849,7 @@ function vPot(id){
   return topbar(p.n,{back:true})+`<div class="pad">
     <div class="card" style="background:${p.col}14;text-align:center;padding:28px">
       <div style="font-size:44px">${p.ico}</div>
-      <div style="font-size:34px;font-weight:800;letter-spacing:-1.4px;margin-top:8px" class="mono">${gbp(p.a)}</div>
+      <div class="money" style="font-size:34px;font-weight:800;letter-spacing:-1.4px;margin-top:8px">${gbp(p.a)}</div>
       <div class="small muted">of ${gbp(p.goal)} goal</div>
       <div class="prog" style="margin-top:12px"><i style="width:${clamp(p.a/p.goal*100,0,100)}%;background:${p.col}"></i></div>
       <div class="tiny muted" style="margin-top:8px">${p.rate.toFixed(2)}% AER${p.lock?` · locked until ${new Date(p.lock).toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`:''}</div></div>
@@ -830,7 +867,7 @@ function vTx(id){
   return topbar('Transaction',{back:true})+`<div class="pad">
     <div class="card" style="text-align:center;padding:26px">
       <div style="display:grid;place-items:center;margin-bottom:12px">${t.amt>0?'<span class="ico coral" style="width:56px;height:56px;font-size:20px">↓</span>':logo(t.n,56)}</div>
-      <div style="font-size:28px;font-weight:800" class="mono">${t.amt>0?'+':''}${gbp(t.amt)}</div>
+      <div class="money" style="font-size:28px;font-weight:800">${t.amt>0?'+':''}${gbp(t.amt)}</div>
       <div style="font-weight:700;margin-top:6px">${esc(t.n)}</div>
       <div class="small muted">${new Date(t.t).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
       ${t.pend?'<div class="badge warn" style="margin-top:10px">Pending</div>':''}
@@ -852,7 +889,7 @@ function vTx(id){
 function vFlex(){
   return topbar('Monzo Flex',{back:true})+`<div class="pad">
     <div class="hc"><div class="tiny" style="font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.8">Available</div>
-      <div style="font-size:34px;font-weight:800;letter-spacing:-1.4px" class="mono">${gbp(S.acct.flexLimit-S.acct.flexUsed)}</div>
+      <div class="money" style="font-size:34px;font-weight:800;letter-spacing:-1.4px">${gbp(S.acct.flexLimit-S.acct.flexUsed)}</div>
       <div class="small" style="opacity:.85">of ${gbp(S.acct.flexLimit)} limit · ${gbp(S.acct.flexUsed)} used</div></div>
     <div class="sec" style="padding:0;margin-top:20px">Plans</div>
     <div class="row"><span class="t"><b>Pay in 3</b><span>0% · 3 monthly instalments</span></span><span class="badge ok">Active</span></div>
@@ -864,7 +901,7 @@ function vFlex(){
 }
 function vOD(){
   return topbar('Overdraft',{back:true})+`<div class="pad">
-    <div class="card w"><div class="tiny muted">Available to use</div><div style="font-size:32px;font-weight:800" class="mono">${gbp(S.acct.odLimit-S.acct.odDrawn)}</div>
+    <div class="card w"><div class="tiny muted">Available to use</div><div class="money" style="font-size:32px;font-weight:800">${gbp(S.acct.odLimit-S.acct.odDrawn)}</div>
       <div class="small muted">${gbp(S.acct.odDrawn)} of ${gbp(S.acct.odLimit)} used · 29% EAR</div>
       <div class="prog" style="margin-top:10px"><i style="width:${S.acct.odDrawn/S.acct.odLimit*100}%"></i></div></div>
     <div style="display:flex;gap:10px;margin-top:14px">
@@ -926,14 +963,16 @@ function vNotifs(){
 function vBudgets(){
   const m=new Date().getMonth();
   const keys=Object.keys(S.targets);
+  const spent=spentThisMonth();
   return topbar('Targets',{back:true})+`<div class="pad">
-    <div class="card w"><div style="display:flex;justify-content:space-between"><b>Total monthly</b><b class="mono">${gbp(budgetTotal())}</b></div>
-      <div class="tiny muted" style="margin-top:6px">Tap any category to change its target. Left to Spend uses this total.</div></div>
+    <div class="card w"><div style="display:flex;justify-content:space-between"><b>Total monthly</b><b class="money">${gbp(budgetTotal())}</b></div>
+      <div class="tiny muted" style="margin-top:6px">${gbp(spent)} spent so far · ${gbp(leftToSpend())} left. Tap a category to change it.</div>
+      <div class="prog" style="margin-top:8px"><i style="width:${clamp(spent/budgetTotal()*100,0,100)}%"></i></div></div>
     ${keys.map(c=>{
       const sp=S.tx.filter(t=>t.c===c&&new Date(t.d).getMonth()===m).reduce((s,t)=>s-t.amt,0),cap=S.targets[c]||0;
       return `<button class="row" style="width:100%;text-align:left" onclick="editTarget('${esc(c)}')">
-        <span class="t"><b>${esc(c)}</b><span>${gbp(sp)} of ${gbp(cap)}</span>
-        <div class="prog" style="margin-top:6px"><i style="width:${cap?clamp(sp/cap*100,0,100):0}%"></i></div></span>
+        <span class="t"><b>${esc(c)}</b><span><span class="money">${gbp(sp)}</span> of ${gbp(cap)}</span>
+        <div class="prog" style="margin-top:6px"><i style="width:${cap?clamp(sp/cap*100,0,100):0}%;background:${sp>cap?'var(--red)':'var(--coral)'}"></i></div></span>
         <span class="muted">›</span></button>`}).join('')}</div>`;
 }
 function editTarget(c){
@@ -948,7 +987,8 @@ function setTarget(c){
 }
 function vProfile(){
   const p=S.profile,t=S.prefs.theme;
-  return topbar('You',{right:`<button class="iconbtn" onclick="cycleTheme()" aria-label="Toggle appearance">${t==='dark'?'🌙':t==='light'?'☀️':'🌗'}</button>
+  return topbar('You',{right:`<button class="iconbtn" onclick="togglePriv()" aria-label="Privacy mode">${S.sec.privacy?'👁️':'👁️‍🗨️'}</button>
+    <button class="iconbtn" onclick="cycleTheme()" aria-label="Toggle appearance">${t==='dark'?'🌙':t==='light'?'☀️':'🌗'}</button>
     <button class="iconbtn" onclick="go('settings')" aria-label="Settings">⚙️</button>`})+`<div class="pad">
     <div class="card w center" style="padding:26px">
       <div class="avatar" style="width:64px;height:64px;margin:0 auto;font-size:22px">JA</div>
@@ -966,7 +1006,7 @@ function vProfile(){
     <button class="row" style="width:100%;text-align:left" onclick="toast('Chat opening…')"><span class="t"><b>Chat with us</b><span>Usually replies in 2 minutes</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('help')"><span class="t"><b>Help centre</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="toast('All systems operational')"><span class="t"><b>Service status</b></span><span class="badge ok">Operational</span></button>
-    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 5.1.0</div></div>`;
+    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 5.2.0</div></div>`;
 }
 function cycleTheme(){const o=['auto','light','dark'],i=o.indexOf(S.prefs.theme||'auto');setTheme(o[(i+1)%3])}
 function vPlan(){
@@ -1011,7 +1051,8 @@ function vSecurity(){
   return topbar('Security & privacy',{back:true})+`<div class="pad">
     <div class="row"><span class="t"><b>Fingerprint unlock</b><span>${S.sec.credId?'Enrolled on this device':'Use the sensor on your S24 Ultra'}</span></span>
       <button class="badge ${S.sec.bio?'ok':''}" onclick="toggleBio()">${S.sec.bio?'On':'Off'}</button></div>
-    <div class="row"><span class="t"><b>Privacy mode</b><span>Hide balances until tapped</span></span><button class="badge ${S.sec.privacy?'ok':''}" onclick="S.sec.privacy=!S.sec.privacy;save();render()">${S.sec.privacy?'On':'Off'}</button></div>
+    <div class="row"><span class="t"><b>Privacy mode</b><span>Blur every balance · tap to reveal</span></span>
+      <button class="badge ${S.sec.privacy?'ok':''}" onclick="togglePriv()">${S.sec.privacy?'On':'Off'}</button></div>
     <div class="row"><span class="t"><b>App PIN</b><span>${'•'.repeat(S.sec.pin.length)}</span></span><button class="badge" onclick="changePin()">Change</button></div>
     <div class="row"><span class="t"><b>Log out of all devices</b></span><span class="muted">›</span></div>
     <div class="sec" style="padding:0;margin-top:20px">Trusted devices</div>
@@ -1093,7 +1134,7 @@ function vHelp(){
 }
 function vMove(){
   return topbar('Move money',{back:true})+`<div class="pad">
-    <div class="card w small muted">From <b>Current account</b> · ${gbp(S.acct.current)}</div>
+    <div class="card w small muted">From <b>Current account</b> · <span class="money">${gbp(S.acct.current)}</span></div>
     ${S.pots.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="potMove('${p.id}',1)"><span class="ico" style="background:${p.col}20">${p.ico}</span><span class="t"><b>${esc(p.n)}</b><span>${gbp(p.a)}</span></span><span class="muted">›</span></button>`).join('')}
     <button class="row" style="width:100%;text-align:left" onclick="isaAdd()"><span class="ico coral">ISA</span><span class="t"><b>Stocks &amp; Shares ISA</b></span><span class="muted">›</span></button></div>`;
 }
@@ -1291,6 +1332,7 @@ function render(){
   view.classList.remove('anim');void view.offsetWidth;view.classList.add('anim');
   $('#tabbar').classList.remove('hide');
   syncTabs();
+  applyPriv();
   if(r==='search')bindSearch();
   if(r==='home')countUp();
 }
