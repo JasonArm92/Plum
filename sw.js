@@ -1,4 +1,4 @@
-const V='monzo-v4-7';
+const V='monzo-v4-8';
 const SHELL=['./','./index.html','./manifest.webmanifest','./monzo-tile.svg','./monzo-mark.svg','./monzo-mark-white.svg','./monzo-maskable.svg'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL).catch(()=>{})))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
