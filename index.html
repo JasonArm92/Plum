@@ -179,6 +179,7 @@ const MONZO_PATH='M4.244 1.174a.44.44 0 0 0-.271.13l-3.97 3.97l-.001.001c3.884 3
 const TIERS={free:{n:'Free',atm:200,p:0},plus:{n:'Plus',atm:400,p:5},premium:{n:'Premium',atm:600,p:15},max:{n:'Max',atm:600,p:17}};
 
 const DOMAINS={
+ 'Kingdom Services Group':'kingdom.co.uk',
  'Arriva North East':'arrivabus.co.uk','Stagecoach Teesside':'stagecoachbus.com','Northern Rail':'northernrailway.co.uk',
  'National Rail':'nationalrail.co.uk','Tesco Extra Stockton':'tesco.com','Aldi Billingham':'aldi.co.uk',
  'Lidl Norton':'lidl.co.uk','Sainsbury’s Whitehouse Farm':'sainsburys.co.uk','Iceland':'iceland.co.uk',
@@ -198,8 +199,8 @@ const DOMAINS={
  'Matalan':'matalan.co.uk','St Aidan’s Primary':'stockton.gov.uk','Little Rascals Soft Play':'littlerascals.co.uk',
  'Northumbrian Water':'nwl.co.uk','British Gas':'britishgas.co.uk','TV Licence':'tvlicensing.co.uk',
  'BT Broadband':'bt.com','Vodafone':'vodafone.co.uk','Sky':'sky.com','EE Mobile':'ee.co.uk','Three':'three.co.uk',
- 'Cleveland Pottery Ltd':'clevelandpottery.co.uk','HMRC Child Benefit':'gov.uk',
- 'Blue Skies Lets':'blueskieslets.co.uk','OpenRent':'openrent.co.uk','Pointens Estate Agents':'pointens.co.uk',
+ 'HMRC Child Benefit':'gov.uk','Blue Skies Lets':'blueskieslets.co.uk','OpenRent':'openrent.co.uk',
+ 'Pointens Estate Agents':'pointens.co.uk','Cleveland Pottery Ltd':'clevelandpottery.co.uk',
  'Vanguard FTSE Global All Cap':'vanguard.com','Vanguard FTSE Dev World ex-UK':'vanguard.com','Vanguard US Equity Index':'vanguard.com',
  'iShares Core MSCI World':'ishares.com','iShares Core FTSE 100':'ishares.com','SPDR S&P 500':'ssga.com',
  'Legal & General UK Index':'legalandgeneral.com','Legal & General International Index':'legalandgeneral.com','HSBC FTSE All-World':'hsbc.com',
@@ -230,6 +231,7 @@ const dstr=d=>d.toISOString().slice(0,10);
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const ymLabel=ym=>MON[+ym.slice(5,7)-1]+' '+ym.slice(0,4);
 const ymOf=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+const addM=(ym,n)=>{const[y,m]=ym.split('-').map(Number);return ymOf(new Date(y,m-1+n,1))};
 
 const ISA_LIMITS={1999:7000,2000:7000,2001:7000,2002:7000,2003:7000,2004:7000,2005:7000,2006:7000,2007:7000,2008:7200,2009:7200,2010:10200,2011:10680,2012:11280,2013:11520,2014:11880,2015:15240,2016:15240,2017:20000,2018:20000,2019:20000,2020:20000,2021:20000,2022:20000,2023:20000,2024:20000,2025:20000,2026:20000};
 const taxYear=()=>{const d=new Date();return (d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6))?d.getFullYear()-1:d.getFullYear()};
@@ -242,6 +244,26 @@ const RENT=[
  {from:'2026-09',to:'9999-12',n:'Blue Skies Lets',a:850,day:12}
 ];
 const rentFor=ym=>RENT.find(x=>ym>=x.from&&ym<=x.to)||null;
+
+/* side hustle: one-off builds, each followed by a 12-month retainer */
+const PROJECTS=[
+ {ym:'2024-11',n:'Stewart Park Cafe',a:600},
+ {ym:'2025-01',n:'Ropner Park',a:480},
+ {ym:'2025-04',n:'Little Rascals Soft Play',a:450},
+ {ym:'2025-07',n:'Stockton Town FC',a:700},
+ {ym:'2025-10',n:'Billingham Forum',a:380},
+ {ym:'2026-01',n:'Stewart Park Cafe',a:950},
+ {ym:'2026-04',n:'Ropner Park',a:520}
+];
+const RETAINERS=[
+ {n:'Little Rascals Soft Play',a:25,start:'2025-05',day:3},
+ {n:'Stockton Town FC',a:40,start:'2025-08',day:3},
+ {n:'Billingham Forum',a:30,start:'2025-11',day:3},
+ {n:'Stewart Park Cafe',a:45,start:'2026-02',day:3},
+ {n:'Ropner Park',a:35,start:'2026-05',day:3}
+];
+const retainerFor=ym=>RETAINERS.filter(r=>ym>=r.start&&ym<=addM(r.start,11));
+const projectFor=ym=>PROJECTS.filter(p=>p.ym===ym);
 
 const MERCH=[
  {n:'Arriva North East',c:'Transport',lo:[2,6],cad:.5},{n:'Stagecoach Teesside',c:'Transport',lo:[2,5],cad:.36},
@@ -314,7 +336,6 @@ function logo(name,size=40){
   return `<span class="ico lg" style="${chip};padding:${Math.round(size*0.15)}px"><img src="https://logo.clearbit.com/${d}" alt="" loading="lazy" decoding="async" data-d="${d}" data-c="${esc((name||'?')[0])}" onerror="logoFail(this)" style="width:100%;height:100%;object-fit:contain"/></span>`;
 }
 
-/* ---------- ISA ledger ---------- */
 function buildLedger(rnd,target){
   const rows=[];let bal=0;let d=new Date(1992,9,1);const end=new Date();end.setDate(1);
   while(d<=end){
@@ -352,7 +373,6 @@ function buildLedger(rnd,target){
   return rows;
 }
 
-/* ---------- current account history (monthly) ---------- */
 const TX_DAYS=548;
 function buildHist(rnd){
   const rows=[];let bal=620;
@@ -362,11 +382,12 @@ function buildHist(rnd){
   while(d<end){
     const ym=ymOf(d);
     const f=(d.getFullYear()-2015)+(d.getMonth()/12);
-    const sal=Math.round(2980+f*66);
+    const sal=Math.round(2380+f*32);
     const rent=rentFor(ym);
-    const household=Math.round(1180+f*44+(rnd()-.5)*190);
-    const kids=d.getFullYear()>=2018?Math.round(210+(d.getFullYear()-2018)*30+(rnd()-.5)*70):0;
-    const inc=sal+(d.getMonth()%1===0&&d.getFullYear()>=2019?102.40:0);
+    const household=Math.round(980+f*22+(rnd()-.5)*160);
+    const kids=d.getFullYear()>=2018?Math.round(170+(d.getFullYear()-2018)*22+(rnd()-.5)*60):0;
+    const side=projectFor(ym).reduce((s,p)=>s+p.a,0)+retainerFor(ym).reduce((s,r)=>s+r.a,0);
+    const inc=sal+side+(d.getFullYear()>=2019?102.40:0);
     const out=household+kids+(rent?rent.a:0);
     bal=Math.max(-520,bal+inc-out);
     rows.push({ym,in:inc,out,closing:+bal.toFixed(2),rent:rent?rent.n:null});
@@ -397,13 +418,22 @@ function buildTx(rnd,startBal){
       bal=+(bal-r.a).toFixed(2);
       out.push({id:'r'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:r.n,c:'Rent',amt:-r.a,bal,dd:true});
     }
+    if(day.getDate()===3)for(const t of retainerFor(ym)){
+      bal=+(bal+t.a).toFixed(2);
+      out.push({id:'m'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:t.n,c:'Income',amt:t.a,bal,maint:true});
+    }
+    if(day.getDate()===15)for(const p of projectFor(ym)){
+      bal=+(bal+p.a).toFixed(2);
+      out.push({id:'j'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:p.n,c:'Income',amt:p.a,bal,proj:true});
+    }
     if(Math.round((day-epoch)/864e5)%28===0){
       bal=+(bal+102.40).toFixed(2);
       out.push({id:'c'+day.getTime(),d:dstr(day),t:day.getTime(),n:'HMRC Child Benefit',c:'Income',amt:102.40,bal});
     }
-    if(day.getDate()===26){
-      bal=+(bal+4080).toFixed(2);
-      out.push({id:'s'+day.getTime(),d:dstr(day),t:day.getTime(),n:'Cleveland Pottery Ltd',c:'Income',amt:4080,bal,sal:true});
+    if(day.getDate()===28){
+      const sal=2600+Math.round(rnd()*180);
+      bal=+(bal+sal).toFixed(2);
+      out.push({id:'s'+day.getTime(),d:dstr(day),t:day.getTime(),n:'Kingdom Services Group',c:'Income',amt:sal,bal,sal:true});
     }
   }
   return out.sort((a,b)=>b.t-a.t);
@@ -434,14 +464,14 @@ function fresh(){
   holdings[0].v=+(holdings[0].v+(PORT_TARGET-holdings.reduce((s,h)=>s+h.v,0))).toFixed(2);
   return {
     v:5,
-    profile:{name:'Jason Armstrong',addr:'259 Piper Knowle Road',city:'Stockton-on-Tees',pc:'TS19 8JQ',email:'jasonarm82@gmail.com',phone:'07356170033',idv:'Verified',taxres:'United Kingdom',since:'14 October 2015',dob:'1992-10-07'},
+    profile:{name:'Jason Armstrong',occupation:'Security Officer',addr:'259 Piper Knowle Road',city:'Stockton-on-Tees',pc:'TS19 8JQ',email:'jasonarm82@gmail.com',phone:'07356170033',idv:'Verified',taxres:'United Kingdom',since:'14 October 2015',dob:'1992-10-07'},
     acct:{current:+(tx[0]?tx[0].bal:2380).toFixed(2),savings:potTotal,isaCash:ISA_CASH,flexUsed:412.50,flexLimit:3000,odLimit:2000,odDrawn:0},
     sub:'max',
     pots,tx,hist,ledger:{isa},holdings,
-    targets:{Groceries:560,Transport:180,'Eating out':160,Shopping:200,Bills:480,Leisure:140,Kids:260,Rent:850,Health:60,Home:120},
+    targets:{Groceries:560,Transport:180,'Eating out':160,Shopping:160,Bills:480,Leisure:120,Kids:230,Rent:850,Health:60,Home:90},
     dd:BILLS.map((b,i)=>({id:'dd'+i,n:b.n,c:b.c,a:b.a,day:b.day,ref:'MZ'+String(4820011+i).slice(0,6),since:'2019-0'+(1+i%8)+'-1'+(i%9)})),
     sched:[{id:'sc1',n:'Mum',a:150,to:'Mum · 40-11-22 · 7341',freq:'Monthly',next:'2026-01-03',out:true}],
-    payees:[{id:'py1',n:'Mum',s:'40-11-22',a:'73412200',i:'M'},{id:'py2',n:'Dan Whitfield',s:'04-00-04',a:'55120987',i:'D'},{id:'py3',n:'Cleveland Pottery Ltd',s:'20-33-87',a:'44210933',i:'C'}],
+    payees:[{id:'py1',n:'Mum',s:'40-11-22',a:'73412200',i:'M'},{id:'py2',n:'Dan Whitfield',s:'04-00-04',a:'55120987',i:'D'},{id:'py3',n:'Kingdom Services Group',s:'20-33-87',a:'44210933',i:'K'}],
     notifs:[],card:{frozen:false,online:true,atm:600,mag:true},
     sec:{bio:true,pin:'4821',lock:true,privacy:false,credId:null},
     prefs:{theme:'auto',mark:'tile',motion:!REDUCED,notif:{tx:true,dd:true,pot:true,market:false}},
@@ -541,7 +571,6 @@ const TABDEF=[['home','Home','<path d="M3 10.5L12 3l9 7.5"/><path d="M5.5 9.5V21
 function buildTabs(){$('#tabbar').innerHTML=TABDEF.map(([k,l,ic])=>`<button data-t="${k}" onclick="reset('${k}')"><svg viewBox="0 0 24 24">${ic}</svg>${l}</button>`).join('')}
 function syncTabs(){const c=cur().split(':')[0];$$('#tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.t===c))}
 
-/* ---------- charts ---------- */
 function lineChart(pts,w,h,opt={}){
   if(pts.length<2)return '<div class="empty">Not enough data</div>';
   const min=Math.min(...pts),max=Math.max(...pts),pad=(max-min)||1;
@@ -576,7 +605,6 @@ function heatmap(cells){
     `<div title="${c.d}: ${gbp(c.v)}" style="aspect-ratio:1;border-radius:6px;background:${c.v?`rgba(255,79,64,${clamp(c.v/160,.12,1).toFixed(2)})`:'var(--surface)'}"></div>`).join('')}</div>`;
 }
 
-/* ---------- trend series ---------- */
 function monthSpend(ym){
   const h=S.hist.find(r=>r.ym===ym);
   const t=S.tx.filter(x=>x.d.slice(0,7)===ym&&x.amt<0).reduce((s,x)=>s-x.amt,0);
@@ -631,7 +659,7 @@ function balanceSeries(range){
 function txRow(t,i){
   return `<button class="row stag" style="animation-delay:${Math.min(i*9,150)}ms;width:100%;text-align:left" onclick="go('tx','${t.id}')">
     ${t.amt>0?'<span class="ico coral">↓</span>':logo(t.n,40)}
-    <span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}${t.pend?' · Pending':''}${t.dd?' · Direct Debit':''}</span></span>
+    <span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}${t.pend?' · Pending':''}${t.dd?' · Direct Debit':''}${t.maint?' · Maintenance':''}${t.proj?' · Project':''}</span></span>
     <span class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${gbp(t.amt)}</span></button>`;
 }
 function vHome(){
@@ -806,7 +834,9 @@ function vTx(id){
       <div style="font-weight:700;margin-top:6px">${esc(t.n)}</div>
       <div class="small muted">${new Date(t.t).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
       ${t.pend?'<div class="badge warn" style="margin-top:10px">Pending</div>':''}
-      ${t.dd?'<div class="badge" style="margin-top:10px">Direct Debit</div>':''}</div>
+      ${t.dd?'<div class="badge" style="margin-top:10px">Direct Debit</div>':''}
+      ${t.proj?'<div class="badge" style="margin-top:10px">Project fee</div>':''}
+      ${t.maint?'<div class="badge" style="margin-top:10px">Maintenance</div>':''}</div>
     <div class="card w" style="margin-top:12px;padding:0">
       <div class="row" style="padding:13px 16px"><span class="t"><b>Category</b></span><span class="small muted">${esc(t.c)}</span></div>
       <div class="row" style="padding:13px 16px"><span class="t"><b>Balance after</b></span><span class="amt small">${gbp(t.bal)}</span></div>
@@ -923,6 +953,7 @@ function vProfile(){
     <div class="card w center" style="padding:26px">
       <div class="avatar" style="width:64px;height:64px;margin:0 auto;font-size:22px">JA</div>
       <div style="font-weight:800;font-size:18px;margin-top:10px">${esc(p.name)}</div>
+      <div class="small muted">${esc(p.occupation)}</div>
       <div class="small muted">${esc(p.email)}</div>
       <div class="badge ok" style="margin-top:10px">${esc(p.idv)}</div></div>
     <button class="card w" style="width:100%;text-align:left;margin-top:12px" onclick="go('plan')">
@@ -935,7 +966,7 @@ function vProfile(){
     <button class="row" style="width:100%;text-align:left" onclick="toast('Chat opening…')"><span class="t"><b>Chat with us</b><span>Usually replies in 2 minutes</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('help')"><span class="t"><b>Help centre</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="toast('All systems operational')"><span class="t"><b>Service status</b></span><span class="badge ok">Operational</span></button>
-    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 5.0.0</div></div>`;
+    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 5.1.0</div></div>`;
 }
 function cycleTheme(){const o=['auto','light','dark'],i=o.indexOf(S.prefs.theme||'auto');setTheme(o[(i+1)%3])}
 function vPlan(){
@@ -951,13 +982,12 @@ function vPlan(){
       ${S.sub===k?'<span class="badge ok">Current</span>':'<span class="muted">›</span>'}</button>`).join('')}
     <div class="card small muted" style="margin-top:16px">Your daily ATM limit is set from your plan and can't exceed £${TIERS[S.sub].atm}.</div></div>`;
 }
-function pickTier(k){
-  S.sub=k;S.card.atm=TIERS[k].atm;save();render();toast('Switched to Monzo '+TIERS[k].n);
-}
+function pickTier(k){S.sub=k;S.card.atm=TIERS[k].atm;save();render();toast('Switched to Monzo '+TIERS[k].n)}
 function vPD(){
   const p=S.profile;
   return topbar('Personal details',{back:true})+`<div class="pad">
     <label class="f">Legal name</label><input id="pdName" value="${esc(p.name)}"/>
+    <label class="f">Occupation</label><input id="pdOcc" value="${esc(p.occupation||'')}"/>
     <label class="f">Address</label><input id="pdAddr" value="${esc(p.addr)}"/>
     <label class="f">Town</label><input id="pdCity" value="${esc(p.city)}"/>
     <label class="f">Postcode</label><input id="pdPc" value="${esc(p.pc)}"/>
@@ -973,7 +1003,7 @@ function savePD(){
   const n=g('pdName'),e2=g('pdEmail');
   if(!n){toast('Name is required');return}
   if(!/^\S+@\S+\.\S+$/.test(e2)){toast('Check the email address');return}
-  Object.assign(S.profile,{name:n,addr:g('pdAddr'),city:g('pdCity'),pc:g('pdPc'),email:e2,phone:g('pdPhone'),dob:g('pdDob'),taxres:g('pdTax')});
+  Object.assign(S.profile,{name:n,occupation:g('pdOcc'),addr:g('pdAddr'),city:g('pdCity'),pc:g('pdPc'),email:e2,phone:g('pdPhone'),dob:g('pdDob'),taxres:g('pdTax')});
   save();toast('Details saved');
 }
 function vSecurity(){
@@ -1187,7 +1217,6 @@ function dlYear(y){
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`isa-${y}.csv`;a.click();toast(`${y} statement downloaded`);
 }
 
-/* ---------- lock ---------- */
 let pinBuf='';
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
 const ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
