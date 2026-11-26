@@ -1,34 +1,15 @@
-const CACHE = "monzo-v3";
-const SHELL = ["/", "/index.html", "/manifest.json", "/monzo-tile.svg", "/monzo-mark.svg", "/monzo-mark-white.svg"];
-
-self.addEventListener("install", (e) => {
-  self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then((c) => Promise.all(SHELL.map((u) => c.add(u).catch(() => null)))));
-});
-
-self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches.keys()
-      .then((k) => Promise.all(k.filter((x) => x !== CACHE).map((x) => caches.delete(x))))
-      .then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener("fetch", (e) => {
-  const req = e.request;
-  if (req.method !== "GET") return;
-  const net = req.mode === "navigate" || ["script", "style", "manifest", "document"].includes(req.destination);
-  if (!net) {
-    e.respondWith(caches.match(req).then((r) => r || fetch(req)));
-    return;
-  }
+const V='monzo-v4-1';
+const SHELL=['./','./index.html','./manifest.webmanifest','./monzo-tile.svg','./monzo-mark.svg','./monzo-mark-white.svg'];
+self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL).catch(()=>{})))});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
+self.addEventListener('fetch',e=>{
+  if(e.request.method!=='GET')return;
   e.respondWith(
-    fetch(req, { cache: "no-store" })
-      .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
-        return res;
-      })
-      .catch(() => caches.match(req).then((r) => r || caches.match("/index.html")))
+    caches.match(e.request).then(hit=>hit||fetch(e.request).then(res=>{
+      if(res.ok&&new URL(e.request.url).origin===location.origin){
+        const copy=res.clone();caches.open(V).then(c=>c.put(e.request,copy));
+      }
+      return res;
+    }).catch(()=>caches.match('./index.html')))
   );
 });
