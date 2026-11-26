@@ -1,7 +1,7 @@
 /* src/main.js — boot: hydrate state, apply appearance, wire chrome and lock, register screens. */
 
 import {
-  load, getState, subscribe, TODAY, fmt, setTheme, setZoom, setMotion, setCredId, togglePriv, toggleRoundups
+  load, getState, subscribe, TODAY, setCredId, togglePriv
 } from './core.js';
 import { initRouter, register, go, bindGlobalChrome, toast } from './ui.js';
 
@@ -17,25 +17,12 @@ import {
   mountDisputes, mountJoint, mountPersonal, mountSecurity, mountTxDetail
 } from './screens-b.js';
 
-/* ---------------- appearance ---------------- */
-function applyTheme(){
-  const s = getState();
-  document.documentElement.dataset.theme = s.theme;
-}
-function applyZoom(){
-  document.documentElement.style.setProperty('--zoom', getState().zoom);
-}
-function applyMotion(){
-  document.documentElement.dataset.motion = getState().motion ? 'on' : 'off';
-}
-function applyPrivacy(){
-  document.documentElement.dataset.priv = getState().priv ? '1' : '0';
-}
-function applyAll(){
-  applyTheme(); applyZoom(); applyMotion(); applyPrivacy();
-}
+function applyTheme(){ document.documentElement.dataset.theme = getState().theme; }
+function applyZoom(){ document.documentElement.style.setProperty('--zoom', getState().zoom); }
+function applyMotion(){ document.documentElement.dataset.motion = getState().motion ? 'on' : 'off'; }
+function applyPrivacy(){ document.documentElement.dataset.priv = getState().priv ? '1' : '0'; }
+function applyAll(){ applyTheme(); applyZoom(); applyMotion(); applyPrivacy(); }
 
-/* ---------------- chrome ---------------- */
 function paintAvatar(){
   const s = getState();
   document.getElementById('avatarBtn').textContent =
@@ -43,7 +30,6 @@ function paintAvatar(){
   document.getElementById('hName').textContent = s.profile.name.split(' ')[0];
 }
 
-/* ---------------- lock ---------------- */
 let pinBuffer = '';
 
 function paintDots(){
@@ -105,7 +91,6 @@ async function biometricUnlock(){
   } catch { toast('Fingerprint not recognised'); }
 }
 
-/* ---------------- boot ---------------- */
 function boot(){
   load();
   applyAll();
@@ -114,40 +99,18 @@ function boot(){
   initRouter(document.getElementById('main'));
   bindGlobalChrome();
 
-  register('home', mountHome);
-  register('grow', mountGrow);
-  register('pay', mountPay);
-  register('trends', mountTrends);
-  register('account', mountAccount);
-  register('acc', mountAcc);
-  register('pots', mountPots);
-  register('potdetail', mountPotDetail);
-  register('invest', mountInvest);
-  register('statements', mountStatements);
-  register('payees', mountPayees);
-  register('cards', mountCards);
-  register('plan', mountPlan);
-  register('limits', mountLimits);
-  register('borrow', mountBorrow);
-  register('flex', mountFlex);
-  register('aura', mountAura);
-  register('overdraft', mountOverdraft);
-  register('loans', mountLoans);
-  register('connected', mountConnected);
-  register('credit', mountCredit);
-  register('challenge', mountChallenge);
-  register('billsback', mountBillsback);
-  register('insurance', mountInsurance);
-  register('accounts', mountAccounts);
-  register('appearance', mountAppearance);
-  register('search', mountSearch);
-  register('notifs', mountNotifs);
-  register('chat', mountChat);
-  register('disputes', mountDisputes);
-  register('joint', mountJoint);
-  register('personal', mountPersonal);
-  register('security', mountSecurity);
-  register('txdetail', mountTxDetail);
+  const screens = {
+    home: mountHome, grow: mountGrow, pay: mountPay, trends: mountTrends, account: mountAccount,
+    acc: mountAcc, pots: mountPots, potdetail: mountPotDetail, invest: mountInvest,
+    statements: mountStatements, payees: mountPayees, cards: mountCards, plan: mountPlan,
+    limits: mountLimits, borrow: mountBorrow, flex: mountFlex, aura: mountAura,
+    overdraft: mountOverdraft, loans: mountLoans, connected: mountConnected, credit: mountCredit,
+    challenge: mountChallenge, billsback: mountBillsback, insurance: mountInsurance,
+    accounts: mountAccounts, appearance: mountAppearance, search: mountSearch,
+    notifs: mountNotifs, chat: mountChat, disputes: mountDisputes, joint: mountJoint,
+    personal: mountPersonal, security: mountSecurity, txdetail: mountTxDetail
+  };
+  Object.entries(screens).forEach(([name, mount]) => register(name, mount));
 
   buildKeys();
   paintDots();
@@ -163,21 +126,20 @@ function boot(){
     toast(on ? 'Privacy mode on' : 'Privacy mode off');
   };
 
-  /* reveal blurred values on tap */
   document.addEventListener('click', e => {
     const node = e.target.closest('.rev');
     if (node && getState().priv) node.classList.toggle('open');
   });
 
-  /* transaction rows and pot rows navigate */
+  /* row navigation — skipped when a data-go ancestor already navigated */
   document.getElementById('main').addEventListener('click', e => {
+    if (e.monzoHandled || e.target.closest('[data-go]')) return;
     const tx = e.target.closest('[data-tx]');
     if (tx) return go('txdetail', { id: tx.dataset.tx });
     const pot = e.target.closest('[data-pot]');
     if (pot) return go('potdetail', { id: pot.dataset.pot });
   });
 
-  /* keep chrome in sync with state changes */
   subscribe(() => { paintAvatar(); applyAll(); });
 
   if (sessionStorage.getItem('unlocked') === '1') document.body.classList.remove('locked');
