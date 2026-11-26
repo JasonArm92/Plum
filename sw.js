@@ -1,4 +1,4 @@
-const CACHE = "monzo-v1";
+const CACHE = "monzo-v2";
 const SHELL = ["/", "/index.html", "/manifest.json", "/monzo-tile.svg", "/monzo-mark.svg", "/monzo-mark-white.svg"];
 
 self.addEventListener("install", (e) => {
