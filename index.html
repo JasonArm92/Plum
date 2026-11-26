@@ -50,7 +50,6 @@ a{color:var(--coral-d)}
 .offline{display:none;background:var(--navy);color:#fff;font-size:13px;text-align:center;padding:8px}
 body.is-offline .offline{display:block}
 
-/* lock */
 #lock{position:fixed;inset:0;background:var(--coral);z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;color:#fff;text-align:center}
 body:not(.locked) #lock{display:none}
 #lock .mark{width:74px;height:74px;margin-bottom:26px}
@@ -69,7 +68,6 @@ body:not(.locked) #lock{display:none}
 .err{color:#fff;background:rgba(0,0,0,.22);border-radius:var(--r2);padding:6px 12px;font-size:13px;margin-top:14px;display:none}
 .err.on{display:inline-block}
 
-/* frame */
 #app{max-width:520px;margin:0 auto;background:var(--bg);min-height:100vh;zoom:var(--zoom);padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom))}
 .hdr{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:6px;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;background:var(--bg);border-bottom:1px solid transparent;transition:border-color .18s}
 .hdr--scrolled{border-bottom-color:var(--line)}
@@ -87,7 +85,6 @@ section[data-screen]{display:none;padding-bottom:20px}
 section.on{display:block;animation:fade .2s ease}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
-/* headings */
 .h-sec{display:flex;align-items:center;gap:10px;margin:26px 0 12px}
 .h-sec h2{font-size:25px;font-weight:700;letter-spacing:-.035em;flex:1;margin:0;line-height:1.2}
 .h-sec h2.sm{font-size:18px;letter-spacing:-.02em}
@@ -96,7 +93,6 @@ section.on{display:block;animation:fade .2s ease}
 .more:active{background:var(--card2)}
 .more svg{width:18px;height:18px;fill:currentColor}
 
-/* account card */
 .acct{position:relative;display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);
  border-radius:var(--r5);padding:16px;margin:12px 0;box-shadow:var(--sh1)}
 .acct:active{background:var(--card2)}
@@ -106,7 +102,6 @@ section.on{display:block;animation:fade .2s ease}
 .acct__name{font-size:13.5px;font-weight:600;color:var(--ink2);display:flex;align-items:center;gap:6px}
 .acct__num{font-size:12px;color:var(--ink3);margin-top:2px;font-variant-numeric:tabular-nums}
 .acct__art{width:46px;height:30px;border-radius:6px;background:var(--coral);flex:0 0 auto;display:grid;place-items:center;box-shadow:0 2px 6px rgba(255,79,64,.3)}
-.acct__art svg{width:20px;height:20px;fill:#fff}
 .acct__art.joint{background:var(--navy)}
 .acct__bal{font-size:34px;font-weight:700;letter-spacing:-.035em;line-height:1.1;margin:6px 0 0}
 .acct__row{display:flex;align-items:center;gap:8px;margin-top:12px}
@@ -117,7 +112,6 @@ section.on{display:block;animation:fade .2s ease}
 .acct__ghost{height:36px;padding:0 15px;border-radius:var(--pill);font-size:13px;font-weight:600;color:var(--ink);background:var(--card3)}
 .acct--frozen .acct__art{filter:grayscale(1);opacity:.5}
 
-/* spotlights drawer */
 .drawer{position:fixed;inset:0;z-index:59;display:none}
 .drawer.on{display:block}
 .drawer__scrim{position:absolute;inset:0;background:rgba(9,23,35,.4)}
@@ -133,7 +127,6 @@ section.on{display:block;animation:fade .2s ease}
 .spot__d{font-size:11.5px;color:var(--ink3)}
 .spot__c.bad .spot__v{color:var(--bad)}.spot__c.warn .spot__v{color:var(--warn)}.spot__c.ok .spot__v{color:var(--ok)}
 
-/* activity */
 .day__l{font-size:12.5px;font-weight:600;color:var(--ink3);padding:10px 0 4px}
 .txlist{list-style:none;margin:0;padding:0}
 .tx{display:flex;align-items:center;gap:12px;padding:10px 4px;width:100%;text-align:left;border-radius:var(--r2)}
@@ -148,7 +141,6 @@ section.on{display:block;animation:fade .2s ease}
 .amt.in{color:var(--ok)}
 .amt.pend{color:var(--ink3);font-weight:500}
 
-/* pots */
 .pot{display:flex;align-items:center;gap:12px;padding:11px 4px;width:100%;text-align:left;border-radius:var(--r2)}
 .pot:active{background:var(--card2)}
 .pot .art{width:44px;height:44px;border-radius:var(--r2);flex:0 0 auto;display:grid;place-items:center;background:var(--card3);font-size:19px}
@@ -166,7 +158,6 @@ section.on{display:block;animation:fade .2s ease}
 .potcard .v{font-weight:700;font-size:17px;letter-spacing:-.02em;margin-top:1px}
 .potcard .p{font-size:11.5px;color:var(--ink3)}
 
-/* cards & blocks */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r4);padding:16px 18px;box-shadow:var(--sh1);margin:12px 0}
 .card h2{font-size:15.5px;margin:0 0 3px;letter-spacing:-.01em}
 .card .sub{font-size:13px;color:var(--ink2);margin:0 0 12px}
@@ -176,7 +167,6 @@ section.on{display:block;animation:fade .2s ease}
 .kv:last-child{border:0}
 .kv .k{color:var(--ink2)}
 .kv .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
-.v--neg{color:var(--bad)}.v--pos{color:var(--ok)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .divider{height:1px;background:var(--line);margin:14px 0}
 .note{font-size:12.5px;color:var(--ink3);margin:9px 2px}
@@ -192,10 +182,8 @@ section.on{display:block;animation:fade .2s ease}
 .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:var(--r3);
  background:var(--card2);font-size:11.5px;font-weight:600;text-align:center;line-height:1.25}
-.tile:active{background:var(--card3)}
 .tile svg{width:22px;height:22px;stroke:var(--ink2);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
-/* buttons */
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;border-radius:var(--pill);
  background:var(--coral);color:#fff;font-weight:600;font-size:16px;letter-spacing:-.01em;transition:transform .12s,opacity .15s}
 .btn:active{transform:scale(.985);opacity:.9}
@@ -206,7 +194,6 @@ html[data-theme="dark"] .btn.navy{background:var(--coral);color:#fff}
 .btn.sm{height:36px;font-size:13px;padding:0 15px;width:auto}
 .btn:disabled{opacity:.45;pointer-events:none}
 
-/* forms */
 .field{margin:11px 0}
 .field label{display:block;font-size:12.5px;color:var(--ink2);margin-bottom:5px;font-weight:600}
 .field input,.field select,.field textarea{width:100%;padding:12px 13px;border:1.5px solid transparent;
@@ -227,7 +214,6 @@ html[data-theme="dark"] .chip.on{background:var(--coral)}
 .sw.on{background:var(--ok)}
 .sw.on::after{left:23px}
 
-/* tab bar */
 .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:40;background:color-mix(in srgb,var(--bg) 93%,transparent);
  backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;max-width:520px;margin:0 auto;
  padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
@@ -237,7 +223,6 @@ html[data-theme="dark"] .chip.on{background:var(--coral)}
 .tabbar button.on{color:var(--coral)}
 body.locked .tabbar{display:none}
 
-/* sheets */
 .sheet{position:fixed;inset:0;z-index:60;display:none}
 .sheet.on{display:block}
 .sheet .scrim{position:absolute;inset:0;background:rgba(9,23,35,.45)}
@@ -256,7 +241,6 @@ body.locked .tabbar{display:none}
 .layoutrow .mid{flex:1;font-weight:600;font-size:14.5px}
 .mini{width:30px;height:30px;border-radius:9px;background:var(--card3);display:grid;place-items:center;font-size:13px}
 
-/* misc */
 .chart{width:100%;height:auto;display:block;overflow:visible}
 .axis{font-size:10px;fill:var(--ink3)}
 .grid{stroke:var(--line);stroke-width:1}
@@ -273,6 +257,15 @@ html[data-priv="1"] .rev.open{filter:none}
 </style>
 </head>
 <body class="locked">
+<script>
+window.onerror = (m, s, l, c) => {
+  let b = document.getElementById('errBanner');
+  if (!b){ b = document.createElement('div'); b.id = 'errBanner';
+    b.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:999;background:#d70015;color:#fff;font:12px/1.4 monospace;padding:8px 10px;border-radius:8px;white-space:pre-wrap';
+    document.body.appendChild(b); }
+  b.textContent = 'JS error: ' + m + ' @' + l + ':' + c;
+};
+</script>
 <a class="skip" href="#main">Skip to content</a>
 <div class="offline" id="offbar">You're offline — showing your last saved data</div>
 
@@ -656,6 +649,7 @@ const monthLen = (y,m) => new Date(y,m+1,0).getDate();
 const dom = (y,m,day) => `${y}-${pad2(m+1)}-${pad2(Math.min(day,monthLen(y,m)))}`;
 const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; return el; };
 
 let _seed = 0x9e3779b9;
 function rnd(){ _seed|=0; _seed = _seed + 0x6D2B79F5 | 0;
@@ -670,7 +664,7 @@ const PLANS = {
   perks:{name:'Perks', price:9, ia:3.25, atmUK:Infinity, atmRow:600, vcLive:5, vc30:9, billsback:true, cover:false, scores:2, min:0, age:'18+'},
   max:  {name:'Max', price:19, ia:3.50, atmUK:Infinity, atmRow:600, vcLive:5, vc30:9, billsback:true, cover:true, scores:2, min:3, age:'18–69'}
 };
-const plan = () => PLANS[S.plan];
+const plan = () => PLANS[S.plan] || PLANS.free;
 const KEY = 'monzo_v11';
 let S = null;
 
@@ -812,9 +806,12 @@ function load(){
   try { S = JSON.parse(localStorage.getItem(KEY)); } catch(e){ S = null; }
   if (!S || S.v !== 11){ S = freshState(); save(); }
   S.revealed = new Set(S.revealed || []);
-  if (!S.layout || !S.layout.length) S.layout = freshState().layout;
-  if (!S.notifs.length) seedNotifs();
-  if (!S.credit.built){ S.credit = {eq: ri(560,720), tu: ri(540,700), built:true}; save(); }
+  if (!PLANS[S.plan]) S.plan = 'free';
+  if (!Array.isArray(S.layout) || !S.layout.length) S.layout = freshState().layout;
+  if (!Array.isArray(S.tx)) S.tx = seedAccount().reverse();
+  if (!Array.isArray(S.isa) || !S.isa.length) S.isa = seedISA();
+  if (!S.notifs || !S.notifs.length) seedNotifs();
+  if (!S.credit || !S.credit.built){ S.credit = {eq: ri(560,720), tu: ri(540,700), built:true}; save(); }
   runInterest(); runTick();
 }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify({...S, revealed:[...S.revealed]})); } catch(e){} }
@@ -853,7 +850,7 @@ function runTick(){
     if (p.remaining <= 0) return;
     const pay = round2(Math.min(p.monthly, p.remaining));
     if (pay > balNow()) return;
-    pushTx('Monzo Flex','Transfers',-pay,`Instalment`);
+    pushTx('Monzo Flex','Transfers',-pay,'Instalment');
     p.remaining = round2(p.remaining - pay);
     S.flex.used = Math.max(0, round2(S.flex.used - pay));
     flexPaid = round2(flexPaid + pay);
@@ -896,6 +893,7 @@ function balanceSeries(days){
   return out;
 }
 function lineChart(host, series, opts){
+  if (!host) return;
   const o = opts||{}, W = 640, H = o.h||160, padB = 22, padT = 10;
   const vals = series.map(p=>p.v);
   let min = Math.min(...vals), max = Math.max(...vals);
@@ -915,6 +913,7 @@ function lineChart(host, series, opts){
     </linearGradient></defs>${ticks}<path fill="url(#gf)" d="${area}"/><path class="spark" d="${line}"/></svg>`;
 }
 function donut(host, parts){
+  if (!host) return;
   const total = parts.reduce((a,p)=>a+p.v,0) || 1;
   const cols = ['#FF4F40','#091723','#f5a623','#2f9e6b','#7b5cff','#00a3b4','#d9342b','#8a99a5'];
   let acc = 0; const R = 54, C = 2*Math.PI*R;
@@ -931,7 +930,6 @@ function donut(host, parts){
 
 let feedLimit = 12, accLimit = 40, stmtKind = 'acc', catFilter = 'All', trendView = 'balance';
 
-/* ---------- home ---------- */
 const LAYOUT_NAMES = {personal:'Personal account',joint:'Joint account',pots:'Pots',invest:'Investments',latest:'Activity'};
 
 function acctCard(kind){
@@ -1004,13 +1002,15 @@ function txHtml(t){
     <span class="amt ${t.amt>0?'in':''} rev">${t.amt>0?'+':''}${fmt(t.amt)}</span></button>`;
 }
 function renderHome(){
-  const host = document.getElementById('homeBody'); host.innerHTML = '';
-  const order = S.layout.filter(s=>s.on).sort((a,b)=>0);
-  order.forEach(sec => { if (HOME_SECTIONS[sec.id]) host.insertAdjacentHTML('beforeend', HOME_SECTIONS[sec.id]()); });
+  const host = document.getElementById('homeBody'); if (!host) return; host.innerHTML = '';
+  S.layout.filter(s=>s.on).forEach(sec => {
+    if (HOME_SECTIONS[sec.id]) host.insertAdjacentHTML('beforeend', HOME_SECTIONS[sec.id]());
+  });
 }
 function renderSpotlights(){
+  const host = document.getElementById('spotHost'); if (!host) return;
   const lt = leftToSpend(), d = daysToPayday();
-  document.getElementById('spotHost').innerHTML = `
+  host.innerHTML = `
     <button class="spot__c ${lt<100?'bad':lt<300?'warn':'ok'}" data-go="trends" data-dclose>
       <div class="spot__k">Left to spend</div><div class="spot__v rev">${fmt(lt)}</div>
       <div class="spot__d">${d===0?'Payday today':d+' days to payday'}</div></button>
@@ -1035,23 +1035,23 @@ function fillFeed(id, limit, moreId){
   S.tx.slice(0, limit).forEach(t => host.insertAdjacentHTML('beforeend', `<li>${txHtml(t)}</li>`));
   const mb = document.getElementById(moreId); if (mb) mb.classList.toggle('hide', limit >= S.tx.length);
 }
-function renderSave(){ document.getElementById('saveList').innerHTML =
-  S.pots.map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('') || '<div class="empty">No pots yet</div>'; }
+function renderSave(){ const h = document.getElementById('saveList'); if (!h) return;
+  h.innerHTML = S.pots.map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('') || '<div class="empty">No pots yet</div>'; }
 function renderGrow(){
-  document.getElementById('growTotal').textContent = fmt(growTotal());
-  document.getElementById('growSub').textContent =
-    `Savings ${fmt(savingsTotal())} · Invested ${fmt(isaBal())} · Pension ${fmt(S.pension||0)} · Equity ${fmt(homeEquity())}${loanOwed()?` · Owed ${fmt(loanOwed())}`:''}`;
-  document.getElementById('growSaveBal').textContent = fmt(savingsTotal());
-  document.getElementById('growSaveMeta').textContent = `${S.pots.filter(p=>p.type==='savings').length} savings pots · connected ${fmt(connTotal())}`;
-  document.getElementById('growSaveRate').textContent = plan().ia + '% AER';
-  document.getElementById('growInvBal').textContent = fmt(isaBal());
-  document.getElementById('growPenBal').textContent = fmt(S.pension||0);
-  document.getElementById('growHomeBal').textContent = fmt(homeEquity());
-  document.getElementById('hv').value = S.homeValue||0;
-  document.getElementById('hm').value = S.mortgage||0;
+  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('growTotal', fmt(growTotal()));
+  set('growSub', `Savings ${fmt(savingsTotal())} · Invested ${fmt(isaBal())} · Pension ${fmt(S.pension||0)} · Equity ${fmt(homeEquity())}${loanOwed()?` · Owed ${fmt(loanOwed())}`:''}`);
+  set('growSaveBal', fmt(savingsTotal()));
+  set('growSaveMeta', `${S.pots.filter(p=>p.type==='savings').length} savings pots · connected ${fmt(connTotal())}`);
+  set('growSaveRate', plan().ia + '% AER');
+  set('growInvBal', fmt(isaBal()));
+  set('growPenBal', fmt(S.pension||0));
+  set('growHomeBal', fmt(homeEquity()));
+  const hv = document.getElementById('hv'); if (hv) hv.value = S.homeValue||0;
+  const hm = document.getElementById('hm'); if (hm) hm.value = S.mortgage||0;
 }
 function renderTrends(){
-  const host = document.getElementById('trendBody');
+  const host = document.getElementById('trendBody'); if (!host) return;
   if (trendView === 'balance'){
     host.innerHTML = `<div class="card"><h2>Projected balance</h2><div class="sub">Based on bills before payday</div>
       <div class="balance rev">${fmt(leftToSpend())}</div>
@@ -1069,7 +1069,7 @@ function renderTrends(){
     for (let i=55;i>=0;i--){ const v = counts[iso(new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate()-i))]||0;
       const a = v===0?0:Math.min(1,v/90);
       heat += `<i style="background:${v?'rgba(255,79,64,'+(0.15+a*0.85).toFixed(2)+')':''}"></i>`; }
-    document.getElementById('tbHeat').innerHTML = heat;
+    const th = document.getElementById('tbHeat'); if (th) th.innerHTML = heat;
   } else {
     host.innerHTML = `<div class="card"><h2>Targets</h2><div class="sub">Flexible categories only</div>
       ${FLEX.map(c=>{ const v = spentCat(c), t = S.targets[c]||0, pc = t?Math.min(100,(v/t)*100):0;
@@ -1081,38 +1081,45 @@ function renderTrends(){
   }
 }
 function renderAcc(){ fillFeed('accFeed', accLimit, 'accMore'); }
-function renderPots(){ document.getElementById('potsList').innerHTML = S.pots.map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('') || '<div class="empty">No pots yet</div>'; }
+function renderPots(){ const h = document.getElementById('potsList'); if (!h) return;
+  h.innerHTML = S.pots.map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('') || '<div class="empty">No pots yet</div>'; }
 function renderInvest(){
-  document.getElementById('isaVal').textContent = fmt(isaBal());
+  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('isaVal', fmt(isaBal()));
   const pct = Math.min(100, isaBal()/TARGET_ISA*100);
-  document.getElementById('isaProg').innerHTML = `<div class="meter"><i style="width:${pct.toFixed(2)}%"></i></div>
+  const prog = document.getElementById('isaProg');
+  if (prog) prog.innerHTML = `<div class="meter"><i style="width:${pct.toFixed(2)}%"></i></div>
     <div style="font-size:12.5px;color:var(--ink2);margin-bottom:8px">${pct.toFixed(2)}% of target</div>`;
   const used = S.isa.filter(r=>r.date >= TAX_START && r.type==='ISA').reduce((a,r)=>a+r.contrib,0);
-  document.getElementById('isaUsed').textContent = fmt(used);
-  document.getElementById('isaLeft').textContent = fmt(Math.max(0,20000-used));
-  document.getElementById('isaFee').textContent = plan().cover ? '0.20%' : '0.25%';
+  set('isaUsed', fmt(used));
+  set('isaLeft', fmt(Math.max(0,20000-used)));
+  set('isaFee', plan().cover ? '0.20%' : '0.25%');
   const hold = [{k:'Vanguard FTSE Global All Cap',w:.46},{k:'Vanguard US Equity Index',w:.22},
     {k:'iShares Core MSCI World',w:.16},{k:'Vanguard Emerging Markets',w:.09},{k:'Cash',w:.07}];
-  document.getElementById('portList').innerHTML = hold.map(h=>`<div style="margin:8px 0">
+  const pl = document.getElementById('portList');
+  if (pl) pl.innerHTML = hold.map(h=>`<div style="margin:8px 0">
     <div style="display:flex;justify-content:space-between;font-size:13px"><span>${h.k}</span><b class="rev">${fmt(isaBal()*h.w)}</b></div>
     <div class="meter" style="height:6px"><i style="width:${(h.w*100).toFixed(0)}%;background:var(--ink)"></i></div></div>`).join('');
   const asc = S.isa.slice().reverse(), step = Math.max(1, Math.floor(asc.length/140));
   lineChart(document.getElementById('isaChart'), asc.filter((_,i)=>i%step===0).map(r=>({d:r.date,v:r.value})), {h:150});
-  document.getElementById('isaLedger').innerHTML = S.isa.slice(0,40).map(r=>`<li class="tx"><span class="lg">${r.type[0]}</span>
+  const led = document.getElementById('isaLedger');
+  if (led) led.innerHTML = S.isa.slice(0,40).map(r=>`<li class="tx"><span class="lg">${r.type[0]}</span>
     <span class="mid"><span class="nm">${esc(r.note)}</span><span class="mt">${prettyDate(r.date)} · ${r.type}</span></span>
     <span class="amt rev">${fmt(r.value)}</span></li>`).join('');
 }
 function renderStatements(){
+  const host = document.getElementById('stmtList'); if (!host) return;
   const src = stmtKind==='acc' ? S.tx : S.isa;
   const months = [...new Set(src.map(r=>r.date.slice(0,7)))].sort().reverse();
-  document.getElementById('stmtList').innerHTML = months.map(ym=>{ const [y,m] = ym.split('-');
+  host.innerHTML = months.map(ym=>{ const [y,m] = ym.split('-');
     return `<div class="kv"><span class="k">${MONTHS[+m-1]} ${y}</span>
       <span class="v"><button class="btn ghost sm" data-pdf="${ym}">PDF</button>
       <button class="btn ghost sm" data-dl="${ym}">CSV</button></span></div>`; }).join('') || '<div class="empty">No statements</div>';
 }
 function renderPayees(){
+  const host = document.getElementById('payeeList'); if (!host) return;
   const sorted = S.payees.slice().sort((a,b)=>(b.fav?1:0)-(a.fav?1:0) || (b.last||'').localeCompare(a.last||''));
-  document.getElementById('payeeList').innerHTML = sorted.map(p=>`<div class="pot">
+  host.innerHTML = sorted.map(p=>`<div class="pot">
     <span class="art">${esc(p.name.split(' ').map(w=>w[0]).join('').slice(0,2))}</span>
     <span class="mid"><span class="nm">${esc(p.name)} ${p.fav?'<span class="badge ok">Fav</span>':''}
       ${p.last===TODAY?'<span class="badge">Recent</span>':''}</span><span class="sub">${p.sc} · ${p.ac}</span></span>
@@ -1121,12 +1128,14 @@ function renderPayees(){
     <button class="more" data-editpay="${p.id}" aria-label="Edit">✎</button></div>`).join('') || '<div class="empty">No payees yet</div>';
 }
 function renderNotifs(){
-  document.getElementById('notifList').innerHTML = S.notifs.length ? S.notifs.map(n=>`<div class="kv">
+  const host = document.getElementById('notifList'); if (!host) return;
+  host.innerHTML = S.notifs.length ? S.notifs.map(n=>`<div class="kv">
     <span class="k">${esc(n.title)}<br><span style="font-size:12.5px">${esc(n.body)}</span></span>
     <span class="v" style="font-size:12px;color:var(--ink3)">${esc(n.date)} ${esc(n.time)}</span></div>`).join('') : '<div class="empty">Nothing new</div>';
 }
 function renderChat(){
-  document.getElementById('chatList').innerHTML = S.chat.length ? S.chat.map(m=>`
+  const host = document.getElementById('chatList'); if (!host) return;
+  host.innerHTML = S.chat.length ? S.chat.map(m=>`
     <div style="margin:9px 0;text-align:${m.who==='me'?'right':'left'}">
       <div style="display:inline-block;max-width:82%;padding:10px 14px;border-radius:16px;
         background:${m.who==='me'?'var(--coral)':'var(--card3)'};color:${m.who==='me'?'#fff':'var(--ink)'}">${esc(m.text)}</div>
@@ -1134,25 +1143,30 @@ function renderChat(){
     : '<div class="empty">Say hello — we usually reply in a few minutes</div>';
 }
 function renderDisputes(){
-  document.getElementById('dispList').innerHTML = S.disputes.length ? S.disputes.map(d=>`<div class="kv">
+  const host = document.getElementById('dispList'); if (!host) return;
+  host.innerHTML = S.disputes.length ? S.disputes.map(d=>`<div class="kv">
     <span class="k">${esc(d.name)}<br><span style="font-size:12.5px">${esc(d.reason)}</span></span>
     <span class="v"><span class="badge warn">Open</span><br><span style="font-size:12px;color:var(--ink3)">${d.date}</span></span></div>`).join('')
     : '<div class="empty">No open disputes</div>';
 }
 function renderCards(){
+  const host = document.getElementById('cardList'); if (!host) return;
   const p = plan();
-  document.getElementById('cardList').innerHTML = `<div class="kv"><span class="k">Physical card · Hot coral · 4000 1234</span>
+  host.innerHTML = `<div class="kv"><span class="k">Physical card · Hot coral · 4000 1234</span>
     <span class="v"><span class="badge ${S.frozen?'bad':'ok'}">${S.frozen?'Frozen':'Active'}</span></span></div>
     <button class="btn ghost sm" id="freezeBtn" style="margin:10px 0">${S.frozen?'Unfreeze':'Freeze'} card</button>`
     + S.vcards.map(v=>`<div class="kv"><span class="k">${esc(v.label)} · ${v.num}</span>
     <span class="v"><span class="badge ${v.frozen?'bad':'ok'}">${v.frozen?'Frozen':'Active'}</span></span></div>`).join('');
-  document.getElementById('vcNote').textContent = p.vcLive
+  const note = document.getElementById('vcNote');
+  if (note) note.textContent = p.vcLive
     ? `${S.vcards.length} of ${p.vcLive} live virtual cards. Up to ${p.vc30} new per 30 days, 100 per year.`
     : 'Virtual cards need Extra, Perks or Max.';
+  on('freezeBtn', () => { S.frozen = !S.frozen; save(); renderCards(); renderHome(); toast(S.frozen?'Card frozen':'Card unfrozen'); });
 }
 function renderPlan(){
-  document.getElementById('planSub').textContent = plan().name;
-  document.getElementById('planList').innerHTML = Object.entries(PLANS).map(([k,p])=>`
+  const sub = document.getElementById('planSub'); if (sub) sub.textContent = plan().name;
+  const host = document.getElementById('planList'); if (!host) return;
+  host.innerHTML = Object.entries(PLANS).map(([k,p])=>`
     <div class="card" style="border:2px solid ${k===S.plan?'var(--coral)':'var(--line)'}">
       <div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">${p.name}</h2>
         <b>${p.price?'£'+p.price+'/mo':'Free'}</b></div>
@@ -1167,8 +1181,9 @@ function renderPlan(){
     '<p class="note">Max with family is £23/month (+£4).</p>';
 }
 function renderLimits(){
+  const host = document.getElementById('limitBox'); if (!host) return;
   const p = plan();
-  document.getElementById('limitBox').innerHTML = `
+  host.innerHTML = `
     <div class="kv"><span class="k">ATM abroad (per 30 days)</span><span class="v">£${p.atmRow}</span></div>
     <div class="kv"><span class="k">ATM UK &amp; EEA (per 30 days)</span><span class="v">${p.atmUK===Infinity?'Unlimited':'£'+p.atmUK}</span></div>
     <div class="kv"><span class="k">Contactless (per day)</span><span class="v">£100</span></div>
@@ -1177,24 +1192,29 @@ function renderLimits(){
     <div class="kv"><span class="k">Cash deposits</span><span class="v">${p.cover?'3 free/month':'£1 each'}</span></div>`;
 }
 function renderPay(){
-  document.getElementById('soCount').textContent = S.sos.filter(s=>s.active).length + ' active';
-  document.getElementById('tabCount').textContent = S.tabs.length + ' open';
-  document.getElementById('soList').innerHTML = '<h2>Standing orders</h2><div class="sub">Regular payments</div>' +
+  const sc = document.getElementById('soCount'); if (sc) sc.textContent = S.sos.filter(s=>s.active).length + ' active';
+  const tc = document.getElementById('tabCount'); if (tc) tc.textContent = S.tabs.length + ' open';
+  const so = document.getElementById('soList');
+  if (so) so.innerHTML = '<h2>Standing orders</h2><div class="sub">Regular payments</div>' +
     (S.sos.map(s=>`<div class="kv"><span class="k">${esc(s.name)}<br><span style="font-size:12.5px">Day ${s.day}</span></span>
       <span class="v rev">${fmt(s.amt)}</span></div>`).join('') || '<div class="empty">None set up</div>');
-  document.getElementById('tabList').innerHTML = '<h2>Shared tabs</h2><div class="sub">Split with friends</div>' +
+  const tb = document.getElementById('tabList');
+  if (tb) tb.innerHTML = '<h2>Shared tabs</h2><div class="sub">Split with friends</div>' +
     (S.tabs.map(t=>`<div class="kv"><span class="k">${esc(t.name)}<br><span style="font-size:12.5px">${t.people} people</span></span>
       <span class="v rev">${fmt(t.total)}</span></div>`).join('') || '<div class="empty">No open tabs</div>');
 }
 function renderJoint(){
   const inn = S.tx.filter(t=>t.date.slice(0,7)===THIS_YM && t.cat==='Income').reduce((a,t)=>a+t.amt,0);
-  document.getElementById('jointBal').textContent = fmt(round2(inn*0.35));
-  document.getElementById('jointIn').textContent = fmt(round2(inn*0.35));
-  document.getElementById('jointOut').textContent = fmt(1240);
+  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('jointBal', fmt(round2(inn*0.35)));
+  set('jointIn', fmt(round2(inn*0.35)));
+  set('jointOut', fmt(1240));
 }
 function renderAccounts(){
-  document.getElementById('accCount').textContent = (1 + S.extraAccounts.length) + ' account' + (S.extraAccounts.length?'s':'');
-  document.getElementById('accList').innerHTML =
+  const c = document.getElementById('accCount');
+  if (c) c.textContent = (1 + S.extraAccounts.length) + ' account' + (S.extraAccounts.length?'s':'');
+  const host = document.getElementById('accList'); if (!host) return;
+  host.innerHTML =
     `<div class="pot"><span class="art">PC</span><span class="mid"><span class="nm">Personal current account</span>
       <span class="sub">04-00-04 · 73829104</span></span><span class="badge ok">Active</span></div>` +
     `<div class="pot"><span class="art">JT</span><span class="mid"><span class="nm">Joint account</span>
@@ -1204,14 +1224,16 @@ function renderAccounts(){
       <span class="badge">${a.status}</span></div>`).join('');
 }
 function renderBorrow(){
-  document.getElementById('flexSub').textContent = `${fmt(flexAvail())} available`;
-  document.getElementById('odSub').textContent = S.overdraft.limit ? fmt(S.overdraft.limit) + ' arranged' : 'Not arranged';
+  const f = document.getElementById('flexSub'); if (f) f.textContent = `${fmt(flexAvail())} available`;
+  const o = document.getElementById('odSub'); if (o) o.textContent = S.overdraft.limit ? fmt(S.overdraft.limit) + ' arranged' : 'Not arranged';
 }
 function renderFlex(){
-  document.getElementById('flexAvail').textContent = fmt(flexAvail());
-  document.getElementById('flexLimit').textContent = fmt(S.flex.limit);
-  document.getElementById('flexMeter').style.width = Math.min(100, S.flex.used/S.flex.limit*100) + '%';
-  document.getElementById('flexPlans').innerHTML = S.flex.plans.length ? S.flex.plans.map(p=>{
+  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('flexAvail', fmt(flexAvail()));
+  set('flexLimit', fmt(S.flex.limit));
+  const m = document.getElementById('flexMeter'); if (m) m.style.width = Math.min(100, S.flex.used/S.flex.limit*100) + '%';
+  const host = document.getElementById('flexPlans'); if (!host) return;
+  host.innerHTML = S.flex.plans.length ? S.flex.plans.map(p=>{
     const paid = round2(p.amount - p.remaining);
     return `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
       <div style="display:flex;justify-content:space-between;font-size:14px">
@@ -1221,31 +1243,32 @@ function renderFlex(){
   }).join('') : '<div class="empty">No plans</div>';
 }
 function renderAura(){
-  const a = S.aura;
-  document.getElementById('auraStatus').innerHTML = a.active ? '<span class="badge ok">Active</span>' : '<span class="badge">Not taken out</span>';
-  document.getElementById('auraCash').textContent = fmt(a.cashback);
-  document.getElementById('auraLounge').textContent = a.lounge;
-  document.getElementById('auraFast').textContent = a.fast;
-  document.getElementById('auraAuto').classList.toggle('on', a.auto);
-  document.getElementById('auraToggle').textContent = a.active ? 'Close Aura' : 'Take out Aura for £15/month';
+  const a = S.aura, set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const st = document.getElementById('auraStatus');
+  if (st) st.innerHTML = a.active ? '<span class="badge ok">Active</span>' : '<span class="badge">Not taken out</span>';
+  set('auraCash', fmt(a.cashback)); set('auraLounge', a.lounge); set('auraFast', a.fast);
+  const au = document.getElementById('auraAuto'); if (au) au.classList.toggle('on', a.auto);
+  set('auraToggle', a.active ? 'Close Aura' : 'Take out Aura for £15/month');
 }
 function renderOverdraft(){
-  const o = S.overdraft;
-  document.getElementById('odLimit').textContent = fmt(o.limit);
-  document.getElementById('odRate').textContent = o.rate ? o.rate + '% EAR' : '—';
-  document.getElementById('odUsed').textContent = fmt(Math.max(0, -balNow()));
-  document.getElementById('odChoices').innerHTML = [250,500,1000,2000].map(v=>
+  const o = S.overdraft, set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('odLimit', fmt(o.limit));
+  set('odRate', o.rate ? o.rate + '% EAR' : '—');
+  set('odUsed', fmt(Math.max(0, -balNow())));
+  const c = document.getElementById('odChoices');
+  if (c) c.innerHTML = [250,500,1000,2000].map(v=>
     `<button class="chip ${o.pending===v?'on':''}" data-od="${v}">£${v}</button>`).join('');
 }
 function renderLoans(){
-  const amt = +document.getElementById('lnAmt').value || 8000;
-  const term = +document.getElementById('lnTerm').value || 24;
+  const amtEl = document.getElementById('lnAmt'), termEl = document.getElementById('lnTerm');
+  const amt = amtEl ? (+amtEl.value || 8000) : 8000;
+  const term = termEl ? (+termEl.value || 24) : 24;
   const apr = amt > 10000 ? 10 : 23;
   const monthly = round2(amt * (1 + apr/100 * term/12) / term);
-  document.getElementById('lnApr').textContent = apr + '%';
-  document.getElementById('lnMonth').textContent = fmt(monthly);
-  document.getElementById('lnTotal').textContent = fmt(round2(monthly*term));
-  document.getElementById('lnList').innerHTML = S.loans.length ? S.loans.map(l=>`
+  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('lnApr', apr + '%'); set('lnMonth', fmt(monthly)); set('lnTotal', fmt(round2(monthly*term)));
+  const host = document.getElementById('lnList'); if (!host) return;
+  host.innerHTML = S.loans.length ? S.loans.map(l=>`
     <div style="padding:9px 0;border-bottom:1px solid var(--line)">
       <div style="display:flex;justify-content:space-between;font-size:14px">
         <span>${fmt(l.amount)} · ${l.apr}% APR</span><b class="rev">${fmt(l.outstanding)}</b></div>
@@ -1254,34 +1277,40 @@ function renderLoans(){
     : '<div class="empty">No loans</div>';
 }
 function renderConnected(){
-  document.getElementById('bankChips').innerHTML = BANKS.map(b=>
-    `<button class="chip" data-bank="${b}">${b}</button>`).join('');
-  document.getElementById('connSub').textContent = S.connected.length ? S.connected.length + ' connected' : 'Other banks';
-  document.getElementById('connList').innerHTML = S.connected.length ? S.connected.map(c=>`<div class="kv">
+  const chips = document.getElementById('bankChips');
+  if (chips) chips.innerHTML = BANKS.map(b=>`<button class="chip" data-bank="${b}">${b}</button>`).join('');
+  const cs = document.getElementById('connSub');
+  if (cs) cs.textContent = S.connected.length ? S.connected.length + ' connected' : 'Other banks';
+  const host = document.getElementById('connList'); if (!host) return;
+  host.innerHTML = S.connected.length ? S.connected.map(c=>`<div class="kv">
     <span class="k">${esc(c.bank)}<br><span style="font-size:12.5px">${esc(c.kind)}</span></span>
     <span class="v rev">${fmt(c.bal)}</span></div>`).join('') : '<div class="empty">No accounts connected</div>';
 }
 function renderCredit(){
   const scores = plan().scores;
-  document.getElementById('creditSub').textContent = scores + ' score' + (scores>1?'s':'');
-  document.getElementById('creditBox').innerHTML = `<div style="display:flex;gap:20px">
+  const sub = document.getElementById('creditSub');
+  if (sub) sub.textContent = scores + ' score' + (scores>1?'s':'');
+  const box = document.getElementById('creditBox');
+  if (box) box.innerHTML = `<div style="display:flex;gap:20px">
       <div style="flex:1"><div class="sub" style="margin:0">Equifax</div><div class="score">${S.credit.eq}</div>
         <div class="badge ${S.credit.eq>650?'ok':'warn'}">${S.credit.eq>650?'Good':'Fair'}</div></div>
       ${scores>1?`<div style="flex:1"><div class="sub" style="margin:0">TransUnion</div><div class="score">${S.credit.tu}</div>
         <div class="badge ${S.credit.tu>650?'ok':'warn'}">${S.credit.tu>650?'Good':'Fair'}</div></div>`:''}
     </div><div class="sub" style="margin-top:12px">Updated weekly</div>
     ${scores===1?'<p class="note">Extra adds a second score, weekly updates and credit-boosting actions.</p>':''}`;
-  document.getElementById('creditFactors').innerHTML = [['On-time payments','Positive','ok'],
+  const fac = document.getElementById('creditFactors');
+  if (fac) fac.innerHTML = [['On-time payments','Positive','ok'],
     ['Credit utilisation','29% used','warn'],['Account age','13 years','ok'],['Hard searches','1 in 6 months','ok']]
     .map(([a,b,c])=>`<div class="kv"><span class="k">${a}</span><span class="v"><span class="badge ${c}">${b}</span></span></div>`).join('');
 }
 function renderChallenge(){
   const c = S.challenge, target = 667.95;
-  document.getElementById('chBal').textContent = fmt(c.saved);
-  document.getElementById('chMeter').style.width = Math.min(100, c.saved/target*100) + '%';
-  document.getElementById('chDay').textContent = `${c.day} of 365`;
-  document.getElementById('chToday').textContent = fmt(round2((c.day+1)/100));
-  document.getElementById('chRate').textContent = plan().price ? '5% AER' : 'No interest';
+  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('chBal', fmt(c.saved));
+  const m = document.getElementById('chMeter'); if (m) m.style.width = Math.min(100, c.saved/target*100) + '%';
+  set('chDay', `${c.day} of 365`);
+  set('chToday', fmt(round2((c.day+1)/100)));
+  set('chRate', plan().price ? '5% AER' : 'No interest');
 }
 function bbBills(){
   return S.tx.filter(t => t.date.slice(0,7)===THIS_YM && t.amt < 0 &&
@@ -1289,19 +1318,23 @@ function bbBills(){
 }
 function renderBillsback(){
   const ok = plan().billsback, bills = bbBills();
-  document.getElementById('bbElig').innerHTML = ok ? '<span class="badge ok">Included in your plan</span>' : '<span class="badge bad">Needs Extra</span>';
-  document.getElementById('bbSw').classList.toggle('on', S.billsback.optIn);
-  document.getElementById('bbBills').innerHTML = bills.length ? bills.map(b=>`<div class="kv">
+  const el = document.getElementById('bbElig');
+  if (el) el.innerHTML = ok ? '<span class="badge ok">Included in your plan</span>' : '<span class="badge bad">Needs Extra</span>';
+  const sw = document.getElementById('bbSw'); if (sw) sw.classList.toggle('on', S.billsback.optIn);
+  const bl = document.getElementById('bbBills');
+  if (bl) bl.innerHTML = bills.length ? bills.map(b=>`<div class="kv">
     <span class="k">${esc(b.name)}<br><span style="font-size:12.5px">${b.date}</span></span>
     <span class="v rev">${fmt(Math.min(Math.abs(b.amt), BB_CAP))}</span></div>`).join('')
     : '<div class="empty">No eligible bills yet this month</div>';
-  document.getElementById('bbList').innerHTML = S.billsback.history.length ? S.billsback.history.map(h=>`<div class="kv">
+  const hist = document.getElementById('bbList');
+  if (hist) hist.innerHTML = S.billsback.history.length ? S.billsback.history.map(h=>`<div class="kv">
     <span class="k">${esc(h.month)}${h.bill?` · ${esc(h.bill)}`:''}</span>
     <span class="v">${h.won?`<span class="badge ok">${fmt(h.amount)} back</span>`:'<span class="badge">No win</span>'}</span></div>`).join('')
     : '<div class="empty">No draws entered</div>';
 }
 function renderInsurance(){
-  document.getElementById('insBox').innerHTML = plan().cover ? `<div class="sub">Included with Max</div>
+  const host = document.getElementById('insBox'); if (!host) return;
+  host.innerHTML = plan().cover ? `<div class="sub">Included with Max</div>
     ${[['Worldwide travel insurance','POL-TRV-8842190'],['Worldwide phone insurance','POL-PHN-8842191'],['UK &amp; Europe breakdown cover','POL-BRK-8842192']]
       .map(([n,pol])=>`<div class="kv"><span class="k">${n}<br><span style="font-size:12.5px">${pol}</span></span>
         <span class="v"><button class="btn ghost sm" data-pol="${pol}">Document</button></span></div>`).join('')}
@@ -1311,9 +1344,10 @@ function renderInsurance(){
       <button class="btn" data-go="plan">See plans</button>`;
 }
 function renderLayout(){
-  document.getElementById('panel').innerHTML = `<div class="grab"></div><h2>Edit layout</h2>
+  const panel = document.getElementById('panel'); if (!panel) return;
+  panel.innerHTML = `<div class="grab"></div><h2>Edit layout</h2>
     <div class="sub">Reorder or hide sections of your Home screen</div>` +
-    S.layout.map((s,i)=>`<div class="layoutrow"><span class="mini">${i+1}</span><span class="mid">${LAYOUT_NAMES[s.id]}</span>
+    S.layout.map((s,i)=>`<div class="layoutrow"><span class="mini">${i+1}</span><span class="mid">${LAYOUT_NAMES[s.id]||s.id}</span>
       <button class="more" data-up="${s.id}" aria-label="Up">↑</button>
       <button class="more" data-down="${s.id}" aria-label="Down">↓</button>
       <button class="sw ${s.on?'on':''}" data-eye="${s.id}" aria-label="Toggle"></button></div>`).join('') +
@@ -1321,7 +1355,6 @@ function renderLayout(){
   document.getElementById('sheet').classList.add('on');
 }
 
-/* ---------- account / activity / pots menus ---------- */
 function accountMenu(kind){
   if (kind === 'joint') return sheet(`<div class="grab"></div><h2>Joint account</h2>
     <div class="sub">With ${esc(S.partner)}</div>
@@ -1364,33 +1397,39 @@ function go(name){
   closeSheet(); closeDrawer(); screen = name;
   document.querySelectorAll('section[data-screen]').forEach(s=>s.classList.toggle('on', s.dataset.screen===name));
   document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on', b.dataset.go===name));
-  if (RENDER[name]) RENDER[name]();
+  try { if (RENDER[name]) RENDER[name](); } catch(e){ window.onerror('render ' + name + ': ' + e.message, 'script', 0, 0); }
   if (name==='personal') fillPersonal();
   if (name==='security') syncSecurity();
   if (name==='appearance') syncAppearance();
   window.scrollTo(0,0);
 }
 function fillPersonal(){ const p = S.profile;
-  pName.value=p.name; pDob.value=p.dob; pEmail.value=p.email; pPhone.value=p.phone;
-  pAddr1.value=p.a1; pAddr2.value=p.a2; pCity.value=p.city; pPost.value=p.post; pOcc.value=p.occ; pEmp.value=p.emp; }
+  const set = (id,v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  set('pName',p.name); set('pDob',p.dob); set('pEmail',p.email); set('pPhone',p.phone);
+  set('pAddr1',p.a1); set('pAddr2',p.a2); set('pCity',p.city); set('pPost',p.post); set('pOcc',p.occ); set('pEmp',p.emp); }
 function syncSecurity(){
-  bioSw.classList.toggle('on', !!S.credId);
-  bioState.textContent = S.credId ? 'Enabled' : 'Not set up';
-  privSw.classList.toggle('on', S.priv); roundSw.classList.toggle('on', S.roundups); }
+  const b = document.getElementById('bioSw'), st = document.getElementById('bioState'),
+        pr = document.getElementById('privSw'), rd = document.getElementById('roundSw');
+  if (b) b.classList.toggle('on', !!S.credId);
+  if (st) st.textContent = S.credId ? 'Enabled' : 'Not set up';
+  if (pr) pr.classList.toggle('on', S.priv);
+  if (rd) rd.classList.toggle('on', S.roundups);
+}
 function syncAppearance(){
   document.querySelectorAll('[data-theme]').forEach(b=>b.classList.toggle('on', b.dataset.theme===S.theme));
   document.querySelectorAll('[data-zoom]').forEach(b=>b.classList.toggle('on', +b.dataset.zoom===S.zoom));
-  document.getElementById('motionSw').classList.toggle('on', !S.motion); }
+  const m = document.getElementById('motionSw'); if (m) m.classList.toggle('on', !S.motion);
+}
 
 let toastT;
-function toast(msg){ const t = document.getElementById('toast');
+function toast(msg){ const t = document.getElementById('toast'); if (!t) return;
   t.textContent = msg; t.classList.add('on'); clearTimeout(toastT);
   toastT = setTimeout(()=>t.classList.remove('on'), 2200); }
-function sheet(html){ document.getElementById('panel').innerHTML = html;
-  document.getElementById('sheet').classList.add('on'); }
-const closeSheet = () => document.getElementById('sheet').classList.remove('on');
+function sheet(html){ const p = document.getElementById('panel'); if (!p) return;
+  p.innerHTML = html; document.getElementById('sheet').classList.add('on'); }
+const closeSheet = () => { const s = document.getElementById('sheet'); if (s) s.classList.remove('on'); };
+const closeDrawer = () => { const d = document.getElementById('drawer'); if (d) d.classList.remove('on'); };
 function openDrawer(){ renderSpotlights(); document.getElementById('drawer').classList.add('on'); }
-const closeDrawer = () => document.getElementById('drawer').classList.remove('on');
 function notif(title, body){ S.notifs.unshift({title, body, date:TODAY, time:NOWT}); S.notifs = S.notifs.slice(0,40); save(); }
 function seedNotifs(){ const d = n => iso(new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate()-n));
   S.notifs = [{title:'Left to spend updated', body:'Recalculated for the days before payday', date:TODAY, time:NOWT},
@@ -1412,7 +1451,7 @@ function addTxSheet(){
     <div class="field"><label>Category</label><select id="atCat">${CATS.map(c=>`<option${c==='Groceries'?' selected':''}>${c}</option>`).join('')}</select></div>
     <div class="field"><label>Date</label><input id="atDate" type="date" value="${TODAY}" max="${TODAY}"></div>
     <button class="btn" id="atGo">Add transaction</button>`);
-  document.getElementById('atGo').onclick = () => {
+  on('atGo', () => {
     const name = document.getElementById('atName').value.trim(), amt = +document.getElementById('atAmt').value;
     const cat = document.getElementById('atCat').value;
     if (!name) return toast('Enter a description'); if (!amt || amt <= 0) return toast('Enter an amount');
@@ -1420,7 +1459,7 @@ function addTxSheet(){
     if (signed < 0 && Math.abs(signed) > balNow()) return toast('Not enough in your balance');
     pushTx(name, cat, signed, '', document.getElementById('atDate').value || TODAY);
     notif('Transaction added', `${name} — ${fmt(signed)}`); closeSheet(); go(screen); toast('Added');
-  };
+  });
 }
 
 document.addEventListener('click', e => {
@@ -1437,8 +1476,7 @@ document.addEventListener('click', e => {
       if (a==='add') return addTxSheet();
       if (a==='freeze'){ S.frozen = !S.frozen; save(); closeSheet(); renderHome();
         return toast(S.frozen?'Card frozen':'Card unfrozen'); }
-      if (a==='close'){ S.extraAccounts.push({id:uid(),name:'Closed account',type:'Archived',status:'Closed'});
-        save(); closeSheet(); return toast('Account closing — we will email you'); }
+      if (a==='close'){ save(); closeSheet(); return toast('Account closing — we will email you'); }
       if (a==='newpot') return newPotSheet();
       if (a==='hidepots'){ const s = S.layout.find(x=>x.id==='pots'); if (s) s.on = false;
         save(); closeSheet(); renderHome(); return toast('Pots hidden from Home'); }
@@ -1453,7 +1491,7 @@ document.addEventListener('click', e => {
     if (t.dataset.theme){ S.theme = t.dataset.theme; save(); applyTheme(); syncAppearance(); return; }
     if (t.dataset.zoom){ S.zoom = +t.dataset.zoom; save(); applyZoom(); syncAppearance(); return; }
     if (t.dataset.up || t.dataset.down) return moveLayout(t.dataset.up || t.dataset.down, t.dataset.up ? -1 : 1);
-    if (t.dataset.eye){ const s = S.layout.find(x=>x.dataset===undefined && x.id===t.dataset.eye); s.on = !s.on; save(); renderLayout(); return; }
+    if (t.dataset.eye){ const s = S.layout.find(x=>x.id===t.dataset.eye); if (s){ s.on = !s.on; save(); renderLayout(); } return; }
     if (t.dataset.send) return sendSheet(t.dataset.send);
     if (t.dataset.fav){ const p = S.payees.find(x=>x.id===t.dataset.fav); p.fav = !p.fav; save(); return renderPayees(); }
     if (t.dataset.editpay) return payeeSheet(t.dataset.editpay);
@@ -1462,16 +1500,8 @@ document.addEventListener('click', e => {
     if (t.dataset.pol) return toast('Document ' + t.dataset.pol + ' queued');
     if (t.dataset.term){ flexTerm = +t.dataset.term; flexQuote(); return; }
   }
-  if (e.target.matches('[data-close]')) closeSheet();
+  if (e.target.matches('[data-close]')) return closeSheet();
   const id = e.target.id;
-  if (id === 'pullBtn') return openDrawer();
-  if (id === 'plusBtn') return sheet(`<div class="grab"></div><h2>Add</h2><div class="sub">What would you like to do?</div>
-    <button class="sheetrow" data-act="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add transaction</span></button>
-    <button class="sheetrow" data-act="newpot"><svg viewBox="0 0 24 24"><path d="M6 8h12v11H6z"/><path d="M9 8V6h6v2"/></svg><span>Create a pot</span></button>
-    <button class="sheetrow" data-go="payees"><svg viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg><span>Send money</span></button>
-    <button class="sheetrow" data-go="accounts"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Open an account</span></button>
-    <button class="sheetrow" data-go="loans"><svg viewBox="0 0 24 24"><path d="M4 8h16v8H4z"/></svg><span>Apply for a loan</span></button>`);
-  if (id === 'searchBtn') return go('search');
   if (id === 'editLayout' || id === 'editLayout2') return renderLayout();
   if (id === 'addTxBtn' || id === 'addTxBtn2') return addTxSheet();
   if (id === 'moreBtn'){ feedLimit += 20; renderHome(); }
@@ -1486,7 +1516,6 @@ document.addEventListener('click', e => {
     if (S.vcards.length >= p.vcLive) return toast(`Limit of ${p.vcLive} live virtual cards`);
     S.vcards.push({id:uid(), label:'Virtual card ' + (S.vcards.length+1), frozen:false, num:'4000 '+ri(1000,9999), created:TODAY});
     save(); renderCards(); toast('Virtual card created'); }
-  if (id === 'freezeBtn'){ S.frozen = !S.frozen; save(); renderCards(); toast(S.frozen?'Card frozen':'Card unfrozen'); }
   if (id === 'clearNotifs'){ S.notifs = []; save(); renderNotifs(); }
   if (id === 'logoutAll') toast('Logged out of all other devices');
   if (id === 'addAcc') sheet(`<div class="grab"></div><h2>Add an account</h2><div class="field"><label>Type</label>
@@ -1565,12 +1594,12 @@ function newPotSheet(){
       <option value="savings">Savings (earns interest)</option><option value="bills">Bills (holds direct debits)</option></select></div>
     <div class="field"><label>Goal</label><input id="npGoal" type="number" min="1" value="500"></div>
     <button class="btn" id="npGo">Create pot</button>`);
-  document.getElementById('npGo').onclick = () => {
+  on('npGo', () => {
     const n = document.getElementById('npName').value.trim(); if (!n) return toast('Name your pot');
     S.pots.push({id:uid(), name:n, type:document.getElementById('npType').value,
       goal:Math.max(1,+document.getElementById('npGoal').value||500), bal:0});
     save(); closeSheet(); renderPots(); renderHome(); toast('Pot created');
-  };
+  });
 }
 function connectBank(bank){
   if (S.connected.some(c=>c.bank===bank)) return toast('Already connected');
@@ -1578,7 +1607,6 @@ function connectBank(bank){
   notif('Account connected', bank + ' added'); save(); renderConnected(); renderGrow(); toast('Connected to ' + bank);
 }
 
-/* flex */
 let flexTerm = 3;
 function flexMonthly(amount, term){
   if (term === 3) return round2(amount/3);
@@ -1593,9 +1621,9 @@ function flexSheet(){
       <div class="pill-row">${[3,6,12].map(v=>`<button class="chip ${v===3?'on':''}" data-term="${v}">${v} months${v===3?' · 0%':' · 29%'}</button>`).join('')}</div></div>
     <div class="kv"><span class="k">Monthly</span><span class="v rev" id="fxMonthly">—</span></div>
     <button class="btn" id="fxGo" style="margin-top:12px">Confirm</button>`);
-  document.getElementById('fxAmt').oninput = flexQuote;
+  const amtEl = document.getElementById('fxAmt'); if (amtEl) amtEl.oninput = flexQuote;
   flexQuote();
-  document.getElementById('fxGo').onclick = () => {
+  on('fxGo', () => {
     const name = document.getElementById('fxName').value.trim(), amt = +document.getElementById('fxAmt').value;
     if (!name) return toast('Where was it?');
     if (!amt || amt <= 0) return toast('Enter an amount');
@@ -1605,51 +1633,60 @@ function flexSheet(){
     S.flex.plans.unshift({id:uid(), name, amount:amt, remaining:amt, term:flexTerm, monthly});
     notif('Paid with Flex', `${name} — ${fmt(amt)} over ${flexTerm} months`);
     save(); closeSheet(); renderFlex(); toast('Flexed over ' + flexTerm + ' months');
-  };
+  });
 }
 function flexQuote(){
-  const amt = +document.getElementById('fxAmt').value || 0;
+  const amtEl = document.getElementById('fxAmt');
+  const amt = amtEl ? (+amtEl.value || 0) : 0;
   const m = document.getElementById('fxMonthly');
   if (m) m.textContent = amt ? fmt(flexMonthly(amt, flexTerm)) : '—';
   document.querySelectorAll('[data-term]').forEach(b=>b.classList.toggle('on', +b.dataset.term === flexTerm));
 }
 function switchPlan(k){
-  const cur = plan(), next = PLANS[k]; if (k === S.plan) return;
+  const cur = plan(), next = PLANS[k]; if (!next || k === S.plan) return;
   const diff = next.price - cur.price;
   sheet(`<div class="grab"></div><h2>Switch to ${next.name}</h2><div class="sub">${next.price?'£'+next.price+' per month':'Free'}${next.min?' · '+next.min+' month minimum':''}</div>
     ${diff>0?`<div class="kv"><span class="k">Charged today</span><span class="v rev">${fmt(diff)}</span></div>`:''}
     <button class="btn" id="spGo">Confirm</button>`);
-  document.getElementById('spGo').onclick = () => {
+  on('spGo', () => {
     S.plan = k; if (diff > 0) pushTx('Monzo','Subscriptions',-diff,`${next.name} plan`);
     notif('Plan changed', `You're now on ${next.name}`); save(); closeSheet(); renderPlan(); renderHome(); toast('Plan updated');
-  };
+  });
+}
+function moveLayout(id, dir){
+  const i = S.layout.findIndex(x=>x.id===id); if (i < 0) return;
+  const j = i + dir; if (j < 0 || j >= S.layout.length) return;
+  const tmp = S.layout[i]; S.layout[i] = S.layout[j]; S.layout[j] = tmp;
+  save(); renderLayout();
 }
 let curPot = null;
 function openPot(id){
   const p = S.pots.find(x=>x.id===id); if (!p) return; curPot = p;
-  document.getElementById('pdName').textContent = p.name;
-  document.getElementById('pdBal').textContent = fmt(p.bal);
-  document.getElementById('pdGoal').textContent = `${Math.round(p.bal/p.goal*100)}% of ${fmt(p.goal)} goal`;
-  document.getElementById('pdBar').style.width = Math.min(100, p.bal/p.goal*100) + '%';
-  document.getElementById('pdRateRow').classList.toggle('hide', p.type !== 'savings');
-  document.getElementById('pdRate').textContent = plan().ia + '% AER (variable)';
-  document.getElementById('pdHist').innerHTML = S.tx.filter(t=>t.name===p.name).slice(0,15)
+  const set = (id2,v) => { const el = document.getElementById(id2); if (el) el.textContent = v; };
+  set('pdName', p.name);
+  set('pdBal', fmt(p.bal));
+  set('pdGoal', `${Math.round(p.bal/p.goal*100)}% of ${fmt(p.goal)} goal`);
+  const bar = document.getElementById('pdBar'); if (bar) bar.style.width = Math.min(100, p.bal/p.goal*100) + '%';
+  const rr = document.getElementById('pdRateRow'); if (rr) rr.classList.toggle('hide', p.type !== 'savings');
+  set('pdRate', plan().ia + '% AER (variable)');
+  const hist = document.getElementById('pdHist');
+  if (hist) hist.innerHTML = S.tx.filter(t=>t.name===p.name).slice(0,15)
     .map(t=>`<div class="kv"><span class="k">${esc(t.note||'Move')}</span>
       <span class="v rev">${t.amt>0?'+':''}${fmt(t.amt)}</span></div>`).join('') || '<div class="empty">No activity</div>';
   go('potdetail');
 }
-document.getElementById('pdAdd').onclick = () => amountSheet('in');
-document.getElementById('pdWithdraw').onclick = () => amountSheet('out');
-document.getElementById('pdEdit').onclick = () => {
+on('pdAdd', () => amountSheet('in'));
+on('pdWithdraw', () => amountSheet('out'));
+on('pdEdit', () => {
   sheet(`<div class="grab"></div><h2>Edit pot</h2><div class="field"><label>Name</label><input id="epName" value="${esc(curPot.name)}"></div>
     <div class="field"><label>Goal</label><input id="epGoal" type="number" min="1" value="${curPot.goal}"></div>
     <button class="btn" id="epSave">Save</button>`);
-  document.getElementById('epSave').onclick = () => {
+  on('epSave', () => {
     curPot.name = document.getElementById('epName').value.trim() || curPot.name;
     curPot.goal = Math.max(1, +document.getElementById('epGoal').value || curPot.goal);
     save(); closeSheet(); openPot(curPot.id); toast('Pot updated');
-  };
-};
+  });
+});
 function amountSheet(dir){
   sheet(`<div class="grab"></div><h2>${dir==='in'?'Add to':'Withdraw from'} ${esc(curPot.name)}</h2>
     <div class="sub">Balance ${fmt(balNow())} · Pot ${fmt(curPot.bal)}</div>
@@ -1657,12 +1694,13 @@ function amountSheet(dir){
     <div class="pill-row">${[10,25,50,100].map(v=>`<button class="chip" data-quick="${v}">£${v}</button>`).join('')}</div>
     <button class="btn" id="amGo">Confirm</button>`);
   document.querySelectorAll('[data-quick]').forEach(b=>b.onclick=()=>{document.getElementById('amAmt').value=b.dataset.quick;});
-  document.getElementById('amGo').onclick = () => { const v = +document.getElementById('amAmt').value;
-    if (!v || v <= 0) return toast('Enter an amount'); moveToPot(curPot.id, round2(v), dir); };
+  on('amGo', () => { const v = +document.getElementById('amAmt').value;
+    if (!v || v <= 0) return toast('Enter an amount'); moveToPot(curPot.id, round2(v), dir); });
 }
 function openTx(id){
   const t = S.tx.find(x=>x.id===id); if (!t) return;
-  document.getElementById('txDetail').innerHTML = `<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+  const host = document.getElementById('txDetail'); if (!host) return;
+  host.innerHTML = `<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
     ${logo(t.name)}<div><div style="font-weight:700">${esc(t.name)}</div><div class="sub" style="margin:0">${esc(t.cat)}</div></div></div>
     <div class="balance rev" style="margin:0 0 12px">${t.amt>0?'+':''}${fmt(t.amt)}</div>
     <div class="kv"><span class="k">Date</span><span class="v">${prettyDate(t.date)}</span></div>
@@ -1670,10 +1708,10 @@ function openTx(id){
     <div class="kv"><span class="k">Balance after</span><span class="v rev">${fmt(t.bal)}</span></div>
     ${t.note?`<div class="kv"><span class="k">Note</span><span class="v">${esc(t.note)}</span></div>`:''}
     <button class="btn ghost" id="dispBtn" style="margin-top:14px">Something wrong? Raise a dispute</button>`;
-  document.getElementById('dispBtn').onclick = () => {
+  on('dispBtn', () => {
     S.disputes.unshift({id:uid(), name:t.name, reason:'Query raised from transaction', date:TODAY});
     notif('Dispute raised', t.name + " — we'll look into it"); save(); toast('Dispute raised'); go('disputes');
-  };
+  });
   go('txdetail');
 }
 function payeeSheet(id){
@@ -1683,22 +1721,22 @@ function payeeSheet(id){
     <div class="field"><label>Account number</label><input id="pyAc" inputmode="numeric" value="${esc(p.ac)}"></div>
     <button class="btn" id="pySave">Save</button>
     ${id?`<button class="btn ghost" id="pyDel" style="margin-top:10px">Delete payee</button>`:''}`);
-  document.getElementById('pySave').onclick = () => { const name = document.getElementById('pyName').value.trim();
+  on('pySave', () => { const name = document.getElementById('pyName').value.trim();
     if (!name) return toast('Enter a name');
     if (id){ p.name=name; p.sc=document.getElementById('pySc').value; p.ac=document.getElementById('pyAc').value; }
     else S.payees.push({id:uid(), name, sc:document.getElementById('pySc').value, ac:document.getElementById('pyAc').value, fav:false, last:''});
-    save(); closeSheet(); renderPayees(); toast('Saved'); };
-  if (id) document.getElementById('pyDel').onclick = () => {
-    S.payees = S.payees.filter(x=>x.id!==id); save(); closeSheet(); renderPayees(); toast('Deleted'); };
+    save(); closeSheet(); renderPayees(); toast('Saved'); });
+  if (id) on('pyDel', () => {
+    S.payees = S.payees.filter(x=>x.id!==id); save(); closeSheet(); renderPayees(); toast('Deleted'); });
 }
-document.getElementById('addPayee').onclick = () => payeeSheet(null);
+on('addPayee', () => payeeSheet(null));
 function sendSheet(id){
   const p = S.payees.find(x=>x.id===id); if (!p) return;
   sheet(`<div class="grab"></div><h2>Send to ${esc(p.name)}</h2><div class="sub">${p.sc} · ${p.ac}</div>
     <div class="field"><label>Amount</label><input id="sdAmt" type="number" min="1" step="1"></div>
     <div class="field"><label>Reference</label><input id="sdRef" value="Payment"></div>
     <button class="btn" id="sdNext">Continue</button>`);
-  document.getElementById('sdNext').onclick = () => {
+  on('sdNext', () => {
     const v = +document.getElementById('sdAmt').value;
     if (!v || v <= 0) return toast('Enter an amount');
     if (v > balNow()) return toast('Not enough in your balance');
@@ -1711,10 +1749,10 @@ function sendSheet(id){
       <div class="kv"><span class="k">Amount</span><span class="v rev">${fmt(v)}</span></div>
       <button class="btn" id="sdGo" style="margin-top:14px">Send ${fmt(v)}</button>
       <button class="btn ghost" id="sdBack" style="margin-top:8px">Back</button>`);
-    document.getElementById('sdBack').onclick = () => sendSheet(id);
-    document.getElementById('sdGo').onclick = () => { pushTx(p.name,'Transfers',-v,ref); p.last = TODAY;
-      notif('Payment sent', `${fmt(v)} to ${p.name}`); closeSheet(); go('home'); toast('Sent'); };
-  };
+    on('sdBack', () => sendSheet(id));
+    on('sdGo', () => { pushTx(p.name,'Transfers',-v,ref); p.last = TODAY;
+      notif('Payment sent', `${fmt(v)} to ${p.name}`); closeSheet(); go('home'); toast('Sent'); });
+  });
 }
 function downloadMonth(ym, asPdf){
   const isa = stmtKind === 'isa';
@@ -1744,39 +1782,44 @@ function downloadMonth(ym, asPdf){
     <p class="sub" style="margin-top:18px">Monzo Bank Ltd · FSCS protected up to £120,000</p>`);
   w.document.close(); w.focus(); setTimeout(()=>w.print(), 350); toast('Statement ready to print');
 }
-document.getElementById('savePersonal').onclick = () => {
-  Object.assign(S.profile, {name:pName.value, dob:pDob.value, email:pEmail.value, phone:pPhone.value,
-    a1:pAddr1.value, a2:pAddr2.value, city:pCity.value, post:pPost.value, occ:pOcc.value, emp:pEmp.value});
+on('savePersonal', () => {
+  const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+  Object.assign(S.profile, {name:val('pName'), dob:val('pDob'), email:val('pEmail'), phone:val('pPhone'),
+    a1:val('pAddr1'), a2:val('pAddr2'), city:val('pCity'), post:val('pPost'), occ:val('pOcc'), emp:val('pEmp')});
   save(); paintAvatar(); toast('Details saved');
-};
-document.getElementById('savePin').onclick = () => { const v = document.getElementById('newPin').value.trim();
-  if (!/^\d{4}$/.test(v)) return toast('Passcode must be 4 digits'); S.pin = v; save(); toast('Passcode updated'); };
+});
+on('savePin', () => { const v = document.getElementById('newPin').value.trim();
+  if (!/^\d{4}$/.test(v)) return toast('Passcode must be 4 digits'); S.pin = v; save(); toast('Passcode updated'); });
 function applyPriv(){ document.documentElement.dataset.priv = S.priv ? '1' : '0'; }
 function applyTheme(){ document.documentElement.dataset.theme = S.theme; }
 function applyZoom(){ document.documentElement.style.setProperty('--zoom', S.zoom); }
 function applyMotion(){ document.documentElement.dataset.motion = S.motion ? 'on' : 'off'; }
-document.getElementById('privBtn') && (document.getElementById('privBtn').onclick = () => {});
-document.getElementById('motionSw').onclick = () => { S.motion = !S.motion; save(); applyMotion(); syncAppearance(); };
+on('motionSw', () => { S.motion = !S.motion; save(); applyMotion(); syncAppearance(); });
+on('privSw', () => { S.priv = !S.priv; save(); applyPriv(); syncSecurity(); toast(S.priv?'Privacy mode on':'Privacy mode off'); });
+on('roundSw', () => { S.roundups = !S.roundups; save(); syncSecurity(); });
 document.addEventListener('click', e => { const r = e.target.closest('.rev'); if (!r || !S.priv) return; r.classList.toggle('open'); });
 window.addEventListener('scroll', () => {
-  document.getElementById('hdr').classList.toggle('hdr--scrolled', window.scrollY > 4); }, {passive:true});
-function renderChips(){ document.getElementById('catChips').innerHTML = ['All', ...CATS].map(c=>
-  `<button class="chip ${c===catFilter?'on':''}" data-cat="${c}">${c}</button>`).join(''); }
-document.getElementById('catChips').addEventListener('click', e => { const b = e.target.closest('[data-cat]');
+  const h = document.getElementById('hdr'); if (h) h.classList.toggle('hdr--scrolled', window.scrollY > 4); }, {passive:true});
+
+function renderChips(){ const c = document.getElementById('catChips'); if (!c) return;
+  c.innerHTML = ['All', ...CATS].map(x=>`<button class="chip ${x===catFilter?'on':''}" data-cat="${x}">${x}</button>`).join(''); }
+const chipsEl = document.getElementById('catChips');
+if (chipsEl) chipsEl.addEventListener('click', e => { const b = e.target.closest('[data-cat]');
   if (!b) return; catFilter = b.dataset.cat; renderChips(); runSearch(); });
-document.getElementById('q').addEventListener('input', runSearch);
+const qEl = document.getElementById('q'); if (qEl) qEl.addEventListener('input', runSearch);
 function runSearch(){
-  const q = document.getElementById('q').value.toLowerCase();
+  const q = (document.getElementById('q')||{}).value || '';
   const res = S.tx.filter(t=>(catFilter==='All' || t.cat===catFilter) &&
-    (!q || t.name.toLowerCase().includes(q) || t.note.toLowerCase().includes(q))).slice(0,60);
-  const host = document.getElementById('results'); host.innerHTML = '';
+    (!q || t.name.toLowerCase().includes(q.toLowerCase()) || (t.note||'').toLowerCase().includes(q.toLowerCase()))).slice(0,60);
+  const host = document.getElementById('results'); if (!host) return; host.innerHTML = '';
   res.forEach(t=>host.insertAdjacentHTML('beforeend', `<li>${txHtml(t)}</li>`));
   if (!res.length) host.innerHTML = '<li class="empty">No matches</li>';
 }
-document.getElementById('chatSend').onclick = () => { const i = document.getElementById('chatIn'), v = i.value.trim();
+on('chatSend', () => { const i = document.getElementById('chatIn'); const v = i.value.trim();
   if (!v) return; S.chat.push({who:'me', text:v, time:NOWT}); i.value=''; save(); renderChat();
   setTimeout(()=>{ S.chat.push({who:'them', text:'Thanks Jason — looking into that now.', time:NOWT});
-    save(); if (screen==='chat') renderChat(); }, 900); };
+    save(); if (screen==='chat') renderChat(); }, 900); });
+
 async function enableBio(){
   if (!window.PublicKeyCredential) return toast('No authenticator available');
   try { const cred = await navigator.credentials.create({publicKey:{
@@ -1792,30 +1835,52 @@ async function bioUnlock(){
       allowCredentials:[{type:'public-key', id:Uint8Array.from(atob(S.credId), c=>c.charCodeAt(0))}],
       userVerification:'required', timeout:60000}}); unlock();
   } catch(e){ toast('Fingerprint not recognised'); } }
-document.getElementById('bioSw').onclick = () => { if (S.credId){ S.credId = null; save(); syncSecurity(); } else enableBio(); };
-document.getElementById('bioBtn').onclick = bioUnlock;
+on('bioSw', () => { if (S.credId){ S.credId = null; save(); syncSecurity(); } else enableBio(); });
+on('bioBtn', bioUnlock);
+
 let pinBuf = '';
-function usePinPad(){ document.getElementById('pinpad').classList.add('on'); paintDots(); }
-function paintDots(){ document.getElementById('dots').innerHTML = [0,1,2,3].map(i=>`<span class="dot ${i<pinBuf.length?'f':''}"></span>`).join(''); }
+function usePinPad(){ const p = document.getElementById('pinpad'); if (p) p.classList.add('on'); paintDots(); }
+function paintDots(){ const d = document.getElementById('dots'); if (!d) return;
+  d.innerHTML = [0,1,2,3].map(i=>`<span class="dot ${i<pinBuf.length?'f':''}"></span>`).join(''); }
 function buildKeys(){
-  document.getElementById('keys').innerHTML = ['1','2','3','4','5','6','7','8','9','','0','⌫'].map(k =>
-    k==='' ? '<span></span>' : `<button class="key" data-k="${k}">${k}</button>`).join('');
-  document.getElementById('keys').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return;
-    const k = b.dataset.k; if (k==='⌫') pinBuf = pinBuf.slice(0,-1); else if (pinBuf.length < 4) pinBuf += k;
+  const k = document.getElementById('keys'); if (!k) return;
+  k.innerHTML = ['1','2','3','4','5','6','7','8','9','','0','⌫'].map(x =>
+    x==='' ? '<span></span>' : `<button class="key" data-k="${x}">${x}</button>`).join('');
+  k.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return;
+    const v = b.dataset.k; if (v==='⌫') pinBuf = pinBuf.slice(0,-1); else if (pinBuf.length < 4) pinBuf += v;
     paintDots(); if (pinBuf.length === 4) checkPin(); });
 }
-function checkPin(){ if (pinBuf === S.pin) unlock();
-  else { document.getElementById('pinErr').classList.add('on'); pinBuf=''; paintDots();
-    setTimeout(()=>document.getElementById('pinErr').classList.remove('on'), 1600); } }
+function checkPin(){ if (pinBuf === S.pin) return unlock();
+  const err = document.getElementById('pinErr'); if (err) err.classList.add('on');
+  pinBuf=''; paintDots();
+  setTimeout(()=>{ if (err) err.classList.remove('on'); }, 1600); }
 function unlock(){ sessionStorage.setItem('unlocked','1'); document.body.classList.remove('locked');
-  pinBuf=''; paintDots(); document.getElementById('pinpad').classList.remove('on'); go('home'); }
-document.getElementById('usePin').onclick = usePinPad;
-function paintAvatar(){ document.getElementById('avatarBtn').textContent =
-    S.profile.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
-document.getElementById('avatarBtn').onclick = () => go('account');
-document.getElementById('bellBtn').onclick = () => go('notifs');
-load(); applyPriv(); applyTheme(); applyZoom(); applyMotion();
-paintAvatar(); buildKeys(); paintDots(); renderChips(); renderHome();
+  pinBuf=''; paintDots(); const p = document.getElementById('pinpad'); if (p) p.classList.remove('on'); go('home'); }
+on('usePin', usePinPad);
+
+function paintAvatar(){ const a = document.getElementById('avatarBtn'); if (!a) return;
+  a.textContent = S.profile.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+on('avatarBtn', () => go('account'));
+on('bellBtn', () => go('notifs'));
+on('searchBtn', () => go('search'));
+on('pullBtn', openDrawer);
+on('plusBtn', plusSheet);
+on('editLayout2', renderLayout);
+
+function plusSheet(){
+  sheet(`<div class="grab"></div><h2>Add</h2><div class="sub">What would you like to do?</div>
+    <button class="sheetrow" data-act="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add transaction</span></button>
+    <button class="sheetrow" data-act="newpot"><svg viewBox="0 0 24 24"><path d="M6 8h12v11H6z"/><path d="M9 8V6h6v2"/></svg><span>Create a pot</span></button>
+    <button class="sheetrow" data-go="payees"><svg viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg><span>Send money</span></button>
+    <button class="sheetrow" data-go="accounts"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Open an account</span></button>
+    <button class="sheetrow" data-go="loans"><svg viewBox="0 0 24 24"><path d="M4 8h16v8H4z"/></svg><span>Apply for a loan</span></button>`);
+}
+
+try { load(); } catch(e){ window.onerror('boot: ' + e.message, 'script', 0, 0); }
+if (!S) S = freshState();
+applyPriv(); applyTheme(); applyZoom(); applyMotion();
+paintAvatar(); buildKeys(); paintDots(); renderChips();
+try { renderHome(); } catch(e){ window.onerror('home: ' + e.message, 'script', 0, 0); }
 if (sessionStorage.getItem('unlocked') === '1') document.body.classList.remove('locked');
 window.addEventListener('online', ()=>document.body.classList.remove('is-offline'));
 window.addEventListener('offline', ()=>document.body.classList.add('is-offline'));
