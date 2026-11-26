@@ -3,7 +3,7 @@
 import {
   getState, commit, esc, fmt, TODAY, round2, plan, PLANS_BANK, CATS, BANKS, BB_CAP,
   setProfile, setPin, setCredId, setTheme, setZoom, setMotion, togglePriv, toggleRoundups,
-  roundupPotName,
+  roundupPotName, exportState, importState,
   addPayee, updatePayee, deletePayee, sendMoney, requestMoney, settleRequest, cancelRequest,
   addVirtualCard, freezeVCard, renameVCard,
   deleteVCard, toggleFreeze, setPlan, setFamily, flexAvail, flexPurchase, flexMonthly,
@@ -128,6 +128,53 @@ export function mountRequest(root){
     }
     const c = e.target.closest('[data-cancel]');
     if (c){ cancelRequest(c.dataset.cancel); render(); toast('Cancelled'); }
+  });
+  render();
+}
+
+export function mountBackup(root){
+  const render = () => {
+    const s = getState();
+    root.innerHTML = `<div class="h-sec"><h2>Backup</h2></div>
+      <div class="card"><h2>Export</h2>
+        <div class="sub">Your whole ledger, pots, policies and settings in one file.</div>
+        ${s.lastBackup ? kv('Last export', esc(s.lastBackup)) : `<p class="note">${badge('Never exported', 'warn')}</p>`}
+        <button class="btn" data-export style="margin-top:12px">Download backup</button></div>
+      <div class="card"><h2>Restore</h2>
+        <div class="sub">Replaces everything currently on this device.</div>
+        <label class="filebtn" style="margin-top:4px">Choose file
+          <input type="file" accept="application/json,.json" data-import></label></div>
+      <p class="note">The file is plain JSON and contains your name, address and full history, so keep it somewhere you trust.</p>`;
+  };
+  root.addEventListener('click', e => {
+    if (!e.target.closest('[data-export]')) return;
+    const json = exportState();
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `monzo-backup-${TODAY}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    render(); toast('Backup downloaded');
+  });
+  root.addEventListener('change', async e => {
+    const input = e.target.closest('[data-import]');
+    if (!input || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    let text = '';
+    try { text = await file.text(); } catch { return toast('Could not read that file'); }
+    let rows = 0;
+    try { const parsed = JSON.parse(text); rows = Array.isArray(parsed.tx) ? parsed.tx.length : 0; }
+    catch { rows = 0; }
+    sheet(`<h2>Restore this backup?</h2>
+      <div class="sub">${esc(file.name)} · ${rows} transactions</div>
+      <p class="note">Everything currently on this device is replaced. Export first if you are unsure.</p>
+      <button class="btn" id="rsGo">Replace everything</button>`);
+    document.getElementById('rsGo').onclick = () => {
+      const r = importState(text);
+      if (!r.ok) return toast(r.msg);
+      closeSheet(); go('home'); toast(`Restored ${r.rows} transactions`);
+    };
   });
   render();
 }
@@ -793,12 +840,14 @@ export function mountSecurity(root){
         <div class="d">${roundupPotName() || 'No pot selected'}</div></div>
         <button class="sw ${s.roundups ? 'on' : ''}" data-round aria-label="Round-ups"></button></div>
       <div class="field"><label for="newPin">New passcode</label><input id="newPin" maxlength="4" inputmode="numeric"></div>
-      <button class="btn" data-pin>Update</button></div>
-      <p class="note">Round-ups go to ${esc(roundupPotName() || 'whichever pot you choose on its page')}. Spare change only, never more than your balance.</p>`;
+      <button class="btn" data-pin>Update</button>
+      <button class="btn ghost" data-lock-now style="margin-top:8px">Lock now</button></div>
+      <p class="note">The app locks itself after a minute in the background. Round-ups go to ${esc(roundupPotName() || 'whichever pot you choose on its page')}.</p>`;
   };
   root.addEventListener('click', async e => {
     if (e.target.closest('[data-priv]')){ togglePriv(); return render(); }
     if (e.target.closest('[data-round]')){ toggleRoundups(); return render(); }
+    if (e.target.closest('[data-lock-now]')){ document.dispatchEvent(new CustomEvent('monzo:lock')); return; }
     if (e.target.closest('[data-pin]')){
       const v = root.querySelector('#newPin').value.trim();
       if (!/^\d{4}$/.test(v)) return toast('4 digits');
@@ -905,4 +954,4 @@ export function mountTxDetail(root, params){
     if (e.target.closest('[data-del]')){ deleteTx(t.id); toast('Deleted'); go('acc'); }
   });
   render();
-    }
+                        }
