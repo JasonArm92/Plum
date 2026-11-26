@@ -167,6 +167,15 @@ section.on{display:block;animation:fade .2s ease}
 .potcard .v{font-weight:700;font-size:17px;letter-spacing:-.02em;margin-top:1px}
 .potcard .p{font-size:11.5px;color:var(--ink3)}
 
+.people{display:flex;gap:12px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.people::-webkit-scrollbar{display:none}
+.person{flex:0 0 auto;width:64px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.person .av{width:52px;height:52px;border-radius:50%;background:var(--card2);display:grid;place-items:center;
+ font-size:15px;font-weight:700;color:var(--ink2);border:2px solid transparent}
+.person:active .av{border-color:var(--coral)}
+.person .n{font-size:11.5px;font-weight:600;line-height:1.2;color:var(--ink2)}
+.person--add .av{background:var(--card3);color:var(--ink3);font-size:22px;font-weight:400}
+
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r4);padding:16px 18px;box-shadow:var(--sh1);margin:12px 0}
 .card h2{font-size:15.5px;margin:0 0 3px;letter-spacing:-.01em}
 .card .sub{font-size:13px;color:var(--ink2);margin:0 0 12px}
@@ -187,6 +196,11 @@ section.on{display:block;animation:fade .2s ease}
 .badge.coral{background:rgba(255,79,64,.14);color:var(--coral-d)}
 .meter{height:8px;border-radius:var(--pill);background:var(--card3);overflow:hidden;margin:8px 0}
 .meter i{display:block;height:100%;background:var(--coral);border-radius:var(--pill);transition:width .3s}
+.split{display:flex;height:10px;border-radius:var(--pill);overflow:hidden;background:var(--card3);margin:10px 0}
+.split i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:10px 14px;font-size:12px;color:var(--ink2)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend b{width:8px;height:8px;border-radius:2px;display:inline-block}
 
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;border-radius:var(--pill);
  background:var(--coral);color:#fff;font-weight:600;font-size:16px;letter-spacing:-.01em;transition:transform .12s,opacity .15s}
@@ -306,30 +320,46 @@ window.onerror = (m, s, l, c) => {
 
 <section data-screen="grow">
   <div class="h-sec"><h2>Grow</h2></div>
-  <div class="card"><div class="sub">Everything you're building</div>
+  <div class="card"><div class="sub">Net worth across everything</div>
     <div class="balance rev" id="growTotal">£0.00</div>
-    <div class="sub" id="growSub" style="margin:6px 0 0"></div></div>
-  <div class="card"><div class="sub">Savings</div><div class="balance rev" id="growSaveBal">£0.00</div>
-    <div class="sub" id="growSaveMeta" style="margin:4px 0 0"></div>
-    <div class="badge coral" id="growSaveRate" style="margin-top:8px"></div></div>
-  <div class="card"><div class="sub">Investments · Stocks &amp; shares ISA</div><div class="balance rev" id="growInvBal">£0.00</div></div>
-  <div class="card"><div class="sub">Pension · SIPP connected</div><div class="balance rev" id="growPenBal">£0.00</div></div>
-  <div class="card"><div class="sub">Home equity · estimate</div><div class="balance rev" id="growHomeBal">£0.00</div></div>
-  <div class="card"><h2>Home estimate</h2><div class="sub">Used for equity only</div>
+    <div class="split" id="growSplit"></div>
+    <div class="legend" id="growLegend"></div>
+    <div class="kv" style="margin-top:12px"><span class="k">Change this month</span><span class="v" id="growChange">£0.00</span></div></div>
+  <div class="card"><h2>Savings</h2><div class="sub" id="growSaveMeta">—</div>
+    <div class="balance rev" id="growSaveBal">£0.00</div>
+    <div class="kv"><span class="k">Rate</span><span class="v" id="growSaveRate">—</span></div>
+    <div class="kv"><span class="k">Interest this month</span><span class="v rev" id="growSaveInt">£0.00</span></div>
+    <button class="btn ghost sm" data-go="save" style="margin-top:12px">Open savings</button></div>
+  <div class="card"><h2>Investments</h2><div class="sub">Stocks &amp; shares ISA · opened October 1992</div>
+    <div class="balance rev" id="growInvBal">£0.00</div>
+    <div class="kv"><span class="k">Platform fee</span><span class="v" id="growInvFee">0.25%</span></div>
+    <button class="btn ghost sm" data-go="invest" style="margin-top:12px">Open ISA</button></div>
+  <div class="card"><h2>Pension</h2><div class="sub">SIPP · connected</div>
+    <div class="balance rev" id="growPenBal">£0.00</div></div>
+  <div class="card"><h2>Home equity</h2><div class="sub">Estimate from your mortgage</div>
+    <div class="balance rev" id="growHomeBal">£0.00</div>
     <div class="field"><label>Property value</label><input id="hv" type="number" min="0" step="1000"></div>
     <div class="field"><label>Mortgage owed</label><input id="hm" type="number" min="0" step="1000"></div>
-    <button class="btn" id="saveHome">Save</button></div>
+    <button class="btn" id="saveHome">Save estimate</button></div>
+  <div class="card"><h2>Borrowing against you</h2>
+    <div class="kv"><span class="k">Flex owed</span><span class="v rev" id="growFlex">£0.00</span></div>
+    <div class="kv"><span class="k">Loans owed</span><span class="v rev" id="growLoans">£0.00</span></div></div>
 </section>
 
 <section data-screen="save">
   <div class="h-sec"><h2>Save</h2><button id="newPot2">Create</button></div>
+  <div class="card"><div class="sub">Interest this month</div><div class="balance rev" id="saveInt">£0.00</div>
+    <div class="sub" id="saveIntSub" style="margin:6px 0 0"></div></div>
   <div id="saveList"></div>
-  <p class="note">Savings pots earn interest at your plan rate. Bills pots hold direct debits.</p>
+  <p class="note">Savings pots earn your plan rate. Bills pots hold direct debits. Regular pots are for goals.</p>
 </section>
 
 <section data-screen="pay">
   <div class="h-sec"><h2>Pay</h2></div>
+  <div id="payRecent"></div>
   <div class="card card--list">
+    <button class="pot" data-act="request"><span class="art">↓</span><span class="mid"><span class="nm">Request money</span><span class="sub">Ask someone to pay you</span></span></button>
+    <button class="pot" data-act="split"><span class="art">⑃</span><span class="mid"><span class="nm">Split a bill</span><span class="sub">Share a cost with people</span></span></button>
     <button class="pot" data-go="payees"><span class="art">→</span><span class="mid"><span class="nm">Send money</span><span class="sub">To a saved payee</span></span></button>
     <button class="pot" id="soBtn"><span class="art">⇄</span><span class="mid"><span class="nm">Standing orders</span><span class="sub" id="soCount">0 active</span></span></button>
     <button class="pot" id="tabsBtn"><span class="art">⌗</span><span class="mid"><span class="nm">Shared tabs</span><span class="sub" id="tabCount">0 open</span></span></button>
@@ -658,6 +688,7 @@ const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(3
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; return el; };
 const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+const initials = s => String(s).split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
 
 let _seed = 0x9e3779b9;
 function rnd(){ _seed|=0; _seed = _seed + 0x6D2B79F5 | 0;
@@ -694,7 +725,7 @@ const DOMAINS = {'Tesco':'tesco.com','Aldi':'aldi.co.uk','Asda':'asda.com','Morr
   'Monzo Flex':'monzo.com','Monzo Aura':'monzo.com','Monzo Loans':'monzo.com'};
 function logo(name){
   const d = DOMAINS[name];
-  const ini = String(name).split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const ini = initials(name);
   if (!d) return `<span class="lg">${esc(ini)}</span>`;
   return `<span class="lg"><img src="https://logo.clearbit.com/${d}" alt="" loading="lazy"
     onerror="this.parentNode.textContent='${esc(ini)}'"></span>`;
@@ -844,6 +875,7 @@ const growTotal = () => savingsTotal() + isaBal() + (S.pension||0) + homeEquity(
 const flexAvail = () => Math.max(0, round2(S.flex.limit - S.flex.used));
 const sortedPots = () => S.pots.slice().sort((a,b)=>
   S.potSort === 'balance' ? b.bal - a.bal : a.name.localeCompare(b.name));
+const interestThisMonth = () => round2(S.pots.filter(p=>p.type==='savings').reduce((a,p)=>a+p.bal,0) * (plan().ia/100/12));
 
 function runInterest(){
   if (S.lastInterest === THIS_YM) return;
@@ -887,6 +919,17 @@ function runTick(){
 const spentThisMonth = () => S.tx.filter(t=>t.date.slice(0,7)===THIS_YM && FLEX.includes(t.cat)).reduce((a,t)=>a+Math.abs(t.amt),0);
 const spentCat = c => S.tx.filter(t=>t.date.slice(0,7)===THIS_YM && t.cat===c).reduce((a,t)=>a+Math.abs(t.amt),0);
 const spentToday = () => S.tx.filter(t=>t.date===TODAY && t.amt<0).reduce((a,t)=>a+Math.abs(t.amt),0);
+function topMerchants(n){
+  const m = {};
+  S.tx.filter(t=>t.date.slice(0,7)===THIS_YM && t.amt<0 && FLEX.includes(t.cat))
+    .forEach(t=>{ m[t.name] = round2((m[t.name]||0) + Math.abs(t.amt)); });
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n);
+}
+function monthChange(){
+  const startBal = S.tx.filter(t=>t.date.slice(0,7)!==THIS_YM).length
+    ? S.tx.filter(t=>t.date.slice(0,7)!==THIS_YM)[0].bal : balNow();
+  return round2(balNow() - startBal);
+}
 function nextPayday(){ const d = new Date(NOW.getFullYear(),NOW.getMonth(),28);
   if (TODAY >= iso(d)) d.setMonth(d.getMonth()+1); return iso(d); }
 const daysToPayday = () => Math.max(0, Math.round((dISO(nextPayday())-dISO(TODAY))/86400000));
@@ -1056,19 +1099,76 @@ function fillFeed(id, limit, moreId){
   S.tx.slice(0, limit).forEach(t => host.insertAdjacentHTML('beforeend', `<li>${txHtml(t)}</li>`));
   const mb = document.getElementById(moreId); if (mb) mb.classList.toggle('hide', limit >= S.tx.length);
 }
-function renderSave(){ const h = document.getElementById('saveList'); if (!h) return;
-  h.innerHTML = sortedPots().map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('') || '<div class="empty">No pots yet</div>'; }
+function renderSave(){
+  const host = document.getElementById('saveList'); if (!host) return;
+  const int = interestThisMonth();
+  setTxt('saveInt', fmt(int));
+  setTxt('saveIntSub', `${plan().ia}% AER variable on ${S.pots.filter(p=>p.type==='savings').length} savings pots`);
+  const groups = [
+    ['Savings pots', 'savings', 'Earns interest at your plan rate'],
+    ['Bills pots', 'bills', 'Money set aside for direct debits'],
+    ['Regular pots', 'regular', 'Goals without interest']
+  ];
+  host.innerHTML = groups.map(([label, type, blurb]) => {
+    const items = sortedPots().filter(p=>p.type===type);
+    if (!items.length) return '';
+    return `<div class="h-sec"><h2 class="sm">${label}</h2></div>
+      <p class="note" style="margin:0 0 6px">${blurb}</p>
+      ${items.map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('')}`;
+  }).join('') || '<div class="empty">No pots yet</div>';
+}
 function renderGrow(){
   setTxt('growTotal', fmt(growTotal()));
-  setTxt('growSub', `Savings ${fmt(savingsTotal())} · Invested ${fmt(isaBal())} · Pension ${fmt(S.pension||0)} · Equity ${fmt(homeEquity())}${loanOwed()?` · Owed ${fmt(loanOwed())}`:''}`);
+  const parts = [
+    ['Savings', savingsTotal(), '#ff4f40'],
+    ['Invested', isaBal(), '#091723'],
+    ['Pension', S.pension||0, '#7b5cff'],
+    ['Equity', homeEquity(), '#2f9e6b'],
+    ['Connected', connTotal(), '#00a3b4']
+  ];
+  const total = parts.reduce((a,p)=>a+p[1],0) || 1;
+  const sp = document.getElementById('growSplit');
+  if (sp) sp.innerHTML = parts.filter(p=>p[1]>0).map(([k,v,c])=>
+    `<i style="width:${(v/total*100).toFixed(2)}%;background:${c}"></i>`).join('');
+  const lg = document.getElementById('growLegend');
+  if (lg) lg.innerHTML = parts.filter(p=>p[1]>0).map(([k,v,c])=>
+    `<span><b style="background:${c}"></b>${k} ${(v/total*100).toFixed(0)}%</span>`).join('');
+  const ch = monthChange();
+  const chEl = document.getElementById('growChange');
+  if (chEl){ chEl.textContent = (ch>=0?'+':'−') + fmt(ch); chEl.className = 'v ' + (ch>=0?'v--pos':'v--neg'); }
+  setTxt('growSaveMeta', `${S.pots.filter(p=>p.type==='savings').length} savings pots`);
   setTxt('growSaveBal', fmt(savingsTotal()));
-  setTxt('growSaveMeta', `${S.pots.filter(p=>p.type==='savings').length} savings pots · connected ${fmt(connTotal())}`);
   setTxt('growSaveRate', plan().ia + '% AER');
+  setTxt('growSaveInt', fmt(interestThisMonth()));
   setTxt('growInvBal', fmt(isaBal()));
+  setTxt('growInvFee', plan().cover ? '0.20%' : '0.25%');
   setTxt('growPenBal', fmt(S.pension||0));
   setTxt('growHomeBal', fmt(homeEquity()));
+  setTxt('growFlex', fmt(S.flex.used));
+  setTxt('growLoans', fmt(loanOwed()));
   const hv = document.getElementById('hv'); if (hv) hv.value = S.homeValue||0;
   const hm = document.getElementById('hm'); if (hm) hm.value = S.mortgage||0;
+}
+function renderPay(){
+  const recent = S.payees.slice().sort((a,b)=>(b.fav?1:0)-(a.fav?1:0) ||
+    (b.last||'').localeCompare(a.last||'')).slice(0,6);
+  const host = document.getElementById('payRecent');
+  if (host) host.innerHTML = recent.length ? `<div class="h-sec"><h2 class="sm">Recent</h2>
+    <button data-go="payees">See all</button></div>
+    <div class="people">${recent.map(p=>`<button class="person" data-send="${p.id}">
+      <span class="av">${esc(initials(p.name))}</span><span class="n">${esc(p.name.split(' ')[0])}</span></button>`).join('')}
+      <button class="person person--add" data-go="payees"><span class="av">+</span><span class="n">New</span></button></div>`
+    : `<div class="h-sec"><h2 class="sm">Recent</h2><button data-go="payees">Add</button></div>`;
+  setTxt('soCount', S.sos.filter(s=>s.active).length + ' active');
+  setTxt('tabCount', S.tabs.length + ' open');
+  const so = document.getElementById('soList');
+  if (so) so.innerHTML = '<h2>Standing orders</h2><div class="sub">Regular payments</div>' +
+    (S.sos.map(s=>`<div class="kv"><span class="k">${esc(s.name)}<br><span style="font-size:12.5px">Day ${s.day}</span></span>
+      <span class="v rev">${fmt(s.amt)}</span></div>`).join('') || '<div class="empty">None set up</div>');
+  const tb = document.getElementById('tabList');
+  if (tb) tb.innerHTML = '<h2>Shared tabs</h2><div class="sub">Split with friends</div>' +
+    (S.tabs.map(t=>`<div class="kv"><span class="k">${esc(t.name)}<br><span style="font-size:12.5px">${t.people} people · you owe ${fmt(t.mine)}</span></span>
+      <span class="v rev">${fmt(t.total)}</span></div>`).join('') || '<div class="empty">No open tabs</div>');
 }
 function renderTrends(){
   const host = document.getElementById('trendBody'); if (!host) return;
@@ -1079,8 +1179,12 @@ function renderTrends(){
       <div id="tbChart"></div></div>`;
     lineChart(document.getElementById('tbChart'), balanceSeries(90));
   } else if (trendView === 'spending'){
+    const merch = topMerchants(5);
     host.innerHTML = `<div class="card"><h2>${fmt(spentThisMonth())}</h2>
       <div class="sub">${MONTHS[NOW.getMonth()]} ${NOW.getFullYear()}</div><div id="tbDonut"></div></div>
+      <div class="card"><h2>Where it goes</h2><div class="sub">Top merchants this month</div>
+        ${merch.length ? merch.map(([n,v])=>`<div class="kv"><span class="k">${esc(n)}</span><span class="v rev">${fmt(v)}</span></div>`).join('')
+          : '<div class="empty">Nothing yet this month</div>'}</div>
       <div class="card"><h2>Daily activity</h2><div class="sub">Last 8 weeks</div><div class="heat" id="tbHeat"></div></div>`;
     const parts = FLEX.map(c=>({k:c,v:spentCat(c)})).filter(p=>p.v>0).sort((a,b)=>b.v-a.v);
     donut(document.getElementById('tbDonut'), parts.length?parts:[{k:'Nothing yet',v:1}]);
@@ -1139,7 +1243,7 @@ function renderPayees(){
   const host = document.getElementById('payeeList'); if (!host) return;
   const sorted = S.payees.slice().sort((a,b)=>(b.fav?1:0)-(a.fav?1:0) || (b.last||'').localeCompare(a.last||''));
   host.innerHTML = sorted.map(p=>`<div class="pot">
-    <span class="art">${esc(p.name.split(' ').map(w=>w[0]).join('').slice(0,2))}</span>
+    <span class="art">${esc(initials(p.name))}</span>
     <span class="mid"><span class="nm">${esc(p.name)} ${p.fav?'<span class="badge ok">Fav</span>':''}
       ${p.last===TODAY?'<span class="badge">Recent</span>':''}</span><span class="sub">${p.sc} · ${p.ac}</span></span>
     <button class="more" data-send="${p.id}" aria-label="Send">➤</button>
@@ -1213,18 +1317,6 @@ function renderLimits(){
     <div class="kv"><span class="k">Card payments (per day)</span><span class="v">£5,000</span></div>
     <div class="kv"><span class="k">Bank transfers (per day)</span><span class="v">£10,000</span></div>
     <div class="kv"><span class="k">Cash deposits</span><span class="v">${p.cover?'3 free/month':'£1 each'}</span></div>`;
-}
-function renderPay(){
-  setTxt('soCount', S.sos.filter(s=>s.active).length + ' active');
-  setTxt('tabCount', S.tabs.length + ' open');
-  const so = document.getElementById('soList');
-  if (so) so.innerHTML = '<h2>Standing orders</h2><div class="sub">Regular payments</div>' +
-    (S.sos.map(s=>`<div class="kv"><span class="k">${esc(s.name)}<br><span style="font-size:12.5px">Day ${s.day}</span></span>
-      <span class="v rev">${fmt(s.amt)}</span></div>`).join('') || '<div class="empty">None set up</div>');
-  const tb = document.getElementById('tabList');
-  if (tb) tb.innerHTML = '<h2>Shared tabs</h2><div class="sub">Split with friends</div>' +
-    (S.tabs.map(t=>`<div class="kv"><span class="k">${esc(t.name)}<br><span style="font-size:12.5px">${t.people} people</span></span>
-      <span class="v rev">${fmt(t.total)}</span></div>`).join('') || '<div class="empty">No open tabs</div>');
 }
 function renderJoint(){
   const inn = S.tx.filter(t=>t.date.slice(0,7)===THIS_YM && t.cat==='Income').reduce((a,t)=>a+t.amt,0);
@@ -1504,6 +1596,8 @@ document.addEventListener('click', e => {
     if (t.dataset.act){
       const a = t.dataset.act;
       if (a==='add') return addTxSheet();
+      if (a==='request') return requestSheet();
+      if (a==='split') return splitSheet();
       if (a==='freeze'){ S.frozen = !S.frozen; save(); closeSheet(); renderHome();
         return toast(S.frozen?'Card frozen':'Card unfrozen'); }
       if (a==='rename'){ closeSheet(); return renameSheet(); }
@@ -1621,6 +1715,44 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => { if (e.target.id === 'lnTerm') renderLoans(); });
 
+function requestSheet(){
+  sheet(`<div class="grab"></div><h2>Request money</h2><div class="sub">Ask someone to pay you</div>
+    <div class="field"><label>From</label><select id="rqWho">${S.payees.map(p=>`<option>${esc(p.name)}</option>`).join('')}</select></div>
+    <div class="field"><label>Amount</label><input id="rqAmt" type="number" min="1" step="1"></div>
+    <div class="field"><label>What for</label><input id="rqRef" value="Split"></div>
+    <button class="btn" id="rqGo">Send request</button>`);
+  on('rqGo', () => {
+    const who = document.getElementById('rqWho').value;
+    const amt = +document.getElementById('rqAmt').value;
+    const ref = document.getElementById('rqRef').value || 'Split';
+    if (!amt || amt <= 0) return toast('Enter an amount');
+    notif('Request sent', `${fmt(amt)} from ${who} — ${ref}`);
+    closeSheet(); toast('Request sent'); go(screen, true);
+  });
+}
+function splitSheet(){
+  sheet(`<div class="grab"></div><h2>Split a bill</h2><div class="sub">Everyone gets their own share</div>
+    <div class="field"><label>What for</label><input id="spName" placeholder="e.g. Steak night"></div>
+    <div class="field"><label>Total</label><input id="spTot" type="number" min="1" step="1"></div>
+    <div class="field"><label>People</label><input id="spPpl" type="number" min="2" value="2"></div>
+    <div class="kv"><span class="k">Each pays</span><span class="v rev" id="spEach">—</span></div>
+    <button class="btn" id="spGo" style="margin-top:12px">Create split</button>`);
+  const calc = () => {
+    const tot = +document.getElementById('spTot').value || 0;
+    const ppl = Math.max(2, +document.getElementById('spPpl').value || 2);
+    setTxt('spEach', tot ? fmt(round2(tot/ppl)) : '—');
+  };
+  const tEl = document.getElementById('spTot'), pEl = document.getElementById('spPpl');
+  if (tEl) tEl.oninput = calc; if (pEl) pEl.oninput = calc;
+  on('spGo', () => {
+    const n = document.getElementById('spName').value.trim();
+    const tot = +document.getElementById('spTot').value;
+    const ppl = Math.max(2, +document.getElementById('spPpl').value || 2);
+    if (!n || !tot) return toast('Fill in both fields');
+    S.tabs.push({id:uid(), name:n, total:tot, mine:round2(tot/ppl), people:ppl});
+    save(); closeSheet(); renderPay(); notif('Split created', `${n} — ${fmt(tot)} between ${ppl}`); toast('Split created');
+  });
+}
 function renameSheet(){
   sheet(`<div class="grab"></div><h2>Rename account</h2><div class="sub">Only you see this name</div>
     <div class="field"><label>Account name</label><input id="rnName" value="${esc(S.acctName)}" maxlength="28"></div>
@@ -1910,7 +2042,7 @@ function unlock(){ sessionStorage.setItem('unlocked','1'); document.body.classLi
 on('usePin', usePinPad);
 
 function paintAvatar(){ const a = document.getElementById('avatarBtn'); if (!a) return;
-  a.textContent = S.profile.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+  a.textContent = initials(S.profile.name); }
 on('avatarBtn', () => go('account'));
 on('bellBtn', () => go('notifs'));
 on('searchBtn', () => go('search'));
@@ -1923,6 +2055,7 @@ function plusSheet(){
   sheet(`<div class="grab"></div><h2>Add</h2><div class="sub">What would you like to do?</div>
     <button class="sheetrow" data-act="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add transaction</span></button>
     <button class="sheetrow" data-act="newpot"><svg viewBox="0 0 24 24"><path d="M6 8h12v11H6z"/><path d="M9 8V6h6v2"/></svg><span>Create a pot</span></button>
+    <button class="sheetrow" data-act="request"><svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg><span>Request money</span></button>
     <button class="sheetrow" data-go="payees"><svg viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg><span>Send money</span></button>
     <button class="sheetrow" data-go="accounts"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Open an account</span></button>
     <button class="sheetrow" data-go="loans"><svg viewBox="0 0 24 24"><path d="M4 8h16v8H4z"/></svg><span>Apply for a loan</span></button>`);
