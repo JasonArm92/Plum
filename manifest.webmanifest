@@ -11,9 +11,11 @@
   "theme_color": "#FF4F40",
   "orientation": "portrait",
   "categories": ["finance", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
-    { "src": "monzo-tile.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
-    { "src": "monzo-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "monzo-mark-white.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "monzo-maskable.svg?v=2", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" },
+    { "src": "monzo-tile.svg?v=2", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "monzo-tile.svg?v=2", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "monzo-mark.svg?v=2", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }
