@@ -8,7 +8,8 @@ import {
   moveToPot, createPot, updatePot, deletePot, togglePotLock,
   setHomeEstimate, setPensionMonthly, setTarget, setActiveAccount,
   moveLayoutSection, toggleLayoutSection, addStandingOrder, addSharedTab,
-  toggleStandingOrder, settleTab, CATS, FLEX
+  toggleStandingOrder, settleTab, salaryAmount, setSorter, setSorterOn, sorterTotal,
+  getPaidEarly, gpeClaimed, CATS, FLEX
 } from './core.js';
 
 import {
@@ -208,6 +209,8 @@ export function mountPay(root){
       <div class="card" style="padding:6px 8px">
         <button class="pot" data-go="payees"><span class="lg"><span class="lg__i">SND</span></span><span class="mid">
           <span class="nm">Send money</span><span class="sub">To a saved payee</span></span><span class="amt">›</span></button>
+        <button class="pot" data-go="request"><span class="lg"><span class="lg__i">RQ</span></span><span class="mid">
+          <span class="nm">Request money</span><span class="sub">${s.requests.length} outstanding</span></span><span class="amt">›</span></button>
         <button class="pot" data-so><span class="lg"><span class="lg__i">SO</span></span><span class="mid">
           <span class="nm">Standing orders</span><span class="sub">${s.sos.filter(x => x.active).length} active</span></span><span class="amt">›</span></button>
         <button class="pot" data-tabs><span class="lg"><span class="lg__i">TAB</span></span><span class="mid">
@@ -215,9 +218,9 @@ export function mountPay(root){
         <button class="pot" data-go="joint"><span class="lg"><span class="lg__i">JNT</span></span><span class="mid">
           <span class="nm">Joint account</span><span class="sub">With ${esc(s.partner)}</span></span><span class="amt">›</span></button>
         <button class="pot" data-sorter><span class="lg"><span class="lg__i">SRT</span></span><span class="mid">
-          <span class="nm">Salary sorter</span><span class="sub">Split your pay</span></span><span class="amt">›</span></button>
+          <span class="nm">Salary sorter</span><span class="sub">${s.sorter.on ? fmt(sorterTotal()) + ' split' : 'Split your pay'}</span></span><span class="amt">›</span></button>
         <button class="pot" data-gpe><span class="lg"><span class="lg__i">GPE</span></span><span class="mid">
-          <span class="nm">Get paid early</span><span class="sub">4pm the day before</span></span><span class="amt">›</span></button>
+          <span class="nm">Get paid early</span><span class="sub">${gpeClaimed() ? 'Claimed this month' : '4pm the day before'}</span></span><span class="amt">›</span></button>
       </div>
       <div class="card"><h2>Standing orders</h2>
         ${s.sos.length ? s.sos.map(x => `<div class="pot"><span class="lg"><span class="lg__i">${esc(x.name[0])}</span></span>
@@ -230,6 +233,49 @@ export function mountPay(root){
           <button class="btn ghost sm" data-settle="${t.id}">Settle</button></div>`).join('')
           : empty('No open tabs')}</div>`;
   };
+
+  const sorterSheet = () => {
+    const s = getState();
+    const salary = salaryAmount();
+    const draft = { ...(s.sorter.splits || {}) };
+    const totals = () => {
+      const total = round2(Object.values(draft).reduce((a, b) => a + (Number(b) || 0), 0));
+      const t = document.getElementById('stTotal'), l = document.getElementById('stLeft');
+      if (t) t.textContent = fmt(total);
+      if (l) l.textContent = fmt(Math.max(0, salary - total));
+      return total;
+    };
+    sheet(`<h2>Salary sorter</h2>
+      <div class="sub">Your next pay is ${fmt(salary)}. Choose what goes where.</div>
+      <div class="toggle"><div><div class="t">Split automatically</div>
+        <div class="d">Runs when your pay lands</div></div>
+        <button class="sw ${s.sorter.on ? 'on' : ''}" data-sorter-on aria-label="Enable sorter"></button></div>
+      ${s.pots.length ? s.pots.map(p => `<div class="field"><label for="st_${p.id}">${esc(p.name)}</label>
+        <input id="st_${p.id}" data-split="${p.id}" type="number" min="0" step="5"
+          value="${(Number(draft[p.id]) || 0).toFixed(2)}"></div>`).join('')
+        : empty('Create a pot first')}
+      ${kv('To pots', '<span class="rev" id="stTotal">—</span>')}
+      ${kv('Left in account', '<span class="rev" id="stLeft">—</span>')}
+      <button class="btn" id="stSave" style="margin-top:14px">Save sorter</button>`);
+    totals();
+    root.querySelectorAll('[data-split]').forEach(i => i.oninput = () => {
+      draft[i.dataset.split] = Math.max(0, +i.value || 0);
+      totals();
+    });
+    const sw = document.querySelector('[data-sorter-on]');
+    if (sw) sw.onclick = () => {
+      const on = !getState().sorter.on;
+      setSorterOn(on);
+      sw.classList.toggle('on', on);
+    };
+    document.getElementById('stSave').onclick = () => {
+      const total = totals();
+      setSorter(draft, true);
+      closeSheet(); render();
+      toast(total > salary ? 'Saved — over your salary' : `Saved · ${fmt(total)} split`);
+    };
+  };
+
   root.addEventListener('click', e => {
     const so = e.target.closest('[data-toggle-so]');
     if (so){ toggleStandingOrder(so.dataset.toggleSo); return render(); }
@@ -264,21 +310,23 @@ export function mountPay(root){
         closeSheet(); render(); toast('Tab created');
       };
     }
-    if (e.target.closest('[data-sorter]')){
-      sheet(`<h2>Salary sorter</h2><div class="sub">Split your next pay</div>
-        ${getState().pots.map(p => kv(esc(p.name), '<span class="rev">£100.00</span>')).join('')}
-        <button class="btn" id="sorterSave" style="margin-top:12px">Save sorter</button>`);
-      document.getElementById('sorterSave').onclick = () => {
-        notif('Salary sorter saved', 'Your next pay will be split automatically');
-        closeSheet(); toast('Sorter saved');
-      };
-    }
+    if (e.target.closest('[data-sorter]')) return sorterSheet();
     if (e.target.closest('[data-gpe]')){
-      sheet(`<h2>Get paid early</h2><div class="sub">Salary lands at 4pm the day before.</div>
-        <button class="btn" id="gpeGo">Claim early</button>`);
+      const claimed = gpeClaimed();
+      sheet(`<h2>Get paid early</h2>
+        <div class="sub">${claimed
+          ? 'You have already claimed this month. It resets after payday.'
+          : `Bring ${fmt(salaryAmount())} forward to now.`}</div>
+        ${kv('Salary', `<span class="rev">${fmt(salaryAmount())}</span>`)}
+        ${getState().sorter.on ? kv('Sorter', 'Runs on credit') : ''}
+        <button class="btn" id="gpeGo" ${claimed ? 'disabled' : ''} style="margin-top:14px">Claim early</button>`);
       document.getElementById('gpeGo').onclick = () => {
-        notif('Paid early', 'Your salary is available now');
-        closeSheet(); toast('Claimed');
+        const r = getPaidEarly();
+        if (!r.ok) return toast(r.msg);
+        closeSheet(); render();
+        toast(r.split.length
+          ? `Paid early · ${r.split.length} pot${r.split.length > 1 ? 's' : ''} funded`
+          : 'Paid early');
       };
     }
   });
@@ -522,23 +570,35 @@ export function mountInvest(root){
 }
 
 export function mountStatements(root){
-  let kind = 'acc';
+  let kind = 'acc', all = false;
   const render = () => {
     const s = getState();
     const src = kind === 'acc' ? s.tx : s.isa;
-    const months = [...new Set(src.map(r => r.date.slice(0, 7)))].sort().reverse().slice(0, 24);
+    const months = [...new Set(src.map(r => r.date.slice(0, 7)))].sort().reverse();
+    const rows = all
+      ? kv(`All time · ${src.length} rows`,
+          `<button class="btn ghost sm" data-pdf="all">PDF</button>
+           <button class="btn ghost sm" data-csv="all">CSV</button>`)
+      : months.slice(0, 24).map(ym => {
+          const [y, m] = ym.split('-');
+          return kv(`${MONTHS[+m - 1]} ${y}`,
+            `<button class="btn ghost sm" data-pdf="${ym}">PDF</button>
+             <button class="btn ghost sm" data-csv="${ym}">CSV</button>`);
+        }).join('');
     root.innerHTML = `<div class="h-sec"><h2>Statements</h2></div>
       ${chipRow([{ value: 'acc', label: 'Current account' }, { value: 'isa', label: 'ISA' }], kind, 'stmt')}
-      <div class="card">${months.length ? months.map(ym => {
-        const [y, m] = ym.split('-');
-        return kv(`${MONTHS[+m - 1]} ${y}`,
-          `<button class="btn ghost sm" data-pdf="${ym}">PDF</button>
-           <button class="btn ghost sm" data-csv="${ym}">CSV</button>`);
-      }).join('') : empty('No statements')}</div>`;
+      ${chipRow([{ value: 'months', label: 'By month' }, { value: 'all', label: 'All time' }],
+        all ? 'all' : 'months', 'range')}
+      <div class="card">${rows || empty('No statements')}</div>
+      <p class="note">${all
+        ? `Everything on this ${kind === 'acc' ? 'account' : 'ISA'} up to ${TODAY}.`
+        : `Showing the last ${Math.min(24, months.length)} of ${months.length} months.`}</p>`;
   };
   root.addEventListener('click', e => {
     const chip = e.target.closest('[data-stmt]');
     if (chip){ kind = chip.dataset.stmt; return render(); }
+    const range = e.target.closest('[data-range]');
+    if (range){ all = range.dataset.range === 'all'; return render(); }
     const pdf = e.target.closest('[data-pdf]');
     if (pdf) return download(kind, pdf.dataset.pdf, true);
     const csv = e.target.closest('[data-csv]');
@@ -549,18 +609,24 @@ export function mountStatements(root){
 
 function download(kind, ym, asPdf){
   const s = getState(), isa = kind === 'isa';
+  const scope = r => ym === 'all' || r.date.slice(0, 7) === ym;
   const rows = isa
-    ? s.isa.filter(r => r.date.slice(0, 7) === ym).reverse().map(r => [r.date, r.type, r.contrib.toFixed(2), r.growth.toFixed(2), r.value.toFixed(2), r.note])
-    : s.tx.filter(t => t.date.slice(0, 7) === ym).reverse().map(t => [t.date, t.time, t.name, t.cat, t.amt.toFixed(2), t.bal.toFixed(2), t.note]);
+    ? s.isa.filter(scope).reverse().map(r => [r.date, r.type, r.contrib.toFixed(2), r.growth.toFixed(2), r.value.toFixed(2), r.note])
+    : s.tx.filter(scope).reverse().map(t => [t.date, t.time, t.name, t.cat, t.amt.toFixed(2), t.bal.toFixed(2), t.note]);
+  if (!rows.length) return toast('Nothing in that range');
   const head = isa ? ['Date','Type','Contribution','Growth','Value','Note'] : ['Date','Time','Description','Category','Amount','Balance','Note'];
-  const name = `${isa ? 'isa' : 'statement'}-${ym}`;
+  const stamp = ym === 'all' ? 'all-time' : ym;
+  const name = `${isa ? 'isa' : 'statement'}-${stamp}`;
+  const [y, m] = ym === 'all' ? ['', ''] : ym.split('-');
+  const period = ym === 'all'
+    ? `All time · to ${TODAY}`
+    : `${MONTHS[+m - 1]} ${y}`;
   if (!asPdf){
     const csv = [head, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     const a = document.createElement('a'); a.href = url; a.download = name + '.csv'; a.click();
     URL.revokeObjectURL(url); return toast('Downloaded ' + name + '.csv');
   }
-  const [y, m] = ym.split('-');
   const w = window.open('', '_blank');
   if (!w) return toast('Allow pop-ups to print');
   w.document.write(`<title>${name}</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#0b1a26}
@@ -568,7 +634,7 @@ function download(kind, ym, asPdf){
     table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:6px 4px;border-bottom:1px solid #e6ebef}
     th{font-size:11px;text-transform:uppercase;color:#6b7c8a}.amt{text-align:right}</style>
     <h1>Monzo — ${isa ? 'ISA' : 'Current account'} statement</h1>
-    <div class="sub">${esc(s.profile.name)} · ${esc(s.profile.a1)}, ${esc(s.profile.city)}, ${esc(s.profile.post)} · ${MONTHS[+m - 1]} ${y}</div>
+    <div class="sub">${esc(s.profile.name)} · ${esc(s.profile.a1)}, ${esc(s.profile.city)}, ${esc(s.profile.post)} · ${period}</div>
     <table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead>
     <tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td class="${i === 4 ? 'amt' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
   w.document.close(); w.focus(); setTimeout(() => w.print(), 350);
