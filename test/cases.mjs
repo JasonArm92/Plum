@@ -258,6 +258,128 @@ export function run(t){
     eq(s.acctName, 'Personal current account');
     ok(Array.isArray(s.extraAccounts));
   });
+  test('fresh state carries the scheduler fields', () => {
+    withState();
+    eq(core.getState().lastRun, core.TODAY);
+    eq(core.getState().roundupPotId, '');
+  });
+
+  /* ---------------- scheduled money ---------------- */
+  test('payday credits the salary on the 28th', () => {
+    withState(s => { s.tx = big(); s.lastRun = '2026-02-27'; s.gpeMonth = ''; });
+    const res = core.runScheduled('2026-02-28');
+    ok(res.some(a => a.kind === 'salary'), 'no salary credited');
+    eq(core.getState().gpeMonth, '2026-02');
+    ok(core.balNow() > 20000, `balance ${core.balNow()}`);
+  });
+  test('a month is not paid twice after an early claim', () => {
+    withState(s => { s.tx = big(); s.lastRun = '2026-02-27'; s.gpeMonth = '2026-02'; });
+    const res = core.runScheduled('2026-02-28');
+    eq(res.filter(a => a.kind === 'salary').length, 0);
+    eq(core.balNow(), 20000);
+  });
+  test('the sorter funds pots from the salary', () => {
+    withState(s => {
+      s.tx = big(); s.lastRun = '2026-02-27'; s.gpeMonth = '';
+      s.sorter = { on: true, splits: { [s.pots[0].id]: 200 } };
+    });
+    const pot = core.getState().pots[0], before = pot.bal;
+    core.runScheduled('2026-02-28');
+    near(core.getState().pots[0].bal, before + 200, 0.01);
+  });
+  test('a sorter that is switched off does not run', () => {
+    withState(s => {
+      s.tx = big(); s.lastRun = '2026-02-27'; s.gpeMonth = '';
+      s.sorter = { on: false, splits: { [s.pots[0].id]: 200 } };
+    });
+    const before = core.getState().pots[0].bal;
+    core.runScheduled('2026-02-28');
+    eq(core.getState().pots[0].bal, before);
+  });
+  test('a standing order debits on its day', () => {
+    withState(s => {
+      s.tx = big(); s.lastRun = '2026-03-09';
+      s.sos = [{ id: 'so', name: 'OpenRent', amt: 799, day: 10, active: true }];
+    });
+    const res = core.runScheduled('2026-03-10');
+    ok(res.some(a => a.kind === 'standing-order'), 'standing order skipped');
+    eq(core.round2(core.balNow()), 19201);
+  });
+  test('an inactive standing order is skipped', () => {
+    withState(s => {
+      s.tx = big(); s.lastRun = '2026-03-09';
+      s.sos = [{ id: 'so', name: 'OpenRent', amt: 799, day: 10, active: false }];
+    });
+    eq(core.runScheduled('2026-03-10').length, 0);
+    eq(core.balNow(), 20000);
+  });
+  test('pot auto-save moves on the first', () => {
+    withState(s => { s.tx = big(); s.lastRun = '2026-03-31'; s.pots[0].autoSave = 50; });
+    const before = core.getState().pots[0].bal;
+    core.runScheduled('2026-04-01');
+    near(core.getState().pots[0].bal, before + 50, 0.01);
+  });
+  test('a run is idempotent for the same day', () => {
+    withState(s => {
+      s.tx = big(); s.lastRun = '2026-03-09';
+      s.sos = [{ id: 'so', name: 'X', amt: 10, day: 10, active: true }];
+    });
+    core.runScheduled('2026-03-10');
+    const n = core.getState().tx.length;
+    core.runScheduled('2026-03-10');
+    eq(core.getState().tx.length, n);
+  });
+  test('an unaffordable standing order does not overdraw', () => {
+    withState(s => {
+      s.tx = [{ id: 'a', date: core.TODAY, time: '09:00', name: 'X', cat: 'Income', amt: 20, bal: 20, note: '' }];
+      s.lastRun = '2026-03-09';
+      s.sos = [{ id: 'so', name: 'Rent', amt: 799, day: 10, active: true }];
+    });
+    core.runScheduled('2026-03-10');
+    ok(core.balNow() >= 0, `balance ${core.balNow()}`);
+  });
+
+  /* ---------------- round-ups ---------------- */
+  test('round-ups move the remainder to the pot', () => {
+    withState(s => {
+      s.tx = [{ id: 'a', date: core.TODAY, time: '08:00', name: 'X', cat: 'Income', amt: 100, bal: 100, note: '' }];
+      s.roundups = true; s.roundupPotId = s.pots[0].id;
+    });
+    const before = core.getState().pots[0].bal;
+    core.addTx('Costa', 'Eating out', -3.40);
+    near(core.getState().pots[0].bal, before + 0.6, 0.01);
+  });
+  test('round-ups stay off when the switch is off', () => {
+    withState(s => {
+      s.tx = [{ id: 'a', date: core.TODAY, time: '08:00', name: 'X', cat: 'Income', amt: 100, bal: 100, note: '' }];
+      s.roundups = false; s.roundupPotId = s.pots[0].id;
+    });
+    const before = core.getState().pots[0].bal;
+    core.addTx('Costa', 'Eating out', -3.40);
+    eq(core.getState().pots[0].bal, before);
+  });
+  test('a whole-pound spend rounds to nothing', () => {
+    withState(s => {
+      s.tx = [{ id: 'a', date: core.TODAY, time: '08:00', name: 'X', cat: 'Income', amt: 100, bal: 100, note: '' }];
+      s.roundups = true; s.roundupPotId = s.pots[0].id;
+    });
+    const before = core.getState().pots[0].bal, n = core.getState().tx.length;
+    core.addTx('Tesco', 'Groceries', -10);
+    eq(core.getState().pots[0].bal, before);
+    eq(core.getState().tx.length, n + 1);
+  });
+  test('the round-up target falls back to the first pot', () => {
+    withState(s => {
+      s.tx = [{ id: 'a', date: core.TODAY, time: '08:00', name: 'X', cat: 'Income', amt: 100, bal: 100, note: '' }];
+      s.roundups = true; s.roundupPotId = '';
+    });
+    eq(core.roundupPotName(), core.getState().pots[0].name);
+  });
+  test('closing the round-up pot clears the target', () => {
+    withState(s => { s.roundupPotId = s.pots[0].id; });
+    core.deletePot(core.getState().pots[0].id);
+    eq(core.getState().roundupPotId, '');
+  });
 
   /* ---------------- migrations ---------------- */
   test('a v11 blob migrates forward without losing data', () => {
@@ -275,6 +397,19 @@ export function run(t){
     ok(Array.isArray(s.connected));
     ok(typeof s.billsback.optIn === 'boolean');
     ok(s.layout.length > 0);
+  });
+  test('a v15 blob gains the scheduler fields', () => {
+    localStorage.setItem(KEY, JSON.stringify({
+      v: 15, tx: [], isa: [], pots: [], targets: {}, payees: [], sos: [], tabs: [], vcards: [],
+      sorter: { on: false, splits: {} }, requests: [], profile: { name: 'Jason Armstrong' }, plan: 'max'
+    }));
+    core.load();
+    const s = core.getState();
+    eq(s.v, core.VERSION);
+    eq(typeof s.lastRun, 'string');
+    eq(s.roundupPotId, '');
+    ok(Array.isArray(s.policies));
+    ok(s.policies.length > 0);
   });
   test('migrate is idempotent', () => {
     const once = core.migrate({ v: 11, tx: [], isa: [], pots: [], targets: {} });
@@ -295,4 +430,4 @@ export function run(t){
     eq(core.getState().v, core.VERSION);
     eq(localStorage.getItem('monzo_v11'), null);
   });
-      }
+}
