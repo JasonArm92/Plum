@@ -5,9 +5,9 @@ import {
   DOMAINS, POTS0, TARGET_ISA, buildSeed, uid
 } from './data.js';
 
-export const VERSION = 14;
-export const KEY = 'monzo_v14';
-const LEGACY_KEYS = ['monzo_v13', 'monzo_v12', 'monzo_v11'];
+export const VERSION = 15;
+export const KEY = 'monzo_v15';
+const LEGACY_KEYS = ['monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
 
 export const NOW = new Date();
 export const TODAY = iso(NOW);
@@ -16,6 +16,9 @@ export const THIS_YM = TODAY.slice(0, 7);
 export const MONTHS = ['January','February','March','April','May','June','July',
   'August','September','October','November','December'];
 export const TAX_START = `${NOW.getMonth() >= 3 ? NOW.getFullYear() : NOW.getFullYear() - 1}-04-06`;
+
+export const CASHBACK_RATE = 0.01;
+export const CASHBACK_MIN = 1;
 
 function p2(n){ return String(n).padStart(2, '0'); }
 export function iso(d){ return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; }
@@ -61,6 +64,22 @@ export function getState(){ return S; }
 export function subscribe(fn){ listeners.add(fn); return () => listeners.delete(fn); }
 function notify(){ listeners.forEach(fn => fn(S)); }
 
+/* Policy templates. Numbers and start dates are minted once, then held in state
+   so documents print the policy that actually exists rather than a fixture. */
+const POLICY_TEMPLATES = [
+  ['travel',    'Worldwide travel insurance',   'POL-TRV-8842190', 75, 'Covers all named travellers, up to 31 days per trip.'],
+  ['phone',     'Worldwide phone insurance',    'POL-PHN-8842191', 75, 'Covers four registered handsets, £75 excess per claim.'],
+  ['breakdown', 'UK & Europe breakdown cover',  'POL-BRK-8842192', 0,  'Vehicle-based, any driver, home start included.']
+];
+
+function policySeed(covered){
+  const start = `${NOW.getFullYear() - 2}-04-01`;
+  return POLICY_TEMPLATES.map(([key, name, number, excess, note]) => ({
+    id: uid(), key, name, number, excess, note, start,
+    status: covered ? 'Active' : 'Not included', ended: ''
+  }));
+}
+
 export function freshState(){
   const seedData = buildSeed(NOW);
   return {
@@ -79,6 +98,7 @@ export function freshState(){
       { id: uid(), name: 'British Gas', amt: 96,  day: 2, active: true }
     ],
     tabs: [{ id: uid(), name: 'Steak night', total: 148.40, mine: 74.20, people: 2 }],
+    requests: [],
     vcards: [{ id: uid(), label: 'Subscriptions', frozen: false, num: '4000 1234', created: TODAY, single: false }],
     targets: { ...DEFAULT_TARGETS },
     layout: [
@@ -98,8 +118,11 @@ export function freshState(){
     pension: 41250.18, pensionMonthly: 180, homeValue: 168000, mortgage: 100000,
     flex: { limit: 4000, used: 0, plans: [] },
     aura: { active: true, auto: true, lounge: 2, fast: 2, cashback: 0 },
+    policies: policySeed(true),
     overdraft: { limit: 0, rate: 0 },
     loans: [], connected: [], extraAccounts: [],
+    sorter: { on: false, splits: {} },
+    gpeMonth: '',
     credit: { eq: 560 + Math.floor(Math.random() * 160), tu: 540 + Math.floor(Math.random() * 160), done: [] },
     challenge: { day: 0, saved: 0, level: '1p' },
     billsback: { optIn: false, history: [] },
@@ -151,6 +174,29 @@ const migrations = [
     s.notifsCleared ??= false;
     s.tx = (s.tx || []).slice().sort((a, b) =>
       (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+    return s;
+  },
+  /* 14 -> 15: sorter, requests, policy state, per-account balances, cashback */
+  s => {
+    s.v = 15;
+    s.extraAccounts = (s.extraAccounts || []).map(a => ({ bal: 0, ...a }));
+    s.sorter ||= { on: false, splits: {} };
+    s.sorter.splits ||= {};
+    s.requests ||= [];
+    s.gpeMonth ||= '';
+    if (!Array.isArray(s.policies) || !s.policies.length){
+      s.policies = policySeed(!!(PLANS[s.plan] || {}).cover);
+    }
+    if (s.aura){
+      s.aura.cashback = round2(s.aura.cashback || 0);
+      if (!s.aura.cashback){
+        /* backfill from this month's eligible card spend */
+        const spent = (s.tx || [])
+          .filter(t => t.date.slice(0, 7) === THIS_YM && t.amt < 0 && FLEX.includes(t.cat))
+          .reduce((a, t) => a + Math.abs(t.amt), 0);
+        s.aura.cashback = round2(spent * CASHBACK_RATE);
+      }
+    }
     return s;
   }
 ];
@@ -305,11 +351,22 @@ function recompute(){
   }
 }
 
+/* Cashback is earned on card spend in flexible categories, at 1%, and is only
+   moved to the balance when the holder asks for it. */
+function accrueCashback(amt, cat){
+  if (!S.aura || !S.aura.active) return;
+  if (amt >= 0 || !FLEX.includes(cat)) return;
+  const gain = round2(Math.abs(amt) * CASHBACK_RATE);
+  if (gain <= 0) return;
+  S.aura.cashback = round2((S.aura.cashback || 0) + gain);
+}
+
 export function addTx(name, cat, amt, note = '', dateOverride){
   const date = dateOverride || TODAY;
   const time = dateOverride && dateOverride !== TODAY ? '12:00' : NOWT;
   insertTx({ id: uid(), date, time, name, cat, amt: round2(amt), bal: 0, note });
   recompute();
+  accrueCashback(round2(amt), cat);
   commit();
 }
 export function updateTx(id, patch){
@@ -358,6 +415,7 @@ export function deletePot(id){
   if (!p) return { ok: false, msg: 'No such pot' };
   const bal = p.bal;
   S.pots = S.pots.filter(x => x.id !== id);
+  if (S.sorter.splits[id] !== undefined) delete S.sorter.splits[id];
   if (bal > 0) addTx('Pot closed', 'Transfers', bal, p.name + ' returned');
   else commit();
   return { ok: true };
@@ -385,7 +443,93 @@ export function updatePayee(id, patch){
   if (p) Object.assign(p, patch);
   commit();
 }
-export function deletePayee(id){ S.payees = S.payees.filter(p => p.id !== id); commit(); }
+export function deletePayee(id){
+  S.payees = S.payees.filter(p => p.id !== id);
+  S.requests = S.requests.filter(r => r.payeeId !== id);
+  commit();
+}
+
+/* ---------------- money requests ---------------- */
+export function requestMoney(payeeId, amount, note){
+  const p = S.payees.find(x => x.id === payeeId);
+  if (!p) return { ok: false, msg: 'Add a payee first' };
+  if (!amount || amount <= 0) return { ok: false, msg: 'Enter an amount' };
+  S.requests.unshift({ id: uid(), payeeId, name: p.name, amount: round2(amount),
+    note: note || '', date: TODAY, status: 'Pending' });
+  notif('Request sent', `${fmt(amount)} requested from ${p.name}`);
+  return { ok: true };
+}
+export function settleRequest(id){
+  const r = S.requests.find(x => x.id === id);
+  if (!r) return { ok: false, msg: 'Request not found' };
+  S.requests = S.requests.filter(x => x.id !== id);
+  addTx(r.name, 'Income', r.amount, r.note || 'Money request paid');
+  notif('Request paid', `${fmt(r.amount)} from ${r.name}`);
+  return { ok: true };
+}
+export function cancelRequest(id){
+  const before = S.requests.length;
+  S.requests = S.requests.filter(x => x.id !== id);
+  commit();
+  return { ok: S.requests.length < before };
+}
+
+/* ---------------- salary sorter & paid early ---------------- */
+export const sorterTotal = () =>
+  round2(Object.values(S.sorter.splits || {}).reduce((a, v) => a + (Number(v) || 0), 0));
+
+/* The salary figure comes off the last real pay, so a raise or a cut moves it. */
+export function salaryAmount(){
+  const t = S.tx.find(x => x.cat === 'Income' && /kingdom/i.test(x.name) && x.date < TODAY);
+  return t ? Math.abs(t.amt) : 2480;
+}
+
+export function setSorter(splits, on = true){
+  const clean = {};
+  for (const [k, v] of Object.entries(splits || {})){
+    const amt = round2(Math.max(0, Number(v) || 0));
+    if (amt > 0) clean[k] = amt;
+  }
+  S.sorter = { on, splits: clean };
+  commit();
+  return { ok: true, total: sorterTotal() };
+}
+export function setSorterOn(on){ S.sorter.on = !!on; commit(); return { ok: true }; }
+
+/* Runs the stored splits against whatever just landed. Bounded by the money
+   actually in the account, so an oversized split can't drive the balance under. */
+function applySorter(){
+  if (!S.sorter || !S.sorter.on) return [];
+  let left = balNow();
+  const done = [];
+  for (const [potId, raw] of Object.entries(S.sorter.splits || {})){
+    const p = S.pots.find(x => x.id === potId);
+    if (!p) continue;
+    const amt = round2(Math.min(Number(raw) || 0, left));
+    if (amt <= 0) continue;
+    left = round2(left - amt);
+    p.bal = round2(p.bal + amt);
+    insertTx({ id: uid(), date: TODAY, time: NOWT, name: p.name, cat: 'Transfers',
+      amt: -amt, bal: 0, note: 'Salary sorter' });
+    done.push({ pot: p.name, amt });
+  }
+  if (done.length) recompute();
+  return done;
+}
+
+export const gpeClaimed = () => S.gpeMonth === THIS_YM;
+
+export function getPaidEarly(){
+  if (S.gpeMonth === THIS_YM) return { ok: false, msg: 'Already claimed this month' };
+  const salary = salaryAmount();
+  if (salary <= 0) return { ok: false, msg: 'No salary due' };
+  S.gpeMonth = THIS_YM;
+  addTx('Kingdom Services Group', 'Income', salary, 'Salary paid early');
+  const split = applySorter();
+  notif('Paid early', `${fmt(salary)} is in your account`);
+  commit();
+  return { ok: true, salary, split };
+}
 
 export function addStandingOrder(name, amt, day){
   S.sos.push({ id: uid(), name, amt, day, active: true });
@@ -440,6 +584,7 @@ export function setPlan(key){
   if (!to || key === S.plan) return { ok: false };
   const diff = round2(to.price - from.price);
   S.plan = key;
+  syncPolicies();
   if (diff > 0) addTx('Monzo', 'Subscriptions', -diff, `${to.name} plan`);
   else commit();
   notif('Plan changed', `You're now on ${to.name}`);
@@ -585,8 +730,9 @@ export function removeBank(id){
   commit();
 }
 
+/* ---------------- additional accounts ---------------- */
 export function addExtraAccount(name, type){
-  S.extraAccounts.push({ id: uid(), name, type, status: 'Active' });
+  S.extraAccounts.push({ id: uid(), name, type, status: 'Active', bal: 0 });
   notif('Account opened', `${type} account for ${name}`);
   commit();
 }
@@ -595,10 +741,59 @@ export function updateExtraAccount(id, patch){
   if (a) Object.assign(a, patch);
   commit();
 }
-export function closeExtraAccount(id){
-  S.extraAccounts = S.extraAccounts.filter(x => x.id !== id);
-  commit();
+export function moveToExtraAccount(id, amt){
+  const a = S.extraAccounts.find(x => x.id === id);
+  if (!a) return { ok: false, msg: 'No such account' };
+  if (!amt || amt <= 0) return { ok: false, msg: 'Enter an amount' };
+  if (amt > balNow()) return { ok: false, msg: 'Not enough in your balance' };
+  a.bal = round2((a.bal || 0) + amt);
+  addTx(a.name, 'Transfers', -amt, 'Moved to ' + a.name);
+  return { ok: true };
 }
+/* Closing hands the balance back before the account disappears. */
+export function closeExtraAccount(id){
+  const a = S.extraAccounts.find(x => x.id === id);
+  if (!a) return { ok: false, msg: 'No such account' };
+  const bal = round2(a.bal || 0);
+  S.extraAccounts = S.extraAccounts.filter(x => x.id !== id);
+  if (bal > 0){
+    addTx(a.name, 'Transfers', bal, a.name + ' closed — balance returned');
+    notif('Account closed', `${fmt(bal)} returned to ${S.acctName}`);
+    return { ok: true, returned: bal };
+  }
+  notif('Account closed', a.name + ' closed');
+  commit();
+  return { ok: true, returned: 0 };
+}
+
+/* Closing the current account moves the balance to the joint account and
+   leaves the shell in place so it can be reopened. */
+export function closeAccount(){
+  if (S.acctClosed) return { ok: false, msg: 'Already closed' };
+  const bal = round2(balNow());
+  if (bal > 0){
+    S.jointBal = round2((S.jointBal || 0) + bal);
+    insertTx({ id: uid(), date: TODAY, time: NOWT, name: 'Joint account', cat: 'Transfers',
+      amt: -bal, bal: 0, note: 'Balance moved — account closed' });
+    recompute();
+  }
+  S.acctClosed = true;
+  S.activeAccount = 'joint';
+  notif('Account closed', bal > 0
+    ? `${fmt(bal)} moved to your joint account`
+    : 'Your current account is closed');
+  commit();
+  return { ok: true, moved: bal };
+}
+export function reopenAccount(){
+  if (!S.acctClosed) return { ok: false, msg: 'Already open' };
+  S.acctClosed = false;
+  S.activeAccount = 'personal';
+  notif('Account reopened', 'Your current account is active again');
+  commit();
+  return { ok: true };
+}
+
 export function setAura(patch){ Object.assign(S.aura, patch); commit(); }
 export function takeAura(){
   const next = !S.aura.active;
@@ -606,6 +801,23 @@ export function takeAura(){
   if (next) addTx('Monzo Aura', 'Subscriptions', -15, 'Aura monthly fee');
   else commit();
   return next;
+}
+export function payOutCashback(){
+  const amt = round2(S.aura.cashback || 0);
+  if (amt < CASHBACK_MIN) return { ok: false, msg: `£${CASHBACK_MIN} minimum to move out` };
+  S.aura.cashback = 0;
+  addTx('Monzo Aura', 'Income', amt, 'Cashback paid out');
+  return { ok: true, amt };
+}
+
+/* ---------------- policies ---------------- */
+export function syncPolicies(){
+  const cover = !!plan().cover;
+  S.policies.forEach(p => {
+    if (cover){ p.status = 'Active'; p.ended = ''; }
+    else { p.status = 'Ended'; p.ended ||= TODAY; }
+  });
+  commit();
 }
 
 export const CREDIT_ACTIONS = [
