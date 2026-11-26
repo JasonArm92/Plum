@@ -11,13 +11,13 @@ export const PLANS = {
 };
 
 export const CATS = ['Groceries','Eating out','Transport','Shopping','Bills','Rent','Health','Education',
-  'Subscriptions','Entertainment','Fitness','Income','Transfers','Savings','Investments'];
+  'Subscriptions','Entertainment','Fitness','Kids','Income','Transfers','Savings','Investments'];
 
-export const FLEX = ['Groceries','Eating out','Transport','Shopping','Health','Education','Entertainment','Fitness'];
+export const FLEX = ['Groceries','Eating out','Transport','Shopping','Health','Education','Entertainment','Fitness','Kids'];
 export const COMMITTED = ['Rent','Bills','Subscriptions'];
 
-export const DEFAULT_TARGETS = { Groceries:420, 'Eating out':140, Transport:120, Shopping:180,
-  Health:60, Education:90, Entertainment:70, Fitness:35 };
+export const DEFAULT_TARGETS = { Groceries:620, 'Eating out':120, Transport:140, Shopping:220,
+  Health:70, Education:120, Entertainment:90, Fitness:35, Kids:110 };
 
 export const BANKS = ['Barclays','HSBC','Lloyds','NatWest','Santander','Nationwide','Starling','Chase'];
 
@@ -26,30 +26,35 @@ export const BB_PROVIDERS = ['British Gas','Northumbrian Water','Virgin Media','
 
 export const DOMAINS = {
   'Tesco':'tesco.com','Aldi':'aldi.co.uk','Asda':'asda.com','Morrisons':'morrisons.com','Lidl':'lidl.co.uk',
-  "Sainsbury's":'sainsburys.co.uk','Iceland':'iceland.co.uk','Costa':'costa.co.uk','Greggs':'greggs.co.uk',
-  'The Masham':'masham.co.uk','Hope & Union':'hopeandunion.co.uk','Cena':'cena.co.uk','Borge':'borgerestaurant.co.uk',
-  'The Twisted Peel':'thetwistedpeel.co.uk',"McDonald's":'mcdonalds.com','KFC':'kfc.co.uk',"Domino's":'dominos.co.uk',
-  "Nando's":'nandos.co.uk','Stagecoach':'stagecoachbus.com','Arriva':'arrivabus.co.uk','BP':'bp.com','Shell':'shell.co.uk',
+  'Iceland':'iceland.co.uk','Farmfoods':'farmfoods.co.uk',"Sainsbury's":'sainsburys.co.uk',
+  'Costa':'costa.co.uk','Greggs':'greggs.co.uk','The Masham':'masham.co.uk','Hope & Union':'hopeandunion.co.uk',
+  'Cena':'cena.co.uk','Borge':'borgerestaurant.co.uk','The Twisted Peel':'thetwistedpeel.co.uk',
+  "McDonald's":'mcdonalds.com','KFC':'kfc.co.uk',"Domino's":'dominos.co.uk',"Nando's":'nandos.co.uk',
+  'Stagecoach':'stagecoachbus.com','Arriva':'arrivabus.co.uk','BP':'bp.com','Shell':'shell.co.uk',
   'Amazon':'amazon.co.uk','Argos':'argos.co.uk','Matalan':'matalan.co.uk','Sports Direct':'sportsdirect.com',
-  'B&M':'bmstores.co.uk','Home Bargains':'homebargains.co.uk','Screwfix':'screwfix.com','Boots':'boots.com',
-  'Specsavers':'specsavers.co.uk','PureGym':'puregym.com','Odeon':'odeon.co.uk','Cineworld':'cineworld.co.uk',
-  'Steam':'steampowered.com','Netflix':'netflix.com','Spotify':'spotify.com','Monzo':'monzo.com','Twinkl':'twinkl.co.uk',
-  'The Works':'theworks.co.uk','Clarks':'clarks.co.uk',"St Aidan's School":'staidans.co.uk','British Gas':'britishgas.co.uk',
-  'Northumbrian Water':'nwl.co.uk','Virgin Media':'virginmedia.com','EE':'ee.co.uk','Aviva':'aviva.co.uk',
-  'Stockton Council':'stockton.gov.uk','Kingdom Services Group':'kingdom.co.uk','Vanguard':'vanguardinvestor.co.uk',
-  'Pointens':'pointens.co.uk','OpenRent':'openrent.co.uk','Blue Skies Lets':'blueskieslets.co.uk',
-  'Barclays':'barclays.co.uk','HSBC':'hsbc.co.uk','Lloyds':'lloydsbank.com','NatWest':'natwest.com',
-  'Santander':'santander.co.uk','Nationwide':'nationwide.co.uk','Starling':'starlingbank.com','Chase':'chase.co.uk',
+  'Smyths':'smythstoys.com','Next':'next.co.uk','B&M':'bmstores.co.uk','Home Bargains':'homebargains.co.uk',
+  'Screwfix':'screwfix.com','Boots':'boots.com','Specsavers':'specsavers.co.uk','PureGym':'puregym.com',
+  'Everyone Active':'everyoneactive.com','Odeon':'odeon.co.uk','Cineworld':'cineworld.co.uk',
+  'Steam':'steampowered.com','Netflix':'netflix.com','Spotify':'spotify.com','Monzo':'monzo.com',
+  'Twinkl':'twinkl.co.uk','The Works':'theworks.co.uk','Clarks':'clarks.co.uk','Preston Park Museum':'prestonparkmuseum.co.uk',
+  "St Aidan's School":'staidans.co.uk','British Gas':'britishgas.co.uk','Northumbrian Water':'nwl.co.uk',
+  'Virgin Media':'virginmedia.com','EE':'ee.co.uk','Aviva':'aviva.co.uk','Stockton Council':'stockton.gov.uk',
+  'Kingdom Services Group':'kingdom.co.uk','Vanguard':'vanguardinvestor.co.uk','Pointens':'pointens.co.uk',
+  'OpenRent':'openrent.co.uk','Blue Skies Lets':'blueskieslets.co.uk','Barclays':'barclays.co.uk',
+  'HSBC':'hsbc.co.uk','Lloyds':'lloydsbank.com','NatWest':'natwest.com','Santander':'santander.co.uk',
+  'Nationwide':'nationwide.co.uk','Starling':'starlingbank.com','Chase':'chase.co.uk',
   'Monzo Flex':'monzo.com','Monzo Aura':'monzo.com','Monzo Loans':'monzo.com','Monzo Billsback':'monzo.com',
-  'Saving Challenge':'monzo.com','Savings interest':'monzo.com'
+  'Saving Challenge':'monzo.com','Savings interest':'monzo.com','Child Benefit':'gov.uk','Universal Credit':'gov.uk',
+  'Chloe Brown':''
 };
 
 export const POTS0 = [
   { name:'Rainy Day',      goal:5000, bal:2410.55, type:'regular' },
   { name:'Rent buffer',    goal:1700, bal:1700,    type:'bills'   },
   { name:'Holiday',        goal:2500, bal:842.20,  type:'savings' },
-  { name:'Home education', goal:1200, bal:310,     type:'savings' },
-  { name:'Emergency',      goal:3000, bal:1000,    type:'savings' }
+  { name:'Home education', goal:1800, bal:640,     type:'savings' },
+  { name:'Emergency',      goal:3000, bal:1000,    type:'savings' },
+  { name:"Kids' savings",  goal:4000, bal:520,     type:'savings' }
 ];
 
 let seed = 0x9e3779b9;
@@ -68,7 +73,6 @@ const asDate = s => new Date(s + 'T12:00:00');
 const monthLen = (y, m) => new Date(y, m + 1, 0).getDate();
 const domS = (y, m, day) => `${y}-${p2(m + 1)}-${p2(Math.min(day, monthLen(y, m)))}`;
 
-/* ---------- ISA ledger ---------- */
 export function buildISA(now){
   const months = [];
   let d = new Date(1992, 9, 1);
@@ -106,18 +110,16 @@ export function buildISA(now){
   }).reverse();
 }
 
-/* ---------- current account history ----------
-   isaByMonth supplies the ISA value at each month end so dividends can be paid. */
+/* Household of four: two adults, two home-schooled children. */
 export function buildAccount(now, isaByMonth = {}){
   const today = isoS(now);
   const tx = [];
-  let bal = 1400;
+  let bal = 1850;
   const add = (date, time, name, cat, amt, note) => {
     bal = Math.round((bal + amt) * 100) / 100;
     tx.push({ id: uid(), date, time, name, cat, amt, bal, note: note || '' });
   };
 
-  /* side hustle: 3–4 builds a year since 2020, each followed by 12 retainers */
   const projects = [];
   for (let y = 2020; y <= now.getFullYear(); y++){
     const n = ri(3, 4);
@@ -154,47 +156,64 @@ export function buildAccount(now, isaByMonth = {}){
     if (y >= 2021) day(1, '08:40', 'Spotify', 'Subscriptions', -11.99, 'Premium Duo');
     if (y >= 2022) day(1, '09:05', 'Netflix', 'Subscriptions', -10.99, 'Standard');
     if (y >= 2023){
-      day(2, '06:30', 'British Gas', 'Bills', -ri(74, 132), 'Energy');
-      day(2, '06:31', 'Northumbrian Water', 'Bills', -38.20, 'Water');
+      day(2, '06:30', 'British Gas', 'Bills', -ri(142, 214), 'Energy');
+      day(2, '06:31', 'Northumbrian Water', 'Bills', -52.40, 'Water');
       day(4, '07:00', 'Virgin Media', 'Bills', -32.00, 'Broadband');
       day(4, '07:02', 'EE', 'Bills', -22.00, 'Mobile');
       day(5, '07:15', 'Aviva', 'Bills', -24.40, 'Contents insurance');
     }
-    if (y >= 2024) day(2, '06:35', 'Stockton Council', 'Bills', -148.00, 'Council tax');
+    if (y >= 2024) day(2, '06:35', 'Stockton Council', 'Bills', -156.00, 'Council tax');
 
     const first = domS(y, m, 1);
     if (first >= '2024-03-01' && first < '2025-03-01') day(1, '09:00', 'Pointens', 'Rent', -1300, 'Rent');
     else if (first >= '2025-03-01' && first < '2026-09-01') day(1, '09:00', 'OpenRent', 'Rent', -799, 'Rent');
     else if (first >= '2026-09-01') day(12, '09:00', 'Blue Skies Lets', 'Rent', -850, 'Rent');
 
-    /* salary */
-    day(28, '06:00', 'Kingdom Services Group', 'Income', 2850, 'Net salary');
+    /* income */
+    day(28, '06:00', 'Kingdom Services Group', 'Income', 2480, 'Net salary');
+    day(15, '07:30', 'Chloe Brown', 'Income', 640, 'Part-time wages');
+    day(4, '09:00', 'Child Benefit', 'Income', 194.05, 'Two children');
+    day(7, '09:00', 'Universal Credit', 'Income', 421.30, 'Assessment period');
 
-    [6, 13, 20, 27].forEach(dd => day(dd, '17:40',
-      pick(['Tesco','Aldi','Asda','Morrisons','Lidl',"Sainsbury's",'Iceland']), 'Groceries', -ri(28, 96)));
-    day(8, '19:20', pick(['The Masham','Hope & Union','Cena','Borge','The Twisted Peel',"Nando's","Domino's"]),
-      'Eating out', -ri(16, 44));
-    day(8, '13:05', 'Greggs', 'Eating out', -ri(4, 9));
-    day(9, '08:15', pick(['Stagecoach','Arriva','BP','Shell']), 'Transport', -ri(9, 32));
-    day(11, '12:30', pick(['Amazon','Argos','Matalan','Sports Direct','B&M','Home Bargains','Screwfix']),
-      'Shopping', -ri(14, 74));
+    /* food and household */
+    [3, 9, 16, 22, 28].forEach(dd => day(dd, '17:40',
+      pick(['Aldi','Asda','Tesco','Morrisons','Lidl','Iceland','Farmfoods']), 'Groceries', -ri(58, 132)));
+    day(11, '12:10', pick(['Costa','Greggs']), 'Eating out', -ri(8, 19));
+    day(19, '18:30', pick(['McDonald\'s','KFC','Domino\'s','Nando\'s']), 'Eating out', -ri(24, 52));
+
+    /* transport */
+    day(5, '08:15', 'Stagecoach', 'Transport', -ri(12, 24));
+    day(13, '08:20', pick(['BP','Shell']), 'Transport', -ri(38, 62));
+    day(26, '08:15', 'Arriva', 'Transport', -ri(12, 24));
+
+    /* shopping */
+    day(9, '12:30', pick(['Amazon','Argos','Matalan','B&M','Home Bargains']), 'Shopping', -ri(24, 88));
+    day(17, '11:00', pick(['Smyths','Next','Sports Direct','Screwfix']), 'Shopping', -ri(18, 76));
+
+    /* kids */
+    day(8, '16:00', 'Clarks', 'Kids', -ri(28, 54), 'Children’s shoes');
+    day(20, '15:30', 'Smyths', 'Kids', -ri(12, 38), 'Toys and craft');
+    day(24, '10:00', 'Everyone Active', 'Kids', -ri(14, 26), 'Swimming');
+
+    /* health and fitness */
     day(14, '07:45', 'PureGym', 'Fitness', -24.99, 'Membership');
-    day(16, '11:10', pick(['Boots','Specsavers']), 'Health', -ri(6, 34));
-    day(19, '20:00', pick(['Odeon','Cineworld','Steam']), 'Entertainment', -ri(8, 26));
+    day(16, '11:10', 'Boots', 'Health', -ri(9, 38));
 
+    /* home education */
     if (last < '2026-07-01'){
       day(3, '09:00', "St Aidan's School", 'Education', -45, 'School costs');
       if (m === 7) day(20, '10:00', 'Clarks', 'Education', -ri(38, 62), 'School shoes');
-    } else {
-      day(7, '10:00', 'Twinkl', 'Education', -8.99, 'Home education resources');
-      day(21, '11:30', 'The Works', 'Education', -ri(9, 22), 'Home education resources');
     }
+    day(7, '10:00', 'Twinkl', 'Education', -8.99, 'Home education resources');
+    day(18, '11:30', 'The Works', 'Education', -ri(12, 28), 'Workbooks and art supplies');
+    day(23, '13:00', 'Preston Park Museum', 'Education', -ri(6, 14), 'Home ed trip');
 
-    /* side hustle income */
+    /* entertainment */
+    day(21, '19:30', pick(['Odeon','Cineworld','Steam']), 'Entertainment', -ri(12, 34));
+
     (byMonth[ym] || []).forEach(p =>
       add(p.date, '14:20', p.client, 'Income', p.amt, p.retainer ? 'Maintenance retainer' : 'Website build'));
 
-    /* dividends on the last day, then swept into Rainy Day */
     const isaValue = isaByMonth[ym];
     if (isaValue && last <= today){
       const div = Math.round(isaValue * 0.0032 * 100) / 100;
@@ -204,7 +223,7 @@ export function buildAccount(now, isaByMonth = {}){
       }
     }
 
-    if (last <= today && bal > 2100) add(last, '20:00', 'Rainy Day', 'Transfers', -(Math.round((bal - 2000) * 100) / 100), 'Monthly sweep');
+    if (last <= today && bal > 2600) add(last, '20:00', 'Rainy Day', 'Transfers', -(Math.round((bal - 2500) * 100) / 100), 'Monthly sweep');
   });
 
   return tx.reverse();
