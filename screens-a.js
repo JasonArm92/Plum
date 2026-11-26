@@ -4,9 +4,9 @@ import {
   getState, esc, fmt, TODAY, THIS_YM, MONTHS, round2, plan,
   balNow, isaBal, growTotal, savingsTotal, homeEquity, connTotal, loanOwed,
   spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend,
-  daysToPayday, balanceSeries, tyUsed, TAX_START, TARGET_ISA,
+  daysToPayday, balanceSeries, tyUsed, TARGET_ISA,
   setHomeEstimate, setTarget, addTx, moveToPot, createPot, updatePot,
-  addStandingOrder, addSharedTab, CATS, FLEX
+  moveLayoutSection, toggleLayoutSection, addStandingOrder, addSharedTab, notif, CATS, FLEX
 } from './core.js';
 
 import {
@@ -80,6 +80,7 @@ export function mountHome(root){
     }
   };
 
+  /* the sheet lives outside the screen root, so its controls are bound directly */
   const layoutSheet = () => {
     const s = getState();
     sheet(`<h2>Edit layout</h2><div class="sub">Reorder or hide sections of your Home screen</div>` +
@@ -89,27 +90,19 @@ export function mountHome(root){
         <button class="iconbtn" data-down="${sec.id}" aria-label="Down">↓</button>
         <button class="sw ${sec.on ? 'on' : ''}" data-eye="${sec.id}" aria-label="Toggle"></button></div>`).join('') +
       `<button class="btn" style="margin-top:16px" data-close>Done</button>`);
+
+    document.querySelectorAll('[data-up]').forEach(b =>
+      b.onclick = () => { moveLayoutSection(b.dataset.up, -1); layoutSheet(); render(); });
+    document.querySelectorAll('[data-down]').forEach(b =>
+      b.onclick = () => { moveLayoutSection(b.dataset.down, 1); layoutSheet(); render(); });
+    document.querySelectorAll('[data-eye]').forEach(b =>
+      b.onclick = () => { toggleLayoutSection(b.dataset.eye); layoutSheet(); render(); });
   };
 
   root.addEventListener('click', e => {
     if (e.target.closest('[data-more]')){ limit += 20; return render(); }
     if (e.target.closest('[data-layout]')) return layoutSheet();
     if (e.target.closest('[data-add]')) return addTxSheet();
-    const up = e.target.closest('[data-up]'), down = e.target.closest('[data-down]');
-    if (up || down){
-      const id = (up || down).dataset[up ? 'up' : 'down'];
-      const s = getState(), i = s.layout.findIndex(x => x.id === id), j = i + (up ? -1 : 1);
-      if (j >= 0 && j < s.layout.length){
-        [s.layout[i], s.layout[j]] = [s.layout[j], s.layout[i]];
-        layoutSheet(); render();
-      }
-      return;
-    }
-    const eye = e.target.closest('[data-eye]');
-    if (eye){
-      const sec = getState().layout.find(x => x.id === eye.dataset.eye);
-      sec.on = !sec.on; layoutSheet(); render();
-    }
   });
 
   render();
@@ -190,41 +183,62 @@ export function mountPay(root){
         ${s.tabs.length ? s.tabs.map(t => kv(`${esc(t.name)}<br><span style="font-size:12.5px">${t.people} people</span>`,
           `<span class="rev">${fmt(t.total)}</span>`)).join('') : empty('No open tabs')}</div>`;
   };
+
+  const soSheet = () => {
+    sheet(`<h2>Standing order</h2><div class="field"><label>Payee</label><input id="soName"></div>
+      <div class="field"><label>Amount</label><input id="soAmt" type="number" min="1"></div>
+      <div class="field"><label>Day of month</label><input id="soDay" type="number" min="1" max="28" value="1"></div>
+      <button class="btn" id="soGo">Create</button>`);
+    document.getElementById('soGo').onclick = () => {
+      const n = document.getElementById('soName').value.trim();
+      const a = +document.getElementById('soAmt').value;
+      if (!n || !a) return toast('Fill in both fields');
+      addStandingOrder(n, a, +document.getElementById('soDay').value || 1);
+      closeSheet(); render(); toast('Standing order created');
+    };
+  };
+
+  const tabSheet = () => {
+    sheet(`<h2>Shared tab</h2><div class="field"><label>Name</label><input id="tbName"></div>
+      <div class="field"><label>Total</label><input id="tbTot" type="number" min="1"></div>
+      <div class="field"><label>People</label><input id="tbPpl" type="number" min="2" value="2"></div>
+      <button class="btn" id="tbGo">Create tab</button>`);
+    document.getElementById('tbGo').onclick = () => {
+      const n = document.getElementById('tbName').value.trim();
+      const tot = +document.getElementById('tbTot').value;
+      const ppl = Math.max(2, +document.getElementById('tbPpl').value || 2);
+      if (!n || !tot) return toast('Fill in both fields');
+      addSharedTab(n, tot, ppl);
+      closeSheet(); render(); toast('Tab created');
+    };
+  };
+
+  const sorterSheet = () => {
+    const s = getState();
+    sheet(`<h2>Salary sorter</h2><div class="sub">Split your next pay automatically</div>
+      ${s.pots.map(p => kv(esc(p.name), '<span class="rev">£100.00</span>')).join('')}
+      <p class="note">Splits are taken the moment your salary lands.</p>
+      <button class="btn" id="sorterSave" style="margin-top:12px">Save sorter</button>`);
+    document.getElementById('sorterSave').onclick = () => {
+      notif('Salary sorter saved', 'Your next pay will be split automatically');
+      closeSheet(); toast('Sorter saved');
+    };
+  };
+
+  const gpeSheet = () => {
+    sheet(`<h2>Get paid early</h2><div class="sub">Salary lands at 4pm the day before it's due.</div>
+      <button class="btn" id="gpeGo">Claim early</button>`);
+    document.getElementById('gpeGo').onclick = () => {
+      notif('Paid early', 'Your salary is available now');
+      closeSheet(); toast('Claimed');
+    };
+  };
+
   root.addEventListener('click', e => {
-    if (e.target.closest('[data-so]')){
-      sheet(`<h2>Standing order</h2><div class="field"><label>Payee</label><input id="soName"></div>
-        <div class="field"><label>Amount</label><input id="soAmt" type="number" min="1"></div>
-        <div class="field"><label>Day of month</label><input id="soDay" type="number" min="1" max="28" value="1"></div>
-        <button class="btn" id="soGo">Create</button>`);
-      document.getElementById('soGo').onclick = () => {
-        const n = document.getElementById('soName').value.trim(), a = +document.getElementById('soAmt').value;
-        if (!n || !a) return toast('Fill in both fields');
-        addStandingOrder(n, a, +document.getElementById('soDay').value || 1);
-        closeSheet(); render(); toast('Standing order created');
-      };
-    }
-    if (e.target.closest('[data-tabs]')){
-      sheet(`<h2>Shared tab</h2><div class="field"><label>Name</label><input id="tbName"></div>
-        <div class="field"><label>Total</label><input id="tbTot" type="number" min="1"></div>
-        <div class="field"><label>People</label><input id="tbPpl" type="number" min="2" value="2"></div>
-        <button class="btn" id="tbGo">Create tab</button>`);
-      document.getElementById('tbGo').onclick = () => {
-        const n = document.getElementById('tbName').value.trim(), tot = +document.getElementById('tbTot').value;
-        const ppl = Math.max(2, +document.getElementById('tbPpl').value || 2);
-        if (!n || !tot) return toast('Fill in both fields');
-        addSharedTab(n, tot, ppl);
-        closeSheet(); render(); toast('Tab created');
-      };
-    }
-    if (e.target.closest('[data-sorter]')){
-      sheet(`<h2>Salary sorter</h2><div class="sub">Split your next pay automatically</div>
-        ${getState().pots.map(p => kv(esc(p.name), '<span class="rev">£100.00</span>')).join('')}
-        <button class="btn" data-close style="margin-top:12px">Save sorter</button>`);
-    }
-    if (e.target.closest('[data-gpe]')){
-      sheet(`<h2>Get paid early</h2><div class="sub">Salary lands at 4pm the day before it's due.</div>
-        <button class="btn" data-close>Claim early</button>`);
-    }
+    if (e.target.closest('[data-so]')) return soSheet();
+    if (e.target.closest('[data-tabs]')) return tabSheet();
+    if (e.target.closest('[data-sorter]')) return sorterSheet();
+    if (e.target.closest('[data-gpe]')) return gpeSheet();
   });
   render();
 }
@@ -282,7 +296,7 @@ export function mountTrends(root){
 /* ---------- account hub ---------- */
 export function mountAccount(root){
   const s = getState();
-  const row = (label, sub, attrs) => `<button class="pot" ${attrs}><span class="lg">${label.slice(0, 3)}</span>
+  const row = (label, sub, attrs) => `<button class="pot" ${attrs}><span class="lg">${label.replace(/&amp;/g, '').slice(0, 3)}</span>
     <span class="mid"><span class="nm">${label}</span><span class="sub">${sub}</span></span></button>`;
   root.innerHTML = `<div class="h-sec"><h2>Account</h2></div>
     <div class="card" style="padding:6px 8px">
@@ -389,10 +403,7 @@ export function mountPotDetail(root, params){
       closeSheet(); render(); toast('Done');
     };
   };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-in]')) return amountSheet('in');
-    if (e.target.closest('[data-out]')) return amountSheet('out');
-    if (!e.target.closest('[data-edit]')) return;
+  const editSheet = () => {
     const p = getState().pots.find(x => x.id === params.id);
     sheet(`<h2>Edit pot</h2><div class="field"><label>Name</label><input id="epName" value="${esc(p.name)}"></div>
       <div class="field"><label>Goal</label><input id="epGoal" type="number" min="1" value="${p.goal}"></div>
@@ -402,6 +413,11 @@ export function mountPotDetail(root, params){
         goal: Math.max(1, +document.getElementById('epGoal').value || p.goal) });
       closeSheet(); render(); toast('Pot updated');
     };
+  };
+  root.addEventListener('click', e => {
+    if (e.target.closest('[data-in]')) return amountSheet('in');
+    if (e.target.closest('[data-out]')) return amountSheet('out');
+    if (e.target.closest('[data-edit]')) return editSheet();
   });
   render();
 }
@@ -409,12 +425,12 @@ export function mountPotDetail(root, params){
 /* ---------- invest ---------- */
 export function mountInvest(root){
   const s = getState();
-  const pctOfTarget = Math.min(100, isaBal() / TARGET_ISA * 100);
+  const share = isaBal() / TARGET_ISA * 100;
   root.innerHTML = `<div class="card" style="margin-top:16px">
       <div class="sub">Stocks &amp; shares ISA · transferred in October 1992</div>
       <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(isaBal())}</div>
       ${meter(isaBal(), TARGET_ISA)}
-      <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">${pctOfTarget.toFixed(2)}% of target</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px">${share.toFixed(2)}% of target</div>
       ${kv('Target', `<span class="rev">${fmt(TARGET_ISA)}</span>`)}
       ${kv('Allowance used', `<span class="rev">${fmt(tyUsed())}</span>`)}
       ${kv('Allowance remaining', `<span class="rev">${fmt(Math.max(0, 20000 - tyUsed()))}</span>`)}
@@ -514,4 +530,4 @@ function download(kind, ym, asPdf){
   w.document.close(); w.focus();
   setTimeout(() => w.print(), 350);
   toast('Statement ready to print');
-      }
+}
