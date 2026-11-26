@@ -6,8 +6,8 @@
 <title>Monzo</title>
 <meta name="theme-color" content="#FF4F40">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="monzo-tile.svg?v=10" type="image/svg+xml">
-<link rel="apple-touch-icon" href="monzo-maskable.svg?v=10">
+<link rel="icon" href="monzo-tile.svg?v=11" type="image/svg+xml">
+<link rel="apple-touch-icon" href="monzo-maskable.svg?v=11">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Monzo">
@@ -22,8 +22,7 @@ html[data-theme="dark"]{--ink:#f2f5f7;--muted:#93a3af;--line:#1f2c38;--bg:#0a141
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif;
-  background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;
-  overscroll-behavior-y:contain}
+  background:var(--bg);color:var(--ink);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;overscroll-behavior-y:contain}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 html[data-motion="off"] *{transition:none!important;animation:none!important}
 img{display:block;max-width:100%}
@@ -53,8 +52,7 @@ body:not(.locked) #lock{display:none}
 .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .key{height:58px;border-radius:16px;background:rgba(255,255,255,.16);color:#fff;font-size:22px;font-weight:600}
 .key:active{background:rgba(255,255,255,.32)}
-.err{color:#fff;background:rgba(0,0,0,.22);border-radius:12px;padding:6px 12px;font-size:13px;
-  margin-top:14px;display:none}
+.err{color:#fff;background:rgba(0,0,0,.22);border-radius:12px;padding:6px 12px;font-size:13px;margin-top:14px;display:none}
 .err.on{display:inline-block}
 #app{max-width:520px;margin:0 auto;padding-bottom:88px;background:var(--bg);min-height:100vh;zoom:var(--zoom)}
 .topbar{background:var(--bg);padding:14px 16px 0;position:sticky;top:0;z-index:30}
@@ -195,15 +193,13 @@ html[data-priv="1"] .rev.open{filter:none}
 <div class="offline" id="offbar">You're offline — showing your last saved data</div>
 
 <div id="lock">
-  <img class="mark" src="monzo-mark-white.svg?v=10" alt="">
-  <h1>Welcome back, Jason</h1>
-  <p>Unlock to see your money</p>
+  <img class="mark" src="monzo-mark-white.svg?v=11" alt="">
+  <h1>Welcome back, Jason</h1><p>Unlock to see your money</p>
   <button class="bio" id="bioBtn" aria-label="Unlock with fingerprint">
     <svg viewBox="0 0 24 24"><path d="M12 3c-3 0-5.6 1.2-7.5 3.1l1.4 1.4C7.4 5.9 9.6 5 12 5s4.6.9 6.1 2.5l1.4-1.4C17.6 4.2 15 3 12 3zm0 3a6 6 0 00-4.2 1.7l1.4 1.4A4 4 0 0112 8a4 4 0 013.9 3.1l1.9-.4A6 6 0 0012 6zm0 4a2 2 0 00-1.4.6l1.4 1.4 1.4-1.4A2 2 0 0012 10zm-5.6.3l-1.9.4A8 8 0 0011 21v-2a6 6 0 00-4.6-8.7zM13 13v8h1a8 8 0 003.7-.9l-.9-1.8A6 6 0 0015 19v-6h-2z"/></svg>
   </button>
   <button class="lockbtn" id="usePin">Use passcode</button>
-  <div id="pinpad"><div class="dots" id="dots"></div><div class="keys" id="keys"></div>
-    <div class="err" id="pinErr">Incorrect passcode</div></div>
+  <div id="pinpad"><div class="dots" id="dots"></div><div class="keys" id="keys"></div><div class="err" id="pinErr">Incorrect passcode</div></div>
 </div>
 
 <div id="app" aria-live="polite">
@@ -229,18 +225,14 @@ html[data-priv="1"] .rev.open{filter:none}
   <div class="card"><div class="sub">Everything you're building</div>
     <div class="balance rev" id="growTotal" style="font-size:30px;margin:4px 0">£0.00</div>
     <div class="sub" id="growSub" style="margin:0"></div></div>
-  <div class="accard" id="growSave"><div class="accrow"><div><div class="accname">Savings</div>
-    <div class="accmeta" id="growSaveMeta"></div></div><span class="badge coral" id="growSaveRate"></span></div>
-    <div class="balance rev" id="growSaveBal">£0.00</div></div>
-  <div class="accard" id="growInv"><div class="accrow"><div><div class="accname">Investments</div>
-    <div class="accmeta">Stocks &amp; shares ISA</div></div><span class="badge coral">ISA</span></div>
-    <div class="balance rev" id="growInvBal">£0.00</div></div>
-  <div class="accard" id="growPen"><div class="accrow"><div><div class="accname">Pension</div>
-    <div class="accmeta">SIPP · connected</div></div><span class="badge">SIPP</span></div>
-    <div class="balance rev" id="growPenBal">£0.00</div></div>
-  <div class="accard" id="growHome"><div class="accrow"><div><div class="accname">Home equity</div>
-    <div class="accmeta">Estimate from your mortgage</div></div><span class="badge">Est.</span></div>
-    <div class="balance rev" id="growHomeBal">£0.00</div></div>
+  <div class="accard"><div class="accrow"><div><div class="accname">Savings</div><div class="accmeta" id="growSaveMeta"></div></div>
+    <span class="badge coral" id="growSaveRate"></span></div><div class="balance rev" id="growSaveBal">£0.00</div></div>
+  <div class="accard"><div class="accrow"><div><div class="accname">Investments</div><div class="accmeta">Stocks &amp; shares ISA</div></div>
+    <span class="badge coral">ISA</span></div><div class="balance rev" id="growInvBal">£0.00</div></div>
+  <div class="accard"><div class="accrow"><div><div class="accname">Pension</div><div class="accmeta">SIPP · connected</div></div>
+    <span class="badge">SIPP</span></div><div class="balance rev" id="growPenBal">£0.00</div></div>
+  <div class="accard"><div class="accrow"><div><div class="accname">Home equity</div><div class="accmeta">Estimate from your mortgage</div></div>
+    <span class="badge">Est.</span></div><div class="balance rev" id="growHomeBal">£0.00</div></div>
   <div class="card"><h2>Home</h2><div class="sub">Set your estimate</div>
     <div class="field"><label>Property value</label><input id="hv" type="number" min="0" step="1000"></div>
     <div class="field"><label>Mortgage owed</label><input id="hm" type="number" min="0" step="1000"></div>
@@ -263,11 +255,8 @@ html[data-priv="1"] .rev.open{filter:none}
 
 <section data-screen="trends">
   <div class="h-sec" style="margin-top:16px"><h2>Trends</h2></div>
-  <div class="pill-row">
-    <button class="chip on" data-tv="balance">Balance</button>
-    <button class="chip" data-tv="spending">Spending</button>
-    <button class="chip" data-tv="targets">Targets</button>
-  </div>
+  <div class="pill-row"><button class="chip on" data-tv="balance">Balance</button>
+    <button class="chip" data-tv="spending">Spending</button><button class="chip" data-tv="targets">Targets</button></div>
   <div id="trendBody"></div>
 </section>
 
@@ -286,6 +275,8 @@ html[data-priv="1"] .rev.open{filter:none}
     <button class="pot" data-go="plan"><span class="lg">PLN</span><span class="mid"><span class="nm">Plan</span><span class="sub" id="planSub">Max</span></span></button>
     <button class="pot" data-go="limits"><span class="lg">LIM</span><span class="mid"><span class="nm">Limits</span><span class="sub">ATM and card limits</span></span></button>
     <button class="pot" data-go="insurance"><span class="lg">INS</span><span class="mid"><span class="nm">Insurance</span><span class="sub">Travel, phone, breakdown</span></span></button>
+    <button class="pot" data-go="billsback"><span class="lg">BB</span><span class="mid"><span class="nm">Billsback</span><span class="sub">Your bills could be on us</span></span></button>
+    <button class="pot" data-go="challenge"><span class="lg">CH</span><span class="mid"><span class="nm">Saving Challenge</span><span class="sub">1p to £667.95</span></span></button>
     <button class="pot" data-go="disputes"><span class="lg">DSP</span><span class="mid"><span class="nm">Disputes</span><span class="sub">Raised queries</span></span></button>
     <button class="pot" data-go="chat"><span class="lg">CHT</span><span class="mid"><span class="nm">Support</span><span class="sub">Chat to us</span></span></button>
     <button class="pot" data-go="appearance"><span class="lg">APP</span><span class="mid"><span class="nm">Appearance</span><span class="sub">Theme, text size, motion</span></span></button>
@@ -313,8 +304,7 @@ html[data-priv="1"] .rev.open{filter:none}
     <div class="kv"><span class="k">Target</span><span class="v rev">£934,745.32</span></div>
     <div class="kv"><span class="k">Allowance used</span><span class="v rev" id="isaUsed">£0.00</span></div>
     <div class="kv"><span class="k">Allowance remaining</span><span class="v rev" id="isaLeft">£20,000.00</span></div>
-    <div class="kv"><span class="k">Platform fee</span><span class="v" id="isaFee">0.25%</span></div>
-  </div>
+    <div class="kv"><span class="k">Platform fee</span><span class="v" id="isaFee">0.25%</span></div></div>
   <div class="card"><h2>Portfolio</h2><div class="sub">Holdings by value</div><div id="portList"></div></div>
   <div class="card"><h2>Value over time</h2><div class="sub">Since October 1992</div><div id="isaChart"></div></div>
   <div class="h-sec"><h2>Ledger</h2><button data-go="statements">Statements</button></div>
@@ -351,8 +341,8 @@ html[data-priv="1"] .rev.open{filter:none}
     <div class="meter"><i id="flexMeter"></i></div>
     <div class="kv"><span class="k">Limit</span><span class="v rev" id="flexLimit"></span></div>
     <div class="kv"><span class="k">Representative APR</span><span class="v">29%</span></div>
-    <button class="btn" id="flexNew" style="margin-top:12px">Flex a purchase</button></div>
-  <div class="card"><h2>Plans</h2><div class="sub">3 months is interest free</div><div id="flexPlans"></div></div>
+    <button class="btn" id="flexNew" style="margin-top:12px">Pay with Flex</button></div>
+  <div class="card"><h2>Plans</h2><div class="sub">3 months interest free · 6 and 12 months at 29%</div><div id="flexPlans"></div></div>
 </section>
 
 <section data-screen="aura">
@@ -389,7 +379,7 @@ html[data-priv="1"] .rev.open{filter:none}
     <div class="kv"><span class="k">Monthly repayment</span><span class="v rev" id="lnMonth">—</span></div>
     <div class="kv"><span class="k">Total repayable</span><span class="v rev" id="lnTotal">—</span></div>
     <button class="btn" id="lnApply" style="margin-top:12px">Apply</button></div>
-  <div class="card"><h2>Your loans</h2><div class="sub">Active agreements</div><div id="lnList"></div></div>
+  <div class="card"><h2>Your loans</h2><div class="sub">Active agreements · repaid monthly</div><div id="lnList"></div></div>
 </section>
 
 <section data-screen="connected">
@@ -424,6 +414,7 @@ html[data-priv="1"] .rev.open{filter:none}
     <div class="toggle"><div><div class="t">Opt in this month</div><div class="d">At least 1,000 bills paid back monthly</div></div>
       <button class="sw" id="bbSw" aria-label="Opt in"></button></div>
     <button class="btn" id="bbDraw" style="margin-top:14px">Enter this month's draw</button></div>
+  <div class="card"><h2>Eligible bills this month</h2><div class="sub">From the agreed provider list</div><div id="bbBills"></div></div>
   <div class="card"><h2>Results</h2><div id="bbList"></div></div>
 </section>
 
@@ -530,10 +521,8 @@ html[data-priv="1"] .rev.open{filter:none}
 
 <section data-screen="potdetail">
   <div class="h-sec" style="margin-top:16px"><h2 id="pdName">Pot</h2><button id="pdEdit">Edit</button></div>
-  <div class="card">
-    <div class="balance rev" id="pdBal" style="font-size:30px;margin:0 0 4px">£0.00</div>
-    <div class="sub" id="pdGoal"></div>
-    <div class="meter"><i id="pdBar"></i></div>
+  <div class="card"><div class="balance rev" id="pdBal" style="font-size:30px;margin:0 0 4px">£0.00</div>
+    <div class="sub" id="pdGoal"></div><div class="meter"><i id="pdBar"></i></div>
     <div class="kv" id="pdRateRow"><span class="k">Interest</span><span class="v" id="pdRate"></span></div>
     <div class="row2" style="margin-top:12px"><button class="btn" id="pdAdd">Add money</button>
       <button class="btn ghost" id="pdWithdraw">Withdraw</button></div></div>
@@ -593,8 +582,7 @@ const PLANS = {
   max:  {name:'Max', price:19, ia:3.50, atmUK:Infinity, atmRow:600, vcLive:5, vc30:9, billsback:true, cover:true, scores:2, min:3, age:'18–69'}
 };
 const plan = () => PLANS[S.plan];
-
-const KEY = 'monzo_v10';
+const KEY = 'monzo_v11';
 let S = null;
 
 const DOMAINS = {'Tesco':'tesco.com','Aldi':'aldi.co.uk','Asda':'asda.com','Morrisons':'morrisons.com','Lidl':'lidl.co.uk',
@@ -610,9 +598,9 @@ const DOMAINS = {'Tesco':'tesco.com','Aldi':'aldi.co.uk','Asda':'asda.com','Morr
   'Northumbrian Water':'nwl.co.uk','Virgin Media':'virginmedia.com','EE':'ee.co.uk','Aviva':'aviva.co.uk',
   'Stockton Council':'stockton.gov.uk','Kingdom Services Group':'kingdom.co.uk','Vanguard':'vanguardinvestor.co.uk',
   'Pointens':'pointens.co.uk','OpenRent':'openrent.co.uk','Blue Skies Lets':'blueskieslets.co.uk',
-  'Chloe Brown':'','Barclays':'barclays.co.uk','HSBC':'hsbc.co.uk','Lloyds':'lloydsbank.com','NatWest':'natwest.com',
+  'Barclays':'barclays.co.uk','HSBC':'hsbc.co.uk','Lloyds':'lloydsbank.com','NatWest':'natwest.com',
   'Santander':'santander.co.uk','Nationwide':'nationwide.co.uk','Starling':'starlingbank.com','Chase':'chase.co.uk',
-  'Monzo Flex':'monzo.com','Monzo Aura':'monzo.com'};
+  'Monzo Flex':'monzo.com','Monzo Aura':'monzo.com','Monzo Loans':'monzo.com'};
 function logo(name){
   const d = DOMAINS[name];
   const ini = String(name).split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -631,6 +619,9 @@ const POTS0 = [{name:'Rainy Day', goal:5000, bal:2410.55, type:'regular'},
   {name:'Emergency', goal:3000, bal:1000, type:'savings'}];
 const TARGET_ISA = 934745.32;
 const BANKS = ['Barclays','HSBC','Lloyds','NatWest','Santander','Nationwide','Starling','Chase'];
+/* agreed Billsback provider list */
+const BB_PROVIDERS = ['British Gas','Northumbrian Water','Virgin Media','EE','Aviva','Stockton Council','OpenRent','Blue Skies Lets','Pointens'];
+const BB_CAP = 150;
 
 function seedISA(){
   const months = []; let d = new Date(1992,9,1);
@@ -703,7 +694,7 @@ function seedAccount(){
   return tx;
 }
 function freshState(){
-  return {v:10, tx:seedAccount().reverse(), isa:seedISA(), pots:POTS0.map(p=>({id:uid(),...p})),
+  return {v:11, tx:seedAccount().reverse(), isa:seedISA(), pots:POTS0.map(p=>({id:uid(),...p})),
     payees:[{id:uid(),name:'Chloe Brown',sc:'04-00-04',ac:'73829104',fav:true,last:TODAY},
       {id:uid(),name:'David Armstrong',sc:'09-01-28',ac:'11293847',fav:false,last:''},
       {id:uid(),name:'Halcyon Digital',sc:'20-45-77',ac:'55102238',fav:false,last:''},
@@ -725,17 +716,17 @@ function freshState(){
     credit:{eq:0, tu:0, built:false},
     challenge:{day:0, saved:0},
     billsback:{optIn:false, history:[]},
-    lastInterest:'', notifs:[], chat:[], disputes:[], revealed:[]};
+    lastInterest:'', lastTick:'', notifs:[], chat:[], disputes:[], revealed:[]};
 }
 function load(){
   const p = new URLSearchParams(location.search);
   if (p.get('reset') === '1') localStorage.removeItem(KEY);
   try { S = JSON.parse(localStorage.getItem(KEY)); } catch(e){ S = null; }
-  if (!S || S.v !== 10){ S = freshState(); save(); }
+  if (!S || S.v !== 11){ S = freshState(); save(); }
   S.revealed = new Set(S.revealed || []);
   if (!S.notifs.length) seedNotifs();
   if (!S.credit.built){ S.credit = {eq: ri(560,720), tu: ri(540,700), built:true}; save(); }
-  runInterest();
+  runInterest(); runTick();
 }
 function save(){ try { localStorage.setItem(KEY, JSON.stringify({...S, revealed:[...S.revealed]})); } catch(e){} }
 
@@ -753,6 +744,7 @@ const homeEquity = () => Math.max(0, (S.homeValue||0) - (S.mortgage||0));
 const connTotal = () => S.connected.reduce((a,c)=>a+c.bal,0);
 const loanOwed = () => S.loans.reduce((a,l)=>a+l.outstanding,0);
 const growTotal = () => savingsTotal() + isaBal() + (S.pension||0) + homeEquity() + connTotal() - loanOwed();
+const flexAvail = () => Math.max(0, round2(S.flex.limit - S.flex.used));
 
 function runInterest(){
   if (S.lastInterest === THIS_YM) return;
@@ -762,6 +754,35 @@ function runInterest(){
     if (int > 0){ p.bal = round2(p.bal + int); paid = round2(paid + int); } });
   S.lastInterest = THIS_YM;
   if (paid > 0) S.notifs.unshift({title:'Interest paid', body:`${fmt(paid)} across your savings pots`, date:TODAY, time:NOWT});
+  save();
+}
+/* monthly credit tick: flex instalments and loan repayments */
+function runTick(){
+  if (S.lastTick === THIS_YM) return;
+  S.lastTick = THIS_YM;
+  let flexPaid = 0, loanPaid = 0;
+  S.flex.plans.forEach(p => {
+    if (p.remaining <= 0) return;
+    const pay = round2(Math.min(p.monthly, p.remaining));
+    if (pay > balNow()) return;
+    pushTx('Monzo Flex','Transfers',-pay,`Instalment ${p.term === 3 ? '3' : p.term} of ${p.term}`);
+    p.remaining = round2(p.remaining - pay);
+    S.flex.used = Math.max(0, round2(S.flex.used - pay));
+    flexPaid = round2(flexPaid + pay);
+  });
+  S.flex.plans = S.flex.plans.filter(p => p.remaining > 0.01);
+  S.loans.forEach(l => {
+    if (l.outstanding <= 0) return;
+    const pay = round2(Math.min(l.monthly, l.outstanding));
+    if (pay > balNow()) return;
+    pushTx('Monzo Loans','Transfers',-pay,`Repayment ${l.paid + 1} of ${l.term}`);
+    l.outstanding = round2(l.outstanding - pay);
+    l.paid += 1;
+    loanPaid = round2(loanPaid + pay);
+  });
+  S.loans = S.loans.filter(l => l.outstanding > 0.01);
+  if (flexPaid) S.notifs.unshift({title:'Flex instalment', body:`${fmt(flexPaid)} taken`, date:TODAY, time:NOWT});
+  if (loanPaid) S.notifs.unshift({title:'Loan repayment', body:`${fmt(loanPaid)} taken`, date:TODAY, time:NOWT});
   save();
 }
 
@@ -822,7 +843,6 @@ function donut(host, parts){
 }
 
 let feedLimit = 12, accLimit = 40, stmtKind = 'acc', catFilter = 'All', trendView = 'balance';
-
 function renderHome(){
   const host = document.getElementById('homeBody'); host.innerHTML = '';
   S.layout.filter(s=>s.on).forEach(sec => {
@@ -881,11 +901,10 @@ function fillFeed(id, limit, moreId){
   S.tx.slice(0, limit).forEach(t => host.appendChild(txNode(t)));
   const mb = document.getElementById(moreId); if (mb) mb.classList.toggle('hide', limit >= S.tx.length);
 }
-
 function renderGrow(){
   document.getElementById('growTotal').textContent = fmt(growTotal());
   document.getElementById('growSub').textContent =
-    `Savings ${fmt(savingsTotal())} · Invested ${fmt(isaBal())} · Pension ${fmt(S.pension||0)} · Equity ${fmt(homeEquity())}`;
+    `Savings ${fmt(savingsTotal())} · Invested ${fmt(isaBal())} · Pension ${fmt(S.pension||0)} · Equity ${fmt(homeEquity())}${loanOwed()?` · Owed ${fmt(loanOwed())}`:''}`;
   document.getElementById('growSaveBal').textContent = fmt(savingsTotal());
   document.getElementById('growSaveMeta').textContent = `${S.pots.filter(p=>p.type==='savings').length} savings pots · connected ${fmt(connTotal())}`;
   document.getElementById('growSaveRate').textContent = plan().ia + '% AER';
@@ -1049,17 +1068,21 @@ function renderAccounts(){
       <span class="badge">${a.status}</span></div>`).join('');
 }
 function renderBorrow(){
-  document.getElementById('flexSub').textContent = `${fmt(S.flex.limit - S.flex.used)} available`;
+  document.getElementById('flexSub').textContent = `${fmt(flexAvail())} available`;
   document.getElementById('odSub').textContent = S.overdraft.limit ? fmt(S.overdraft.limit) + ' arranged' : 'Not arranged';
 }
 function renderFlex(){
-  const avail = S.flex.limit - S.flex.used;
-  document.getElementById('flexAvail').textContent = fmt(avail);
+  document.getElementById('flexAvail').textContent = fmt(flexAvail());
   document.getElementById('flexLimit').textContent = fmt(S.flex.limit);
   document.getElementById('flexMeter').style.width = Math.min(100, S.flex.used/S.flex.limit*100) + '%';
-  document.getElementById('flexPlans').innerHTML = S.flex.plans.length ? S.flex.plans.map(p=>`<div class="kv">
-    <span class="k">${esc(p.name)}<br><span style="font-size:12.5px">${p.term} months · ${fmt(p.monthly)}/mo</span></span>
-    <span class="v rev">${fmt(p.remaining)}</span></div>`).join('') : '<div class="empty">No plans</div>';
+  document.getElementById('flexPlans').innerHTML = S.flex.plans.length ? S.flex.plans.map(p=>{
+    const paid = round2(p.amount - p.remaining);
+    return `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+        <span>${esc(p.name)}</span><b class="rev">${fmt(p.remaining)}</b></div>
+      <div class="meter" style="height:6px"><i style="width:${(paid/p.amount*100).toFixed(0)}%"></i></div>
+      <div style="font-size:12.5px;color:var(--muted)">${fmt(paid)} of ${fmt(p.amount)} · ${p.term} months · ${fmt(p.monthly)}/mo</div></div>`;
+  }).join('') : '<div class="empty">No plans</div>';
 }
 function renderAura(){
   const a = S.aura;
@@ -1086,9 +1109,13 @@ function renderLoans(){
   document.getElementById('lnApr').textContent = apr + '%';
   document.getElementById('lnMonth').textContent = fmt(monthly);
   document.getElementById('lnTotal').textContent = fmt(round2(monthly*term));
-  document.getElementById('lnList').innerHTML = S.loans.length ? S.loans.map(l=>`<div class="kv">
-    <span class="k">${fmt(l.amount)} over ${l.term} months<br><span style="font-size:12.5px">${l.apr}% APR</span></span>
-    <span class="v rev">${fmt(l.outstanding)}</span></div>`).join('') : '<div class="empty">No loans</div>';
+  document.getElementById('lnList').innerHTML = S.loans.length ? S.loans.map(l=>`
+    <div style="padding:9px 0;border-bottom:1px solid var(--line)">
+      <div style="display:flex;justify-content:space-between;font-size:14px">
+        <span>${fmt(l.amount)} · ${l.apr}% APR</span><b class="rev">${fmt(l.outstanding)}</b></div>
+      <div class="meter" style="height:6px"><i style="width:${(l.paid/l.term*100).toFixed(0)}%"></i></div>
+      <div style="font-size:12.5px;color:var(--muted)">${l.paid} of ${l.term} payments · ${fmt(l.monthly)}/mo</div></div>`).join('')
+    : '<div class="empty">No loans</div>';
 }
 function renderConnected(){
   document.getElementById('bankChips').innerHTML = BANKS.map(b=>
@@ -1101,41 +1128,44 @@ function renderConnected(){
 function renderCredit(){
   const scores = plan().scores;
   document.getElementById('creditSub').textContent = scores + ' score' + (scores>1?'s':'');
-  document.getElementById('creditBox').innerHTML = `
-    <div style="display:flex;gap:20px">
+  document.getElementById('creditBox').innerHTML = `<div style="display:flex;gap:20px">
       <div style="flex:1"><div class="sub" style="margin:0">Equifax</div><div class="score">${S.credit.eq}</div>
         <div class="badge ${S.credit.eq>650?'ok':'warn'}">${S.credit.eq>650?'Good':'Fair'}</div></div>
       ${scores>1?`<div style="flex:1"><div class="sub" style="margin:0">TransUnion</div><div class="score">${S.credit.tu}</div>
         <div class="badge ${S.credit.tu>650?'ok':'warn'}">${S.credit.tu>650?'Good':'Fair'}</div></div>`:''}
-    </div>
-    <div class="sub" style="margin-top:12px">Updated weekly</div>
+    </div><div class="sub" style="margin-top:12px">Updated weekly</div>
     ${scores===1?'<p class="note">Extra adds a second score, weekly updates and credit-boosting actions.</p>':''}`;
-  document.getElementById('creditFactors').innerHTML = [
-    ['On-time payments','Positive','ok'],['Credit utilisation','29% used','warn'],
-    ['Account age','13 years','ok'],['Hard searches','1 in 6 months','ok']
-  ].map(([a,b,c])=>`<div class="kv"><span class="k">${a}</span><span class="v"><span class="badge ${c}">${b}</span></span></div>`).join('');
+  document.getElementById('creditFactors').innerHTML = [['On-time payments','Positive','ok'],
+    ['Credit utilisation','29% used','warn'],['Account age','13 years','ok'],['Hard searches','1 in 6 months','ok']]
+    .map(([a,b,c])=>`<div class="kv"><span class="k">${a}</span><span class="v"><span class="badge ${c}">${b}</span></span></div>`).join('');
 }
 function renderChallenge(){
-  const c = S.challenge;
-  const target = 667.95;
-  const todayAmt = round2((c.day+1)/100);
+  const c = S.challenge, target = 667.95;
   document.getElementById('chBal').textContent = fmt(c.saved);
   document.getElementById('chMeter').style.width = Math.min(100, c.saved/target*100) + '%';
   document.getElementById('chDay').textContent = `${c.day} of 365`;
-  document.getElementById('chToday').textContent = fmt(todayAmt);
+  document.getElementById('chToday').textContent = fmt(round2((c.day+1)/100));
   document.getElementById('chRate').textContent = plan().price ? '5% AER' : 'No interest';
 }
+function bbBills(){
+  return S.tx.filter(t => t.date.slice(0,7)===THIS_YM && t.amt < 0 &&
+    (t.cat === 'Bills' || t.cat === 'Rent') && BB_PROVIDERS.includes(t.name));
+}
 function renderBillsback(){
-  const ok = plan().billsback;
+  const ok = plan().billsback, bills = bbBills();
   document.getElementById('bbElig').innerHTML = ok ? '<span class="badge ok">Included in your plan</span>' : '<span class="badge bad">Needs Extra</span>';
   document.getElementById('bbSw').classList.toggle('on', S.billsback.optIn);
+  document.getElementById('bbBills').innerHTML = bills.length ? bills.map(b=>`<div class="kv">
+    <span class="k">${esc(b.name)}<br><span style="font-size:12.5px">${b.date}</span></span>
+    <span class="v rev">${fmt(Math.min(Math.abs(b.amt), BB_CAP))}</span></div>`).join('')
+    : '<div class="empty">No eligible bills yet this month</div>';
   document.getElementById('bbList').innerHTML = S.billsback.history.length ? S.billsback.history.map(h=>`<div class="kv">
-    <span class="k">${esc(h.month)}</span><span class="v">${h.won?`<span class="badge ok">${fmt(h.amount)} back</span>`:'<span class="badge">No win</span>'}</span></div>`).join('')
+    <span class="k">${esc(h.month)}${h.bill?` · ${esc(h.bill)}`:''}</span>
+    <span class="v">${h.won?`<span class="badge ok">${fmt(h.amount)} back</span>`:'<span class="badge">No win</span>'}</span></div>`).join('')
     : '<div class="empty">No draws entered</div>';
 }
 function renderInsurance(){
-  document.getElementById('insBox').innerHTML = plan().cover ? `
-    <div class="sub">Included with Max</div>
+  document.getElementById('insBox').innerHTML = plan().cover ? `<div class="sub">Included with Max</div>
     ${[['Worldwide travel insurance','POL-TRV-8842190'],['Worldwide phone insurance','POL-PHN-8842191'],['UK &amp; Europe breakdown cover','POL-BRK-8842192']]
       .map(([n,pol])=>`<div class="kv"><span class="k">${n}<br><span style="font-size:12.5px">${pol}</span></span>
         <span class="v"><button class="btn ghost sm" data-pol="${pol}">Document</button></span></div>`).join('')}
@@ -1147,8 +1177,7 @@ function renderInsurance(){
 function renderLayout(){
   document.getElementById('panel').innerHTML = `<div class="grab"></div><h2>Edit layout</h2>
     <div class="sub">Reorder or hide sections of your Home screen</div>` +
-    S.layout.map((s,i)=>`<div class="layoutrow"><span class="mini">${i+1}</span>
-      <span class="mid">${LAYOUT_NAMES[s.id]}</span>
+    S.layout.map((s,i)=>`<div class="layoutrow"><span class="mini">${i+1}</span><span class="mid">${LAYOUT_NAMES[s.id]}</span>
       <button class="iconbtn" data-up="${s.id}" aria-label="Up">↑</button>
       <button class="iconbtn" data-down="${s.id}" aria-label="Down">↓</button>
       <button class="sw ${s.on?'on':''}" data-eye="${s.id}" aria-label="Toggle"></button></div>`).join('') +
@@ -1226,7 +1255,7 @@ function addTxSheet(){
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-go],[data-pot],[data-tx],[data-send],[data-fav],[data-editpay],[data-dl],[data-pdf],[data-stmt],[data-tv],[data-plan],[data-theme],[data-zoom],[data-up],[data-down],[data-eye],[data-close],[data-od],[data-bank],[data-pol]');
+  const t = e.target.closest('[data-go],[data-pot],[data-tx],[data-send],[data-fav],[data-editpay],[data-dl],[data-pdf],[data-stmt],[data-tv],[data-plan],[data-theme],[data-zoom],[data-up],[data-down],[data-eye],[data-close],[data-od],[data-bank],[data-pol],[data-term]');
   if (t){
     if (t.dataset.go) return go(t.dataset.go);
     if (t.dataset.close !== undefined || t.classList.contains('scrim')) return closeSheet();
@@ -1246,7 +1275,8 @@ document.addEventListener('click', e => {
     if (t.dataset.editpay) return payeeSheet(t.dataset.editpay);
     if (t.dataset.od){ S.overdraft.pending = +t.dataset.od; return renderOverdraft(); }
     if (t.dataset.bank) return connectBank(t.dataset.bank);
-    if (t.dataset.pol) return toast('Document ' + t.dataset.pol + ' queued to download');
+    if (t.dataset.pol) return toast('Document ' + t.dataset.pol + ' queued');
+    if (t.dataset.term){ flexTerm = +t.dataset.term; flexQuote(); return; }
   }
   if (e.target.id === 'sheet' || e.target.matches('[data-close]')) closeSheet();
   const id = e.target.id;
@@ -1277,7 +1307,7 @@ document.addEventListener('click', e => {
   if (id === 'logoutAll') toast('Logged out of all other devices');
   if (id === 'addAcc') sheet(`<h2>Add an account</h2><div class="field"><label>Type</label>
     <select id="aaType"><option>Under 16</option><option>16-17</option><option>Business</option></select></div>
-    <div class="field"><label>Name</label><input id="aaName" placeholder="e.g. Alfie or Trading name"></div>
+    <div class="field"><label>Name</label><input id="aaName"></div>
     <button class="btn" id="aaGo">Open account</button>`);
   if (id === 'aaGo'){ const n = document.getElementById('aaName').value.trim(); if (!n) return toast('Enter a name');
     const type = document.getElementById('aaType').value;
@@ -1320,7 +1350,7 @@ document.addEventListener('click', e => {
     if (amt < 1000 || amt > 35000) return toast('Enter £1,000 to £35,000');
     const apr = amt > 10000 ? 10 : 23;
     const monthly = round2(amt * (1 + apr/100 * term/12) / term);
-    S.loans.push({id:uid(), amount:amt, term, apr, monthly, outstanding:round2(monthly*term)});
+    S.loans.push({id:uid(), amount:amt, term, apr, monthly, outstanding:round2(monthly*term), paid:0});
     pushTx('Monzo Loans','Income',amt,'Loan advance');
     notif('Loan approved', `${fmt(amt)} paid into your account`); save(); renderLoans(); toast('Loan paid in'); }
   if (id === 'chSave'){ const c = S.challenge; if (c.day >= 365) return toast('Challenge complete');
@@ -1330,40 +1360,64 @@ document.addEventListener('click', e => {
     pushTx('Saving Challenge','Savings',-amt,'Day ' + c.day); save(); renderChallenge(); toast('Saved ' + fmt(amt)); }
   if (id === 'bbSw'){ if (!plan().billsback) return toast('Billsback needs Extra');
     S.billsback.optIn = !S.billsback.optIn; save(); renderBillsback(); }
-  if (id === 'bbDraw'){ if (!plan().billsback) return toast('Billsback needs Extra');
+  if (id === 'bbDraw'){
+    if (!plan().billsback) return toast('Billsback needs Extra');
     if (!S.billsback.optIn) return toast('Opt in first');
-    const won = rnd() < 0.25, amount = won ? ri(20,150) : 0;
-    S.billsback.history.unshift({month: MONTHS[NOW.getMonth()], won, amount});
-    if (won){ pushTx('Monzo Billsback','Income',amount,'Bill paid back'); notif('Billsback','You won ' + fmt(amount)); }
+    const bills = bbBills();
+    if (!bills.length) return toast('No eligible bills this month');
+    const won = rnd() < 0.25;
+    const bill = pick(bills);
+    const amount = won ? round2(Math.min(Math.abs(bill.amt), BB_CAP)) : 0;
+    S.billsback.history.unshift({month: MONTHS[NOW.getMonth()], won, amount, bill: won ? bill.name : ''});
+    if (won){ pushTx('Monzo Billsback','Income',amount,bill.name + ' paid back'); notif('Billsback', `${bill.name} — ${fmt(amount)} paid back`); }
     else notif('Billsback','No win this month');
     save(); renderBillsback(); toast(won ? 'You won ' + fmt(amount) : 'No win this month'); }
-  if (id === 'lnAmt' || id === 'lnTerm') renderLoans();
+  if (id === 'lnAmt') renderLoans();
 });
 document.addEventListener('change', e => { if (e.target.id === 'lnTerm') renderLoans(); });
 
 function connectBank(bank){
   if (S.connected.some(c=>c.bank===bank)) return toast('Already connected');
   S.connected.push({id:uid(), bank, kind:'Current account', bal: ri(120,3400)});
-  notif('Account connected', bank + ' added');
-  save(); renderConnected(); renderGrow(); toast('Connected to ' + bank);
+  notif('Account connected', bank + ' added'); save(); renderConnected(); renderGrow(); toast('Connected to ' + bank);
+}
+
+/* ---- Flex: spendable credit line ---- */
+let flexTerm = 3;
+function flexMonthly(amount, term){
+  if (term === 3) return round2(amount/3);
+  return round2(amount * (1 + 0.29*term/12) / term);
 }
 function flexSheet(){
-  const avail = S.flex.limit - S.flex.used;
-  const eligible = S.tx.filter(t=>t.amt < 0 && Math.abs(t.amt) >= 100 && !t.flexed).slice(0,12);
-  if (!eligible.length) return toast('No purchases over £100 to flex');
-  sheet(`<h2>Flex a purchase</h2><div class="sub">Purchases over £100 · 3 months interest free</div>
-    ${eligible.map(t=>`<div class="kv"><span class="k">${esc(t.name)}<br><span style="font-size:12.5px">${fmt(t.amt)}</span></span>
-      <span class="v"><button class="btn ghost sm" data-flex="${t.id}">Flex</button></span></div>`).join('')}`);
-  document.querySelectorAll('[data-flex]').forEach(b=>b.onclick = () => {
-    const t = S.tx.find(x=>x.id===b.dataset.flex); if (!t) return;
-    const amt = Math.abs(t.amt);
-    if (amt > avail) return toast('Over your available limit');
+  flexTerm = 3;
+  sheet(`<h2>Pay with Flex</h2><div class="sub">${fmt(flexAvail())} available · 3 months interest free</div>
+    <div class="field"><label>Where</label><input id="fxName" placeholder="e.g. Currys"></div>
+    <div class="field"><label>Amount</label><input id="fxAmt" type="number" min="1" step="0.01"></div>
+    <div class="field"><label>Spread over</label>
+      <div class="pill-row">${[3,6,12].map(v=>`<button class="chip ${v===3?'on':''}" data-term="${v}">${v} months${v===3?' · 0%':' · 29%'}</button>`).join('')}</div></div>
+    <div class="kv"><span class="k">Monthly</span><span class="v rev" id="fxMonthly">—</span></div>
+    <button class="btn" id="fxGo" style="margin-top:12px">Confirm</button>`);
+  document.getElementById('fxAmt').oninput = flexQuote;
+  flexQuote();
+  document.getElementById('fxGo').onclick = () => {
+    const name = document.getElementById('fxName').value.trim(), amt = +document.getElementById('fxAmt').value;
+    if (!name) return toast('Where was it?');
+    if (!amt || amt <= 0) return toast('Enter an amount');
+    if (amt > flexAvail()) return toast('Over your available limit');
+    const monthly = flexMonthly(amt, flexTerm);
     S.flex.used = round2(S.flex.used + amt);
-    S.flex.plans.unshift({id:uid(), name:t.name, amount:amt, remaining:amt, term:3, monthly:round2(amt/3)});
-    t.flexed = true;
-    notif('Purchase flexed', `${t.name} over 3 months`); save(); closeSheet(); renderFlex(); toast('Flexed over 3 months');
-  });
+    S.flex.plans.unshift({id:uid(), name, amount:amt, remaining:amt, term:flexTerm, monthly});
+    notif('Paid with Flex', `${name} — ${fmt(amt)} over ${flexTerm} months`);
+    save(); closeSheet(); renderFlex(); toast('Flexed over ' + flexTerm + ' months');
+  };
 }
+function flexQuote(){
+  const amt = +document.getElementById('fxAmt').value || 0;
+  const m = document.getElementById('fxMonthly');
+  if (m) m.textContent = amt ? fmt(flexMonthly(amt, flexTerm)) : '—';
+  document.querySelectorAll('[data-term]').forEach(b=>b.classList.toggle('on', +b.dataset.term === flexTerm));
+}
+
 function switchPlan(k){
   const cur = plan(), next = PLANS[k]; if (k === S.plan) return;
   const diff = next.price - cur.price;
@@ -1572,7 +1626,7 @@ window.addEventListener('online', ()=>document.body.classList.remove('is-offline
 window.addEventListener('offline', ()=>document.body.classList.add('is-offline'));
 if (!navigator.onLine) document.body.classList.add('is-offline');
 if ('serviceWorker' in navigator) window.addEventListener('load', () => {
-  navigator.serviceWorker.register('sw.js?v=10').catch(()=>{}); });
+  navigator.serviceWorker.register('sw.js?v=11').catch(()=>{}); });
 </script>
 </body>
 </html>
