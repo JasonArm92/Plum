@@ -1,1405 +1,1131 @@
-<!doctype html>
-<html lang="en-GB" data-theme="light">
+<!DOCTYPE html>
+<html lang="en-GB">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#FF4F40">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>Monzo</title>
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="monzo-tile.svg">
+<meta name="theme-color" content="#FF4F40"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<link rel="icon" href="monzo-mark.svg"/>
+<link rel="apple-touch-icon" href="monzo-tile.svg"/>
 <style>
-*,*::before,*::after{box-sizing:border-box}
-[hidden]{display:none!important}
 :root{
-  --coral:#FF4F40;--ink:#091723;--ink-2:#112231;
-  --bg:#FFFFFF;--surface:#F2F8F3;--mint:#E3EBE4;--fg:#091723;--muted:#3B4C54;
-  --line:rgba(9,23,35,.12);--soft:rgba(9,23,35,.06);
-  --good:#0E7A4F;--bad:#C2352B;--amber:#B26B00;
-  --r:24px;--r-lg:32px;--pill:500px;
-  --sans:Inter,"Helvetica Neue",-apple-system,system-ui,sans-serif;
+--coral:#FF4F40;--navy:#091723;--ink:#091723;--muted:#6B7480;--line:#E7E9EB;
+--bg:#fff;--surface:#F5F6F7;--green:#0E9F6E;--red:#D92D20;--amber:#B54708;
+--r:24px;--pill:500px;--safeb:env(safe-area-inset-bottom,0px);
 }
-html[data-theme="dark"]{
-  --bg:#091723;--surface:#112231;--mint:#16293A;--fg:#FFFFFF;--muted:#B8C2CC;
-  --line:rgba(255,255,255,.12);--soft:rgba(255,255,255,.06);
-  --good:#3DD69B;--bad:#FF7A6B;--amber:#F2B44C;
-}
-html,body{margin:0;height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.4;
-  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.42;overscroll-behavior-y:none}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
-input,textarea,select{font:inherit;color:inherit}
-#app{position:fixed;inset:0;max-width:520px;margin:0 auto;display:flex;flex-direction:column}
-#view{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 20px 28px;position:relative}
-#view.fade{animation:fade .18s ease}
-@keyframes fade{from{opacity:.45}to{opacity:1}}
-@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
-@keyframes draw{to{stroke-dashoffset:0}}
-@keyframes spin{to{transform:rotate(360deg)}}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--navy);outline-offset:2px;border-radius:6px}
+.hide{display:none!important}
+#app{max-width:520px;margin:0 auto;min-height:100%;padding-bottom:calc(96px + var(--safeb));position:relative}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-.tabs{flex:0 0 auto;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);
-  background:var(--bg);padding:8px 4px calc(8px + env(safe-area-inset-bottom))}
-.tabs button{display:grid;justify-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted);
-  padding:4px 0;transition:color .15s,transform .12s}
-.tabs button:active{transform:scale(.92)}
-.tabs button.on{color:var(--fg)}
-.tabs svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+/* ---------- top bar ---------- */
+.top{display:flex;align-items:center;gap:12px;padding:14px 20px 6px}
+.top h1{font-size:20px;font-weight:800;letter-spacing:-.4px;margin:0;flex:1}
+.iconbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:0 0 auto}
+.iconbtn:active{transform:scale(.94)}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;flex:0 0 auto;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
 
-h1,h2,h3{margin:0;font-weight:800;letter-spacing:0;line-height:1.2}
-h1{font-size:31px}h2{font-size:25px}h3{font-size:20px;font-weight:700}
-.eyebrow{font-size:13px;font-weight:600;color:var(--muted)}
-.muted{color:var(--muted)}.small{font-size:13px}.num{font-variant-numeric:tabular-nums}
+/* ---------- mark ---------- */
+.mark{display:inline-grid;place-items:center}
+.mark svg{display:block}
 
-.brand{display:flex;align-items:center;gap:10px;padding:18px 0 10px}
-.wordmark{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1;flex:1}
-.avatar{width:36px;height:36px;border-radius:50%;background:var(--coral);color:#fff;
-  display:grid;place-items:center;font-weight:800;font-size:15px;flex:0 0 36px}
-.bell{position:relative;width:36px;height:36px;border-radius:50%;background:var(--surface);display:grid;place-items:center;flex:0 0 36px}
-.bell .dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--coral);border:1.5px solid var(--bg)}
+/* ---------- cards ---------- */
+.pad{padding:0 20px}
+.card{background:var(--surface);border-radius:var(--r);padding:18px}
+.card.w{background:#fff;border:1px solid var(--line)}
+.hero{background:var(--navy);color:#fff;border-radius:28px;padding:22px;position:relative;overflow:hidden}
+.hero .bal{font-size:40px;font-weight:800;letter-spacing:-1.6px;line-height:1.05}
+.hero .sub{opacity:.62;font-size:13px;font-weight:600;margin-top:4px}
+.hero .lbl{font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.55}
+.hc{background:var(--coral);color:#fff;border-radius:28px;padding:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--navy);color:#fff;border-radius:var(--pill);padding:14px 22px;font-weight:700;font-size:15px;width:100%}
+.btn:active{transform:scale(.98)}
+.btn.sm{padding:10px 16px;font-size:14px;width:auto}
+.btn.ghost{background:var(--surface);color:var(--ink)}
+.btn.coral{background:var(--coral)}
+.btn:disabled{opacity:.4}
+.row{display:flex;align-items:center;gap:14px;padding:13px 0}
+.row+.row{border-top:1px solid var(--line)}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-size:15px;font-weight:700}
+.row .t span{font-size:13px;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .amt{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pos{color:var(--green)}
+.neg{color:var(--ink)}
+.list{background:#fff}
+.list .row{padding:13px 20px}
+.sec{margin:26px 0 8px;padding:0 20px;font-size:12px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.tiny{font-size:11.5px}
+.center{text-align:center}
+.mono{font-variant-numeric:tabular-nums}
+hr{border:0;border-top:1px solid var(--line);margin:16px 0}
 
-.head{display:flex;align-items:center;gap:12px;padding:18px 0 14px}
-.head h1{font-size:25px;flex:1}
-.back{width:36px;height:36px;border-radius:50%;background:var(--surface);display:grid;place-items:center;flex:0 0 36px;font-size:19px}
+/* ---------- icons ---------- */
+.ico{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);flex:0 0 auto;font-size:16px;font-weight:800;color:var(--navy)}
+.ico.coral{background:var(--coral);color:#fff}
 
-.balance{font-size:44px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;margin:2px 0 4px}
-.sub{font-size:14px;color:var(--muted);margin-bottom:16px}
+/* ---------- tab bar ---------- */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.94);backdrop-filter:blur(16px);border-top:1px solid var(--line);display:flex;padding:8px 8px calc(8px + var(--safeb));z-index:40;max-width:520px;margin:0 auto}
+.tabs button{flex:1;display:grid;place-items:center;gap:3px;padding:6px 0;font-size:10.5px;font-weight:700;color:var(--muted)}
+.tabs button.on{color:var(--navy)}
+.tabs svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
-.card{aspect-ratio:1.586;position:relative;border-radius:var(--r);padding:18px;background:var(--coral);
-  color:#fff;display:flex;flex-direction:column;justify-content:space-between;
-  box-shadow:0 12px 26px -14px rgba(255,79,64,.65);margin-bottom:14px;transition:filter .2s,transform .2s;
-  touch-action:pan-y;user-select:none}
-.card.frozen{filter:saturate(.2) brightness(.85)}
-.card:active{transform:scale(.985)}
-.card .top{display:flex;justify-content:space-between;align-items:flex-start}
-.card .mark{width:26px;height:26px;display:block}
-.card .chip{width:30px;height:23px;border-radius:5px;background:rgba(255,255,255,.35)}
-.card .pan{position:absolute;left:18px;bottom:44px;font-size:16px;letter-spacing:.1em;font-variant-numeric:tabular-nums}
-.card .foot{display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;font-weight:700;letter-spacing:.08em;margin-top:auto}
-.card .foot span{opacity:.8;font-size:10px}
+/* ---------- sheets ---------- */
+#scrim{position:fixed;inset:0;background:rgba(9,23,35,.42);opacity:0;pointer-events:none;transition:opacity .22s;z-index:50}
+#scrim.on{opacity:1;pointer-events:auto}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:#fff;border-radius:28px 28px 0 0;padding:10px 20px calc(24px + var(--safeb));transform:translateY(102%);transition:transform .3s cubic-bezier(.22,1,.36,1);z-index:60;max-height:90vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(9,23,35,.18)}
+#sheet.on{transform:translateY(0)}
+.grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 16px}
+#sheet h2{font-size:22px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 
-.btn{display:block;width:100%;border-radius:var(--pill);padding:14px 24px;font-size:16px;font-weight:600;
-  text-align:center;background:var(--ink);color:#fff;margin-bottom:10px;min-height:51px;transition:transform .12s,opacity .15s}
-html[data-theme="dark"] .btn{background:#fff;color:var(--ink)}
-.btn:active{transform:scale(.975);opacity:.9}
-.btn.ghost{background:var(--surface);color:var(--fg)}
-.btn.outline{background:transparent;border:1px solid var(--fg);color:var(--fg)}
-.btn.danger{background:var(--bad);color:#fff}
-.btn.sm{padding:9px 16px;font-size:14px;width:auto;min-height:0;margin:0}
+/* ---------- toast ---------- */
+#toast{position:fixed;left:16px;right:16px;bottom:calc(88px + var(--safeb));max-width:488px;margin:0 auto;z-index:70;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--navy);color:#fff;border-radius:16px;padding:13px 16px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(9,23,35,.28);animation:tin .3s ease both}
+@keyframes tin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
-.rows{background:var(--surface);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
-.row{display:flex;align-items:center;gap:12px;padding:14px;width:100%;text-align:left;animation:rise .3s both}
-.row+.row{border-top:1px solid var(--soft)}
-.row .lg,.row .mono{flex:0 0 38px;width:38px;height:38px;border-radius:50%;overflow:hidden}
-.lg{display:block;width:38px;height:38px}
-.mono{display:grid;place-items:center;background:var(--mint);font-weight:800;font-size:15px;color:var(--fg)}
-.row .mid{flex:1;min-width:0}
-.row .mid b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row .mid span{font-size:13px;color:var(--muted)}
-.row .amt{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.pos{color:var(--good)}.neg{color:var(--bad)}
+/* ---------- charts ---------- */
+.chart{width:100%;display:block;overflow:visible}
+.axis{font-size:10px;fill:var(--muted);font-weight:600}
+.seg{display:flex;background:var(--surface);border-radius:var(--pill);padding:3px;gap:2px;overflow-x:auto;scrollbar-width:none}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:1 0 auto;padding:8px 13px;border-radius:var(--pill);font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--navy);color:#fff}
 
-.sec{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 10px}
-.sec h3{font-size:20px;font-weight:700}
-.sec a{font-size:14px;font-weight:600;color:var(--coral);text-decoration:none}
-
-.pots{display:flex;gap:10px;overflow-x:auto;padding:2px 0 16px;scrollbar-width:none}
-.pots::-webkit-scrollbar{display:none}
-.pot{flex:0 0 132px;background:var(--surface);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;text-align:left;transition:transform .12s}
-.pot:active{transform:scale(.96)}
-.pot .em{font-size:24px;line-height:1}
-.pot b{font-size:14px;font-weight:600}
-.pot .amt{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
-.pot.add{align-items:center;justify-content:center;color:var(--muted);font-size:13px;font-weight:600;border:1px dashed var(--line)}
-.bar{height:6px;border-radius:99px;background:var(--soft);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--coral);border-radius:99px;transition:width .6s cubic-bezier(.2,.8,.3,1)}
-
-.meter{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin:6px 0 4px}
-.meter i{display:block;height:100%;background:var(--ink);transition:width .6s cubic-bezier(.2,.8,.3,1)}
-html[data-theme="dark"] .meter i{background:#fff}
-
-.chart{display:flex;align-items:flex-end;gap:5px;height:140px;margin:8px 0 4px}
-.chart div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px}
-.chart i{display:block;width:100%;background:var(--coral);border-radius:4px 4px 2px 2px;min-height:3px;
-  animation:grow .6s cubic-bezier(.2,.8,.3,1) both;transform-origin:bottom}
-.chart span{font-size:9px;font-weight:700;color:var(--muted)}
-.chartwrap{position:relative;margin:8px 0}
-.chartwrap svg{display:block;width:100%}
-.axis{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px}
-
-.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:10px 0}
-.heat i{aspect-ratio:1;border-radius:5px;background:var(--soft)}
-
-.search{width:100%;background:var(--surface);border-radius:var(--pill);padding:13px 18px;margin-bottom:12px;border:0}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:14px;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chips button{flex:0 0 auto;border-radius:var(--pill);padding:9px 15px;font-size:13px;font-weight:600;background:var(--surface);color:var(--muted)}
-.chips button.on{background:var(--fg);color:var(--bg)}
-.mhead{display:flex;justify-content:space-between;align-items:baseline;margin:18px 0 8px}
-
-.group{background:var(--surface);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
-.opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;width:100%;text-align:left}
-.opt+.opt{border-top:1px solid var(--soft)}
-.opt .t{font-size:15px;font-weight:600}
-.opt .s{font-size:13px;color:var(--muted);margin-top:2px}
-.tick{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:0 0 22px;transition:all .15s}
-.opt[aria-pressed="true"] .tick{border-color:var(--coral);background:var(--coral);box-shadow:inset 0 0 0 3px var(--surface)}
-.toggle{width:46px;height:27px;border-radius:99px;background:var(--line);position:relative;flex:0 0 46px;transition:background .18s}
-.toggle::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:transform .18s}
-.opt[aria-pressed="true"] .toggle{background:var(--coral)}
-.opt[aria-pressed="true"] .toggle::after{transform:translateX(19px)}
-
-.tile{display:flex;align-items:center;gap:14px;background:var(--coral);color:#fff;border-radius:var(--r);
-  padding:18px;margin-bottom:14px;text-align:left;width:100%;transition:transform .12s}
-.tile:active{transform:scale(.98)}
-.tile .ic{font-size:26px}
-.tile b{display:block;font-size:17px;font-weight:700}
-.tile span{font-size:13px;opacity:.85}
-
-.acct{display:flex;align-items:center;gap:12px;padding:16px;width:100%;text-align:left}
-.acct .mid{flex:1}
-.acct b{display:block;font-size:15px;font-weight:600}
-.acct span{font-size:12.5px;color:var(--muted)}
-.acct .amt{font-weight:800;font-variant-numeric:tabular-nums}
-
-#pull{position:absolute;top:0;left:0;right:0;display:grid;place-items:center;height:0;overflow:hidden;color:var(--muted);font-size:13px}
-
-#lock{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:16px;background:var(--bg);padding:30px;max-width:520px;margin:0 auto}
-#lock .wordmark{font-size:34px;color:var(--coral);flex:none}
-#lock h1{font-size:25px;text-align:center}
-#lock .pin{display:flex;gap:12px}
-#lock .pin i{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--muted);transition:all .15s}
-#lock .pin i.f{background:var(--fg);border-color:var(--fg);transform:scale(1.1)}
-#lock .pad{display:grid;grid-template-columns:repeat(3,74px);gap:11px}
-#lock .pad button{height:60px;border-radius:var(--pill);background:var(--surface);font-size:22px;font-weight:600;transition:transform .1s}
-#lock .pad button:active{transform:scale(.92)}
-#lock .bio{font-size:14px;font-weight:600;color:var(--coral)}
-#lock .err{font-size:13px;color:var(--bad);height:15px}
-
-#sheet{position:fixed;inset:0;z-index:50;background:rgba(9,23,35,.5);display:flex;align-items:flex-end;justify-content:center}
-#sheet .in{background:var(--bg);width:100%;max-width:520px;border-radius:var(--r-lg) var(--r-lg) 0 0;
-  padding:10px 20px 30px;max-height:88vh;overflow:auto;animation:slideUp .32s cubic-bezier(.2,.9,.25,1.02)}
-#sheet .grab{width:40px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 14px}
-#sheet h3{margin-bottom:14px}
-#sheet .field{width:100%;background:var(--surface);border:0;border-radius:18px;padding:15px;font-size:22px;font-weight:800;margin-bottom:12px}
-#sheet .chips{margin-bottom:16px}
-#sheet .chips button{flex:1;text-align:center}
-
-#toast{position:fixed;left:50%;transform:translate(-50%,20px);bottom:96px;z-index:70;background:var(--ink);color:#fff;
-  border-radius:var(--pill);padding:12px 20px;font-size:14px;font-weight:600;opacity:0;
-  transition:opacity .2s,transform .25s;pointer-events:none;max-width:88vw;text-align:center}
-#toast.on{opacity:1;transform:translate(-50%,0)}
-#confetti{position:fixed;inset:0;pointer-events:none;z-index:80}
-#crash{position:fixed;inset:0;z-index:99;background:#C2352B;color:#fff;padding:24px;
-  font:12px/1.5 ui-monospace,monospace;overflow:auto;white-space:pre-wrap}
+/* ---------- misc ---------- */
+.badge{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border-radius:var(--pill);padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--muted)}
+.badge.imp{background:#EEF2FF;color:#3538CD}
+.badge.ok{background:#ECFDF3;color:#067647}
+.badge.warn{background:#FFFAEB;color:#B54708}
+.prog{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--coral);border-radius:4px;transition:width .5s}
+.prog.navy i{background:var(--navy)}
+input,select,textarea{font:inherit;width:100%;background:var(--surface);border:1px solid transparent;border-radius:14px;padding:13px 14px;color:var(--ink)}
+input:focus,select:focus,textarea:focus{border-color:var(--navy);outline:none}
+label.f{display:block;margin:14px 0 6px;font-size:13px;font-weight:700}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+.stag{animation:stag .38s cubic-bezier(.22,1,.36,1) both}
+@keyframes stag{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.yearbtn{width:100%;display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line);text-align:left}
+.yearbtn b{font-weight:800}
+.ledrow{display:grid;grid-template-columns:52px 1fr auto;gap:10px;padding:10px 20px;font-size:13px;border-bottom:1px solid var(--line);align-items:center}
+.ledrow .m{font-weight:800;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px}
+.ledrow .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.ledrow .d{grid-column:2/4;font-size:11.5px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.crisis{background:#FFF6F5}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001s!important;transition-duration:.001s!important}}
 </style>
 </head>
 <body>
-<div id="app">
-  <main id="view"></main>
-  <nav class="tabs">
-    <button data-r="home" class="on" data-act="go" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/></svg></button>
-    <button data-r="save" data-act="go" aria-label="Save"><svg viewBox="0 0 24 24"><path d="M12 3v13"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg></button>
-    <button data-r="trends" data-act="go" aria-label="Trends"><svg viewBox="0 0 24 24"><path d="M4 20V11"/><path d="M10 20V6"/><path d="M16 20v-6"/><path d="M22 20H2"/></svg></button>
-    <button data-r="payments" data-act="go" aria-label="Payments"><svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/></svg></button>
-  </nav>
-</div>
+<div id="app" aria-live="polite"></div>
+<div id="scrim"></div>
+<div id="sheet" role="dialog" aria-modal="true" aria-label="Sheet"></div>
+<div id="toast" aria-live="assertive"></div>
 <script>
-/* ===== icon sprite ===== */
-var P={
-  tesco:"M11.621 8.791c-1.018 0-2.013.308-2.013 1.327c0 1.752 3.079.828 3.079 1.894c0 .355-.545.497-.971.497c-.781 0-1.35-.118-2.037-.52v.876c.521.165 1.208.26 1.99.26c1.065 0 2.06-.284 2.06-1.303c0-1.847-3.079-1.018-3.079-1.918c0-.355.498-.497.924-.497c.734 0 1.515.213 1.942.616v-.947h-.048a7 7 0 0 0-1.847-.285m9.733 0c-1.61.024-2.723.924-2.723 2.226c0 1.255 1.018 2.108 2.51 2.108c1.586 0 2.7-.9 2.7-2.202c0-1.279-.995-2.132-2.487-2.132m-4.31.024c-1.847 0-3.055.876-3.055 2.226c0 1.231 1.113 2.06 2.795 2.06a6.2 6.2 0 0 0 1.586-.213v-1.042c-.403.426-.876.592-1.397.592c-.994 0-1.658-.615-1.658-1.515c0-.876.71-1.516 1.682-1.516c.544 0 .97.19 1.302.52v-.994c-.355-.094-.805-.118-1.255-.118M.16 8.933v.995c.355-.26 1.066-.379 1.847-.379v2.7c0 .402-.024.497-.213.71h1.563c-.166-.213-.213-.331-.213-.71V9.526h.047c.687 0 1.492.118 1.847.402v-.995zm5.304 0c.166.214.19.332.19.711v2.605c0 .402-.024.52-.19.71H9.23v-.97c-.521.378-1.492.378-1.895.355H6.79V11.23h.403c.284 0 .758.023 1.042.118v-.829c-.284.095-.781.119-1.042.119H6.79V9.573h.545c.498 0 1.35.095 1.658.379V8.933zm15.748.498c.829 0 1.374.687 1.374 1.54c.023.828-.522 1.514-1.35 1.514c-.853 0-1.398-.686-1.398-1.515c0-.852.545-1.54 1.374-1.54m-19.37 4.69c-.498 0-.877.26-1.066.45c0 0-.45.45-.758.615c-.024 0-.024.024 0 .024h2.794c.545 0 .805-.19 1.137-.474c0 0 .474-.45.829-.592c.023 0 .023-.023 0-.023zm4.806 0c-.497 0-.876.26-1.041.45c0 0-.45.45-.758.615c-.024 0-.024.024 0 .024h2.794c.545 0 .805-.19 1.137-.474c0 0 .473-.45.805-.592c.023 0 .023-.023 0-.023zm4.784 0c-.474 0-.853.26-1.042.45c0 0-.45.45-.758.615c-.024 0-.024.024 0 .024h2.794c.545 0 .806-.19 1.137-.474c0 0 .474-.45.805-.592c.024 0 .024-.023 0-.023zm4.807 0c-.474 0-.852.26-1.042.45c0 0-.45.45-.758.615c-.023 0-.023.024 0 .024h2.794c.545 0 .805-.19 1.137-.474c0 0 .474-.45.805-.592c.024 0 .024-.023 0-.023zm4.807 0c-.473 0-.852.26-1.065.45c0 0-.45.45-.758.615c-.024 0-.024.024 0 .024h2.818c.544 0 .805-.19 1.136-.474c0 0 .474-.45.805-.592c.024 0 .024-.023 0-.023z",
-  mcdonalds:"M17.243 3.006c2.066 0 3.742 8.714 3.742 19.478H24c0-11.588-3.042-20.968-6.766-20.968c-2.127 0-4.007 2.81-5.248 7.227c-1.241-4.416-3.121-7.227-5.231-7.227C3.031 1.516 0 10.888 0 22.476h3.014c0-10.763 1.658-19.47 3.724-19.47s3.741 8.05 3.741 17.98h2.997c0-9.93 1.684-17.98 3.75-17.98Z",
-  starbucks:"M13.207 5.28c-.105-.019-.612-.104-1.207-.104s-1.102.085-1.207.104c-.06.01-.084-.048-.038-.083c.042-.03 1.245-.946 1.245-.946l1.244.946c.047.035.024.094-.037.083m-2.078 5.945s-.064.023-.08.079c.252.193.425.634.951.634s.7-.44.951-.635c-.016-.056-.08-.078-.08-.078s-.33.077-.871.077c-.542 0-.871-.077-.871-.077m.871-.742c-.146 0-.178-.055-.278-.055c-.094 0-.279.076-.319.146a.15.15 0 0 0 .042.095c.212.031.309.15.555.15s.343-.119.556-.15a.16.16 0 0 0 .041-.095c-.04-.07-.224-.145-.319-.146c-.1 0-.132.055-.278.055m11.987 2.27a12 12 0 0 1-.076.853c-1.36.225-1.845-.986-3.237-.925q.124.443.203.903c1.148 0 1.61 1.073 2.888.915q-.1.492-.242.97c-1.01.1-1.365-.904-2.534-.876q.015.249.015.504l-.005.28l2.27.866a12 12 0 0 1-.397.948c-.682-.037-.917-.912-1.955-.843a9 9 0 0 1-.118.665c.901-.063 1.095.767 1.74.834a12 12 0 0 1-.53.877c-.382-.205-.714-.823-1.44-.861a9 9 0 0 0 .196-.7c-.644 0-1.38-.25-1.996-.812c.2-1.14-1.568-2.299-1.568-3.133c0-.906.458-1.407.458-2.628c0-.907-.44-1.89-1.104-2.562a2.2 2.2 0 0 0-.411-.33c.61.754 1.078 1.649 1.078 2.685c0 1.15-.535 1.757-.535 2.819c0 1.061 1.553 1.98 1.553 3.074c0 .43-.138.85-.592 1.677c.697.696 1.605 1.076 2.19 1.076c.19 0 .293-.058.361-.207a9 9 0 0 0 .167-.391c.63.024.92.597 1.269.826q-.288.387-.604.746c-.234-.259-.549-.695-1.01-.816a9 9 0 0 1-.26.473c.396.108.667.508.877.771a12 12 0 0 1-.707.676c-.153-.239-.392-.541-.66-.704a8 8 0 0 1-.307.39c.227.155.428.432.559.658q-.424.341-.88.645c-.15-1.22-1.814-2.055-1.365-3.47c-.147.25-.323.561-.323.937c0 1.024 1.09 1.836 1.178 2.854q-.34.202-.693.383c-.04-1.119-1.194-2.343-1.194-3.26c0-1.025 1.342-2.055 1.342-3.264c0-1.21-1.549-2.049-1.549-3.111s.659-1.673.659-3.035c0-.997-.474-2.006-1.206-2.65a2 2 0 0 0-.41-.286c.69.828 1.09 1.58 1.09 2.719c0 1.28-.755 1.99-.755 3.244s1.52 1.95 1.52 3.12c0 1.168-1.414 2.152-1.414 3.353c0 1.092 1.246 2.182 1.265 3.477a12 12 0 0 1-.833.326c.159-1.309-1.245-2.659-1.245-3.727c0-1.167 1.467-2.171 1.467-3.43s-1.491-1.845-1.491-3.138s.915-2.007.915-3.435a3.48 3.48 0 0 0-1.352-2.734l-.051-.038c-.076-.056-.138.011-.084.078c.568.71.872 1.427.872 2.49c0 1.305-1.052 2.366-1.052 3.632c0 1.493 1.412 1.92 1.412 3.145s-1.514 2.205-1.514 3.505c0 1.206 1.433 2.545 1.187 3.937a12 12 0 0 1-.874.192c.269-1.733-1.137-2.978-1.137-4.112c0-1.228 1.568-2.322 1.568-3.522c0-1.131-1.125-1.501-1.273-2.659c-.02-.158-.147-.275-.322-.246c-.229.042-.522.192-.982.192s-.753-.15-.982-.192c-.174-.029-.301.088-.321.246c-.148 1.158-1.274 1.527-1.274 2.66c0 1.199 1.568 2.293 1.568 3.52c0 1.135-1.405 2.38-1.137 4.113a12 12 0 0 1-.874-.192c-.246-1.392 1.187-2.73 1.187-3.937c0-1.3-1.514-2.28-1.514-3.505s1.412-1.652 1.412-3.145c0-1.266-1.051-2.326-1.051-3.633c0-1.062.303-1.78.872-2.49c.053-.066-.009-.133-.085-.077l-.05.038a3.48 3.48 0 0 0-1.351 2.732c0 1.428.915 2.143.915 3.436c0 1.292-1.492 1.878-1.492 3.138c0 1.258 1.467 2.262 1.467 3.43c0 1.068-1.403 2.418-1.244 3.727a12 12 0 0 1-.833-.326c.019-1.296 1.265-2.386 1.265-3.478c0-1.2-1.414-2.185-1.414-3.353s1.519-1.866 1.519-3.12c0-1.253-.754-1.964-.754-3.244c0-1.14.4-1.89 1.09-2.718a2 2 0 0 0-.41.285a3.63 3.63 0 0 0-1.206 2.65c0 1.362.659 1.973.659 3.035s-1.549 1.9-1.549 3.111c0 1.21 1.342 2.24 1.342 3.264c0 .918-1.155 2.142-1.194 3.26a12 12 0 0 1-.693-.383c.087-1.017 1.178-1.83 1.178-2.854c0-.375-.176-.687-.323-.936c.448 1.414-1.216 2.25-1.366 3.469a12 12 0 0 1-.88-.645c.131-.225.332-.503.56-.657a8 8 0 0 1-.308-.391c-.268.163-.507.466-.66.704a12 12 0 0 1-.707-.675c.21-.264.482-.664.878-.772a9 9 0 0 1-.261-.473c-.46.122-.776.558-1.01.817a12 12 0 0 1-.603-.746c.35-.23.638-.803 1.269-.827q.079.197.167.39c.068.15.17.208.36.208c.586 0 1.493-.38 2.19-1.076c-.453-.826-.59-1.246-.59-1.677c0-1.094 1.552-2.012 1.552-3.074s-.535-1.668-.535-2.818c0-1.037.468-1.931 1.078-2.686a2.2 2.2 0 0 0-.412.33C6.781 8.7 6.34 9.683 6.34 10.589c0 1.221.459 1.723.459 2.629c0 .834-1.768 1.993-1.568 3.132c-.617.562-1.353.813-1.997.813a9 9 0 0 0 .195.7c-.725.038-1.056.656-1.44.86a12 12 0 0 1-.53-.876c.646-.068.84-.897 1.742-.834a9 9 0 0 1-.118-.665c-1.038-.07-1.274.806-1.956.843a12 12 0 0 1-.396-.948L3 15.376l-.005-.28q0-.255.014-.505c-1.168-.027-1.524.976-2.534.877a12 12 0 0 1-.241-.97c1.276.157 1.74-.916 2.888-.915a9 9 0 0 1 .202-.904c-1.392-.06-1.878 1.15-3.236.925a12 12 0 0 1-.076-.852c1.58.176 2.171-1.122 3.61-.963a8 8 0 0 1 .47-.997c-1.803-.317-2.415 1.191-4.093.96C.181 5.28 5.484.09 12 .09s11.819 5.19 12 11.663c-1.679.232-2.29-1.276-4.093-.96q.267.481.47.997c1.438-.159 2.03 1.14 3.61.963M6.84 7.718c-.884-.361-1.954-.278-2.868.31c-.142-.851-.603-1.607-1.26-2.062c-.091-.063-.185-.004-.177.102c.139 1.796-.912 3.356-2.203 4.728c1.331.4 2.464-1.314 4.19-.716A9 9 0 0 1 6.84 7.718M12 6.631c-1.114 0-2.048.63-2.292 1.445c-.02.062.006.103.078.07c.2-.09.429-.133.677-.133c.454 0 .855.167 1.092.457c.104.346.113.847-.005 1.132c-.187-.042-.255-.186-.438-.186c-.182 0-.324.128-.634.128s-.346-.146-.55-.146c-.24 0-.284.247-.284.525c0 1.242 1.142 2.95 2.356 2.95s2.354-1.708 2.354-2.95c0-.279-.057-.517-.307-.55a.76.76 0 0 1-.526.171c-.31 0-.395-.128-.578-.128c-.22 0-.198.465-.46.49c-.175-.419-.183-.957-.038-1.436c.237-.29.637-.457 1.092-.457c.248 0 .477.044.676.133c.072.033.097-.008.079-.07c-.244-.814-1.178-1.445-2.292-1.445m1.774 1.782c-.267 0-.58.082-.777.301a.3.3 0 0 0 .008.208c.485-.166.912-.173 1.119.058c.11-.1.145-.19.145-.294c0-.161-.164-.273-.495-.273m-3.898.567c.234-.234.727-.224 1.238-.035c.023-.254-.433-.533-.888-.533c-.331 0-.495.112-.495.274c0 .104.035.195.145.294m7.68-4.203c-.88.063-1.643.365-2.262.868a9 9 0 0 1 1.019-2.026c-1.12.119-2.057.529-2.74 1.229l-.536-1.403l1.188-1.048l-1.59-.113L12 .805l-.635 1.48l-1.59.112l1.187 1.049l-.534 1.402c-.684-.7-1.62-1.11-2.74-1.229a9 9 0 0 1 1.017 2.026c-.618-.503-1.382-.805-2.262-.868c.528.679.996 1.402 1.342 2.18c.04.088.124.117.214.071a8.96 8.96 0 0 1 4-.936c1.438 0 2.795.338 4.001.936c.091.046.175.017.214-.07c.347-.779.815-1.502 1.343-2.18zm1.922 5.304c1.726-.598 2.86 1.115 4.19.716c-1.291-1.372-2.341-2.932-2.202-4.729c.008-.105-.087-.165-.177-.102c-.657.456-1.119 1.212-1.26 2.062c-.914-.587-1.984-.67-2.868-.309a9 9 0 0 1 2.317 2.362",
-  deliveroo:"m16.861 0l-1.127 10.584L13.81 1.66L7.777 2.926l1.924 8.922l-8.695 1.822l1.535 7.127L17.832 24l3.498-7.744L22.994.636zM11.39 13.61a.8.8 0 0 1 .322.066c.208.093.56.29.63.592c.103.434.004.799-.312 1.084v.002c-.315.284-.732.258-1.174.113s-.637-.672-.47-1.309c.124-.473.71-.544 1.004-.549zm4.142.548c.447-.012.832.186 1.05.543c.217.357.107.75-.122 1.143h-.002c-.229.392-.83.445-1.422.16c-.399-.193-.397-.684-.353-.983a.9.9 0 0 1 .193-.447c.142-.177.381-.408.656-.416",
-  amazon:"M.045 18.02q.107-.174.348-.022q5.455 3.165 11.87 3.166q4.278-.001 8.447-1.595l.315-.14c.138-.06.234-.1.293-.13c.226-.088.39-.046.525.13c.12.174.09.336-.12.48c-.256.19-.6.41-1.006.654q-1.867 1.113-4.185 1.726a17.6 17.6 0 0 1-10.951-.577a17.9 17.9 0 0 1-5.43-3.35q-.15-.113-.151-.22c0-.047.021-.09.051-.13zm6.565-6.218q0-1.507.743-2.577c.495-.71 1.17-1.25 2.04-1.615c.796-.335 1.756-.575 2.912-.72c.39-.046 1.033-.103 1.92-.174v-.37c0-.93-.105-1.558-.3-1.875c-.302-.43-.78-.65-1.44-.65h-.182c-.48.046-.896.196-1.246.46c-.35.27-.575.63-.675 1.096c-.06.3-.206.465-.435.51l-2.52-.315c-.248-.06-.372-.18-.372-.39c0-.046.007-.09.022-.15q.372-1.935 1.82-2.88c.976-.616 2.1-.975 3.39-1.05h.54c1.65 0 2.957.434 3.888 1.29c.135.15.27.3.405.48c.12.165.224.314.283.45c.075.134.15.33.195.57c.06.254.105.42.135.51c.03.104.062.3.076.615c.01.313.02.493.02.553v5.28c0 .376.06.72.165 1.036q.157.471.315.674l.51.674q.136.204.136.36q0 .181-.18.314c-1.2 1.05-1.86 1.62-1.963 1.71q-.247.203-.63.045a6 6 0 0 1-.526-.496l-.31-.347a9 9 0 0 1-.317-.42l-.3-.435c-.81.886-1.603 1.44-2.4 1.665c-.494.15-1.093.227-1.83.227c-1.11 0-2.04-.343-2.76-1.034c-.72-.69-1.08-1.665-1.08-2.94l-.05-.076zm3.753-.438q-.001.848.425 1.364c.285.34.675.512 1.155.512c.045 0 .106-.007.195-.02c.09-.016.134-.023.166-.023c.614-.16 1.08-.553 1.424-1.178c.165-.28.285-.58.36-.91c.09-.32.12-.59.135-.8c.015-.195.015-.54.015-1.005v-.54c-.84 0-1.484.06-1.92.18c-1.275.36-1.92 1.17-1.92 2.43l-.035-.02zm9.162 7.027c.03-.06.075-.11.132-.17q.544-.365 1.05-.5a8 8 0 0 1 1.612-.24c.14-.012.28 0 .41.03c.65.06 1.05.168 1.172.33c.063.09.099.228.099.39v.15c0 .51-.149 1.11-.424 1.8q-.418 1.034-1.156 1.68q-.11.09-.197.09c-.03 0-.06 0-.09-.012c-.09-.044-.107-.12-.064-.24c.54-1.26.806-2.143.806-2.64c0-.15-.03-.27-.087-.344c-.145-.166-.55-.257-1.224-.257q-.364 0-.87.046c-.363.045-.7.09-1 .135q-.134 0-.18-.044c-.03-.03-.036-.047-.02-.077c0-.017.006-.03.02-.063v-.06z",
-  spotify:"M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12s12-5.4 12-12S18.66 0 12 0m5.521 17.34c-.24.359-.66.48-1.021.24c-2.82-1.74-6.36-2.101-10.561-1.141c-.418.122-.779-.179-.899-.539c-.12-.421.18-.78.54-.9c4.56-1.021 8.52-.6 11.64 1.32c.42.18.479.659.301 1.02m1.44-3.3c-.301.42-.841.6-1.262.3c-3.239-1.98-8.159-2.58-11.939-1.38c-.479.12-1.02-.12-1.14-.6s.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2m.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721c-.18-.601.18-1.2.72-1.381c4.26-1.26 11.28-1.02 15.721 1.621c.539.3.719 1.02.419 1.56c-.299.421-1.02.599-1.559.3",
-  netflix:"m5.398 0l8.348 23.602c2.346.059 4.856.398 4.856.398L10.113 0zm8.489 0v9.172l4.715 13.33V0zM5.398 1.5V24c1.873-.225 2.81-.312 4.715-.398V14.83z",
-  shell:"M12 .863C5.34.863 0 6.251 0 12.98c0 .996.038 1.374.246 2.33l3.662 2.71l.57 4.515h6.102l.326.227c.377.262.705.375 1.082.375c.352 0 .732-.101 1.024-.313l.39-.289h6.094l.563-4.515l3.695-2.71c.208-.956.246-1.334.246-2.33C24 6.252 18.661.863 12 .863m.996 2.258c.9 0 1.778.224 2.512.649l-2.465 12.548l3.42-12.062c1.059.36 1.863.941 2.508 1.814l.025.034l-4.902 10.615l5.572-9.713l.033.03c.758.708 1.247 1.567 1.492 2.648l-6.195 7.666l6.436-6.5l.01.021c.253.563.417 1.36.417 1.996c0 .509-.024.712-.164 1.25l-3.554 2.602l-.467 3.71h-4.475l-.517.395c-.199.158-.482.266-.682.266c-.199 0-.483-.108-.682-.266l-.517-.394H6.322l-.445-3.61l-3.627-2.666c-.11-.436-.16-.83-.16-1.261c0-.72.159-1.49.426-2.053l.013-.024l6.45 6.551L2.75 9.621c.25-1.063.874-2.09 1.64-2.713l5.542 9.776L4.979 6.1c.555-.814 1.45-1.455 2.546-1.827l3.424 12.069L8.355 3.816l.055-.03c.814-.45 1.598-.657 2.457-.657c.195 0 .286.004.528.03l.587 13.05l.46-13.059c.224-.025.309-.029.554-.029",
-  boots:"M22.979 8.337c.201-.23.326-.516.326-.73c0-.143-.083-.234-.218-.234c-.224 0-.493.276-.493.691a1 1 0 0 0 .018.175c-.257.4-.524.807-.793 1.198a1.5 1.5 0 0 0-.292-.029c-.649 0-1.319.487-1.319 1.367a1.7 1.7 0 0 0 .114.632c-.555.633-1.044 1.044-1.375 1.044c-.13 0-.208-.071-.208-.219q0-.236.229-.758l1.91-4.228l2.062-.242l.234-.489l-1.993.067l.346-.763l-.776.092l-.35.695l-2.79.09l-.501.995l2.917-.344l-.587 1.165a2.6 2.6 0 0 0-1.086-.212a3.9 3.9 0 0 0-1.766.425a1.8 1.8 0 0 0-.792-.175c-.673 0-1.436.324-2.056.893c-.126-.388-.39-.62-.778-.62c-.454 0-.935.238-1.396.623c-.276-.225-.673-.29-1.095-.132a2.8 2.8 0 0 0 .35-1.317c0-.781-.365-1.354-1.032-1.7a5 5 0 0 1 .723-.493a2 2 0 0 0-.233-.164a6.6 6.6 0 0 0-.942.473c-.42-.134-.922-.202-1.496-.202C5.18 5.911 2.66 7.45 2.66 9.35c0 .837.473 1.137.942 1.137c.438 0 .866-.246 1.002-.544c-.381-.078-.607-.408-.607-.827c0-1.481 1.792-2.774 3.63-2.774c.412 0 .769.077 1.062.218c-1.117.86-1.975 2.03-2.682 3.282a2 2 0 0 0-.298-.024c-.528 0-.91.224-.91.666c0 .298.194.554.494.739c-.44.911-.822 1.822-1.19 2.652c-.128-.252-.419-.416-.755-.416c-.807 0-1.418.712-1.418 1.594c0 .575.233 1.125.636 1.566c-.38.425-.796.676-1.28.69a.86.86 0 0 1-.452-.114c.38-.042.692-.325.683-.692s-.314-.628-.734-.617a.793.793 0 0 0-.783.817c.017.695.608 1.062 1.38 1.044c.667-.015 1.24-.253 1.75-.654a3.27 3.27 0 0 0 1.769.5c2.049 0 3.787-1.745 3.787-4.087c0-.93-.24-1.668-.599-2.231a4.6 4.6 0 0 0 1.705-1.06c.637-.63 1.11-.572 1.381-.403c-1.057 1.097-1.916 2.867-1.916 4.056c0 .737.295 1.217.862 1.217c1.7 0 3.73-3.278 3.705-5.08c.546-.605 1.276-.965 1.869-.965a1.2 1.2 0 0 1 .307.037c-1.329.94-2.157 2.547-2.157 3.782c0 .655.322 1.152.95 1.152c1.17 0 2.692-1.823 2.692-3.64c0-.559-.159-.978-.41-1.273a2.6 2.6 0 0 1 1.34-.392a2.1 2.1 0 0 1 .834.18l-1.172 2.323c-.272.568-.378.988-.378 1.293c0 .469.275.71.711.71c.636 0 1.385-.59 2.132-1.436c.323.4.826.579 1.242.579a2 2 0 0 0 .404-.039c-.314.397-.838.696-1.607.889l-10.17 2.548c-1.545.386-2.49 1.148-2.034 2.608c.353-.29.987-.573 2.63-1.073l9.232-2.816c1.35-.411 2.207-1.38 2.572-2.356c.628-.306 1.189-.89 1.189-1.7c.001-.894-.749-1.429-1.021-2.078zm-16.16 2.322a2.2 2.2 0 0 1 .321.33a3 3 0 0 1-.503.062q.09-.197.182-.392m-1.592-.214c0-.231.279-.27.577-.236q-.162.3-.314.604c-.167-.105-.263-.235-.263-.368m-2.271 5.663c-.34-.317-.507-.727-.502-1.068a1 1 0 0 1 .12-.462a.76.76 0 0 0 .693.418a.9.9 0 0 0 .35-.071a10 10 0 0 1-.661 1.183m1.403.511a2.3 2.3 0 0 1-.641-.086c1.053-1.185 1.84-3.085 2.697-4.993a5 5 0 0 0 1.013-.087c.172.363.277.805.277 1.331c0 1.723-1.266 3.835-3.346 3.835m3.366-5.816a3.3 3.3 0 0 0-.7-.577c.608-1.251 1.284-2.432 2.13-3.335c.287.297.443.702.443 1.186c-.001 1.204-.796 2.262-1.872 2.726zm2.597 3.579c-.164 0-.246-.142-.246-.382c0-1.047 1.778-4.474 2.673-4.474c.17 0 .246.142.246.388c-.002 1.058-1.77 4.468-2.673 4.468m4.588-.996c-.17 0-.245-.135-.245-.388c0-.81.72-2.513 1.877-3.511c.128.213.186.482.187.763c.005 1.34-1.224 3.136-1.82 3.136zm5.744-2.368a1.3 1.3 0 0 1-.032-.295c0-.523.373-.946.865-.946q.05 0 .096.004c-.317.446-.63.866-.931 1.237zm1.867.593a1.27 1.27 0 0 1-.763.252c-.385 0-.713-.159-.917-.432c.387-.47.77-.997 1.13-1.533c.42.236.592.782.592 1.276a2 2 0 0 1-.044.437zm.494-.6c-.015-.6-.315-1.175-.825-1.444c.202-.308.396-.617.579-.917c.191.39.477.813.477 1.368a2.2 2.2 0 0 1-.232.994z",
-  uber:"M0 7.97v4.958c0 1.867 1.302 3.101 3 3.101c.826 0 1.562-.316 2.094-.87v.736H6.27V7.97H5.082v4.888c0 1.257-.85 2.106-1.947 2.106c-1.11 0-1.946-.827-1.946-2.106V7.971H0zm7.44 0v7.925h1.13v-.725c.521.532 1.257.86 2.06.86a3.006 3.006 0 0 0 3.034-3.01a3.01 3.01 0 0 0-3.033-3.024a2.86 2.86 0 0 0-2.049.861V7.971H7.439zm9.869 2.038c-1.687 0-2.965 1.37-2.965 3c0 1.72 1.334 3.01 3.066 3.01c1.053 0 1.913-.463 2.49-1.233l-.826-.611c-.43.577-.996.847-1.664.847c-.973 0-1.753-.7-1.912-1.64h4.697v-.373c0-1.72-1.222-3-2.886-3m6.295.068c-.634 0-1.098.294-1.381.758v-.713h-1.131v5.774h1.142V12.61c0-.894.544-1.47 1.291-1.47H24v-1.065h-.396zm-6.319.928c.85 0 1.564.588 1.756 1.47H15.52c.203-.882.916-1.47 1.765-1.47m-6.732.012c1.086 0 1.98.883 1.98 2.004a1.993 1.993 0 0 1-1.98 2.001A1.99 1.99 0 0 1 8.56 13.02a1.99 1.99 0 0 1 1.992-2.004z",
-  apple:"M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04c-2.04.027-3.91 1.183-4.961 3.014c-2.117 3.675-.546 9.103 1.519 12.09c1.013 1.454 2.208 3.09 3.792 3.039c1.52-.065 2.09-.987 3.935-.987c1.831 0 2.35.987 3.96.948c1.637-.026 2.676-1.48 3.676-2.948c1.156-1.688 1.636-3.325 1.662-3.415c-.039-.013-3.182-1.221-3.22-4.857c-.026-3.04 2.48-4.494 2.597-4.559c-1.429-2.09-3.623-2.324-4.39-2.376c-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83c-1.207.052-2.662.805-3.532 1.818c-.78.896-1.454 2.338-1.273 3.714c1.338.104 2.715-.688 3.559-1.701",
-  monzo:"M4.244 1.174a.44.44 0 0 0-.271.13l-3.97 3.97l-.001.001c3.884 3.882 8.093 8.092 11.748 11.748v-8.57L4.602 1.305a.44.44 0 0 0-.358-.131m15.483 0a.44.44 0 0 0-.329.13L12.25 8.456v8.568L24 5.275c-1.316-1.322-2.647-2.648-3.97-3.97a.44.44 0 0 0-.301-.131zM0 5.979l.002 10.955c0 .294.118.577.326.785l4.973 4.976c.28.282.76.083.758-.314V12.037zm23.998.003l-6.06 6.061v10.338c-.004.399.48.6.76.314l4.974-4.976a1.1 1.1 0 0 0 .326-.785z",
-  asda:"M21.76 8.673h-2.475l-1.412 4.085c.063-.34.074-.61.074-.728c0-1.712-.98-3.357-3.284-3.357h-2.646l.008 4.063c-.229-1.154-1.283-1.463-2.595-1.862c-.49-.151-.76-.39-.661-.614c.084-.196.384-.257.75-.206c.556.08 1 .265 1.428.498l.585-1.449c-.132-.065-1.08-.634-2.267-.634c-1.656 0-2.713.808-2.713 2c0 1.063.654 1.68 1.857 2.026c1.294.376 1.622.527 1.583.899c-.034.32-.835.711-2.797-.496l-.583 1.206l-1.8-5.43H2.338L0 15.423h1.95l.378-1.09h2.287l.389 1.09h2.047l-.232-.66c.692.4 1.55.767 2.577.767c1.573 0 2.423-.86 2.626-1.683v1.577h2.638c1.573 0 2.396-.75 2.825-1.553l-.54 1.553h1.95l.39-1.09h2.322l.343 1.09H24zM2.764 12.81l.727-2.32l.689 2.32Zm11.219.873v-3.27h.465c.663 0 1.387.269 1.387 1.635c0 1.21-.64 1.635-1.381 1.635zm5.773-.873l.694-2.293l.722 2.293z",
-  coop:"M23.275 5.265c0-.852-.132-1.703-.36-2.555c-.328-1.016-1.081-1.834-2.031-2.194a9.25 9.25 0 0 0-6.092 0a3.17 3.17 0 0 0-2.03 2.194a9.53 9.53 0 0 0 0 5.077c.326 1.015 1.08 1.834 2.03 2.194a8 8 0 0 0 3.046.491c1.049 0 2.063-.196 3.046-.491a3.17 3.17 0 0 0 2.031-2.194c.229-.819.36-1.67.36-2.522m-3.308 0c0 .393-.065.852-.196 1.212c-.164.524-.623.95-1.18 1.081a4.2 4.2 0 0 1-1.571 0a1.47 1.47 0 0 1-1.18-1.081a4.03 4.03 0 0 1 0-2.489c.163-.524.622-.95 1.18-1.081a4.2 4.2 0 0 1 1.571 0a1.48 1.48 0 0 1 1.18 1.081q.195.687.196 1.277m-8.745 13.79a9.55 9.55 0 0 0 0-5.077c-.327-1.016-1.081-1.834-2.03-2.195a9.25 9.25 0 0 0-6.092 0a3.17 3.17 0 0 0-2.031 2.195a9.55 9.55 0 0 0 0 5.077c.328 1.015 1.081 1.834 2.031 2.193a9.25 9.25 0 0 0 6.092 0a3.4 3.4 0 0 0 2.03-2.193m-2.948-2.523c0 .393-.066.852-.197 1.212a1.64 1.64 0 0 1-1.179 1.081a4.2 4.2 0 0 1-1.572 0a1.48 1.48 0 0 1-1.179-1.081a4.04 4.04 0 0 1 0-2.489a1.64 1.64 0 0 1 1.179-1.081a4.2 4.2 0 0 1 1.572 0a1.48 1.48 0 0 1 1.179 1.081q.197.639.197 1.277m0-11.3h3.308c0-.851-.131-1.703-.36-2.521c-.327-1.016-1.081-1.834-2.03-2.194a9.25 9.25 0 0 0-6.092 0C2.084.909 1.331 1.728 1.068 2.743a9.55 9.55 0 0 0 0 5.077c.328 1.015 1.081 1.834 2.031 2.194c.982.36 1.998.492 3.046.492s2.063-.197 3.046-.492a3.17 3.17 0 0 0 2.03-2.194c.033-.131.065-.295.131-.426L8.241 5.953c-.033.196-.065.36-.131.557c-.163.524-.622.95-1.179 1.081a4.2 4.2 0 0 1-1.572 0A1.48 1.48 0 0 1 4.18 6.51a4.04 4.04 0 0 1 0-2.489c.164-.524.622-.95 1.179-1.082a4.2 4.2 0 0 1 1.572 0A1.48 1.48 0 0 1 8.11 4.021c.098.425.164.818.164 1.211m4.421 8.779a9.4 9.4 0 0 0-.36 2.555V24h3.308v-7.468c0-.393.065-.852.196-1.212c.163-.524.622-.95 1.18-1.081a4.2 4.2 0 0 1 1.571 0a1.48 1.48 0 0 1 1.18 1.081a4.04 4.04 0 0 1 0 2.489c-.164.523-.623.95-1.146 1.08a4.2 4.2 0 0 1-1.572 0c-.099-.031-.229-.064-.327-.098l1.113 3.079c1.049 0 2.063-.197 3.046-.491a3.18 3.18 0 0 0 2.031-2.194a9.55 9.55 0 0 0 0-5.077c-.328-1.016-1.081-1.834-2.031-2.195a9.25 9.25 0 0 0-6.092 0c-1.016.263-1.769 1.082-2.097 2.098",
-  argos:"M0 1.738v20.524h24V1.738zm5.93 5.546c.178 0 .434 0 .638.026c.23 0 .307.077.333.281c.051.792.23 4.217.256 4.907c0 .18-.103.23-.23.23H6.21c-.179 0-.256-.102-.256-.23c0-.255-.026-.92-.026-.92H3.987c-.204.358-.434.767-.537.946c-.076.153-.178.179-.306.179h-.818c-.18 0-.23-.128-.153-.281C3.272 10.428 4.677 8.255 5.29 7.54c.178-.23.383-.23.638-.256zM5.831 8.48a.1.1 0 0 0-.03.032c-.46.562-1.048 1.483-1.38 2.122h1.507S5.88 9.15 5.853 8.51c0 0 0-.043-.021-.032zm14.666.237c.614 0 1.125.28 1.355.664c.102.154.076.255-.077.332a3.5 3.5 0 0 1-.434.205c-.128.025-.23.025-.333-.102c-.434-.512-1.047-.333-1.073-.051c-.026.255.256.357.639.46c.588.178 1.252.485 1.048 1.277c-.205.818-.997 1.227-1.917 1.227c-.588 0-1.253-.178-1.508-.792c-.051-.128-.026-.23.077-.28q.23-.155.46-.231c.128-.026.23 0 .306.102c.18.256.384.384.716.384c.307 0 .639-.129.613-.41c-.025-.255-.408-.357-.613-.409c-.383-.102-1.176-.28-1.176-.92c0-.792.741-1.38 1.917-1.456m-3.834.076c1.227 0 1.79.818 1.534 1.994c-.23 1.176-1.15 1.993-2.377 1.993s-1.789-.817-1.533-1.993c.255-1.176 1.15-1.994 2.376-1.994m-4.421.026c.562 0 .869.332.945.46c0 .025.026.025.026 0c.025-.077.051-.128.051-.153c.026-.128.128-.23.307-.23h.51c.154 0 .282.102.231.306a96 96 0 0 1-.741 3.067q-.575 2.223-2.3 2.224c-.46 0-1.227-.128-1.56-.664c-.076-.103-.102-.205.077-.333c.154-.102.332-.153.486-.205c.153-.05.204-.05.357.052a.9.9 0 0 0 .563.179c.409 0 .946-.23 1.201-1.1c.026-.05 0-.05-.025-.025c-.18.23-.563.383-.997.383c-.537-.025-.869-.204-1.074-.536c-.23-.358-.204-.997-.025-1.56c.28-.894.971-1.865 1.968-1.865m-3.86.026h.614c.127 0 .179.101.153.204s-.051.179-.051.204c0 .026.025.026.025.026c.46-.41 1.049-.409 1.688-.409c.102 0 .153.102.076.179c-.23.23-.358.409-.511.639c-.102.153-.18.204-.358.204c-.409.026-.613.102-.767.205c-.153.102-.307.434-.383.818a48 48 0 0 1-.332 1.61a.224.224 0 0 1-.23.179h-.742c-.102 0-.178-.077-.153-.18c.128-.715.64-3.117.716-3.475c.026-.154.128-.204.256-.204zm8.205.792c-.69 0-.971.562-1.15 1.15c-.154.588-.23 1.15.46 1.15s.97-.562 1.15-1.15s.23-1.15-.46-1.15m-4.217.025c-.512-.025-.87.384-1.1 1.15c-.127.41-.153 1.023.384 1.1c.537.025.895-.358 1.099-1.1c.128-.485.256-1.124-.383-1.15M2.338 13.958a.3.3 0 0 1 .09.023c3.68 1.508 6.058 2.07 9.406 2.07s5.725-.562 9.43-2.07c.256-.102.41.153.155.306c-1.457.92-4.805 2.812-9.585 2.812s-8.153-1.892-9.56-2.812c-.223-.134-.133-.346.064-.329",
-  iceland:"M7.744 13.919c-.942 0-1.256-.419-1.325-.768L9 12.593c0-1.884-1.151-2.232-1.884-2.232c-.942 0-1.988.697-1.988 2.197c0 1.326.907 2.163 2.407 2.163c.453 0 .942-.105 1.22-.21l-.139-.697c-.244.07-.593.105-.872.105m-.628-2.756c.384 0 .663.279.698.837l-1.5.314c.035-.733.314-1.151.802-1.151m6.07-.802c-.663 0-1.256.174-1.605.278c0 .036.14.698.175.768c.384-.14.907-.244 1.256-.244c.558 0 .802.174.802.558v.174c-1.744 0-2.477.628-2.477 1.43c0 .908.803 1.396 1.954 1.396a7 7 0 0 0 1.674-.21v-2.72c.035-.977-.558-1.43-1.779-1.43m.628 3.523c-.105.035-.314.035-.419.035c-.383 0-.837-.175-.837-.628c0-.454.384-.698 1.221-.663v1.256zm9-4.605v1.186a2.3 2.3 0 0 0-.593-.07c-1.012 0-2.093.698-2.093 2.198c0 1.326.872 2.128 2.302 2.128c.593 0 1.29-.105 1.57-.174V9.279Zm0 4.64c-.105.035-.244.035-.314.035c-.733 0-1.151-.524-1.151-1.396c0-.663.279-1.36 1.081-1.36c.105 0 .314.035.384.035zM0 9.279h1.081v5.233H0Zm3.977 5.442c-1.221 0-2.023-.837-2.023-2.058c0-1.326.872-2.268 2.058-2.268c.279 0 .628.07.837.175l-.21.732c-.139-.035-.314-.104-.453-.104c-.663 0-1.116.558-1.116 1.395s.418 1.326 1.046 1.326c.175 0 .419-.035.628-.105l.175.733c-.21.07-.628.174-.942.174m5.651-5.442h1.081v5.233H9.628Zm9.872 5.233h-1.151v-2.686c0-.559-.28-.698-.698-.698c-.21 0-.453.035-.628.07v3.314h-1.15V10.57a9.2 9.2 0 0 1 1.813-.21c1.256 0 1.814.454 1.814 1.396z",
-  kfc:"M21.893 8.23c-4.187.001-5.249 2.365-5.42 3.97c-.194 1.802 1.053 3.57 4.127 3.57c1.294 0 2.14-.225 2.44-.32a.22.22 0 0 0 .147-.166l.173-.91a.184.184 0 0 0-.236-.21c-.336.106-.93.252-1.685.252c-1.469 0-2.53-.882-2.395-2.4c.13-1.47 1.121-2.59 2.485-2.59c.82 0 1.183.43 1.156 1.003v.033a.184.184 0 0 0 .182.193h.557c.086 0 .16-.06.18-.143l.39-1.76a.215.215 0 0 0-.15-.255a7.2 7.2 0 0 0-1.95-.266zm-20.157.116a.2.2 0 0 0-.195.156l-.108.484a.2.2 0 0 0 .13.23l.033.01c.208.082.45.266.348.748l-.792 3.62c-.207.987-.542 1.19-.86 1.226h-.01a.2.2 0 0 0-.176.157l-.102.464a.192.192 0 0 0 .187.233h3.487c.085 0 .159-.06.177-.142l.12-.543a.184.184 0 0 0-.112-.21l-.022-.01c-.177-.07-.418-.224-.356-.51l.405-1.85c1.389 2.535 1.848 3.266 3.514 3.265H8.91a.18.18 0 0 0 .177-.142l.105-.47a.195.195 0 0 0-.186-.238c-.376-.006-.56-.093-.935-.575l-1.932-2.614l2.51-2.088c.337-.264.748-.338.976-.368l.022-.002a.185.185 0 0 0 .163-.144l.103-.464a.184.184 0 0 0-.18-.223h-3.02a.2.2 0 0 0-.193.155l-.102.46a.2.2 0 0 0 .138.235c.178.069.217.24.063.366L4.046 11.7l.44-2.014a.68.68 0 0 1 .477-.487l.025-.008a.2.2 0 0 0 .135-.147l.106-.477a.18.18 0 0 0-.177-.22zm8.88 0a.2.2 0 0 0-.194.156l-.107.483a.19.19 0 0 0 .122.221l.02.008c.204.077.487.274.364.758l-1.21 5.48a.182.182 0 0 0 .178.222h2.777c.086 0 .16-.06.179-.143l.12-.547a.174.174 0 0 0-.098-.196l-.027-.013c-.176-.086-.438-.285-.35-.67c.009-.05.27-1.24.27-1.24h2.362c.086 0 .16-.06.18-.143l.221-1a.183.183 0 0 0-.18-.224h-2.28l.427-1.94l1.592-.003c.515 0 .672.27.642.728l-.002.024a.184.184 0 0 0 .183.205h.587c.086 0 .16-.06.178-.144l.4-1.8a.184.184 0 0 0-.18-.222z",
-  burgerking:"M15.39 12.614c-.72 0-1.11.538-1.11 1.215v1.508c0 .125-.043.182-.12.182c-.056 0-.098-.035-.147-.133l-.971-1.885c-.37-.72-.755-.887-1.196-.887c-.734 0-1.14.552-1.14 1.243v4.314c0 .678.392 1.215 1.112 1.215s1.112-.537 1.112-1.215v-1.507c0-.126.042-.182.119-.182c.055 0 .097.035.146.133l.972 1.885c.37.719.769.886 1.195.886c.735 0 1.14-.551 1.14-1.242v-4.315c0-.677-.391-1.215-1.111-1.215zm-4.02-.405c.364 0 .68-.286.68-.642c0-.238-.099-.412-.224-.572c-.203-.266-.385-.496-.476-.74c-.02-.056-.007-.105.056-.154c.217-.167.469-.537.469-1.124c0-.886-.734-1.389-1.622-1.389h-.79c-.553 0-.819.321-.819.754v3.114c0 .419.245.754.692.754c.448 0 .693-.335.693-.754v-.74c0-.09.042-.133.111-.133c.084 0 .112.049.126.133c.063.356.23.837.42 1.082c.237.314.46.411.685.411zm-1.146-2.666h-.098c-.119 0-.175-.07-.175-.161v-.474c0-.09.056-.16.175-.16h.098c.294 0 .385.208.385.39c0 .174-.091.405-.385.405m-3.761 2.666c1.132 0 1.734-.677 1.734-1.528V8.328c0-.419-.245-.754-.692-.754c-.448 0-.693.335-.693.754v2.276c0 .167-.097.363-.35.363c-.251 0-.335-.196-.335-.363V8.328c0-.419-.252-.754-.7-.754s-.691.335-.691.754v2.353c0 .852.594 1.528 1.727 1.528m12.011-.034c.392 0 .7-.23.7-.65c0-.412-.308-.642-.7-.642h-.63c-.118 0-.174-.07-.174-.16v-.133c0-.091.056-.161.175-.161h.482c.336 0 .602-.202.602-.559c0-.355-.266-.558-.602-.558h-.482c-.12 0-.175-.07-.175-.16V9.04c0-.091.056-.161.175-.161h.629c.392 0 .7-.23.7-.65c0-.411-.308-.642-.7-.642h-1.321c-.553 0-.818.321-.818.754v3.079c0 .432.265.754.818.754h1.321zm2.642 3.127h-.342c-.615 0-1.09.286-1.09.914c0 .573.517.845.901.845c.189 0 .322.056.322.202c0 .182-.224.3-.462.3c-.79 0-1.328-.537-1.328-1.535c0-1.11.734-1.515 1.3-1.515c.692 0 .804.349 1.287.349a.927.927 0 0 0 .936-.915a.95.95 0 0 0-.398-.788c-.427-.315-1.07-.545-1.979-.545c-1.629 0-3.216 1.026-3.216 3.414c0 2.282 1.587 3.35 3.153 3.35c1.643 0 2.685-1.012 2.685-2.492c0-.935-.587-1.584-1.769-1.584m-12.43-2.688c-.783 0-1.21.587-1.21 1.32v4.132c0 .734.427 1.32 1.21 1.32s1.21-.586 1.21-1.32v-4.132c0-.733-.427-1.32-1.21-1.32m11.494-.405c.447 0 .692-.335.692-.754v-.74c0-.09.042-.132.112-.132c.084 0 .111.049.125.133c.063.355.231.837.42 1.082c.238.314.461.412.685.412c.363 0 .678-.286.678-.643c0-.237-.098-.412-.224-.572c-.237-.3-.384-.496-.475-.74c-.02-.056-.007-.105.056-.153c.217-.168.469-.538.469-1.124c0-.887-.735-1.39-1.623-1.39h-.79c-.552 0-.817.321-.817.754v3.114c0 .419.244.753.692.753m.615-3.301c0-.09.056-.161.175-.161h.098c.293 0 .384.21.384.391c0 .175-.09.405-.384.405h-.098c-.12 0-.175-.07-.175-.16zm-18.87 3.267h.986c.93 0 1.496-.622 1.496-1.397c0-.621-.37-.907-.454-.977c-.035-.028-.07-.056-.07-.084c0-.035.021-.048.056-.09c.133-.154.266-.398.266-.754c0-.838-.567-1.285-1.448-1.285h-.832c-.552 0-.817.321-.817.754v3.079c0 .433.265.754.817.754m.413-3.386c0-.09.056-.16.175-.16h.09c.301 0 .392.209.392.39c0 .168-.09.405-.391.405h-.091c-.12 0-.175-.07-.175-.16zm0 1.634c0-.091.056-.161.175-.161h.126c.335 0 .433.223.433.426c0 .181-.098.44-.433.44h-.126c-.12 0-.175-.07-.175-.161zm11.878 1.794c1.098 0 1.79-.699 1.79-1.718c0-.649-.391-1.096-1.174-1.096h-.224c-.413 0-.734.196-.734.636c0 .39.342.58.601.58c.133 0 .217.041.217.139c0 .125-.147.21-.315.21c-.524 0-.88-.37-.88-1.062c0-.768.489-1.047.866-1.047c.462 0 .539.238.86.238c.37 0 .623-.308.623-.629a.67.67 0 0 0-.266-.544c-.294-.217-.706-.377-1.321-.377c-1.084 0-2.14.712-2.14 2.36c0 1.576 1.056 2.31 2.097 2.31m-8.718 3.762a.35.35 0 0 1-.07-.188c0-.077.042-.133.126-.21c.196-.181.678-.635.944-1.047c.202-.314.286-.6.286-.837c0-.607-.552-1.082-1.153-1.082c-.385 0-.748.216-.993.614c-.329.53-.72 1.145-.972 1.39c-.063.062-.098.076-.146.076c-.084 0-.12-.056-.12-.146v-.699c0-.684-.405-1.235-1.139-1.235c-.74 0-1.14.551-1.14 1.235v4.3c0 .685.399 1.237 1.14 1.237c.734 0 1.14-.552 1.14-1.236v-.991c0-.084.035-.147.119-.147c.111 0 .14.112.167.168c.161.384.63 1.2 1.063 1.682c.294.32.657.524 1.042.524c.65 0 1.196-.566 1.196-1.173c0-.377-.161-.657-.469-.991c-.392-.427-.853-.986-1.021-1.244m15.751 6.702C19.432 23.707 16.313 24 12 24s-7.432-.293-9.25-1.32c-1.09-.614-1.642-1.451-1.642-2.052c0-.342.181-.537.587-.537h20.61c.406 0 .587.195.587.537c0 .6-.552 1.438-1.643 2.053m1.056-15.917H1.695c-.406 0-.587-.209-.587-.586C1.108 3.944 4.47 0 12 0c7.46 0 10.892 3.944 10.892 6.178c0 .377-.181.586-.587.586",
-  vodafone:"M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12a12 12 0 0 0 12-12A12 12 0 0 0 12 0m4.25 1.12c.32 0 .65.03.86.1c-2.17.45-3.9 2.47-3.89 4.78c0 .05 0 .11.01.17c3.64.89 5.27 3.08 5.27 6.11c.04 3.03-2.36 6.36-6.41 6.37c-3.27.01-6.68-2.79-6.7-7.28C5.38 8.4 7 5.54 9.04 3.85c2-1.66 4.73-2.72 7.21-2.73",
-  sky:"M7.387 13.656c0 1.423-.933 2.454-2.823 2.675c-1.35.147-3.337-.025-4.294-.148c-.025-.147-.074-.343-.074-.49c0-1.252.663-1.522 1.3-1.522c.664 0 1.694.123 2.455.123c.834 0 1.104-.295 1.104-.565c0-.368-.343-.515-1.006-.638l-1.767-.343C.785 12.453 0 11.423 0 10.343c0-1.325.933-2.454 2.798-2.65c1.398-.148 3.116.024 4.049.122c.024.172.049.32.049.491c0 1.252-.663 1.522-1.276 1.522c-.491 0-1.227-.099-2.086-.099c-.884 0-1.227.246-1.227.54c0 .32.343.442.883.54l1.718.32c1.742.294 2.479 1.3 2.479 2.527m3.092 1.521c0 .761-.295 1.203-1.792 1.203c-.196 0-.368-.025-.54-.05V6.22c0-.76.27-1.57 1.767-1.57c.196 0 .393.024.565.049zm6.085 3.927c.197.098.59.22 1.105.245c.859.025 1.325-.319 1.693-1.08L24 7.913a2.5 2.5 0 0 0-.957-.22c-.589 0-1.399.122-1.914 1.325l-1.497 3.534l-2.945-4.81c-.196-.05-.662-.148-1.006-.148c-1.03 0-1.62.393-2.233 1.031l-2.871 3.141l2.306 3.632c.418.663.982 1.006 1.89 1.006c.589 0 1.104-.147 1.325-.245l-2.773-4.196l1.963-2.086l3.24 5.08Z",
-  bt:"M12.589 7.91h5.977v1.753H16.56v6.41h-1.97v-6.41h-2zM12 22.523C6.193 22.523 1.477 17.807 1.477 12S6.193 1.477 12 1.477S22.523 6.193 22.523 12S17.807 22.523 12 22.523M12 24c6.626 0 12-5.374 12-12S18.626 0 12 0C5.379 0 0 5.374 0 12s5.379 12 12 12M9.97 13.574c0-.516-.321-.865-.873-.865h-1.32v1.702h1.32c.552 0 .874-.345.874-.837m-.24-3.276c0-.433-.275-.732-.745-.732h-1.21v1.486h1.21c.47 0 .746-.299.746-.754m2.231 3.372c0 1.546-1.09 2.402-2.65 2.402H5.834V7.91h3.249c1.573 0 2.64.805 2.64 2.277c0 .672-.298 1.27-.781 1.634c.552.326 1.021.947 1.021 1.85Z",
-  nationalrail:"M0 12C0 5.373 5.372 0 12 0c6.627 0 11.999 5.373 11.999 12c0 6.628-5.372 12-11.999 12S0 18.628 0 12m6.195-5.842l6.076 2.794H2.835v1.884h9.499l-4.616 2.246H2.835v1.868h4.883l5.778 2.795h4.333l-6.092-2.795h9.469v-1.868h-9.453l4.616-2.246h4.837V8.952h-4.868l-5.777-2.794z"
+/* ============================================================
+   Monzo — monzo_v4
+   ============================================================ */
+const KEY='monzo_v4';
+const TARGET=934745.32;
+const PORT_TARGET=922628.93;
+const ISA_CASH=+(TARGET-PORT_TARGET).toFixed(2);
+const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const gbp=(n,dp=2)=>(n<0?'−':'')+'£'+Math.abs(n).toLocaleString('en-GB',{minimumFractionDigits:dp,maximumFractionDigits:dp});
+const gbp0=n=>gbp(n,0);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const pick=(r,a)=>a[Math.floor(r()*a.length)];
+const dstr=d=>d.toISOString().slice(0,10);
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const ymLabel=ym=>MON[+ym.slice(5,7)-1]+' '+ym.slice(0,4);
+
+/* ---------- ISA historical subscription limits ---------- */
+const ISA_LIMITS={
+1999:7000,2000:7000,2001:7000,2002:7000,2003:7000,2004:7000,2005:7000,2006:7000,2007:7000,2008:7200,
+2009:7200,2010:10200,2011:10680,2012:11280,2013:11520,2014:11880,2015:15240,2016:15240,2017:20000,
+2018:20000,2019:20000,2020:20000,2021:20000,2022:20000,2023:20000,2024:20000,2025:20000,2026:20000
 };
-var S={
-  aldi:{v:"0 0 48 48",d:"M16.633 40.377c1.19 0 2.255-.738 2.673-1.853L30.197 9.475a2.855 2.855 0 0 1 2.673-1.852M10.077 40.377c1.19 0 2.255-.738 2.673-1.853L23.641 9.475a2.855 2.855 0 0 1 2.673-1.852M5.5 40.377L17.086 9.475a2.855 2.855 0 0 1 2.673-1.852m16.637 9.345a1.715 1.715 0 0 0-1.621-1.157h-3.443M28.262 24h9.547c.732 0 1.383.465 1.62 1.157m-14.237 7.032h15.687c.732 0 1.383.464 1.621 1.156"},
-  lidl:{v:"0 0 48 48",d:"M42.5 5.5h-37v37h37ZM24 5.5a18.5 18.5 0 1 0 0 37a18.5 18.5 0 0 0 0-37M10.278 19.909v8.687h3.794m13.656 0V19.91h1.954a3.8 3.8 0 0 1 3.801 3.8v1.086a3.8 3.8 0 0 1-3.8 3.801Zm-11.544-4.274l4.414-4.414l4.414 4.414l-4.414 4.415zm4.414 4.415l-1.181 1.181m6.777-6.776l-1.182 1.181m-8.828 0l-1.181 1.181M20.008 13.419a2.401 2.401 0 1 0 0 4.802a2.401 2.401 0 0 0 0-4.802M9.405 19.909h1.745m-1.745 8.687h.873m16.577 0h.873m-.873-8.687h.873m7.945 0v8.687h3.794M34.8 19.909h1.745M34.8 28.596h.873"},
-  greggs:{v:"0 0 48 48",d:"M28.995 27.276h11.787c.952 0 1.718.767 1.718 1.719v11.787c0 .952-.766 1.718-1.718 1.718H28.995a1.715 1.715 0 0 1-1.719-1.711V28.995c0-.952.767-1.719 1.719-1.719m-21.777 0h11.787c.952 0 1.719.767 1.719 1.719v11.787c0 .952-.767 1.718-1.719 1.718H7.218A1.714 1.714 0 0 1 5.5 40.79V28.995c0-.952.766-1.719 1.718-1.719M28.995 5.5h11.787c.952 0 1.718.766 1.718 1.718v11.787c0 .952-.766 1.719-1.718 1.719H28.995a1.715 1.715 0 0 1-1.719-1.711V7.218c0-.952.767-1.718 1.719-1.718m-21.777 0h11.787c.952 0 1.719.766 1.719 1.718v11.787c0 .952-.767 1.719-1.719 1.719H7.218a1.714 1.714 0 0 1-1.718-1.71V7.218c0-.952.766-1.718 1.718-1.718"},
-  trainline:{v:"0 0 48 48",d:"M18.692 34.18a2.396 2.396 0 0 1 2.396-2.396h0a2.396 2.396 0 0 1 2.396 2.396v1.582a2.396 2.396 0 0 1-2.396 2.396h0a2.396 2.396 0 0 1-2.396-2.396zM23.484 31.784v6.374m4.776-3.978a2.396 2.396 0 0 1 4.792 0v3.978m-4.792-6.374v6.374M14.49 34.18a2.396 2.396 0 0 1 2.396-2.396m-2.397 0v6.374m-3.851-9.584v9.584m-1.673-6.374h3.347m13.56 0v6.374M38.5 5.5h-29a4 4 0 0 0-4 4v29a4 4 0 0 0 4 4h29a4 4 0 0 0 4-4v-29a4 4 0 0 0-4-4"},
-  costa:{v:"0 0 48 48",d:"M29.312 20.155h5.094m-2.547 7.69v-7.69m-18.265 5.111v.032a2.547 2.547 0 0 1-5.094 0v-2.595a2.547 2.547 0 0 1 5.094 0v.031M15.594 22.702a2.547 2.547 0 0 1 2.547-2.547h0a2.547 2.547 0 0 1 2.547 2.547v2.595a2.547 2.547 0 0 1-2.547 2.547h0a2.547 2.547 0 0 1-2.547-2.547zM38.656 25.297H35.25m-.844 2.548l2.547-7.69l2.547 7.69m-16.691.842c.471-.614 1.063-.842 1.885-.842h1.132c1.06 0 1.918-.86 1.918-1.919v-.008c0-1.06-.858-1.918-1.918-1.918h-1.255a1.92 1.92 0 0 1-1.92-1.92c0-1.063.86-1.925 1.924-1.925h1.132c.822 0 1.414-.228 1.885-.842M38.5 5.5h-29a4 4 0 0 0-4 4v29a4 4 0 0 0 4 4h29a4 4 0 0 0 4-4v-29a4 4 0 0 0-4-4"},
-  octopus:{v:"0 0 48 48",d:"M28.975 19.715c1.322-6.796 10.496-12.096 13.936-7.013c2.646 3.909-3.908 9.201-14.071 8.9c-10.184-.301-15.548-1.4-19.845 1.383c-4.27 2.767-5.773 7.938-3.307 11.486s10.583 4.39 16.176-1.022S28.084 24 28.084 24"}
-};
-function T(bg,fg,label,size,ls){
-  return '<rect width="24" height="24" rx="6" fill="'+bg+'"/><text x="12" y="12.9" text-anchor="middle" dominant-baseline="middle" font-family="Inter,Helvetica,Arial,sans-serif" font-weight="800" font-size="'+size+'" letter-spacing="'+(ls||"-.4")+'" fill="'+fg+'">'+label+'</text>';
-}
-function petals(){var o="";for(var i=0;i<12;i++){var a=i*30*Math.PI/180;var x=12+Math.sin(a)*6.2,y=12-Math.cos(a)*6.2;
-  o+='<ellipse cx="'+x.toFixed(2)+'" cy="'+y.toFixed(2)+'" rx="2.1" ry="3.4" fill="#FFED00" transform="rotate('+(i*30)+' '+x.toFixed(2)+' '+y.toFixed(2)+')"/>';}return o;}
-var W={
-  pret:T("#7A1220","#FFFFFF","PRET",6.4),asos:T("#000000","#FFFFFF","ASOS",6.4),
-  nandos:T("#1A1A1A","#FFFFFF","NANDO'S",4.1,"-.6"),ocado:T("#6B1E7A","#FFFFFF","ocado",5.8),
-  sainsburys:T("#F06C00","#FFFFFF","Sainsbury's",3.4,"-.5"),
-  bp:'<rect width="24" height="24" rx="6" fill="#00843D"/>'+petals()+'<circle cx="12" cy="12" r="3.2" fill="#00843D"/><circle cx="12" cy="12" r="1.5" fill="#FFED00"/>',
-  arriva:T("#0B5EA8","#FFFFFF","arriva",4.6),stagecoach:T("#003578","#FFFFFF","SC",6.4),
-  northern:T("#0A1E3C","#FFFFFF","N",7),dominos:T("#0B5FA5","#FFFFFF","DP",6.4),
-  pizzahut:T("#C8102E","#FFFFFF","P·H",5.6),disneyplus:T("#0B1B3A","#FFFFFF","D+",6.4),
-  nowtv:T("#0B1B3A","#00E08A","now",5.4),ee:T("#00A0A0","#FFFFFF","ee",7),
-  britishgas:T("#0F4C81","#FFFFFF","BG",6.4),tvlicensing:T("#1A1A1A","#FFFFFF","TVL",5.4),
-  northumbrian:T("#0B4EA2","#FFFFFF","NW",6.4),wetherspoon:T("#0B2A5B","#C9A227","W",7),
-  three:T("#111111","#FFFFFF","3",7),bm:T("#0B4EA2","#FFD400","B&M",4.6),
-  homebargains:T("#C8102E","#FFFFFF","HB",6.4),heron:T("#0B7A3E","#FFFFFF","HF",6.4),
-  farmfoods:T("#0B7A3E","#FFD400","FF",6.4),poundland:T("#0B4EA2","#FFFFFF","£1",6.4),
-  very:T("#C8102E","#FFFFFF","very",4.6),wickes:T("#0B4EA2","#FFFFFF","W",7),
-  homebase:T("#0B7A3E","#FFFFFF","H",7),next:T("#111111","#FFFFFF","next",4.6),
-  primark:T("#0B5EA8","#FFFFFF","P",7),superdrug:T("#0B2A5B","#FFFFFF","SD",6.4),
-  hollandbarrett:T("#0B7A3E","#FFFFFF","H&B",4.4),specsavers:T("#0B4EA2","#FFFFFF","SS",6.4),
-  halfords:T("#0B1B3A","#FF6B00","H",7),currys:T("#3A0CA3","#FFFFFF","currys",3.9),
-  screwfix:T("#0B4EA2","#FFD400","SFX",4.6),bandq:T("#FF6B00","#FFFFFF","B&Q",4.6),
-  jdsports:T("#111111","#FFFFFF","JD",6.4),sportsdirect:T("#0B1B3A","#FFFFFF","SD",6.4),
-  wellingtonsq:T("#0B5EA8","#FFFFFF","WS",6.4),teessidepark:T("#0B2A5B","#FFFFFF","TP",6.4),
-  clevelandcentre:T("#C8102E","#FFFFFF","CC",6.4),prestpark:T("#0B7A3E","#FFFFFF","PP",6.4),
-  stewartpark:T("#0B7A3E","#FFFFFF","SP",6.4),ropnerpark:T("#0B7A3E","#FFFFFF","RP",6.4),
-  butterflyworld:T("#7A1FA2","#FFFFFF","BW",6.4),mfc:T("#C8102E","#FFFFFF","MFC",4.6),
-  stocktontown:T("#0B2A5B","#FFFFFF","ST",6.4),forum:T("#0B5EA8","#FFFFFF","F",7),
-  everyoneactive:T("#0B7A3E","#FFFFFF","EA",6.4),odeon:T("#0B1B3A","#FFFFFF","O",7),
-  cineworld:T("#0B1B3A","#FFFFFF","CW",6.4),teessideair:T("#0B4EA2","#FFFFFF","TIA",4.6),
-  stockton:T("#0B2A5B","#FFFFFF","S",7),amazonprime:T("#00A8E1","#FFFFFF","prime",3.9),
-  morrisons:T("#0B7A3E","#FFD400","M",7)
-};
-(function(){
-  var NS="http://www.w3.org/2000/svg";
-  var root=document.createElementNS(NS,"svg");
-  root.setAttribute("aria-hidden","true");
-  root.style.cssText="position:absolute;width:0;height:0;overflow:hidden";
-  Object.keys(P).forEach(function(k){
-    var y=document.createElementNS(NS,"symbol");y.id="lg-"+k;y.setAttribute("viewBox","0 0 24 24");
-    var p=document.createElementNS(NS,"path");p.setAttribute("d",P[k]);p.setAttribute("fill","currentColor");
-    y.appendChild(p);root.appendChild(y);
-  });
-  Object.keys(S).forEach(function(k){
-    var y=document.createElementNS(NS,"symbol");y.id="lg-"+k;y.setAttribute("viewBox",S[k].v);
-    var p=document.createElementNS(NS,"path");p.setAttribute("d",S[k].d);
-    p.setAttribute("fill","none");p.setAttribute("stroke","currentColor");
-    p.setAttribute("stroke-width","2.4");p.setAttribute("stroke-linecap","round");p.setAttribute("stroke-linejoin","round");
-    y.appendChild(p);root.appendChild(y);
-  });
-  Object.keys(W).forEach(function(k){
-    var y=document.createElementNS(NS,"symbol");y.id="lg-"+k;y.setAttribute("viewBox","0 0 24 24");
-    y.innerHTML=W[k];root.appendChild(y);
-  });
-  document.body.appendChild(root);
-})();
-function logo(slug,name){
-  if(!slug||(!(slug in P)&&!(slug in S)&&!(slug in W))){
-    return '<span class="mono">'+String(name||slug||"?").trim()[0].toUpperCase()+'</span>';
+const taxYear=()=>{const d=new Date();const y=d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6)?d.getFullYear()-1:d.getFullYear();return y};
+const tyLabel=y=>`${y}/${String(y+1).slice(2)}`;
+
+const SOURCES=['Halifax','Lloyds Bank','Barclays','Hargreaves Lansdown','Legal & General','AJ Bell','Barclays Stockbrokers','Cheltenham & Gloucester','Alliance Trust'];
+
+const MERCH=[
+ {n:'Arriva North East',c:'Transport',lo:[2,6],cad:.55},
+ {n:'Stagecoach Teesside',c:'Transport',lo:[2,5],cad:.4},
+ {n:'Northern Rail',c:'Transport',lo:[3,14],cad:.2},
+ {n:'National Rail',c:'Transport',lo:[8,42],cad:.12},
+ {n:'Tesco Extra Stockton',c:'Groceries',lo:[6,54],cad:.75},
+ {n:'Aldi Billingham',c:'Groceries',lo:[5,38],cad:.5},
+ {n:'Lidl Norton',c:'Groceries',lo:[4,31],cad:.35},
+ {n:'Sainsbury’s Whitehouse Farm',c:'Groceries',lo:[7,46],cad:.3},
+ {n:'Wellington Square',c:'Shopping',lo:[8,64],cad:.3},
+ {n:'Teesside Park',c:'Shopping',lo:[12,120],cad:.22},
+ {n:'Cleveland Centre',c:'Shopping',lo:[5,48],cad:.26},
+ {n:'The Thomas Sheraton',c:'Eating out',lo:[9,34],cad:.3},
+ {n:'Costa Stockton High St',c:'Eating out',lo:[2,7],cad:.5},
+ {n:'Greggs',c:'Eating out',lo:[1,6],cad:.55},
+ {n:'Nando’s Teesside Park',c:'Eating out',lo:[14,42],cad:.14},
+ {n:'Butterfly World',c:'Leisure',lo:[9,26],cad:.05},
+ {n:'Preston Park Museum',c:'Leisure',lo:[4,18],cad:.05},
+ {n:'Stewart Park Cafe',c:'Eating out',lo:[3,12],cad:.12},
+ {n:'Ropner Park',c:'Leisure',lo:[2,8],cad:.08},
+ {n:'Middlesbrough FC',c:'Leisure',lo:[22,58],cad:.06},
+ {n:'Stockton Town FC',c:'Leisure',lo:[8,16],cad:.05},
+ {n:'Billingham Forum',c:'Leisure',lo:[5,22],cad:.08},
+ {n:'Teesside Airport',c:'Travel',lo:[48,220],cad:.03},
+ {n:'Boots Stockton',c:'Health',lo:[4,29],cad:.14},
+ {n:'Specsavers',c:'Health',lo:[25,180],cad:.03},
+ {n:'Hays Travel',c:'Travel',lo:[180,640],cad:.02},
+ {n:'B&Q Portrack',c:'Home',lo:[8,86],cad:.12},
+ {n:'Screwfix',c:'Home',lo:[4,52],cad:.1},
+ {n:'Shell A19',c:'Transport',lo:[28,62],cad:.16},
+ {n:'BP Wolviston',c:'Transport',lo:[26,58],cad:.12},
+ {n:'Cineworld Teesside',c:'Leisure',lo:[9,28],cad:.06},
+ {n:'Amazon UK',c:'Shopping',lo:[6,74],cad:.3},
+ {n:'Smyths Toys',c:'Shopping',lo:[9,64],cad:.05},
+ {n:'Argos Stockton',c:'Shopping',lo:[12,92],cad:.05},
+ {n:'Wilko',c:'Home',lo:[4,34],cad:.1}
+];
+const BILLS=[
+ {n:'Northumbrian Water',c:'Bills',a:41.00,day:4},
+ {n:'British Gas',c:'Bills',a:96.40,day:8},
+ {n:'TV Licence',c:'Bills',a:14.45,day:12},
+ {n:'BT Broadband',c:'Bills',a:38.99,day:17},
+ {n:'Vodafone',c:'Bills',a:28.00,day:21},
+ {n:'Sky',c:'Bills',a:52.00,day:25},
+ {n:'EE Mobile',c:'Bills',a:18.50,day:2},
+ {n:'Three',c:'Bills',a:16.00,day:14}
+];
+const INSTR=[
+ ['Vanguard FTSE Global All Cap','Fund'],['Vanguard FTSE Dev World ex-UK','Fund'],['Vanguard US Equity Index','Fund'],
+ ['iShares Core MSCI World','ETF'],['iShares Core FTSE 100','ETF'],['SPDR S&P 500','ETF'],
+ ['Legal & General UK Index','Fund'],['Legal & General International Index','Fund'],['HSBC FTSE All-World','Fund'],
+ ['Fidelity Index World','Fund'],['Fidelity Index Emerging Markets','Fund'],['Royal London Global Equity','Fund'],
+ ['Scottish Mortgage Inv Trust','Trust'],['Alliance Trust','Trust'],['F&C Investment Trust','Trust'],
+ ['City of London Inv Trust','Trust'],['Bankers Inv Trust','Trust'],['Temple Bar Inv Trust','Trust'],
+ ['Murray International','Trust'],['Monks Inv Trust','Trust'],['Law Debenture Corp','Trust'],
+ ['Witan Inv Trust','Trust'],['TR Property Inv Trust','Trust'],['Edinburgh Worldwide','Trust'],
+ ['UK Gilt 2035','Gilt'],['UK Gilt 2045','Gilt'],['UK Index-Linked Gilt 2030','Gilt'],
+ ['iShares Core UK Gilts','ETF'],['iShares Physical Gold','ETC'],['WisdomTree Physical Gold','ETC'],
+ ['iShares Global Clean Energy','ETF'],['Legal & General Clean Energy','Fund'],['Impax Environmental Markets','Trust'],
+ ['iShares Global Infrastructure','ETF'],['First Sentier Global Listed Infra','Fund'],
+ ['iShares UK Property','ETF'],['Legal & General UK Property','Fund'],['Tritax Big Box REIT','REIT'],
+ ['SEGRO','REIT'],['British Land','REIT'],['Land Securities','REIT'],
+ ['iShares Global Water','ETF'],['Pictet Water','Fund'],['iShares Healthcare Innovation','ETF'],
+ ['AstraZeneca','Stock'],['Unilever','Stock'],['HSBC Holdings','Stock'],['Shell','Stock'],
+ ['Diageo','Stock'],['RELX','Stock'],['BAE Systems','Stock']
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+function buildLedger(rnd,target){
+  const rows=[];let bal=0;
+  let d=new Date(1992,9,1);
+  const end=new Date();end.setDate(1);
+  while(d<=end){
+    const y=d.getFullYear(),m=d.getMonth(),age=y-1992;
+    let contrib;
+    if(age<7)contrib=38+age*18;
+    else if(age<14)contrib=165+(age-7)*32;
+    else if(age<24)contrib=390+(age-14)*28;
+    else if(age<32)contrib=700+(age-24)*65;
+    else contrib=1260;
+    contrib*=(0.85+rnd()*0.3);
+    let mean=0.0049;
+    if(y===2000&&m>=2)mean=-0.011;
+    if(y===2001)mean=-0.0102;
+    if(y===2002&&m<9)mean=-0.0091;
+    if(y===2008&&m>=8)mean=-0.0225;
+    if(y===2009&&m<3)mean=-0.0155;
+    if(y===2020&&m===2)mean=-0.074;
+    if(y===2020&&m===3)mean=0.044;
+    if(y===2022&&m<10)mean=-0.0082;
+    if(y===1997&&m>5)mean=0.0105;
+    if(y===1999&&m<3)mean=0.0128;
+    const r=mean+(rnd()-.5)*0.055;
+    const opening=bal;
+    const div=opening*0.0018;
+    const mkt=opening*r;
+    const fee=opening*0.00031;
+    const closing=Math.max(0,opening+contrib+div+mkt-fee);
+    rows.push({ym:y+'-'+String(m+1).padStart(2,'0'),y,m,opening,contrib,div,mkt,fee,closing});
+    bal=closing;
+    d=new Date(y,m+1,1);
   }
-  return '<svg class="lg" viewBox="0 0 24 24" aria-hidden="true"><use href="#lg-'+slug+'"/></svg>';
+  const scale=target/bal;let prev=0;
+  for(const row of rows){
+    row.opening=prev;
+    row.contrib=+(row.contrib*scale).toFixed(2);
+    row.div=+(row.div*scale).toFixed(2);
+    row.mkt=+(row.mkt*scale).toFixed(2);
+    row.fee=+(row.fee*scale).toFixed(2);
+    row.closing=+(row.opening+row.contrib+row.div+row.mkt-row.fee).toFixed(2);
+    prev=row.closing;
+  }
+  const last=rows[rows.length-1];
+  last.mkt=+(last.mkt+(target-last.closing)).toFixed(2);
+  last.closing=target;
+  const split=new Date(2015,9,1);
+  for(const row of rows){
+    const dt=new Date(row.y,row.m,1);
+    row.imported=dt<split;
+    row.src=row.imported?SOURCES[(row.y*7+row.m)%SOURCES.length]:null;
+    row.wrapper=row.y<1999||(row.y===1999&&row.m<3)?'PEP/TESSA':'ISA';
+  }
+  return rows;
 }
-</script>
-<script>
-(function(){
-"use strict";
-var KEY="monzo_v3",PREFS="monzo_prefs";
-var ROUTE="home",page=0,buf="",q="",cat="All",prev="home",lastTotal=0,range="month";
-var cash=3412.87,tx=[],frozen=false,limit=2500,isa=14320,paidEarly=false,roundup=0,odUsed=0,notifRead=0;
-var prefs={theme:"light",mark:null,pin:"1234",bio:true,name:"Jason",plan:"Plus",
-  online:true,magstripe:false,atm:300,roundups:true,notify:true,seen:false,
-  email:"jasonarm82@gmail.com",phone:"07356170033",
-  addr:"259 Piper Knowle Road, Stockton-on-Tees, TS19 8JQ"};
 
-var INV_TOTAL=922628.93;
-var RAW=[["VUSA","Vanguard S&P 500",7.0,18.4],["VWRL","Vanguard FTSE All-World",6.5,11.2],["CSPX","iShares Core S&P 500",6.0,21.6],["VUAG","Vanguard S&P 500 Acc",5.5,16.9],["IUSA","iShares Core S&P 500 Acc",5.0,14.3],["EQQQ","Invesco Nasdaq 100",4.8,27.5],["AAPL","Apple",4.2,42.1],["MSFT","Microsoft",4.0,38.7],["NVDA","NVIDIA",3.8,61.4],["VFEM","Vanguard FTSE Emerging",3.2,4.8],["IGLT","iShares Core UK Gilts",3.0,2.1],["IUKD","iShares UK Dividend",2.8,6.4],["AMZN","Amazon",2.8,33.2],["VHYL","Vanguard All-World High Div",2.6,9.1],["GOOGL","Alphabet",2.6,29.8],["PHGP","WisdomTree Physical Gold",2.5,19.3],["ISF","iShares Core FTSE 100",2.4,7.2],["META","Meta Platforms",2.4,45.6],["VGOV","Vanguard UK Gilt",2.2,1.4],["SMT","Scottish Mortgage",2.0,12.7],["IWM","iShares Russell 2000",2.0,5.9],["ATT","Aberforth Smaller Cos",1.8,8.3],["AZN","AstraZeneca",1.8,11.4],["TSLA","Tesla",1.8,24.9],["VNQ","Vanguard US Real Estate",1.6,3.7],["JPM","JPMorgan Chase",1.6,22.8],["FCIT","F&C Investment Trust",1.6,10.6],["HSBA","HSBC Holdings",1.5,9.8],["DFND","Future of Defence",1.4,31.2],["MONKS","Monks Investment Trust",1.4,13.9],["JNJ","Johnson & Johnson",1.4,4.6],["ULVR","Unilever",1.3,3.2],["XOM","Exxon Mobil",1.3,8.8],["BRKB","Berkshire Hathaway B",1.2,17.4],["V","Visa",1.2,20.1],["ICLN","Global Clean Energy",1.2,-4.3],["RIO","Rio Tinto",1.1,6.7],["DGE","Diageo",1.1,-2.8],["UNH","UnitedHealth",1.0,5.4],["PG","Procter & Gamble",1.0,7.9],["BATS","British American Tobacco",1.0,4.2],["VOD","Vodafone",0.9,2.6],["KO","Coca-Cola",0.9,6.1],["TSCO","Tesco",0.9,12.3],["RR","Rolls-Royce",0.8,58.7],["NG","National Grid",0.8,3.9],["BA","BAE Systems",0.7,34.5],["SSE","SSE",0.7,5.1],["SBRY","Sainsbury's",0.6,8.4]];
-function buildHoldings(){
-  var sum=RAW.reduce(function(a,r){return a+r[2];},0),acc=0,out=[];
-  RAW.forEach(function(r,i){
-    var v=i===RAW.length-1?Math.round((INV_TOTAL-acc)*100)/100:Math.round(INV_TOTAL*r[2]/sum*100)/100;
-    acc=Math.round((acc+v)*100)/100;
-    out.push({k:r[0],n:r[1],v:v,c:Math.round(v/(1+r[3]/100)*100)/100});
-  });
-  return out;
-}
-var holdings=buildHoldings();
-
-var pots=[
- {id:1,em:"🇯🇵",n:"Japan trip",v:2140.00,goal:4000,bills:false,locked:false,joint:false,rate:3.80},
- {id:2,em:"🍳",n:"New kitchen",v:4863.52,goal:9000,bills:false,locked:false,joint:true,rate:3.80},
- {id:3,em:"🛠️",n:"Emergency fund",v:1700.00,goal:5000,bills:true,locked:true,joint:false,rate:4.10}
-];
-var budgets={Groceries:320,"Eating out":260,Shopping:180,Transport:140,Health:60,Bills:200,Subscriptions:40};
-var notifs=[
- {ic:"💸",t:"Salary paid",s:"Kestrel Digital Ltd · £4,250.00",ago:"2h",read:false},
- {ic:"🛒",t:"Tesco Extra",s:"You spent £42.18",ago:"5h",read:false},
- {ic:"📊",t:"Budget check",s:"Eating out is at 84% of £260",ago:"1d",read:false},
- {ic:"🔁",t:"Netflix",s:"£10.99 taken · renews 4 Dec",ago:"2d",read:true},
- {ic:"🏦",t:"Direct Debit",s:"Northumbrian Water £36.40 tomorrow",ago:"2d",read:true}
-];
-
-function $(s,r){return (r||document).querySelector(s);}
-function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
-function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
-function money(n){if(!isFinite(n))n=0;return "£"+Math.abs(n).toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});}
-function signed(n){return (n<0?"−":"+")+money(n);}
-function invested(){return holdings.reduce(function(a,h){return a+(+h.v||0);},0);}
-function cost(){return holdings.reduce(function(a,h){return a+(+h.c||0);},0);}
-function potTotal(){return pots.reduce(function(a,p){return a+(+p.v||0);},0);}
-function total(){return cash+invested()+potTotal();}
-function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
-
-var M=[
- {s:"tesco",n:"Tesco Extra",c:"Groceries",b:[18,86],cad:"w",dow:6,w:9,sea:{12:1.4}},
- {s:"asda",n:"Asda Stockton",c:"Groceries",b:[14,72],cad:"w",dow:3,w:6},
- {s:"lidl",n:"Lidl",c:"Groceries",b:[9,38],cad:"w",dow:1,w:5},
- {s:"aldi",n:"Aldi",c:"Groceries",b:[8,34],cad:"w",dow:4,w:4},
- {s:"morrisons",n:"Morrisons",c:"Groceries",b:[12,54],cad:"w",dow:0,w:3},
- {s:"sainsburys",n:"Sainsbury's",c:"Groceries",b:[10,48],cad:"w",dow:2,w:2},
- {s:"heron",n:"Heron Foods",c:"Groceries",b:[4,18],cad:"w",dow:5,w:3},
- {s:"iceland",n:"Iceland",c:"Groceries",b:[7,32],cad:"m",w:2},
- {s:"greggs",n:"Greggs",c:"Eating out",b:[3,9],cad:"d",w:6},
- {s:"costa",n:"Costa Coffee",c:"Eating out",b:[3,8],cad:"d",w:4},
- {s:"starbucks",n:"Starbucks",c:"Eating out",b:[4,10],cad:"d",w:3},
- {s:"mcdonalds",n:"McDonald's",c:"Eating out",b:[6,18],cad:"d",w:3},
- {s:"kfc",n:"KFC",c:"Eating out",b:[7,19],cad:"w",dow:5,w:3},
- {s:"burgerking",n:"Burger King",c:"Eating out",b:[6,17],cad:"m",w:2},
- {s:"nandos",n:"Nando's",c:"Eating out",b:[18,44],cad:"m",w:2},
- {s:"dominos",n:"Domino's",c:"Eating out",b:[16,38],cad:"w",dow:5,w:4},
- {s:"pizzahut",n:"Pizza Hut",c:"Eating out",b:[20,46],cad:"m",w:1},
- {s:"deliveroo",n:"Deliveroo",c:"Eating out",b:[16,40],cad:"w",dow:5,w:4},
- {s:"pret",n:"Pret A Manger",c:"Eating out",b:[5,13],cad:"d",w:2},
- {s:"wetherspoon",n:"The Thomas Sheraton",c:"Eating out",b:[9,32],cad:"m",w:3},
- {s:"amazon",n:"Amazon",c:"Shopping",b:[7,88],cad:"d",w:4,sea:{12:2.2}},
- {s:"asos",n:"ASOS",c:"Shopping",b:[20,80],cad:"m",w:2},
- {s:"argos",n:"Argos",c:"Shopping",b:[12,68],cad:"m",w:2},
- {s:"very",n:"Very",c:"Shopping",b:[18,74],cad:"m",w:1},
- {s:"currys",n:"Currys",c:"Shopping",b:[24,180],cad:"m",w:1},
- {s:"screwfix",n:"Screwfix",c:"Shopping",b:[6,54],cad:"m",w:2},
- {s:"bandq",n:"B&Q",c:"Shopping",b:[14,86],cad:"m",w:1},
- {s:"wickes",n:"Wickes",c:"Shopping",b:[12,72],cad:"m",w:1},
- {s:"homebase",n:"Homebase",c:"Shopping",b:[10,58],cad:"m",w:1},
- {s:"primark",n:"Primark",c:"Shopping",b:[14,64],cad:"m",w:2},
- {s:"next",n:"Next",c:"Shopping",b:[22,96],cad:"m",w:1},
- {s:"jdsports",n:"JD Sports",c:"Shopping",b:[24,88],cad:"m",w:1},
- {s:"sportsdirect",n:"Sports Direct",c:"Shopping",b:[16,64],cad:"m",w:1},
- {s:"bm",n:"B&M",c:"Shopping",b:[6,34],cad:"w",dow:2,w:3},
- {s:"homebargains",n:"Home Bargains",c:"Shopping",b:[5,28],cad:"w",dow:2,w:2},
- {s:"poundland",n:"Poundland",c:"Shopping",b:[3,16],cad:"w",dow:2,w:2},
- {s:"farmfoods",n:"Farmfoods",c:"Groceries",b:[6,26],cad:"m",w:1},
- {s:"boots",n:"Boots",c:"Health",b:[5,32],cad:"m",w:2},
- {s:"superdrug",n:"Superdrug",c:"Health",b:[4,22],cad:"m",w:1},
- {s:"hollandbarrett",n:"Holland & Barrett",c:"Health",b:[6,28],cad:"m",w:1},
- {s:"specsavers",n:"Specsavers",c:"Health",b:[12,140],cad:"m",w:1},
- {s:"halfords",n:"Halfords",c:"Transport",b:[8,58],cad:"m",w:1},
- {s:"arriva",n:"Arriva North East",c:"Transport",b:[2.4,6.8],cad:"d",w:7},
- {s:"stagecoach",n:"Stagecoach",c:"Transport",b:[2.4,6.4],cad:"w",dow:3,w:3},
- {s:"northern",n:"Northern",c:"Transport",b:[4.2,12.6],cad:"w",dow:4,w:3},
- {s:"nationalrail",n:"National Rail",c:"Transport",b:[9,46],cad:"m",w:1},
- {s:"shell",n:"Shell",c:"Transport",b:[34,68],cad:"m",w:2},
- {s:"bp",n:"BP",c:"Transport",b:[32,64],cad:"m",w:1},
- {s:"teessideair",n:"Teesside Airport",c:"Transport",b:[8,26],cad:"m",w:1},
- {s:"uber",n:"Uber",c:"Transport",b:[7,24],cad:"w",dow:5,w:2},
- {s:"wellingtonsq",n:"Wellington Square",c:"Shopping",b:[8,42],cad:"w",dow:6,w:2},
- {s:"teessidepark",n:"Teesside Park",c:"Shopping",b:[14,78],cad:"m",w:2},
- {s:"clevelandcentre",n:"Cleveland Centre",c:"Shopping",b:[7,38],cad:"m",w:1},
- {s:"stockton",n:"Stockton High Street",c:"Shopping",b:[5,26],cad:"w",dow:6,w:2},
- {s:"prestpark",n:"Preston Park",c:"Leisure",b:[3,9],cad:"m",w:1},
- {s:"stewartpark",n:"Stewart Park",c:"Leisure",b:[3,8],cad:"m",w:1},
- {s:"ropnerpark",n:"Ropner Park",c:"Leisure",b:[2,6],cad:"m",w:1},
- {s:"butterflyworld",n:"Butterfly World",c:"Leisure",b:[8,24],cad:"m",w:1},
- {s:"mfc",n:"Middlesbrough FC",c:"Leisure",b:[18,58],cad:"m",w:1},
- {s:"stocktontown",n:"Stockton Town FC",c:"Leisure",b:[7,18],cad:"m",w:1},
- {s:"forum",n:"Billingham Forum",c:"Leisure",b:[5,16],cad:"m",w:1},
- {s:"everyoneactive",n:"Everyone Active",c:"Leisure",b:[6,18],cad:"m",w:1},
- {s:"odeon",n:"Odeon",c:"Leisure",b:[9,32],cad:"m",w:1},
- {s:"cineworld",n:"Cineworld",c:"Leisure",b:[9,32],cad:"m",w:1},
- {s:"spotify",n:"Spotify",c:"Subscriptions",b:[11.99,11.99],cad:"m",w:10,fixed:true},
- {s:"netflix",n:"Netflix",c:"Subscriptions",b:[10.99,10.99],cad:"m",w:10,fixed:true},
- {s:"amazonprime",n:"Amazon Prime",c:"Subscriptions",b:[8.99,8.99],cad:"m",w:10,fixed:true},
- {s:"disneyplus",n:"Disney+",c:"Subscriptions",b:[7.99,7.99],cad:"m",w:10,fixed:true},
- {s:"nowtv",n:"NOW",c:"Subscriptions",b:[9.99,9.99],cad:"m",w:10,fixed:true},
- {s:"audible",n:"Audible",c:"Subscriptions",b:[7.99,7.99],cad:"m",w:10,fixed:true},
- {s:"icloud",n:"iCloud+",c:"Subscriptions",b:[2.99,2.99],cad:"m",w:10,fixed:true},
- {s:"apple",n:"Apple",c:"Subscriptions",b:[2.49,2.49],cad:"m",w:10,fixed:true},
- {s:"octopus",n:"Octopus Energy",c:"Bills",b:[58,142],cad:"m",w:10,sea:{1:1.5,2:1.5,12:1.3}},
- {s:"northumbrian",n:"Northumbrian Water",c:"Bills",b:[36.40,36.40],cad:"m",w:10,fixed:true},
- {s:"britishgas",n:"British Gas",c:"Bills",b:[48.20,48.20],cad:"m",w:10,fixed:true},
- {s:"tvlicensing",n:"TV Licence",c:"Bills",b:[14.55,14.55],cad:"m",w:10,fixed:true},
- {s:"bt",n:"BT Broadband",c:"Bills",b:[32.99,32.99],cad:"m",w:10,fixed:true},
- {s:"vodafone",n:"Vodafone",c:"Bills",b:[18.00,18.00],cad:"m",w:10,fixed:true},
- {s:"sky",n:"Sky",c:"Bills",b:[26.00,26.00],cad:"m",w:10,fixed:true},
- {s:"ee",n:"EE",c:"Bills",b:[12.00,12.00],cad:"m",w:10,fixed:true},
- {s:"three",n:"Three",c:"Bills",b:[10.00,10.00],cad:"m",w:10,fixed:true},
- {s:"ocado",n:"Ocado",c:"Groceries",b:[28,74],cad:"m",w:1}
-];
-var CATS=["All","Groceries","Eating out","Shopping","Transport","Bills","Subscriptions","Health","Leisure"];
-var CATCOL={Groceries:"#0E7A4F","Eating out":"#FF4F40",Shopping:"#3A0CA3",Transport:"#0B5EA8",Bills:"#B26B00",Subscriptions:"#7A1FA2",Health:"#0B7A3E",Leisure:"#C8102E",Income:"#0E7A4F",Transfers:"#3B4C54"};
-
-function seed(){
-  var r=mulberry(20260119),now=Date.now(),out=[],id=1;
-  var d=new Date();d.setMonth(d.getMonth()-12);d.setHours(0,0,0,0);
-  for(;d.getTime()<now;d.setDate(d.getDate()+1)){
-    var m=d.getMonth()+1,dom=d.getDate(),dow=d.getDay();
-    for(var i=0;i<M.length;i++){
-      var x=M[i],p=0;
-      if(x.cad==="d")p=0.16*(x.w/5);
-      else if(x.cad==="w")p=(dow===x.dow)?0.6*(x.w/6):0;
-      else p=(dom===((i%27)+2))?0.85:0;
-      if(x.sea&&x.sea[m])p*=x.sea[m];
-      if(r()>p)continue;
-      var amt=x.fixed?x.b[0]:x.b[0]+r()*(x.b[1]-x.b[0]);
-      if(x.sea&&x.sea[m]&&!x.fixed)amt*=x.sea[m];
-      var at=new Date(d);at.setHours(6+Math.floor(r()*16),Math.floor(r()*60),0,0);
-      if(at.getTime()>now)continue;
-      out.push({id:id++,t:at.getTime(),s:x.s,n:x.n,c:x.c,a:-Math.round(amt*100)/100,ac:"current"});
+function buildTx(rnd,startBal){
+  const out=[];
+  const today=new Date();today.setHours(0,0,0,0);
+  const from=new Date(today);from.setDate(from.getDate()-548);
+  let bal=startBal;
+  for(let d=new Date(from);d<=today;d.setDate(d.getDate()+1)){
+    const day=new Date(d);
+    for(const m of MERCH){
+      if(rnd()<m.cad*0.42){
+        const amt=+(m.lo[0]+rnd()*(m.lo[1]-m.lo[0])).toFixed(2);
+        bal=+(bal-amt).toFixed(2);
+        out.push({id:'t'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:m.n,c:m.c,amt:-amt,bal,pend:rnd()<0.04});
+      }
     }
-    if(dom===28){var pay=new Date(d);pay.setHours(7,4,0,0);
-      if(pay.getTime()<now)out.push({id:id++,t:pay.getTime(),s:"",n:"Kestrel Digital Ltd",c:"Income",a:4250,ac:"current"});}
+    if(day.getDate()<=28){
+      for(const b of BILLS) if(day.getDate()===b.day){
+        bal=+(bal-b.a).toFixed(2);
+        out.push({id:'b'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:b.n,c:'Bills',amt:-b.a,bal,dd:true});
+      }
+    }
+    if(day.getDate()===26){
+      bal=+(bal+3120.44).toFixed(2);
+      out.push({id:'s'+day.getTime(),d:dstr(day),t:day.getTime(),n:'Cleveland Pottery Ltd',c:'Income',amt:3120.44,bal,sal:true});
+    }
   }
-  out.sort(function(a,b){return b.t-a.t;});
-  return out;
+  return out.sort((a,b)=>b.t-a.t);
 }
 
-function save(){try{localStorage.setItem(KEY,JSON.stringify({cash:cash,holdings:holdings,pots:pots,tx:tx,budgets:budgets,frozen:frozen,limit:limit,isa:isa,paidEarly:paidEarly,roundup:roundup,odUsed:odUsed,notifs:notifs}));localStorage.setItem(PREFS,JSON.stringify(prefs));}catch(e){}}
+function fresh(){
+  const rnd=mulberry32(19921024);
+  const isa=buildLedger(rnd,TARGET);
+  const tx=buildTx(mulberry32(77021),2847.19);
+  const pots=[
+    {id:'p1',n:'Emergency Fund',a:12480.00,rate:4.10,goal:15000,lock:'2027-03-01',ico:'🛟',col:'#0E9F6E'},
+    {id:'p2',n:'House Deposit',a:18250.00,rate:3.80,goal:40000,lock:null,ico:'🏡',col:'#3538CD'},
+    {id:'p3',n:'Christmas',a:1240.50,rate:2.80,goal:1500,lock:'2026-11-01',ico:'🎄',col:'#D92D20'},
+    {id:'p4',n:'Car Service',a:980.00,rate:3.15,goal:1200,lock:null,ico:'🚗',col:'#B54708'},
+    {id:'p5',n:'Holiday',a:8900.00,rate:3.55,goal:12000,lock:'2026-06-01',ico:'✈️',col:'#0BA5EC'},
+    {id:'p6',n:'Tech Fund',a:1462.94,rate:2.80,goal:2000,lock:null,ico:'💻',col:'#7A5AF8'},
+    {id:'p7',n:'Rainy Day',a:5000.00,rate:3.80,goal:8000,lock:null,ico:'☔',col:'#475467'}
+  ];
+  const potTotal=+pots.reduce((s,p)=>s+p.a,0).toFixed(2);
+  const hold=rnd;
+  let raw=INSTR.map(([n,k])=>({n,k,w:0.3+hold()*2.6}));
+  const sum=raw.reduce((s,h)=>s+h.w,0);
+  const holdings=raw.map(h=>({n:h.n,k:h.k,v:+(h.w/sum*PORT_TARGET).toFixed(2),cost:+(h.w/sum*PORT_TARGET*(0.42+hold()*0.55)).toFixed(2)}));
+  const diff=+(PORT_TARGET-holdings.reduce((s,h)=>s+h.v,0)).toFixed(2);
+  holdings[0].v=+(holdings[0].v+diff).toFixed(2);
+  return {
+    v:4,
+    profile:{name:'Jason Armstrong',addr:'259 Piper Knowle Road',city:'Stockton-on-Tees',pc:'TS19 8JQ',email:'jasonarm82@gmail.com',phone:'07356170033',idv:'Verified',taxres:'United Kingdom',since:'14 October 2015',dob:'1982-04-11'},
+    acct:{current:2847.19,savings:potTotal,isaCash:ISA_CASH,flexUsed:412.50,flexLimit:3000,odLimit:2000,odDrawn:340},
+    pots,tx,ledger:{isa},
+    holdings,
+    dd:BILLS.map((b,i)=>({id:'dd'+i,n:b.n,c:b.c,a:b.a,day:b.day,ref:'MZ'+String(4820011+i).slice(0,6),since:'2019-0'+(1+i%8)+'-1'+(i%9)})),
+    sched:[{id:'sc1',n:'Mum',a:150,to:'Mum · 40-11-22 · 7341',freq:'Monthly',next:'2026-01-03',out:true}],
+    payees:[{id:'py1',n:'Mum',s:'40-11-22',a:'73412200',i:'M'},{id:'py2',n:'Dan Whitfield',s:'04-00-04',a:'55120987',i:'D'},{id:'py3',n:'Cleveland Pottery Ltd',s:'20-33-87',a:'44210933',i:'C'}],
+    notifs:[],card:{frozen:false,online:true,atm:200,mag:true},
+    sec:{bio:true,pin:'4821',lock:true,privacy:false},
+    prefs:{motion:!REDUCED,notif:{tx:true,dd:true,pot:true,market:false}},
+    cats:['Groceries','Transport','Eating out','Shopping','Bills','Leisure','Health','Home','Travel','Income','Transfers'],
+    importLog:[{d:'2015-10-14',src:'Halifax',n:'ISA transfer-in'},{d:'2015-10-14',src:'Hargreaves Lansdown',n:'Investment account transfer'},{d:'2016-04-06',src:'Legal & General',n:'PEP consolidation'}],
+    seen:{}
+  };
+}
+
+let S;
 function load(){
-  try{var p=localStorage.getItem(PREFS);if(p)Object.assign(prefs,JSON.parse(p));}catch(e){}
-  try{var raw=localStorage.getItem(KEY);
-    if(raw){var s=JSON.parse(raw);
-      var ok=s&&Array.isArray(s.tx)&&s.tx.length&&s.tx[0]&&typeof s.tx[0].a==="number"&&typeof s.tx[0].n==="string"&&Array.isArray(s.holdings)&&s.holdings[0]&&typeof s.holdings[0].v==="number"&&Array.isArray(s.pots)&&typeof s.cash==="number";
-      if(ok){cash=s.cash;holdings=s.holdings;pots=s.pots;tx=s.tx;
-        if(s.budgets)budgets=s.budgets;if(typeof s.frozen==="boolean")frozen=s.frozen;
-        if(s.limit)limit=s.limit;if(s.isa)isa=s.isa;if(s.paidEarly)paidEarly=true;
-        if(typeof s.roundup==="number")roundup=s.roundup;if(s.odUsed)odUsed=s.odUsed;
-        if(Array.isArray(s.notifs))notifs=s.notifs;}
-    }}catch(e){}
-  if(!tx.length){tx=seed();save();}
-}
-function resolved(){return (prefs.theme==="light"||prefs.theme==="dark")?prefs.theme:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");}
-function paint(){
-  document.documentElement.setAttribute("data-theme",resolved());
-  if(prefs.mark)document.documentElement.setAttribute("data-mark",prefs.mark);
-  else document.documentElement.removeAttribute("data-mark");
-}
-matchMedia("(prefers-color-scheme: light)").addEventListener("change",function(){if(prefs.theme==="auto")paint();});
-
-function toast(m){var t=$("#toast")||document.createElement("div");t.id="toast";t.textContent=m;
-  if(!t.parentNode)document.body.appendChild(t);
-  requestAnimationFrame(function(){t.classList.add("on");});
-  clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove("on");},1900);}
-
-function confetti(){
-  var c=document.createElement("canvas");c.id="confetti";
-  c.width=innerWidth;c.height=innerHeight;document.body.appendChild(c);
-  var x=c.getContext("2d"),ps=[],cols=["#FF4F40","#091723","#E3EBE4","#FFB3A7"];
-  for(var i=0;i<90;i++)ps.push({x:innerWidth/2,y:innerHeight*.42,vx:(Math.random()-.5)*9,vy:-Math.random()*9-2,s:3+Math.random()*4,c:cols[i%4],r:Math.random()*6});
-  var t0=performance.now();
-  (function loop(t){
-    x.clearRect(0,0,c.width,c.height);
-    ps.forEach(function(p){p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.r+=.15;
-      x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s);x.restore();});
-    if(t-t0<1800)requestAnimationFrame(loop);else c.remove();
-  })(t0);
-}
-
-function countUp(el,to){
-  var from=lastTotal||to;lastTotal=to;
-  if(from===to||!el){if(el)el.textContent=money(to);return;}
-  var t0=performance.now();
-  (function step(t){
-    var p=Math.min(1,(t-t0)/650),e=1-Math.pow(1-p,3);
-    el.textContent=money(from+(to-from)*e);
-    if(p<1)requestAnimationFrame(step);
-  })(t0);
-}
-
-/* ---------- charts ---------- */
-function lineChart(pts,w,h){
-  w=w||320;h=h||130;
-  if(pts.length<2)return '<p class="muted small">Not enough data</p>';
-  var mx=Math.max.apply(null,pts),mn=Math.min.apply(null,pts),rng=(mx-mn)||1;
-  var step=w/(pts.length-1);
-  var d=pts.map(function(v,i){return (i?"L":"M")+(i*step).toFixed(1)+" "+(h-6-((v-mn)/rng)*(h-14)).toFixed(1);}).join(" ");
-  var area=d+" L"+w+" "+h+" L0 "+h+" Z";
-  return '<div class="chartwrap"><svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'+
-   '<defs><linearGradient id="lc" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF4F40" stop-opacity=".32"/><stop offset="1" stop-color="#FF4F40" stop-opacity="0"/></linearGradient></defs>'+
-   '<path d="'+area+'" fill="url(#lc)"/>'+
-   '<path d="'+d+'" fill="none" stroke="#FF4F40" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2400" stroke-dashoffset="2400" style="animation:draw 1.1s ease forwards"/></svg></div>';
-}
-function barChart(rows,h){
-  h=h||140;
-  if(!rows.length)return '<p class="muted small">Nothing to show</p>';
-  var mx=Math.max.apply(null,rows.map(function(r){return r.v;}))||1;
-  return '<div class="chart" style="height:'+h+'px">'+rows.map(function(r,i){
-    return '<div><i style="height:'+Math.max(2,r.v/mx*100)+'%;background:'+(r.c||"var(--coral)")+';animation-delay:'+(i*30)+'ms"></i><span>'+r.l+'</span></div>';
-  }).join("")+'</div>';
-}
-function donut(rows,size){
-  size=size||150;
-  var tot=rows.reduce(function(a,r){return a+r.v;},0)||1;
-  var r2=size/2-10,c=2*Math.PI*r2,off=0;
-  var segs=rows.map(function(r){
-    var len=r.v/tot*c, s='<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r2+'" fill="none" stroke="'+r.c+'" stroke-width="18" stroke-dasharray="'+len.toFixed(2)+' '+(c-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/>';
-    off+=len;return s;
-  }).join("");
-  return '<svg viewBox="0 0 '+size+' '+size+'" style="width:'+size+'px;height:'+size+'px;flex:0 0 auto">'+
-   '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r2+'" fill="none" stroke="var(--soft)" stroke-width="18"/>'+segs+'</svg>';
-}
-function legend(rows){
-  var tot=rows.reduce(function(a,r){return a+r.v;},0)||1;
-  return rows.map(function(r){
-    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'+
-     '<i style="width:10px;height:10px;border-radius:3px;background:'+r.c+'"></i>'+
-     '<span class="small" style="flex:1">'+r.l+'</span>'+
-     '<span class="small num muted">'+money(r.v)+'</span>'+
-     '<span class="small num" style="width:38px;text-align:right">'+Math.round(r.v/tot*100)+'%</span></div>';
-  }).join("");
-}
-
-function row(t,i){
-  var dt=new Date(t.t);
-  var when=dt.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
-  var clock=dt.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"});
-  return '<button class="row" style="animation-delay:'+Math.min(i*20,300)+'ms" data-act="txn" data-id="'+t.id+'">'+logo(t.s,t.n)+
-   '<div class="mid"><b>'+esc(t.n)+'</b><span>'+when+" · "+clock+" · "+esc(t.c)+'</span></div>'+
-   '<div class="amt '+(t.a>0?"pos":"")+'">'+signed(t.a)+'</div></button>';
-}
-function renderTx(l){return l.length?'<div class="rows">'+l.map(row).join("")+'</div>':'<p class="muted small">Nothing here yet.</p>';}
-function greeting(){var h=new Date().getHours();return h<12?"Good morning":h<18?"Good afternoon":"Good evening";}
-function head(t){return '<div class="head"><button class="back" data-act="back" aria-label="Back">‹</button><h1>'+t+'</h1></div>';}
-function back(){ROUTE=prev||"home";render();}
-
-function monthSpend(o){
-  var n=new Date();n.setDate(1);n.setMonth(n.getMonth()-o);
-  var y=n.getFullYear(),m=n.getMonth();
-  return tx.reduce(function(a,t){var d=new Date(t.t);
-    return (d.getMonth()===m&&d.getFullYear()===y&&t.a<0)?a+Math.abs(t.a):a;},0);
-}
-function catSpend(c,from){
-  var n=new Date();n.setDate(1);n.setMonth(n.getMonth()-(from||0));
-  var y=n.getFullYear(),m=n.getMonth();
-  return tx.reduce(function(a,t){var d=new Date(t.t);
-    return (d.getMonth()===m&&d.getFullYear()===y&&t.c===c&&t.a<0)?a+Math.abs(t.a):a;},0);
-}
-function recurring(){
-  var by={};
-  tx.forEach(function(t){if(t.a<0){(by[t.s]=by[t.s]||[]).push(t);}});
-  var out=[];
-  Object.keys(by).forEach(function(s){
-    var l=by[s];if(l.length<3)return;
-    var gaps=[];for(var i=1;i<l.length;i++)gaps.push(Math.abs(l[i].t-l[i-1].t));
-    var avg=gaps.reduce(function(a,b){return a+b;},0)/gaps.length;
-    var jit=Math.max.apply(null,gaps.map(function(g){return Math.abs(g-avg);}))/avg;
-    if(avg>25*864e5&&avg<40*864e5&&jit<0.4){
-      var m=Math.round(l.slice(0,3).reduce(function(a,t){return a+Math.abs(t.a);},0)/3*100)/100;
-      out.push({s:s,n:l[0].n,m:m,next:l[0].t+avg});
-    }
-  });
-  return out.sort(function(a,b){return b.m-a.m;});
-}
-function dailyBalance(days){
-  var out=[],bal=cash;
-  for(var i=days-1;i>=0;i--){
-    var day=new Date();day.setDate(day.getDate()-i);day.setHours(23,59,59,999);
-    out.push(Math.max(0,bal));
-    var dayStart=new Date(day);dayStart.setHours(0,0,0,0);
-    bal-=tx.reduce(function(a,t){var d=new Date(t.t);
-      return (d>=dayStart&&d<=day)?a+t.a:a;},0);
-  }
-  return out;
-}
-
-/* ---------- screens ---------- */
-function home(){
-  var rec=recurring(),day=28-new Date().getDate();if(day<0)day+=30;
-  var unread=notifs.filter(function(n){return !n.read;}).length;
-  return '<div id="pull">Pull to refresh</div>'+
-   '<div class="brand"><button class="avatar" data-act="go" data-r="hub">JA</button><span class="wordmark">monzo</span>'+
-     '<button class="bell" data-act="go" data-r="notifs" aria-label="Notifications"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>'+(unread?'<span class="dot"></span>':'')+'</button></div>'+
-   '<p class="eyebrow" style="margin:6px 0 0">'+greeting()+', '+prefs.name+'</p>'+
-   '<div class="balance" id="bal">'+money(cash)+'</div>'+
-   '<p class="sub">Current account · '+money(potTotal())+' in pots</p>'+
-   '<div class="card'+(frozen?" frozen":"")+'" data-act="card">'+
-     '<div class="top"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><use href="#lg-monzo"/></svg><div class="chip"></div></div>'+
-     '<div class="pan">•••• 4417</div>'+
-     '<div class="foot"><div>JASON ARMSTRONG<span style="display:block">09/29</span></div><span>MONZO</span></div></div>'+
-   '<div style="display:flex;gap:10px;margin-bottom:16px">'+
-     '<button class="btn sm ghost" style="flex:1" data-act="freeze">'+(frozen?"Unfreeze":"Freeze")+'</button>'+
-     '<button class="btn sm ghost" style="flex:1" data-act="details">Details</button>'+
-     '<button class="btn sm ghost" style="flex:1" data-act="card">Controls</button></div>'+
-   '<button class="tile" data-act="sorter"><span class="ic">💸</span>'+
-     '<div style="flex:1"><b>Get paid early</b><span>Payday in '+day+' days · '+money(4250)+'</span></div><span>›</span></button>'+
-   '<div class="sec"><h3>Pots</h3><a data-act="go" data-r="save">See all</a></div>'+
-   '<div class="pots">'+pots.map(function(p){
-     return '<button class="pot" data-act="pot" data-id="'+p.id+'"><span class="em">'+p.em+'</span><b>'+esc(p.n)+'</b>'+
-      '<span class="amt">'+money(p.v)+'</span><div class="bar"><i style="width:'+Math.min(100,p.v/p.goal*100)+'%"></i></div></button>';
-   }).join("")+'<button class="pot add" data-act="newpot">+<br>New pot</button></div>'+
-   '<div class="tile" style="background:var(--mint);color:var(--fg)" data-act="go" data-r="trends">'+
-     '<span class="ic">📊</span><div style="flex:1"><b>'+money(monthSpend(0))+' spent this month</b>'+
-     '<span>'+Math.round(monthSpend(0)/Math.max(1,monthSpend(1))*100-100)+'% vs last month</span></div><span>›</span></div>'+
-   '<div class="sec"><h3>Activity</h3><a data-act="go" data-r="activity">See all</a></div>'+
-   renderTx(tx.slice(0,6));
-}
-
-function hub(){
-  prev="home";
-  var odLeft=2000-odUsed;
-  return head("Your accounts")+
-   '<div class="rows">'+
-     '<button class="acct" data-act="go" data-r="home"><span class="mono">🏦</span>'+
-      '<div class="mid"><b>Current Account</b><span>04-00-04 · 8844 1172</span></div>'+
-      '<div class="amt">'+money(cash)+'</div></button>'+
-     '<button class="acct" data-act="go" data-r="save"><span class="mono">💰</span>'+
-      '<div class="mid"><b>Savings</b><span>'+pots.length+' pots · up to 4.10% AER</span></div>'+
-      '<div class="amt">'+money(potTotal())+'</div></button>'+
-     '<button class="acct" data-act="go" data-r="isa"><span class="mono">🧾</span>'+
-      '<div class="mid"><b>Cash ISA</b><span>3.55% AER · tax-free</span></div>'+
-      '<div class="amt">'+money(isa)+'</div></button>'+
-     '<button class="acct" data-act="go" data-r="invest"><span class="mono">📈</span>'+
-      '<div class="mid"><b>Investments</b><span>Stocks &amp; shares ISA</span></div>'+
-      '<div class="amt">'+money(invested())+'</div></button>'+
-     '<button class="acct" data-act="go" data-r="flex"><span class="mono">🧮</span>'+
-      '<div class="mid"><b>Monzo Flex</b><span>£1,500 available</span></div><div class="amt">£0.00</div></button>'+
-     '<button class="acct" data-act="go" data-r="overdraft"><span class="mono">📉</span>'+
-      '<div class="mid"><b>Overdraft</b><span>'+money(odLeft)+' available · 29% EAR</span></div>'+
-      '<div class="amt">'+money(odUsed)+'</div></button></div>'+
-   '<p class="muted small" style="text-align:center">Total '+money(total())+' across all accounts</p>';
-}
-
-function isaScreen(){
-  prev="hub";
-  return head("Cash ISA")+
-   '<div class="balance">'+money(isa)+'</div>'+
-   '<p class="sub">3.55% AER variable · paid monthly</p>'+
-   '<div class="eyebrow" style="margin-bottom:6px">ISA allowance</div>'+
-   '<div class="meter"><i style="width:'+(isa/20000*100)+'%"></i></div>'+
-   '<p class="muted small">'+money(20000-isa)+' of £20,000 left this tax year</p>'+
-   '<button class="btn" data-act="isaadd">Add money</button>'+
-   '<button class="btn ghost" data-act="isawithdraw">Withdraw</button>'+
-   '<div class="sec"><h3>Interest</h3></div>'+
-   '<div class="rows"><div class="row"><span class="mono">%</span><div class="mid"><b>Monthly interest</b>'+
-   '<span>Estimated</span></div><div class="amt pos">+'+money(isa*0.0355/12)+'</div></div></div>';
-}
-
-function overdraft(){
-  prev="hub";
-  return head("Overdraft")+
-   '<div class="balance">'+money(odUsed)+'</div>'+
-   '<p class="sub">Used of £2,000 · 29% EAR variable</p>'+
-   '<div class="meter"><i style="width:'+(odUsed/2000*100)+'%"></i></div>'+
-   '<button class="btn" data-act="oddraw">Draw down</button>'+
-   '<button class="btn ghost" data-act="odrepay">Repay</button>'+
-   '<p class="muted small">Interest is charged daily on the amount you use. A £500 drawdown for 30 days costs about £11.90.</p>';
-}
-
-function save(){
-  var rate=prefs.plan==="Max"?3.80:prefs.plan==="Perks"?3.55:prefs.plan==="Plus"?3.15:2.80;
-  return '<div class="head"><h1>Save</h1><button class="btn sm" data-act="newpot">New pot</button></div>'+
-   '<div class="balance">'+money(potTotal())+'</div>'+
-   '<p class="sub">'+pots.length+' pots · '+rate.toFixed(2)+'% AER on Instant Access</p>'+
-   pots.map(function(p){
-     return '<div class="rows"><button class="row" data-act="pot" data-id="'+p.id+'">'+
-      '<span class="mono" style="font-size:20px;background:var(--mint)">'+p.em+'</span>'+
-      '<div class="mid"><b>'+esc(p.n)+(p.locked?" 🔒":"")+(p.joint?" 👥":"")+'</b><span>'+money(p.v)+' of '+money(p.goal)+
-      (p.bills?' · bills pot':'')+' · '+p.rate.toFixed(2)+'%</span></div><span class="muted">›</span></button>'+
-      '<div style="padding:0 14px 14px"><div class="bar"><i style="width:'+Math.min(100,p.v/p.goal*100)+'%"></i></div></div></div>';
-   }).join("")+
-   '<button class="btn ghost" data-act="go" data-r="budgets">Budgets</button>'+
-   '<button class="btn ghost" data-act="challenge">1p savings challenge</button>';
-}
-
-function budgetsScreen(){
-  prev="save";
-  return head("Budgets")+
-   '<p class="sub">Monthly limits. You get a nudge at 80%.</p>'+
-   Object.keys(budgets).map(function(c){
-     var s=catSpend(c),lim=budgets[c],pc=Math.min(100,s/lim*100);
-     return '<button style="display:block;width:100%;text-align:left;margin-bottom:16px" data-act="catdrill" data-c="'+c+'">'+
-      '<div style="display:flex;justify-content:space-between"><b class="small">'+c+'</b>'+
-      '<span class="small num '+(s>lim?"neg":"muted")+'">'+money(s)+' / '+money(lim)+'</span></div>'+
-      '<div class="meter"><i style="width:'+pc+'%;background:'+(s>lim?"var(--bad)":pc>80?"var(--amber)":"var(--good)")+'"></i></div></button>';
-   }).join("")+'<button class="btn" data-act="editbudget">Adjust a budget</button>';
-}
-
-function trends(){
-  var days=range==="week"?7:range==="month"?30:365;
-  var bars=[],labels=[];
-  var buckets=range==="week"?7:range==="month"?6:12;
-  for(var i=buckets-1;i>=0;i--){
-    if(range==="year"){bars.push(monthSpend(i));labels.push(new Date(new Date().setMonth(new Date().getMonth()-i)).toLocaleDateString("en-GB",{month:"short"})[0]);}
-    else{var v=0;for(var k=0;k<Math.ceil(days/buckets);k++){var dd=new Date();dd.setDate(dd.getDate()-(i*Math.ceil(days/buckets)+k));
-      v+=tx.filter(function(t){var x=new Date(t.t);return x.toDateString()===dd.toDateString()&&t.a<0;}).reduce(function(a,t){return a+Math.abs(t.a);},0);}
-      bars.push(v);var lb=new Date();lb.setDate(lb.getDate()-(i*Math.ceil(days/buckets)));labels.push(lb.toLocaleDateString("en-GB",{day:"numeric"}));}
-  }
-  var cats=CATS.slice(1).map(function(c){return {l:c,v:catSpend(c),c:CATCOL[c]};}).filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;});
-  var bal=dailyBalance(Math.min(days,30));
-  var heat="";
-  for(var d=0;d<35;d++){
-    var day=new Date();day.setDate(day.getDate()-(34-d));
-    var sp=tx.filter(function(t){var x=new Date(t.t);return x.toDateString()===day.toDateString()&&t.a<0;})
-      .reduce(function(a,t){return a+Math.abs(t.a);},0);
-    heat+='<i style="background:'+(sp?"rgba(255,79,64,"+(0.15+Math.min(1,sp/70)*0.85)+")":"var(--soft)")+'"></i>';
-  }
-  return '<h1 style="padding:20px 0 10px">Trends</h1>'+
-   '<div class="chips">'+["week","month","year"].map(function(r){
-     return '<button class="'+(range===r?"on":"")+'" data-act="range" data-v="'+r+'">'+(r[0].toUpperCase()+r.slice(1))+'</button>';
-   }).join("")+'</div>'+
-   '<div class="eyebrow">Balance</div>'+lineChart(bal)+
-   '<div class="axis"><span>'+new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short"})+'</span>'+
-   '<span>'+money(cash)+' now</span></div>'+
-   '<div class="eyebrow" style="margin-top:18px">Spending</div>'+
-   barChart(bars.map(function(v,i){return {v:v,l:labels[i],c:"var(--coral)"};}))+
-   '<div class="eyebrow" style="margin-top:18px">By category</div>'+
-   (cats.length?'<div style="display:flex;gap:16px;align-items:center;margin:10px 0">'+donut(cats)+'<div style="flex:1">'+legend(cats)+'</div></div>':'<p class="muted small">No spending yet</p>')+
-   '<div class="eyebrow" style="margin:16px 0 0">Last 35 days</div><div class="heat">'+heat+'</div>'+
-   '<button class="btn ghost" style="margin-top:12px" data-act="go" data-r="budgets">Budgets</button>';
-}
-
-function payments(){
-  return '<h1 style="padding:20px 0 16px">Payments</h1>'+
-   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">'+
-     '<button class="btn ghost" style="margin:0" data-act="send">Send</button>'+
-     '<button class="btn ghost" style="margin:0" data-act="request">Request</button></div>'+
-   '<div class="group">'+
-     '<button class="opt" data-act="monzome"><div><div class="t">monzo.me/jasonarmstrong</div>'+
-     '<div class="s">Share your link to get paid</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="banktransfer"><div><div class="t">Bank transfer</div>'+
-     '<div class="s">04-00-04 · 8844 1172</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="go" data-r="scheduled"><div><div class="t">Scheduled</div>'+
-     '<div class="s">Direct Debits and standing orders</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="go" data-r="shared"><div><div class="t">Shared tabs</div>'+
-     '<div class="s">Split bills with people</div></div><span class="muted">›</span></button></div>'+
-   '<div class="sec"><h3>Recent payees</h3></div>'+
-   '<div class="rows">'+["Sophie Turner","Marcus Reid","Ellie Nawaz"].map(function(n){
-     return '<button class="row" data-act="send"><span class="mono">'+n[0]+'</span>'+
-      '<div class="mid"><b>'+n+'</b><span>Payee</span></div><span class="muted">›</span></button>';
-   }).join("")+'</div>';
-}
-
-function shared(){
-  prev="payments";
-  return head("Shared tabs")+
-   '<p class="sub">Split bills and track who owes what.</p>'+
-   '<div class="rows"><div class="row"><span class="mono">🍕</span><div class="mid"><b>Domino\'s</b>'+
-   '<span>2 people · 1 unpaid</span></div><div class="amt">'+money(28.50)+'</div></div></div>'+
-   '<button class="btn" data-act="newtab">Start a tab</button>';
-}
-
-function scheduled(){
-  prev="payments";
-  var dd=[["octopus","Octopus Energy","£86.40","4 Dec"],["northumbrian","Northumbrian Water","£36.40","5 Dec"],["britishgas","British Gas","£48.20","7 Dec"],["tvlicensing","TV Licence","£14.55","10 Dec"],["bt","BT Broadband","£32.99","12 Dec"]];
-  var so=[["Japan trip","£250.00","28 Nov"],["Emergency fund","£100.00","1 Dec"]];
-  return head("Scheduled")+
-   '<p class="sub">£368.54 going out in the next 30 days</p>'+
-   '<div class="eyebrow" style="margin-bottom:8px">Direct Debits</div>'+
-   '<div class="rows">'+dd.map(function(d,i){
-     return '<div class="row" style="animation-delay:'+(i*30)+'ms">'+logo(d[0],d[1])+
-      '<div class="mid"><b>'+d[1]+'</b><span>'+d[3]+'</span></div><div class="amt">'+d[2]+'</div></div>';
-   }).join("")+'</div>'+
-   '<div class="eyebrow" style="margin:18px 0 8px">Standing orders</div>'+
-   '<div class="rows">'+so.map(function(d){
-     return '<div class="row"><span class="mono">↗</span><div class="mid"><b>'+d[0]+'</b><span>'+d[2]+'</span></div>'+
-      '<div class="amt">'+d[1]+'</div></div>';
-   }).join("")+'</div>';
-}
-
-function cardScreen(){
-  prev="home";
-  return head("Card")+
-   '<div class="card'+(frozen?" frozen":"")+'" style="margin-bottom:18px">'+
-     '<div class="top"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><use href="#lg-monzo"/></svg><div class="chip"></div></div>'+
-     '<div class="pan">•••• 4417</div>'+
-     '<div class="foot"><div>JASON ARMSTRONG<span style="display:block">09/29</span></div><span>MONZO</span></div></div>'+
-   '<button class="btn'+(frozen?"":" ghost")+'" data-act="freeze">'+(frozen?"Unfreeze card":"Freeze card")+'</button>'+
-   '<button class="btn ghost" data-act="details">Card number and PIN</button>'+
-   '<div class="eyebrow" style="margin:18px 0 6px">Monthly spending limit</div>'+
-   '<div class="meter"><i style="width:'+Math.min(100,monthSpend(0)/limit*100)+'%"></i></div>'+
-   '<p class="muted small">'+money(monthSpend(0))+' of '+money(limit)+'</p>'+
-   '<div class="group" style="margin-top:16px">'+
-     '<button class="opt" data-act="online" aria-pressed="'+prefs.online+'"><div><div class="t">Online payments</div>'+
-     '<div class="s">Allow card-not-present</div></div><span class="toggle"></span></button>'+
-     '<button class="opt" data-act="magstripe" aria-pressed="'+prefs.magstripe+'"><div><div class="t">Magstripe</div>'+
-     '<div class="s">For older terminals</div></div><span class="toggle"></span></button>'+
-     '<button class="opt" data-act="atm"><div><div class="t">ATM limit</div>'+
-     '<div class="s">'+money(prefs.atm)+' a day</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="virtual"><div><div class="t">Virtual card</div>'+
-     '<div class="s">For one-off online use</div></div><span class="muted">›</span></button></div>';
-}
-
-function activity(){
-  var list=tx.filter(function(t){
-    if(cat!=="All"&&t.c!==cat)return false;
-    if(q&&!(t.n+" "+t.c).toLowerCase().includes(q.toLowerCase()))return false;
-    return true;});
-  return '<h1 style="padding:20px 0 12px">Activity</h1>'+
-   '<input class="search" id="q" placeholder="Search" value="'+esc(q)+'">'+
-   '<div class="chips">'+CATS.map(function(c){
-     return '<button class="'+(cat===c?"on":"")+'" data-act="cat" data-c="'+c+'">'+c+'</button>';
-   }).join("")+'</div><div id="alist">'+listBody(list.slice(0,60),list.length)+'</div>';
-}
-function listBody(shown,totalN){
-  var out="",last="";
-  shown.forEach(function(t,i){
-    var d=new Date(t.t),m=d.toLocaleDateString("en-GB",{month:"long",year:"numeric"});
-    if(m!==last){
-      var net=shown.filter(function(x){var y=new Date(x.t);return y.getMonth()===d.getMonth()&&y.getFullYear()===d.getFullYear();})
-        .reduce(function(a,x){return a+x.a;},0);
-      out+='<div class="mhead"><div class="eyebrow">'+m+'</div><span class="small num '+(net>0?"pos":"muted")+'">'+signed(net)+'</span></div>';
-      last=m;
-    }
-    out+='<div class="rows" style="margin-bottom:0">'+row(t,i)+'</div>';
-  });
-  if(!shown.length)out='<p class="muted small">No matches.</p>';
-  if(shown.length<totalN)out+='<button class="btn ghost" style="margin:16px 0" data-act="more">Load more</button>';
-  return out;
-}
-
-function sorter(){
-  prev="home";
-  var split=Math.round(4250*0.4*100)/100;
-  return head("Salary Sorter")+
-   '<p class="sub">Next payment of £4,250.00 from Kestrel Digital Ltd.</p>'+
-   '<div class="group">'+
-     '<div class="opt"><div><div class="t">Current account</div><div class="s">Spending</div></div><b class="num">'+money(4250-split-600)+'</b></div>'+
-     '<div class="opt"><div><div class="t">Bills pot</div><div class="s">Rent, energy, subscriptions</div></div><b class="num">'+money(600)+'</b></div>'+
-     '<div class="opt"><div><div class="t">Japan trip</div><div class="s">Savings pot</div></div><b class="num">'+money(split)+'</b></div></div>'+
-   '<button class="btn" data-act="dosort">Sort my salary</button>'+
-   '<button class="btn ghost" data-act="paidearly">Get paid early · 4pm</button>';
-}
-
-function subsScreen(){
-  prev="home";
-  var r=recurring();
-  return head("Subscriptions")+
-   '<p class="sub">'+money(r.reduce(function(a,x){return a+x.m;},0))+' a month across '+r.length+' charges</p>'+
-   (r.length?'<div class="rows">'+r.map(function(x,i){
-     return '<div class="row" style="animation-delay:'+(i*25)+'ms">'+logo(x.s,x.n)+'<div class="mid"><b>'+esc(x.n)+'</b>'+
-      '<span>'+money(x.m)+' a month · next '+new Date(x.next).toLocaleDateString("en-GB",{day:"numeric",month:"short"})+'</span></div>'+
-      '<button class="btn sm ghost" data-act="cancel" data-s="'+x.s+'">Cancel</button></div>';
-   }).join("")+'</div>':'<p class="muted small">Nothing recurring found.</p>');
-}
-
-function invest(){
-  var val=invested(),cst=cost(),gain=val-cst;
-  return '<div class="head"><button class="back" data-act="back">‹</button><h1>Investments</h1>'+
-   '<button class="btn sm" data-act="go" data-r="portfolio">All</button></div>'+
-   '<p class="eyebrow">Portfolio value</p><div class="balance" id="bal">'+money(val)+'</div>'+
-   '<p class="sub"><span class="pos">+'+money(gain)+' ('+(gain/cst*100).toFixed(2)+'%)</span> all time</p>'+
-   lineChart(dailyBalance(30).map(function(v){return v*0.98+invested()*0.02;}),320,90)+
-   '<div class="eyebrow" style="margin-top:14px">Allocation</div>'+
-   (function(){
-     var top=holdings.slice(0,5).map(function(h,i){return {l:h.k,v:h.v,c:["#FF4F40","#3A0CA3","#0B5EA8","#0B7A3E","#B26B00"][i]};});
-     return '<div style="display:flex;gap:16px;align-items:center;margin:10px 0">'+donut(top,130)+'<div style="flex:1">'+legend(top)+'</div></div>';
-   })()+
-   '<div class="eyebrow">Stocks &amp; shares ISA</div>'+
-   '<div class="meter"><i style="width:'+(isa/20000*100)+'%"></i></div>'+
-   '<p class="muted small" style="margin-bottom:18px">'+money(20000-isa)+' of £20,000 allowance left</p>'+
-   '<div class="rows">'+holdings.slice(0,10).map(function(h,i){
-     var g=h.v-h.c;
-     return '<button class="row" style="animation-delay:'+(i*20)+'ms" data-act="fund" data-k="'+h.k+'">'+logo("",h.k)+
-      '<div class="mid"><b>'+h.k+'</b><span>'+esc(h.n)+'</span></div>'+
-      '<div class="amt">'+money(h.v)+'<br><span class="small '+(g>0?"pos":"muted")+'">'+(g>0?"+":"")+money(g)+'</span></div></button>';
-   }).join("")+'</div>'+
-   '<button class="btn ghost" data-act="go" data-r="portfolio">See all '+holdings.length+' holdings</button>';
-}
-
-function portfolio(){
-  prev="invest";
-  return head("All holdings")+
-   '<p class="sub">'+holdings.length+' instruments · '+money(invested())+'</p>'+
-   '<div class="rows">'+holdings.map(function(h,i){
-     var g=h.v-h.c;
-     return '<button class="row" style="animation-delay:'+Math.min(i*12,320)+'ms" data-act="fund" data-k="'+h.k+'">'+logo("",h.k)+
-      '<div class="mid"><b>'+h.k+'</b><span>'+esc(h.n)+'</span></div>'+
-      '<div class="amt">'+money(h.v)+'<br><span class="small '+(g>0?"pos":"muted")+'">'+(g>0?"+":"")+money(g)+'</span></div></button>';
-   }).join("")+'</div>';
-}
-
-function more(){
-  return '<div class="brand"><button class="avatar" data-act="go" data-r="hub">JA</button>'+
-   '<div style="flex:1"><b>'+prefs.name+'</b><div class="small muted">'+prefs.plan+' plan</div></div></div>'+
-   '<button class="tile" style="background:var(--ink);color:#fff" data-act="go" data-r="credit">'+
-     '<span class="ic">📈</span><div style="flex:1"><b>Credit score 743</b><span>Good · updated 3 days ago</span></div><span>›</span></button>'+
-   '<div class="group">'+
-     '<button class="opt" data-act="go" data-r="statements"><div><div class="t">Statements</div><div class="s">Monthly PDFs</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="go" data-r="profile"><div><div class="t">Your details</div><div class="s">Address, email, phone</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="go" data-r="appearance"><div><div class="t">Appearance</div><div class="s">Theme and app icon</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="go" data-r="plan"><div><div class="t">Your plan</div><div class="s">'+prefs.plan+'</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="go" data-r="security"><div><div class="t">Security</div><div class="s">PIN and biometrics</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="export"><div><div class="t">Export statement</div><div class="s">CSV, last 12 months</div></div><span class="muted">›</span></button>'+
-     '<button class="opt" data-act="reset"><div><div class="t">Rebuild data</div><div class="s">Regenerate 12 months</div></div><span class="muted">›</span></button></div>';
-}
-
-function profile(){
-  prev="more";
-  var f=function(label,val){
-    return '<div class="group"><div style="padding:15px 16px;display:flex;justify-content:space-between;gap:12px;align-items:center">'+
-     '<div><div class="small" style="color:var(--muted)">'+label+'</div><div style="font-size:15px;font-weight:600">'+esc(val)+'</div></div>'+
-     '<button class="btn sm ghost" data-act="copy" data-v="'+esc(val)+'">Copy</button></div></div>';
-  };
-  return head("Your details")+
-   '<div class="brand" style="padding:0 0 16px"><div class="avatar" style="width:56px;height:56px;font-size:20px;flex:0 0 56px">JA</div>'+
-   '<div><b style="font-size:19px">Jason Armstrong</b><div class="small muted">Monzo '+prefs.plan+'</div></div></div>'+
-   f("Email",prefs.email)+f("Phone",prefs.phone)+f("Home address",prefs.addr)+
-   '<button class="btn ghost" data-act="editdetail">Edit details</button>';
-}
-
-function credit(){
-  prev="more";
-  return head("Credit score")+
-   '<div style="text-align:center;padding:8px 0 18px"><div style="font-size:56px;font-weight:800;line-height:1">743</div>'+
-   '<div class="eyebrow">Good · out of 999</div></div>'+
-   '<div class="meter"><i style="width:74%;background:var(--good)"></i></div>'+
-   '<p class="muted small">Based on TransUnion data, updated 3 days ago.</p>'+
-   '<div class="group">'+
-     '<div class="opt"><div><div class="t">Payment history</div><div class="s">No missed payments</div></div><b class="pos">Good</b></div>'+
-     '<div class="opt"><div><div class="t">Credit utilisation</div><div class="s">18% of limit</div></div><b class="pos">Good</b></div>'+
-     '<div class="opt"><div><div class="t">Account age</div><div class="s">6 years 4 months</div></div><b>Fair</b></div></div>'+
-   '<button class="btn ghost" data-act="toast" data-m="Full report opens in 2 days">Full report</button>';
-}
-
-function statements(){
-  prev="more";
-  var out=[];
-  for(var i=0;i<12;i++){
-    var d=new Date();d.setMonth(d.getMonth()-i);
-    out.push('<div class="row"><span class="mono">📄</span><div class="mid"><b>'+
-      d.toLocaleDateString("en-GB",{month:"long",year:"numeric"})+'</b><span>CSV statement</span></div>'+
-      '<button class="btn sm ghost" data-act="statement" data-m="'+(d.getMonth()+1)+'" data-y="'+d.getFullYear()+'">Get</button></div>');
-  }
-  return head("Statements")+'<div class="rows">'+out.join("")+'</div>';
-}
-
-function flexScreen(){
-  prev="hub";
-  return head("Monzo Flex")+
-   '<p class="sub">Pay in 3 monthly instalments, interest free. £1,500 limit.</p>'+
-   '<div class="rows"><div class="row"><span class="mono">🛍</span><div class="mid"><b>ASOS</b>'+
-   '<span>2 of 3 paid · £34.66 a month</span></div><div class="amt">'+money(69.32)+'</div></div></div>'+
-   '<button class="btn" data-act="flexplan">Flex a purchase</button>'+
-   '<button class="btn ghost" data-act="flexlimit">Change limit</button>';
-}
-
-function planScreen(){
-  prev="more";
-  var tiers=[["Lite","Free",""],["Plus","£5","Extra accounts, custom categories"],["Perks","£7","Railcards, offers, weekly treat"],["Max","£17","Travel insurance, phone cover, 5% savings"]];
-  return head("Your plan")+
-   '<p class="sub">Upgrade or drop down any time.</p>'+
-   tiers.map(function(t){
-     return '<button class="opt" data-act="plan" data-p="'+t[0]+'" aria-pressed="'+(prefs.plan===t[0])+'">'+
-      '<div><div class="t">Monzo '+t[0]+'</div><div class="s">'+t[1]+(t[2]?" · "+t[2]:"")+'</div></div><span class="tick"></span></button>';
-   }).join("");
-}
-
-function security(){
-  prev="more";
-  return head("Security")+
-   '<div class="group"><button class="opt" data-act="bio" aria-pressed="'+prefs.bio+'">'+
-   '<div><div class="t">Fingerprint unlock</div><div class="s">Samsung Galaxy S24 Ultra</div></div><span class="toggle"></span></button>'+
-   '<button class="opt" data-act="pin"><div><div class="t">Change PIN</div><div class="s">4 digits</div></div><span class="muted">›</span></button>'+
-   '<button class="opt" data-act="lock"><div><div class="t">Lock now</div><div class="s">Back to the lock screen</div></div><span class="muted">›</span></button></div>';
-}
-
-function appearance(){
-  prev="more";
-  var t=prefs.theme,m=prefs.mark;
-  var o=function(act,v,label,on){
-    return '<button class="opt" data-act="'+act+'" data-v="'+v+'" aria-pressed="'+on+'"><div class="t">'+label+'</div><span class="tick"></span></button>';
-  };
-  return head("Appearance")+
-   '<div class="eyebrow" style="margin-bottom:8px">Theme</div><div class="group">'+
-   o("theme","auto","Match device",t==="auto")+o("theme","light","Light",t==="light")+o("theme","dark","Dark",t==="dark")+'</div>'+
-   '<div class="eyebrow" style="margin-bottom:8px">App icon</div><div class="group">'+
-   o("mark","auto","Match theme",!m)+o("mark","coral","Hot Coral",m==="coral")+o("mark","white","White",m==="white")+'</div>'+
-   '<div class="group"><div style="padding:16px;display:flex;gap:12px;align-items:center">'+
-   '<img src="monzo-tile.svg" alt="" width="56" height="56" style="border-radius:14px">'+
-   '<img src="monzo-mark.svg" alt="" width="40" height="40" style="background:var(--surface);border-radius:10px;padding:6px">'+
-   '<img src="monzo-mark-white.svg" alt="" width="40" height="40" style="background:#091723;border-radius:10px;padding:6px"></div></div>';
-}
-
-function notifsScreen(){
-  prev="home";
-  return head("Notifications")+
-   '<div class="rows">'+notifs.map(function(n,i){
-     return '<div class="row" style="animation-delay:'+(i*30)+'ms;'+(n.read?"opacity:.6":"")+'">'+
-      '<span class="mono" style="font-size:18px">'+n.ic+'</span>'+
-      '<div class="mid"><b>'+esc(n.t)+'</b><span>'+esc(n.s)+' · '+n.ago+'</span></div></div>';
-   }).join("")+'</div>'+
-   '<button class="btn ghost" data-act="readnotifs">Mark all read</button>';
-}
-
-var SCREENS={home:home,hub:hub,save:save,trends:trends,payments:payments,more:more,pots:save,
- activity:activity,budgets:budgetsScreen,card:cardScreen,sorter:sorter,subs:subsScreen,
- invest:invest,flex:flexScreen,plan:planScreen,security:security,appearance:appearance,
- notifs:notifsScreen,scheduled:scheduled,portfolio:portfolio,profile:profile,credit:credit,
- statements:statements,shared:shared,isa:isaScreen,overdraft:overdraft};
-
-function render(){
   try{
-    var html=(SCREENS[ROUTE]||home)();
-    if(html==="")return;
-    var v=$("#view");v.innerHTML=html;v.scrollTop=0;
-    v.classList.remove("fade");void v.offsetWidth;v.classList.add("fade");
-    $$(".tabs button").forEach(function(b){b.classList.toggle("on",b.dataset.r===ROUTE);});
-    var bal=$("#bal");if(bal)countUp(bal,ROUTE==="invest"?invested():cash);
-  }catch(e){crash(e);}
+    const raw=localStorage.getItem(KEY);
+    if(raw){const p=JSON.parse(raw);if(p&&p.v===4&&p.ledger&&p.ledger.isa&&p.ledger.isa.length>300){S=p;return}}
+  }catch(e){}
+  S=fresh();save();
 }
-function crash(e){
-  var d=document.createElement("div");d.id="crash";
-  d.textContent="Render failed\n\n"+(e&&e.stack||e)+"\n\nroute: "+ROUTE+"\nhref: "+location.href;
-  document.body.appendChild(d);
-}
-function go(r){if(r!==ROUTE)prev=ROUTE;ROUTE=r;page=0;render();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
-function lock(){
-  buf="";
-  var el=document.createElement("div");el.id="lock";
-  el.innerHTML='<span class="wordmark">monzo</span><h1>Welcome back</h1>'+
-   '<div class="pin"><i></i><i></i><i></i><i></i></div><div class="err"></div>'+
-   '<div class="pad">'+[1,2,3,4,5,6,7,8,9].map(function(n){return '<button data-d="'+n+'">'+n+'</button>';}).join("")+
-   '<button data-d="x" aria-label="Delete">⌫</button><button data-d="0">0</button><button data-d="b" aria-label="Fingerprint">☝</button></div>'+
-   (prefs.bio?'<div class="bio">Touch the sensor to unlock</div>':"");
-  el.addEventListener("click",function(ev){
-    var b=ev.target.closest("[data-d]");if(!b)return;
-    var d=b.dataset.d;
-    if(d==="x")buf=buf.slice(0,-1);
-    else if(d==="b"){if(prefs.bio)return unlock();}
-    else if(buf.length<4)buf+=d;
-    el.querySelectorAll(".pin i").forEach(function(dot,i){dot.classList.toggle("f",i<buf.length);});
-    if(buf.length===4){
-      if(buf===prefs.pin)unlock();
-      else{buf="";el.querySelector(".err").textContent="Wrong PIN";
-        el.querySelectorAll(".pin i").forEach(function(dot){dot.classList.remove("f");});}
-    }
-  });
-  document.body.appendChild(el);
-}
-function unlock(){var el=$("#lock");if(el)el.remove();}
+/* derived */
+const isaBal=()=>S.ledger.isa[S.ledger.isa.length-1].closing;
+const portVal=()=>S.holdings.reduce((s,h)=>s+h.v,0);
+const netWorth=()=>S.acct.current+S.acct.savings+isaBal();
+const leftToSpend=()=>{
+  const d=new Date();const m=d.getMonth(),y=d.getFullYear();
+  const spent=S.tx.filter(t=>t.amt<0&&!t.sal&&new Date(t.d).getMonth()===m&&new Date(t.d).getFullYear()===y).reduce((s,t)=>s-t.amt,0);
+  const budget=2600;
+  return Math.max(0,+(budget-spent).toFixed(2));
+};
+const tyUsed=()=>{
+  const y=taxYear();const start=new Date(y,3,6);const end=new Date(y+1,3,6);
+  return S.ledger.isa.filter(r=>{const dt=new Date(r.y,r.m,1);return dt>=start&&dt<end}).reduce((s,r)=>s+r.contrib,0);
+};
 
+/* ============================================================
+   CHROME
+   ============================================================ */
+const MARK=`<svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#FF4F40"/><path d="M6.6 17.2V9.4a1.7 1.7 0 0 1 3.05-1.03L12 12.4l2.35-4.03A1.7 1.7 0 0 1 17.4 9.4v7.8" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  $('#toast').appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(10px)';t.style.transition='all .25s';setTimeout(()=>t.remove(),260)},2400);
+}
 function sheet(html){
-  var old=$("#sheet");if(old)old.remove();
-  var el=document.createElement("div");el.id="sheet";
-  el.innerHTML='<div class="in"><div class="grab"></div>'+html+'</div>';
-  el.addEventListener("click",function(e){if(e.target===el)el.remove();});
-  document.body.appendChild(el);
-  var f=el.querySelector("input");if(f)f.focus();
-  dragSheet(el);
+  const s=$('#sheet');s.innerHTML='<div class="grab"></div>'+html;s.classList.add('on');$('#scrim').classList.add('on');
+  s.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet);
 }
-function dragSheet(el){
-  var inner=el.querySelector(".in"),y0=0,dy=0,on=false;
-  inner.addEventListener("touchstart",function(e){
-    if(inner.scrollTop>0)return;on=true;y0=e.touches[0].clientY;dy=0;inner.style.transition="none";},{passive:true});
-  inner.addEventListener("touchmove",function(e){
-    if(!on)return;dy=Math.max(0,e.touches[0].clientY-y0);inner.style.transform="translateY("+dy+"px)";},{passive:true});
-  inner.addEventListener("touchend",function(){
-    if(!on)return;on=false;inner.style.transition="transform .24s";
-    if(dy>110){inner.style.transform="translateY(100%)";setTimeout(function(){el.remove();},220);}
-    else inner.style.transform="";});
-}
-function num(){var i=$("#sheet input");return parseFloat(String(i&&i.value||"").replace(/[^0-9.]/g,""));}
-function closeSheet(){var s=$("#sheet");if(s)s.remove();}
+function closeSheet(){$('#sheet').classList.remove('on');$('#scrim').classList.remove('on')}
+$('#scrim').onclick=closeSheet;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 
-function download(name,text,type){
-  var blob=new Blob([text],{type:type||"text/csv"});var url=URL.createObjectURL(blob);
-  var a=document.createElement("a");a.href=url;a.download=name;a.click();
-  setTimeout(function(){URL.revokeObjectURL(url);},1500);
-}
-
-document.addEventListener("input",function(e){
-  if(e.target.id!=="q")return;
-  q=e.target.value;
-  var list=tx.filter(function(t){
-    if(cat!=="All"&&t.c!==cat)return false;
-    if(q&&!(t.n+" "+t.c).toLowerCase().includes(q.toLowerCase()))return false;
-    return true;});
-  var box=$("#alist");if(box)box.innerHTML=listBody(list.slice(0,60),list.length);
-});
-
-var pullEl=null,pullY=0,pulling=false,pullStart=0;
-document.addEventListener("touchstart",function(e){
-  var v=$("#view");if(!v||v.scrollTop>0)return;
-  pullEl=$("#pull");pulling=true;pullStart=e.touches[0].clientY;},{passive:true});
-document.addEventListener("touchmove",function(e){
-  if(!pulling||!pullEl)return;pullY=Math.max(0,e.touches[0].clientY-pullStart);
-  pullEl.style.height=Math.min(70,pullY*.6)+"px";},{passive:true});
-document.addEventListener("touchend",function(){
-  if(!pulling)return;pulling=false;
-  if(pullEl)pullEl.style.height="0";
-  if(pullY>70){toast("Up to date");render();}
-  pullY=0;},{passive:true});
-
-document.addEventListener("click",function(e){
-  var b=e.target.closest("[data-act]");if(!b)return;
-  var a=b.dataset.act;
-
-  if(a==="go"){go(b.dataset.r);return;}
-  if(a==="back"){back();return;}
-  if(a==="more"){page++;render();return;}
-  if(a==="lock"){lock();return;}
-  if(a==="cat"){cat=b.dataset.c;page=0;render();return;}
-  if(a==="catdrill"){cat=b.dataset.c;go("activity");return;}
-  if(a==="range"){range=b.dataset.v;render();return;}
-  if(a==="theme"){prefs.theme=b.dataset.v;paint();save();render();return;}
-  if(a==="mark"){prefs.mark=b.dataset.v==="auto"?null:b.dataset.v;paint();save();render();return;}
-  if(a==="bio"){prefs.bio=!prefs.bio;save();render();return;}
-  if(a==="plan"){prefs.plan=b.dataset.p;save();toast("Switched to Monzo "+b.dataset.p);render();return;}
-  if(a==="online"){prefs.online=!prefs.online;save();render();return;}
-  if(a==="magstripe"){prefs.magstripe=!prefs.magstripe;save();render();return;}
-  if(a==="freeze"){frozen=!frozen;save();toast(frozen?"Card frozen":"Card unfrozen");render();return;}
-  if(a==="card"){go("card");return;}
-  if(a==="close"){closeSheet();return;}
-  if(a==="toast"){toast(b.dataset.m||"Done");return;}
-  if(a==="readnotifs"){notifs.forEach(function(n){n.read=true;});save();toast("All caught up");render();return;}
-
-  if(a==="copy"){if(navigator.clipboard)navigator.clipboard.writeText(b.dataset.v||"").catch(function(){});toast("Copied");return;}
-  if(a==="editdetail"){
-    sheet('<h3>Edit details</h3><input class="field" id="ed" value="'+esc(prefs.addr)+'">'+
-     '<button class="btn" data-act="savedetail">Save</button>');return;}
-  if(a==="savedetail"){var ed=$("#ed");if(ed&&ed.value)prefs.addr=ed.value;save();closeSheet();toast("Updated");render();return;}
-
-  if(a==="details"){
-    sheet('<h3>Card details</h3><p class="small muted">Card number</p>'+
-     '<p class="num" style="font-size:19px;letter-spacing:.08em;margin:0 0 12px">4929 1183 6640 4417</p>'+
-     '<p class="small muted">Expiry · CVC · PIN</p>'+
-     '<p class="num" style="font-size:19px;margin:0 0 16px">09/29 · 317 · 4192</p>'+
-     '<button class="btn" data-act="close">Done</button>');return;}
-  if(a==="virtual"){
-    sheet('<h3>Virtual card</h3><p class="small muted">Dies after one payment.</p>'+
-     '<p class="num" style="font-size:19px;letter-spacing:.08em;margin:0 0 16px">5566 8821 0034 9910</p>'+
-     '<button class="btn" data-act="close">Done</button>');return;}
-  if(a==="atm"){
-    sheet('<h3>ATM limit</h3><div class="chips"><button data-p="100">£100</button><button data-p="300">£300</button><button data-p="500">£500</button></div>'+
-     '<button class="btn" data-act="saveatm">Save</button>');return;}
-  if(a==="saveatm"){var i0=$("#sheet input");var n0=parseFloat(i0&&i0.value);if(n0>0)prefs.atm=n0;save();closeSheet();render();return;}
-
-  if(a==="txn"){
-    var t=tx.find(function(x){return String(x.id)===b.dataset.id;});if(!t)return;
-    var d=new Date(t.t);
-    var same=tx.filter(function(x){return x.s===t.s&&x.a<0;});
-    var avg=same.reduce(function(acc,x){return acc+Math.abs(x.a);},0)/Math.max(1,same.length);
-    sheet('<div style="display:flex;gap:12px;align-items:center;margin-bottom:14px">'+logo(t.s,t.n)+
-     '<div><h3 style="margin:0">'+esc(t.n)+'</h3><span class="small muted">'+esc(t.c)+'</span></div></div>'+
-     '<p style="font-size:30px;font-weight:800;margin:0 0 4px" class="num">'+signed(t.a)+'</p>'+
-     '<p class="small muted">'+d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"})+' · '+d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})+'</p>'+
-     '<p class="small muted">Monzo card •••• 4417</p>'+
-     (t.note?'<p class="small" style="background:var(--surface);padding:12px;border-radius:14px">'+esc(t.note)+'</p>':"")+
-     '<p class="small muted">'+same.length+' visits · average '+money(avg)+'</p>'+
-     '<button class="btn ghost" data-act="note" data-id="'+t.id+'">'+(t.note?"Edit note":"Add note")+'</button>'+
-     '<button class="btn ghost" data-act="recat" data-id="'+t.id+'">Change category</button>'+
-     '<button class="btn ghost" data-act="merchant" data-s="'+t.s+'">Merchant history</button>'+
-     '<button class="btn ghost" data-act="split" data-id="'+t.id+'">Split the bill</button>'+
-     '<button class="btn ghost" data-act="close">Close</button>');return;}
-  if(a==="recat"){
-    var tr=tx.find(function(x){return String(x.id)===b.dataset.id;});
-    sheet('<h3>Category</h3>'+CATS.slice(1).map(function(c){
-      return '<button class="opt" data-act="setcat" data-id="'+tr.id+'" data-c="'+c+'" aria-pressed="'+(tr.c===c)+'">'+
-       '<div class="t">'+c+'</div><span class="tick"></span></button>';}).join(""));
-    return;}
-  if(a==="setcat"){
-    var ts=tx.find(function(x){return String(x.id)===b.dataset.id;});
-    ts.c=b.dataset.c;save();closeSheet();toast("Category updated");render();return;}
-  if(a==="merchant"){
-    var s2=b.dataset.s;var list=tx.filter(function(x){return x.s===s2;}).slice(0,12);
-    var nm=list[0]?list[0].n:s2;
-    sheet('<h3>'+esc(nm)+'</h3><p class="small muted">'+list.length+' payments · '+
-     money(list.reduce(function(acc,x){return acc+Math.abs(x.a);},0))+' total</p>'+
-     list.map(function(x){return '<div class="row" style="padding:9px 0"><div class="mid"><b>'+
-      new Date(x.t).toLocaleDateString("en-GB",{day:"numeric",month:"short"})+'</b></div>'+
-      '<div class="amt">'+money(Math.abs(x.a))+'</div></div>';}).join("")+
-     '<button class="btn" data-act="close">Close</button>');return;}
-  if(a==="note"){
-    var t2=tx.find(function(x){return String(x.id)===b.dataset.id;});
-    sheet('<h3>Note</h3><input class="field" value="'+esc(t2.note||"")+'" placeholder="What was this for?">'+
-     '<button class="btn" data-act="savenote" data-id="'+t2.id+'">Save</button>');return;}
-  if(a==="savenote"){
-    var t3=tx.find(function(x){return String(x.id)===b.dataset.id;});
-    var i2=$("#sheet input");t3.note=i2?i2.value:"";save();closeSheet();toast("Note saved");return;}
-  if(a==="split"){
-    var t4=tx.find(function(x){return String(x.id)===b.dataset.id;});
-    toast("Split request sent for "+money(Math.abs(t4.a)/2));return;}
-
-  if(a==="fund"){
-    var h=holdings.find(function(x){return x.k===b.dataset.k;});if(!h)return;
-    var hist=[];var seedv=h.v;for(var k=0;k<20;k++){hist.push(seedv*(1+Math.sin(k/3)*0.03+k*0.002));}
-    sheet('<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">'+logo("",h.k)+
-     '<div><h3 style="margin:0">'+h.k+'</h3><span class="small muted">'+esc(h.n)+'</span></div></div>'+
-     '<p class="num" style="font-size:28px;font-weight:800;margin:0">'+money(h.v)+'</p>'+
-     '<p class="small pos" style="margin:2px 0 8px">+'+money(h.v-h.c)+' ('+((h.v-h.c)/h.c*100).toFixed(2)+'%)</p>'+
-     lineChart(hist,300,80)+
-     '<button class="btn" style="margin-top:12px" data-act="buy" data-k="'+h.k+'">Buy more</button>'+
-     '<button class="btn ghost" data-act="sell" data-k="'+h.k+'">Sell 25%</button>');return;}
-  if(a==="buy"){
-    sheet('<h3>Buy '+b.dataset.k+'</h3><input class="field" inputmode="decimal" placeholder="Amount">'+
-     '<div class="chips"><button data-p="50">£50</button><button data-p="250">£250</button><button data-p="1000">£1,000</button></div>'+
-     '<button class="btn" data-act="dobuy" data-k="'+b.dataset.k+'">Buy</button>');return;}
-  if(a==="dobuy"){
-    var v2=num();if(!v2||v2>cash){var i3=$("#sheet input");if(i3)i3.value="";return;}
-    var h2=holdings.find(function(x){return x.k===b.dataset.k;});
-    cash-=v2;h2.v+=v2;h2.c+=v2;isa=Math.min(20000,isa+v2);save();closeSheet();toast("Bought "+money(v2));render();return;}
-  if(a==="sell"){
-    var h3=holdings.find(function(x){return x.k===b.dataset.k;});
-    var v3=Math.min(h3.v,Math.round(h3.v*0.25*100)/100);
-    h3.v-=v3;cash+=v3;save();closeSheet();toast("Sold "+money(v3));render();return;}
-
-  if(a==="isaadd"){
-    sheet('<h3>Add to ISA</h3><input class="field" inputmode="decimal" placeholder="Amount">'+
-     '<button class="btn" data-act="doisa">Add</button>');return;}
-  if(a==="doisa"){
-    var v4=num();if(!v4||v4>cash||isa+v4>20000){var i4=$("#sheet input");if(i4)i4.value="";return;}
-    cash-=v4;isa+=v4;save();closeSheet();toast("Added "+money(v4));render();return;}
-  if(a==="isawithdraw"){
-    var w=Math.min(isa,500);isa-=w;cash+=w;save();toast("Withdrew "+money(w));render();return;}
-
-  if(a==="oddraw"){
-    sheet('<h3>Draw down</h3><input class="field" inputmode="decimal" placeholder="Amount">'+
-     '<button class="btn" data-act="dood" data-d="1">Draw</button>');return;}
-  if(a==="dood"){
-    var v5=num();if(!v5||odUsed+v5>2000){var i5=$("#sheet input");if(i5)i5.value="";return;}
-    odUsed+=v5;cash+=v5;save();closeSheet();toast("Drew "+money(v5));render();return;}
-  if(a==="odrepay"){
-    var rp=Math.min(odUsed,cash);odUsed-=rp;cash-=rp;save();toast("Repaid "+money(rp));render();return;}
-
-  if(a==="cancel"){
-    var slug=b.dataset.s;
-    tx=tx.filter(function(t){return !(t.s===slug&&t.c==="Subscriptions");});
-    save();toast("Cancelled");render();return;}
-
-  if(a==="challenge"){
-    sheet('<h3>1p savings challenge</h3><p class="small muted">Start at 1p on day one and add a penny a day. Day 365 is £3.65 and you finish with £667.95.</p>'+
-     '<button class="btn" data-act="startchallenge">Start challenge</button>');return;}
-  if(a==="startchallenge"){
-    pots.push({id:Date.now(),em:"🪙",n:"1p challenge",v:0.01,goal:667.95,bills:false,locked:false,joint:false,rate:3.80});
-    save();closeSheet();toast("Challenge started");render();return;}
-
-  if(a==="newpot"){
-    sheet('<h3>New pot</h3><input class="field" inputmode="decimal" placeholder="Amount to start">'+
-     '<div class="chips"><button data-p="25">£25</button><button data-p="100">£100</button><button data-p="250">£250</button></div>'+
-     '<button class="btn" data-act="savepot">Create pot</button>');return;}
-  if(a==="savepot"){
-    var v6=num();if(!v6||v6>cash){var i6=$("#sheet input");if(i6)i6.value="";return;}
-    cash-=v6;pots.push({id:Date.now(),em:"🎯",n:"New pot",v:v6,goal:Math.max(500,v6*4),bills:false,locked:false,joint:false,rate:3.80});
-    save();closeSheet();toast("Pot created");render();return;}
-  if(a==="pot"){
-    var p=pots.find(function(x){return String(x.id)===b.dataset.id;});if(!p)return;
-    sheet('<h3>'+p.em+' '+esc(p.n)+'</h3><p class="small muted">'+money(p.v)+' of '+money(p.goal)+' · '+p.rate.toFixed(2)+'% AER</p>'+
-     '<div class="meter"><i style="width:'+Math.min(100,p.v/p.goal*100)+'%"></i></div>'+
-     '<input class="field" style="margin-top:14px" inputmode="decimal" placeholder="Amount">'+
-     '<div class="chips"><button data-p="25">£25</button><button data-p="100">£100</button><button data-p="250">£250</button></div>'+
-     '<button class="btn" data-act="topup" data-id="'+p.id+'">Add money</button>'+
-     '<button class="btn ghost" data-act="bills" data-id="'+p.id+'">'+(p.bills?"Turn off bills pot":"Make a bills pot")+'</button>'+
-     '<button class="btn ghost" data-act="joint" data-id="'+p.id+'">'+(p.joint?"Make personal":"Make joint")+'</button>'+
-     '<button class="btn ghost" data-act="withdraw" data-id="'+p.id+'">Withdraw all</button>');return;}
-  if(a==="topup"){
-    var v7=num();if(!v7||v7>cash){var i7=$("#sheet input");if(i7)i7.value="";return;}
-    var p2=pots.find(function(x){return String(x.id)===b.dataset.id;});
-    cash-=v7;p2.v+=v7;save();closeSheet();
-    if(p2.v>=p2.goal){confetti();toast("Goal reached on "+p2.n);}else toast("Added "+money(v7));
-    render();return;}
-  if(a==="bills"){var p3=pots.find(function(x){return String(x.id)===b.dataset.id;});p3.bills=!p3.bills;save();closeSheet();render();return;}
-  if(a==="joint"){var p4=pots.find(function(x){return String(x.id)===b.dataset.id;});p4.joint=!p4.joint;save();closeSheet();render();return;}
-  if(a==="withdraw"){
-    var p5=pots.find(function(x){return String(x.id)===b.dataset.id;});
-    cash+=p5.v;p5.v=0;save();closeSheet();toast("Withdrawn");render();return;}
-
-  if(a==="editbudget"){
-    sheet('<h3>Adjust a budget</h3>'+Object.keys(budgets).map(function(c){
-      return '<label style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--soft)">'+
-       '<span class="small">'+c+'</span><input data-b="'+c+'" inputmode="decimal" value="'+budgets[c]+'" style="width:80px;text-align:right;background:none;border:0;font-weight:800">'+
-       '</label>';}).join("")+'<button class="btn" style="margin-top:14px" data-act="savebudget">Save</button>');return;}
-  if(a==="savebudget"){
-    $$("#sheet [data-b]").forEach(function(i){var v8=parseFloat(i.value);if(v8>0)budgets[i.dataset.b]=v8;});
-    save();closeSheet();toast("Budgets updated");render();return;}
-
-  if(a==="pin"){
-    sheet('<h3>Change PIN</h3><input class="field" inputmode="numeric" maxlength="4" placeholder="New 4 digits">'+
-     '<button class="btn" data-act="savepin">Save PIN</button>');return;}
-  if(a==="savepin"){
-    var i8=$("#sheet input");var v9=String(i8&&i8.value||"").replace(/\D/g,"");
-    if(v9.length!==4)return;prefs.pin=v9;save();closeSheet();toast("PIN changed");return;}
-
-  if(a==="dosort"){
-    pots[2].v+=600;pots[0].v+=Math.round(4250*0.4*100)/100;
-    cash+=4250-600-Math.round(4250*0.4*100)/100;
-    tx.unshift({id:Date.now(),t:Date.now(),s:"",n:"Kestrel Digital Ltd",c:"Income",a:4250,ac:"current"});
-    save();confetti();toast("Salary sorted");go("home");return;}
-  if(a==="paidearly"){
-    if(paidEarly){toast("Already paid early");return;}
-    paidEarly=true;cash+=4250;
-    tx.unshift({id:Date.now(),t:Date.now(),s:"",n:"Kestrel Digital Ltd",c:"Income",a:4250,ac:"current"});
-    save();confetti();toast("£4,250.00 paid in early");go("home");return;}
-  if(a==="send"){
-    sheet('<h3>Send money</h3><input class="field" inputmode="decimal" placeholder="Amount">'+
-     '<div class="chips"><button data-p="10">£10</button><button data-p="50">£50</button><button data-p="100">£100</button></div>'+
-     '<button class="btn" data-act="dosend">Send</button>');return;}
-  if(a==="dosend"){
-    var v10=num();if(!v10||v10>cash){var i9=$("#sheet input");if(i9)i9.value="";return;}
-    cash-=v10;tx.unshift({id:Date.now(),t:Date.now(),s:"",n:"Sophie Turner",c:"Transfers",a:-v10,ac:"current"});
-    save();closeSheet();toast("Sent "+money(v10));render();return;}
-  if(a==="request"){toast("Request link copied");return;}
-  if(a==="monzome"){toast("monzo.me link copied");return;}
-  if(a==="banktransfer"){sheet('<h3>Bank transfer</h3><p class="small muted">Sort code</p><p class="num" style="font-size:20px;margin:0 0 10px">04-00-04</p><p class="small muted">Account number</p><p class="num" style="font-size:20px;margin:0 0 16px">8844 1172</p><button class="btn" data-act="close">Done</button>');return;}
-  if(a==="newtab"){toast("Tab started");return;}
-  if(a==="flexplan"){
-    sheet('<h3>Flex a purchase</h3><p class="small muted">Choose a recent payment</p>'+
-     tx.filter(function(t){return t.a<0&&Math.abs(t.a)>20;}).slice(0,4).map(function(t){
-      return '<div class="row" style="padding:10px 0">'+logo(t.s,t.n)+'<div class="mid"><b>'+esc(t.n)+'</b>'+
-       '<span>'+money(Math.abs(t.a))+' · 3 × '+money(Math.abs(t.a)/3)+'</span></div></div>';}).join("")+
-     '<button class="btn" data-act="close">Close</button>');return;}
-  if(a==="flexlimit"){toast("Limit changes take a minute");return;}
-
-  if(a==="statement"){
-    var mth=parseInt(b.dataset.m,10),yr=parseInt(b.dataset.y,10);
-    var rows=[["Date","Merchant","Category","Amount"]];
-    tx.filter(function(t){var d=new Date(t.t);return d.getMonth()+1===mth&&d.getFullYear()===yr;})
-      .forEach(function(t){rows.push([new Date(t.t).toISOString(),t.n,t.c,t.a.toFixed(2)]);});
-    var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
-    download("monzo-"+yr+"-"+String(mth).padStart(2,"0")+".csv",csv);
-    toast(rows.length-1+" transactions exported");return;}
-
-  if(a==="export"){
-    var rows2=[["Date","Merchant","Category","Amount"]];
-    tx.forEach(function(t){rows2.push([new Date(t.t).toISOString(),t.n,t.c,t.a.toFixed(2)]);});
-    var csv2=rows2.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(",");}).join("\n");
-    download("monzo-statement.csv",csv2);toast("CSV downloaded");return;}
-
-  if(a==="reset"){
-    tx=seed();cash=3412.87;paidEarly=false;odUsed=0;holdings=buildHoldings();save();go("home");toast("Data rebuilt");return;}
-});
-
-document.addEventListener("click",function(e){
-  var c=e.target.closest("[data-p]");if(!c)return;
-  var i=$("#sheet input");if(i)i.value=c.dataset.p;
-});
-document.addEventListener("keydown",function(e){if(e.key==="Escape")closeSheet();});
-
-window.__errors=[];
-window.addEventListener("error",function(e){window.__errors.push(e.message+" @ "+e.filename+":"+e.lineno);});
-
-load();paint();render();lock();
-if(!prefs.seen){
-  prefs.seen=true;save();
-  setTimeout(function(){
-    sheet('<h3>What\'s new</h3><p class="small muted">Trends charts now run on your real spending, and your Current, Savings and Cash ISA accounts all live in the account hub.</p>'+
-     '<button class="btn" data-act="close">Got it</button>');
-  },900);
-}
+/* drag to dismiss */
+(function(){
+  const s=$('#sheet');let y0=null,dy=0;
+  s.addEventListener('touchstart',e=>{if(s.scrollTop>4)return;y0=e.touches[0].clientY},{passive:true});
+  s.addEventListener('touchmove',e=>{if(y0===null)return;dy=e.touches[0].clientY-y0;if(dy>0)s.style.transform=`translateY(${dy}px)`},{passive:true});
+  s.addEventListener('touchend',()=>{if(y0===null)return;s.style.transform='';if(dy>90)closeSheet();y0=null;dy=0});
 })();
-</script>
-<script>
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("sw.js");
-  if(location.search.indexOf("reset=1")>-1){
-    caches.keys().then(function(k){return Promise.all(k.map(function(n){return caches.delete(n);}));})
-      .then(function(){return navigator.serviceWorker.getRegistrations();})
-      .then(function(r){return Promise.all(r.map(function(x){return x.unregister();}));})
-      .then(function(){location.replace(location.pathname);});
-  }
+
+/* ============================================================
+   ROUTER
+   ============================================================ */
+let stack=['home'];
+function go(r,p){stack.push(r+(p?':'+p:''));render();window.scrollTo(0,0)}
+function back(){if(stack.length>1)stack.pop();render();window.scrollTo(0,0)}
+function reset(r){stack=[r];render();window.scrollTo(0,0)}
+const cur=()=>stack[stack.length-1];
+const curP=()=>{const c=cur();return c.includes(':')?c.split(':')[1]:null};
+
+function topbar(title,opts={}){
+  return `<div class="top">
+    ${opts.back?`<button class="iconbtn" onclick="back()" aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>`:''}
+    <h1>${esc(title)}</h1>
+    ${opts.right||''}
+  </div>`;
 }
+function tabs(){
+  const c=cur().split(':')[0];
+  const on=k=>c===k?'on':'';
+  return `<nav class="tabs" aria-label="Main">
+    <button class="${on('home')}" onclick="reset('home')"><svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/></svg>Home</button>
+    <button class="${on('trends')}" onclick="reset('trends')"><svg viewBox="0 0 24 24"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/></svg>Trends</button>
+    <button class="${on('savings')}" onclick="reset('savings')"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Save</button>
+    <button class="${on('profile')}" onclick="reset('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>You</button>
+  </nav>`;
+}
+
+/* ============================================================
+   CHART HELPERS
+   ============================================================ */
+function lineChart(pts,w,h,opt={}){
+  if(!pts.length)return '';
+  const min=Math.min(...pts),max=Math.max(...pts),pad=(max-min)||1;
+  const X=i=>i/(pts.length-1||1)*w, Y=v=>h-((v-min)/pad)*h;
+  const d=pts.map((v,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+  const area=`${d} L${w} ${h} L0 ${h} Z`;
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="height:${opt.h||140}px" aria-hidden="true">
+    <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF4F40" stop-opacity=".28"/><stop offset="1" stop-color="#FF4F40" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#g1)"/><path d="${d}" fill="none" stroke="#FF4F40" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(pts.length-1)}" cy="${Y(pts[pts.length-1])}" r="4" fill="#FF4F40"/></svg>`;
+}
+function barChart(vals,labels,w,h){
+  if(!vals.length)return '';
+  const max=Math.max(...vals)||1;const bw=w/vals.length;
+  return `<svg class="chart" viewBox="0 0 ${w} ${h+18}" style="height:${h+18}px" aria-hidden="true">
+    ${vals.map((v,i)=>`<rect x="${(i*bw+bw*0.18).toFixed(1)}" y="${(h-(v/max)*h).toFixed(1)}" width="${(bw*0.64).toFixed(1)}" height="${Math.max(1,(v/max)*h).toFixed(1)}" rx="3" fill="${v===max?'#FF4F40':'#091723'}" opacity="${v===max?1:.82}"/>`).join('')}
+    ${labels.map((l,i)=>`<text class="axis" x="${(i*bw+bw/2).toFixed(1)}" y="${h+13}" text-anchor="middle">${esc(l)}</text>`).join('')}
+  </svg>`;
+}
+function donut(data,w=150){
+  const total=data.reduce((s,d)=>s+d.v,0)||1;let a=-Math.PI/2;
+  const R=w/2, r=R*0.62;
+  const arcs=data.map(d=>{
+    const ang=d.v/total*Math.PI*2;const a2=a+ang;
+    const p=(rad,ang)=>[w/2+Math.cos(ang)*rad,w/2+Math.sin(ang)*rad];
+    const [x1,y1]=p(R,a),[x2,y2]=p(R,a2),[x3,y3]=p(r,a2),[x4,y4]=p(r,a);
+    const big=ang>Math.PI?1:0;
+    a=a2;
+    return `<path d="M${x1} ${y1} A${R} ${R} 0 ${big} 1 ${x2} ${y2} L${x3} ${y3} A${r} ${r} 0 ${big} 0 ${x4} ${y4} Z" fill="${d.c}"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${w} ${w}" style="width:${w}px;height:${w}px" aria-hidden="true">${arcs}</svg>`;
+}
+function heatmap(cells){
+  return `<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">${cells.map(c=>
+    `<div title="${c.d}: ${gbp(c.v)}" style="aspect-ratio:1;border-radius:6px;background:${c.v?`rgba(255,79,64,${clamp(c.v/120,.12,1).toFixed(2)})`:'#F1F2F4'}"></div>`).join('')}</div>`;
+}
+
+/* ============================================================
+   VIEWS
+   ============================================================ */
+function vHome(){
+  const lts=leftToSpend();
+  const recent=S.tx.slice(0,28);
+  return `
+  <div class="top">
+    <div class="avatar" role="button" tabindex="0" onclick="go('hub')" aria-label="Accounts">JA</div>
+    <h1 style="font-size:17px">${esc(S.profile.name.split(' ')[0])}</h1>
+    <button class="iconbtn" onclick="go('search')" aria-label="Search"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+    <button class="iconbtn" onclick="go('notifs')" aria-label="Notifications">🔔</button>
+  </div>
+  <div class="pad" style="padding-top:8px">
+    <div class="hero">
+      <div class="lbl">Left to spend</div>
+      <div class="bal mono" data-count="${lts}">${gbp(lts)}</div>
+      <div class="sub">of £2,600 monthly budget · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long'})}</div>
+      <div class="prog navy" style="margin:14px 0 16px"><i style="width:${clamp((1-lts/2600)*100,0,100)}%;background:#FF4F40"></i></div>
+      <div style="display:flex;gap:10px">
+        <button class="btn coral sm" style="flex:1" onclick="go('move')">Move money</button>
+        <button class="btn ghost sm" style="flex:1;background:rgba(255,255,255,.14);color:#fff" onclick="go('pay')">Pay</button>
+      </div>
+    </div>
+    <div class="row" style="padding:16px 4px 8px">
+      <div class="t"><b>Current account</b><span>${gbp(S.acct.current)} available${S.acct.odDrawn?` · ${gbp(S.acct.odDrawn)} overdrawn`:''}</span></div>
+      <button class="badge" onclick="go('card')">Card</button>
+    </div>
+  </div>
+
+  <div class="sec" style="display:flex;justify-content:space-between;align-items:center">Pots <button class="badge" onclick="reset('savings')">${gbp0(S.acct.savings)}</button></div>
+  <div style="display:flex;gap:10px;overflow-x:auto;padding:0 20px 6px;scrollbar-width:none">
+    ${S.pots.map(p=>`<button onclick="go('pot',p2='${p.id}')" class="card" style="flex:0 0 132px;text-align:left;background:${p.col}18;border:0">
+      <div style="font-size:22px">${p.ico}</div>
+      <div style="font-weight:800;font-size:13px;margin-top:6px;line-height:1.2">${esc(p.n)}</div>
+      <div class="mono" style="font-weight:800;font-size:14px;margin-top:4px">${gbp(p.a)}</div>
+    </button>`).join('')}
+    <button class="card" style="flex:0 0 132px;border:1.5px dashed var(--line);background:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;color:var(--muted)" onclick="newPot()">+ New pot</button>
+  </div>
+
+  <div class="sec">Transactions</div>
+  <div class="list">
+    ${recent.map((t,i)=>txRow(t,i)).join('')||'<div class="empty"><b>Nothing yet</b>Your spending will appear here.</div>'}
+  </div>
+  ${tabs()}`;
+}
+function txRow(t,i){
+  const ico=t.amt>0?'↓':(t.n[0]||'?');
+  return `<button class="row stag" style="animation-delay:${Math.min(i*14,220)}ms;width:100%;text-align:left" onclick="go('tx','${t.id}')">
+    <span class="ico ${t.amt>0?'coral':''}">${esc(ico)}</span>
+    <span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}${t.pend?' · Pending':''}${t.dd?' · Direct Debit':''}</span></span>
+    <span class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${gbp(t.amt)}</span>
+  </button>`;
+}
+
+function vHub(){
+  return topbar('Accounts',{back:true})+`
+  <div class="pad">
+    <div class="card w" style="margin-bottom:12px">
+      <div class="lbl small muted" style="font-weight:800;text-transform:uppercase;font-size:11px;letter-spacing:.8px">Net worth</div>
+      <div style="font-size:32px;font-weight:800;letter-spacing:-1.2px" class="mono">${gbp(netWorth())}</div>
+    </div>
+    ${[
+      ['Current account',S.acct.current,'home'],
+      ['Savings',S.acct.savings,'savings'],
+      ['Cash ISA',S.acct.isaCash,'isa'],
+      ['Investments',portVal(),'inv'],
+      ['Monzo Flex',-S.acct.flexUsed,'flex'],
+      ['Overdraft',-S.acct.odDrawn,'od']
+    ].map(([n,v,r])=>`<button class="row" style="width:100%;text-align:left" onclick="reset('${r}')">
+      <span class="t"><b>${n}</b><span>${r==='isa'||r==='inv'?'Opened October 1992':'Monzo'}</span></span>
+      <span class="amt ${v<0?'':'pos'}">${gbp(v)}</span></button>`).join('')}
+    <div class="sec" style="padding:0;margin-top:24px">Combined ISA wrapper</div>
+    <div class="card" style="background:#FFF1F0">
+      <div style="display:flex;justify-content:space-between"><b>Stocks &amp; Shares ISA</b><b class="mono">${gbp(isaBal())}</b></div>
+      <div class="small muted" style="margin-top:6px">Cash ${gbp(S.acct.isaCash)} · Invested ${gbp(portVal())}</div>
+      <div class="tiny muted" style="margin-top:6px">${tyLabel(taxYear())} allowance used ${gbp(tyUsed())} of ${gbp(ISA_LIMITS[taxYear()]||20000)}</div>
+    </div>
+  </div>`;
+}
+
+function vTrends(){
+  const range=S.seen.trendRange||'month';
+  const cats={};
+  const from=new Date();from.setDate(from.getDate()-(range==='week'?7:range==='month'?30:range==='year'?365:1095));
+  S.tx.filter(t=>t.amt<0&&new Date(t.d)>=from).forEach(t=>{cats[t.c]=(cats[t.c]||0)+(-t.amt)});
+  const palette=['#FF4F40','#091723','#7A5AF8','#0BA5EC','#0E9F6E','#B54708','#D92D20','#475467'];
+  const cd=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([k,v],i)=>({k,v,c:palette[i%palette.length]}));
+  const total=cd.reduce((s,d)=>s+d.v,0);
+  const days=range==='week'?7:range==='month'?30:range==='year'?12:36;
+  const buckets=Array(days).fill(0);
+  S.tx.filter(t=>t.amt<0).forEach(t=>{
+    const dt=new Date(t.d);const idx=range==='year'?11-dt.getMonth():range==='all'?35-(new Date().getFullYear()-dt.getFullYear())*12-dt.getMonth():Math.floor((Date.now()-dt.getTime())/864e5);
+    const i=range==='week'||range==='month'?days-1-idx:idx;
+    if(i>=0&&i<days)buckets[i]+=-t.amt;
+  });
+  const bal=[];
+  for(let i=Math.min(29,S.tx.length);i>=0;i--) bal.push(S.tx[i]?.bal||0);
+  const cells=[];
+  for(let i=34;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=dstr(d);const v=S.tx.filter(t=>t.d===ds&&t.amt<0).reduce((s,t)=>s-t.amt,0);cells.push({d:ds,v})}
+  const labels=range==='week'?['M','T','W','T','F','S','S']:range==='month'?Array.from({length:days},(_,i)=>i%5===0?String(i+1):''):MON;
+
+  return topbar('Trends')+`<div class="pad">
+    <div class="seg" role="tablist" style="margin-bottom:16px">
+      ${[['week','Week'],['month','Month'],['year','Year'],['all','All time']].map(([k,l])=>`<button class="${range===k?'on':''}" onclick="S.seen.trendRange='${k}';save();render()">${l}</button>`).join('')}
+    </div>
+    <div class="card w">
+      <div class="small muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px;font-size:11px">Balance trend</div>
+      <div style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px" class="mono">${gbp(S.acct.current)}</div>
+      ${lineChart(bal,320,120)}
+    </div>
+    <div class="card w" style="margin-top:12px">
+      <div class="small muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px;font-size:11px">Spending</div>
+      <div style="font-size:26px;font-weight:800;letter-spacing:-1px;margin:4px 0 12px" class="mono">${gbp(buckets.reduce((a,b)=>a+b,0))}</div>
+      ${barChart(buckets,labels,320,110)}
+    </div>
+    <div class="card w" style="margin-top:12px;display:flex;gap:16px;align-items:center">
+      ${donut(cd,132)}
+      <div style="flex:1">
+        ${cd.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px">
+          <span style="width:9px;height:9px;border-radius:3px;background:${d.c};flex:0 0 auto"></span>
+          <span style="flex:1">${esc(d.k)}</span><b class="mono">${gbp(d.v)}</b></div>`).join('')}
+      </div>
+    </div>
+    <div class="card w" style="margin-top:12px">
+      <div class="small muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px;font-size:11px;margin-bottom:10px">Last 35 days</div>
+      ${heatmap(cells)}
+    </div>
+    <div class="card" style="margin-top:12px;background:#FFF1F0">
+      <b>Lifetime performance</b>
+      <div class="small muted" style="margin-top:4px">Since October 1992 · ${gbp(isaBal())} current value</div>
+      <div style="margin-top:12px">${lineChart(S.ledger.isa.filter((_,i)=>i%3===0).map(r=>r.closing),320,90)}</div>
+      <button class="btn sm" style="margin-top:12px" onclick="reset('isa')">Open ISA history</button>
+    </div>
+  </div>${tabs()}`;
+}
+
+function vSavings(){
+  return topbar('Save')+`<div class="pad">
+    <div class="hc">
+      <div style="font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.75">Total saved</div>
+      <div style="font-size:38px;font-weight:800;letter-spacing:-1.5px" class="mono">${gbp(S.acct.savings)}</div>
+      <div class="small" style="opacity:.8;margin-top:4px">Across ${S.pots.length} pots · up to 4.10% AER</div>
+    </div>
+    <div class="sec" style="padding:0;margin-top:20px">Your pots</div>
+    ${S.pots.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="go('pot','${p.id}')">
+      <span class="ico" style="background:${p.col}20">${p.ico}</span>
+      <span class="t"><b>${esc(p.n)}</b><span>${p.rate.toFixed(2)}% AER${p.lock?' · locked':''}</span></span>
+      <span class="amt pos">${gbp(p.a)}</span></button>`).join('')}
+    <button class="btn ghost" style="margin-top:14px" onclick="newPot()">+ Create a pot</button>
+    <div class="sec" style="padding:0;margin-top:26px">Tax-efficient</div>
+    <button class="row" style="width:100%;text-align:left" onclick="reset('isa')">
+      <span class="ico coral">ISA</span>
+      <span class="t"><b>Stocks &amp; Shares ISA</b><span>Opened October 1992 · ${tyLabel(taxYear())} allowance ${gbp(ISA_LIMITS[taxYear()]||20000)}</span></span>
+      <span class="amt">${gbp(isaBal())}</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="reset('inv')">
+      <span class="ico">📈</span>
+      <span class="t"><b>Investments</b><span>${S.holdings.length} holdings · ${gbp(portVal())}</span></span>
+      <span class="amt">›</span></button>
+  </div>${tabs()}`;
+}
+
+function vISA(){
+  const rows=S.ledger.isa;
+  const years=[...new Set(rows.map(r=>r.y))].sort((a,b)=>b-a);
+  const open=S.seen.isaYear||years[0];
+  const yr=rows.filter(r=>r.y===open);
+  const used=tyUsed(),lim=ISA_LIMITS[taxYear()]||20000;
+  return topbar('Cash ISA',{back:true,right:`<button class="iconbtn" onclick="go('stmts','isa')" aria-label="Statements">📄</button>`})+`<div class="pad">
+    <div class="card w">
+      <div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">ISA wrapper value</div>
+      <div style="font-size:34px;font-weight:800;letter-spacing:-1.4px" class="mono">${gbp(isaBal())}</div>
+      <div class="small muted">Cash ${gbp(S.acct.isaCash)} · Invested ${gbp(portVal())}</div>
+      <div class="badge imp" style="margin-top:10px">Opened 6 October 1992 · PEP</div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700"><span>${tyLabel(taxYear())} allowance</span><span class="mono">${gbp(used)} / ${gbp(lim)}</span></div>
+      <div class="prog" style="margin-top:8px"><i style="width:${clamp(used/lim*100,0,100)}%"></i></div>
+      <button class="btn sm" style="margin-top:12px" onclick="isaAdd()" ${used>=lim?'disabled':''}>Add to ISA</button>
+    </div>
+    <div class="sec" style="padding:0;margin-top:22px">Wrapper history</div>
+    <div class="card w small muted">Started as a PEP in October 1992, moved to a TESSA alongside it, then transferred into a stocks &amp; shares ISA when ISAs launched in April 1999. ${rows.filter(r=>r.imported).length} months imported from other providers.</div>
+    <div class="sec" style="padding:0;margin-top:22px">Imported from</div>
+    ${S.importLog.map(l=>`<div class="row"><span class="ico">⇄</span><span class="t"><b>${esc(l.src)}</b><span>${esc(l.n)}</span></span><span class="amt tiny muted">${l.d}</span></div>`).join('')}
+    <div class="sec" style="padding:0;margin-top:22px">Monthly ledger</div>
+    <div style="border-top:1px solid var(--line)">
+      ${years.map(y=>`<div>
+        <button class="yearbtn" onclick="S.seen.isaYear=${y};save();render()">
+          <b>${y}</b><span class="small muted" style="flex:1">${gbp(rows.filter(r=>r.y===y).slice(-1)[0].closing)}</span>
+          <span class="muted">${y===open?'▾':'▸'}</span>
+        </button>
+        ${y===open?yr.map(r=>`<div class="ledrow ${r.mkt<-2000?'crisis':''}">
+          <span class="m">${MON[r.m]}</span>
+          <span class="v">${gbp(r.closing)}</span>
+          <span></span>
+          <span class="d">
+            ${r.imported?`<span class="badge imp" style="font-size:10px;padding:2px 7px">Imported · ${esc(r.src)}</span>`:`<span class="badge" style="font-size:10px;padding:2px 7px">${r.wrapper}</span>`}
+            <span>in ${gbp(r.contrib)}</span><span>div ${gbp(r.div)}</span>
+            <span class="${r.mkt<0?'':'pos'}">mkt ${r.mkt<0?'':'+'}${gbp(r.mkt)}</span>
+            <span>fee ${gbp(r.fee)}</span>
+          </span>
+        </div>`).join(''):''}
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function vInv(){
+  const total=portVal(),cost=S.holdings.reduce((s,h)=>s+h.cost,0);
+  const gain=total-cost;
+  return topbar('Investments',{back:true,right:`<button class="iconbtn" onclick="go('stmts','inv')" aria-label="Statements">📄</button>`})+`<div class="pad">
+    <div class="card w">
+      <div class="tiny muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.8px">Portfolio value</div>
+      <div style="font-size:34px;font-weight:800;letter-spacing:-1.4px" class="mono">${gbp(total)}</div>
+      <div class="small"><span class="pos">+${gbp(gain)}</span> <span class="muted">(${(gain/cost*100).toFixed(1)}%) since 1992</span></div>
+    </div>
+    <div class="card" style="margin-top:12px;background:#FFF1F0">
+      <div class="row" style="padding:0"><span class="t"><b>Reinvested dividends</b><span>Automatic · last paid 1 Dec</span></span><span class="badge ok">On</span></div>
+    </div>
+    <div class="sec" style="padding:0;margin-top:22px">Holdings · ${S.holdings.length}</div>
+    ${S.holdings.slice().sort((a,b)=>b.v-a.v).map((h,i)=>`<button class="row" style="width:100%;text-align:left" onclick="go('hold','${i}')">
+      <span class="ico" style="font-size:11px">${esc(h.k.slice(0,3).toUpperCase())}</span>
+      <span class="t"><b>${esc(h.n)}</b><span>${esc(h.k)} · cost ${gbp(h.cost)}</span></span>
+      <span class="amt">${gbp(h.v)}</span></button>`).join('')}
+  </div>`;
+}
+
+function vHold(i){
+  const h=S.holdings[i];
+  return topbar(h.n,{back:true})+`<div class="pad">
+    <div class="card w"><div class="tiny muted">VALUE</div><div style="font-size:30px;font-weight:800" class="mono">${gbp(h.v)}</div>
+    <div class="small"><span class="${h.v-h.cost>=0?'pos':''}">${h.v-h.cost>=0?'+':''}${gbp(h.v-h.cost)}</span> <span class="muted">(${((h.v-h.cost)/h.cost*100).toFixed(1)}%)</span></div></div>
+    <div class="card w" style="margin-top:12px"><div class="small muted">Cost basis ${gbp(h.cost)} · ${esc(h.k)} · held since 1992 wrapper</div></div>
+    <button class="btn" style="margin-top:14px" onclick="toast('Order ticket opened for ${esc(h.n)}')">Buy more</button>
+    <button class="btn ghost" style="margin-top:8px" onclick="toast('Sell order placed')">Sell</button>
+  </div>`;
+}
+
+function vPot(id){
+  const p=S.pots.find(x=>x.id===id);if(!p)return vSavings();
+  const pct=clamp(p.a/p.goal*100,0,100);
+  return topbar(p.n,{back:true})+`<div class="pad">
+    <div class="card" style="background:${p.col}14;text-align:center;padding:28px">
+      <div style="font-size:44px">${p.ico}</div>
+      <div style="font-size:34px;font-weight:800;letter-spacing:-1.4px;margin-top:8px" class="mono">${gbp(p.a)}</div>
+      <div class="small muted">of ${gbp(p.goal)} goal</div>
+      <div class="prog" style="margin-top:12px"><i style="width:${pct}%;background:${p.col}"></i></div>
+      <div class="tiny muted" style="margin-top:8px">${p.rate.toFixed(2)}% AER${p.lock?` · locked until ${new Date(p.lock).toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`:''}</div>
+    </div>
+    <div class="row" style="padding:16px 0"><span class="t"><b>Interest earned</b><span>Paid monthly</span></span><span class="amt pos">${gbp(p.a*p.rate/100/12)}</span></div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn" style="flex:1" onclick="potMove('${p.id}',1)">Add</button>
+      <button class="btn ghost" style="flex:1" onclick="potMove('${p.id}',-1)">Withdraw</button>
+    </div>
+    <div class="sec" style="padding:0;margin-top:24px">Manage</div>
+    <button class="row" style="width:100%;text-align:left" onclick="toast('Goal updated')"><span class="t"><b>Edit goal</b></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="toast('Round-ups on for this pot')"><span class="t"><b>Round-ups</b><span>Round spending to the nearest £1</span></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="archivePot('${p.id}')"><span class="t"><b>Archive pot</b></span><span class="muted">›</span></button>
+  </div>`;
+}
+
+function vTx(id){
+  const t=S.tx.find(x=>x.id===id);if(!t)return vHome();
+  return topbar('Transaction',{back:true})+`<div class="pad">
+    <div class="card" style="text-align:center;padding:26px">
+      <div class="ico ${t.amt>0?'coral':''}" style="margin:0 auto 12px;width:56px;height:56px;font-size:20px">${esc(t.n[0])}</div>
+      <div style="font-size:28px;font-weight:800" class="mono">${t.amt>0?'+':''}${gbp(t.amt)}</div>
+      <div style="font-weight:700;margin-top:6px">${esc(t.n)}</div>
+      <div class="small muted">${new Date(t.t).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+      ${t.pend?'<div class="badge warn" style="margin-top:10px">Pending</div>':''}
+      ${t.dd?'<div class="badge" style="margin-top:10px">Direct Debit</div>':''}
+    </div>
+    <div class="card w" style="margin-top:12px;padding:0">
+      <div class="row" style="padding:13px 16px"><span class="t"><b>Category</b></span><span class="small muted">${esc(t.c)}</span></div>
+      <div class="row" style="padding:13px 16px"><span class="t"><b>Balance after</b></span><span class="amt small">${gbp(t.bal)}</span></div>
+      <div class="row" style="padding:13px 16px"><span class="t"><b>Reference</b></span><span class="small muted">${esc(t.id.slice(0,12).toUpperCase())}</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+      <button class="btn ghost" onclick="editCat('${t.id}')">Edit category</button>
+      <button class="btn ghost" onclick="noteTx('${t.id}')">Add note</button>
+      <button class="btn ghost" onclick="splitTx('${t.id}')">Split bill</button>
+      <button class="btn ghost" onclick="toast('Dispute raised')">Dispute</button>
+    </div>
+    ${t.note?`<div class="card" style="margin-top:12px"><b class="small">Note</b><div class="small muted">${esc(t.note)}</div></div>`:''}
+    <button class="btn" style="margin-top:14px" onclick="toast('Receipt attached')">Attach receipt</button>
+  </div>`;
+}
+
+function vFlex(){
+  return topbar('Monzo Flex',{back:true})+`<div class="pad">
+    <div class="hc"><div class="tiny" style="font-weight:800;letter-spacing:.8px;text-transform:uppercase;opacity:.8">Available</div>
+    <div style="font-size:34px;font-weight:800;letter-spacing:-1.4px" class="mono">${gbp(S.acct.flexLimit-S.acct.flexUsed)}</div>
+    <div class="small" style="opacity:.85">of ${gbp(S.acct.flexLimit)} limit · ${gbp(S.acct.flexUsed)} used</div></div>
+    <div class="sec" style="padding:0;margin-top:20px">Plans</div>
+    <div class="row"><span class="t"><b>Pay in 3</b><span>0% · 3 monthly instalments</span></span><span class="badge ok">Active</span></div>
+    <div class="row"><span class="t"><b>Pay in 6</b><span>24.9% APR representative</span></span><span class="muted">›</span></div>
+    <div class="row"><span class="t"><b>Pay in 12</b><span>24.9% APR representative</span></span><span class="muted">›</span></div>
+    <div class="sec" style="padding:0;margin-top:20px">Next instalment</div>
+    <div class="card w"><div class="row" style="padding:0"><span class="t"><b>Argos Stockton</b><span>1 of 3 · due 12 Jan</span></span><span class="amt">${gbp(137.50)}</span></div></div>
+    <button class="btn" style="margin-top:14px" onclick="toast('Instalment paid early')">Pay instalment early</button>
+  </div>`;
+}
+
+function vOD(){
+  const avail=S.acct.odLimit-S.acct.odDrawn;
+  return topbar('Overdraft',{back:true})+`<div class="pad">
+    <div class="card w"><div class="tiny muted">Available to use</div><div style="font-size:32px;font-weight:800" class="mono">${gbp(avail)}</div>
+    <div class="small muted">${gbp(S.acct.odDrawn)} of ${gbp(S.acct.odLimit)} used · 29% EAR</div>
+    <div class="prog" style="margin-top:10px"><i style="width:${S.acct.odDrawn/S.acct.odLimit*100}%"></i></div></div>
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button class="btn" style="flex:1" onclick="odMove(1)">Draw</button>
+      <button class="btn ghost" style="flex:1" onclick="odMove(-1)">Repay</button>
+    </div>
+    <div class="card" style="margin-top:16px"><b class="small">Daily charge</b><div class="small muted">50p per day while over £0, capped at £15.50 a month.</div></div>
+  </div>`;
+}
+
+function vDD(){
+  return topbar('Direct Debits',{back:true})+`<div class="pad">
+    <div class="card w small muted">${S.dd.length} active mandates · next collection ${S.dd.slice().sort((a,b)=>a.day-b.day)[0].day} ${MON[new Date().getMonth()]}</div>
+    ${S.dd.map(d=>`<button class="row" style="width:100%;text-align:left" onclick="ddSheet('${d.id}')">
+      <span class="ico">${esc(d.n[0])}</span>
+      <span class="t"><b>${esc(d.n)}</b><span>Monthly · day ${d.day} · ref ${esc(d.ref)}</span></span>
+      <span class="amt">${gbp(d.a)}</span></button>`).join('')}
+  </div>`;
+}
+
+function vSched(){
+  return topbar('Scheduled',{back:true})+`<div class="pad">
+    <div class="sec" style="padding:0">Standing orders</div>
+    ${S.sched.map(s=>`<div class="row"><span class="ico">${esc(s.n[0])}</span><span class="t"><b>${esc(s.n)}</b><span>${esc(s.to)} · ${esc(s.freq)}</span></span><span class="amt">${gbp(s.a)}</span></div>`).join('')}
+    <div class="sec" style="padding:0;margin-top:20px">Payees</div>
+    ${S.payees.map(p=>`<div class="row"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b><span>${esc(p.s)} · ${esc(p.a)}</span></span><span class="muted">›</span></div>`).join('')}
+    <button class="btn" style="margin-top:16px" onclick="toast('New payee added')">+ Add payee</button>
+  </div>`;
+}
+
+function vSearch(){
+  const q=(S.seen.q||'').toLowerCase();
+  const res=q?S.tx.filter(t=>t.n.toLowerCase().includes(q)||t.c.toLowerCase().includes(q)).slice(0,60):[];
+  const led=q?S.ledger.isa.filter(r=>ymLabel(r.ym).toLowerCase().includes(q)||r.ym.includes(q)).slice(-24):[];
+  return topbar('Search',{back:true})+`<div class="pad">
+    <input id="q" placeholder="Merchant, category or month" value="${esc(S.seen.q||'')}" oninput="S.seen.q=this.value;save();renderSearch()" autofocus/>
+    ${q?`<div class="sec" style="padding:0">${res.length} transactions</div>
+      ${res.map(t=>`<button class="row" style="width:100%;text-align:left" onclick="go('tx','${t.id}')"><span class="ico">${esc(t.n[0])}</span><span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB')}</span></span><span class="amt">${gbp(t.amt)}</span></button>`).join('')||'<div class="empty"><b>No matches</b></div>'}
+      ${led.length?`<div class="sec" style="padding:0;margin-top:20px">ISA ledger</div>${led.map(r=>`<div class="row"><span class="t"><b>${ymLabel(r.ym)}</b><span>closing balance</span></span><span class="amt">${gbp(r.closing)}</span></div>`).join('')}`:''}`
+    :`<div class="sec" style="padding:0">Recent searches</div>${['Tesco','Arriva','Bills','ISA'].map(s=>`<button class="row" style="width:100%;text-align:left" onclick="S.seen.q='${s}';save();render()"><span class="ico">⌕</span><span class="t"><b>${s}</b></span></button>`).join('')}`}
+  </div>`;
+}
+function renderSearch(){const v=cur();if(v.split(':')[0]==='search'){const q=$('#q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}render()}}
+
+function vStmts(kind){
+  const isa=kind==='isa';
+  const rows=isa?S.ledger.isa:[];
+  const years=isa?[...new Set(rows.map(r=>r.y))].sort((a,b)=>b-a):[new Date().getFullYear()];
+  return topbar(isa?'ISA statements':'Investment statements',{back:true})+`<div class="pad">
+    <div class="card w small muted">Every month since inception. Each statement exports as CSV.</div>
+    ${isa?years.map(y=>`<div class="row"><span class="t"><b>${y}</b><span>12 monthly statements${y===1992?' · from October':''}</span></span>
+      <button class="badge" onclick="dlYear(${y})">CSV</button></div>`).join(''):''}
+    <div class="sec" style="padding:0;margin-top:20px">Tax year summaries</div>
+    ${[...new Set(rows.map(r=>{const d=new Date(r.y,r.m,1);return d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6)?r.y-1:r.y}))].sort((a,b)=>b-a).slice(0,12).map(y=>{
+      const c=rows.filter(r=>{const d=new Date(r.y,r.m,1);const ty=d.getMonth()<3||(d.getMonth()===3&&d.getDate()<6)?r.y-1:r.y;return ty===y}).reduce((s,r)=>s+r.contrib,0);
+      return `<div class="row"><span class="t"><b>${tyLabel(y)}</b><span>limit ${gbp(ISA_LIMITS[y]||20000)}</span></span><span class="amt small">${gbp(c)}</span></div>`}).join('')}
+  </div>`;
+}
+
+function vNotifs(){
+  const n=S.notifs;
+  return topbar('Notifications',{back:true})+`<div class="pad">
+    ${n.length?n.map(x=>`<div class="row"><span class="ico">${x.i||'•'}</span><span class="t"><b>${esc(x.t)}</b><span>${esc(x.b)}</span></span><span class="tiny muted">${x.d}</span></div>`).join(''):'<div class="empty"><b>All caught up</b>Alerts will appear here.</div>'}
+  </div>`;
+}
+
+function vBudgets(){
+  return topbar('Targets',{back:true})+`<div class="pad">
+    <div class="card w small muted">Set a monthly target per category. Trends and Left to Spend use these.</div>
+    ${['Groceries','Transport','Eating out','Shopping','Bills','Leisure'].map((c,i)=>{
+      const spent=S.tx.filter(t=>t.c===c&&new Date(t.d).getMonth()===new Date().getMonth()).reduce((s,t)=>s-t.amt,0);
+      const cap=[420,120,180,200,320,90][i];
+      return `<div class="row"><span class="t"><b>${c}</b><span>${gbp(spent)} of ${gbp(cap)}</span><div class="prog" style="margin-top:6px"><i style="width:${clamp(spent/cap*100,0,100)}%"></i></div></span></div>`}).join('')}
+  </div>`;
+}
+
+function vProfile(){
+  const p=S.profile;
+  return topbar('You',{right:`<button class="iconbtn" onclick="go('settings')" aria-label="Settings">⚙️</button>`})+`<div class="pad">
+    <div class="card w center" style="padding:26px">
+      <div class="avatar" style="width:64px;height:64px;margin:0 auto;font-size:22px">JA</div>
+      <div style="font-weight:800;font-size:18px;margin-top:10px">${esc(p.name)}</div>
+      <div class="small muted">${esc(p.email)}</div>
+      <div class="badge ok" style="margin-top:10px">${esc(p.idv)}</div>
+    </div>
+    <div class="sec" style="padding:0;margin-top:22px">Account</div>
+    ${[['Personal details','pd'],['Security &amp; privacy','security'],['Card controls','card'],['Notifications','notifprefs'],['Direct Debits','dd'],['Scheduled payments','sched'],['Targets','budgets'],['Statements','stmts']].map(([l,r])=>
+      `<button class="row" style="width:100%;text-align:left" onclick="go('${r}')"><span class="t"><b>${l}</b></span><span class="muted">›</span></button>`).join('')}
+    <div class="sec" style="padding:0;margin-top:22px">Support</div>
+    <button class="row" style="width:100%;text-align:left" onclick="toast('Chat opening…')"><span class="t"><b>Chat with us</b><span>Usually replies in 2 minutes</span></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="go('help')"><span class="t"><b>Help centre</b></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="toast('All systems operational')"><span class="t"><b>Service status</b></span><span class="badge ok">Operational</span></button>
+    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 4.0.1</div>
+  </div>${tabs()}`;
+}
+
+function vPD(){
+  const p=S.profile;
+  return topbar('Personal details',{back:true})+`<div class="pad">
+    <label class="f">Legal name</label><input value="${esc(p.name)}" readonly/>
+    <label class="f">Address</label><input value="${esc(p.addr+', '+p.city+', '+p.pc)}" readonly/>
+    <label class="f">Email</label><input value="${esc(p.email)}" readonly/>
+    <label class="f">Phone</label><input value="${esc(p.phone)}" readonly/>
+    <label class="f">Date of birth</label><input value="${esc(new Date(p.dob).toLocaleDateString('en-GB'))}" readonly/>
+    <label class="f">Tax residency</label><input value="${esc(p.taxres)}" readonly/>
+    <div class="card small muted" style="margin-top:16px">Member since ${esc(p.since)} · identity ${esc(p.idv.toLowerCase())}</div>
+    <button class="btn" style="margin-top:16px" onclick="toast('Changes saved')">Save changes</button>
+  </div>`;
+}
+
+function vSecurity(){
+  return topbar('Security & privacy',{back:true})+`<div class="pad">
+    <div class="row"><span class="t"><b>Fingerprint unlock</b><span>Use the sensor on your S24 Ultra</span></span><button class="badge ${S.sec.bio?'ok':''}" onclick="S.sec.bio=!S.sec.bio;save();render()">${S.sec.bio?'On':'Off'}</button></div>
+    <div class="row"><span class="t"><b>Privacy mode</b><span>Hide balances until tapped</span></span><button class="badge ${S.sec.privacy?'ok':''}" onclick="S.sec.privacy=!S.sec.privacy;save();render()">${S.sec.privacy?'On':'Off'}</button></div>
+    <div class="row"><span class="t"><b>App PIN</b><span>${'•'.repeat(S.sec.pin.length)}</span></span><button class="badge" onclick="changePin()">Change</button></div>
+    <div class="row"><span class="t"><b>Log out of all devices</b></span><span class="muted">›</span></div>
+    <div class="sec" style="padding:0;margin-top:20px">Trusted devices</div>
+    <div class="row"><span class="ico">📱</span><span class="t"><b>Samsung Galaxy S24 Ultra</b><span>Stockton-on-Tees · this device</span></span><span class="badge ok">Current</span></div>
+  </div>`;
+}
+
+function vCard(){
+  const c=S.card;
+  return topbar('Card controls',{back:true})+`<div class="pad">
+    <div style="background:linear-gradient(135deg,#FF4F40,#FF7A5C);border-radius:22px;padding:20px;color:#fff;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">${MARK}<b style="font-size:13px;letter-spacing:1px">MONZO</b></div>
+      <div style="font-family:ui-monospace,monospace;font-size:19px;letter-spacing:2.5px;margin-top:26px" id="pan">•••• •••• •••• 4471</div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12px;opacity:.9"><span>J ARMSTRONG</span><span>09/29</span></div>
+    </div>
+    <div class="row"><span class="t"><b>Freeze card</b><span>${c.frozen?'Card is frozen':'Card is active'}</span></span><button class="badge ${c.frozen?'warn':'ok'}" onclick="S.card.frozen=!S.card.frozen;save();render();toast(S.card.frozen?'Card frozen':'Card unfrozen')">${c.frozen?'Frozen':'Active'}</button></div>
+    <div class="row"><span class="t"><b>Reveal PIN</b></span><button class="badge" onclick="toast('PIN ${S.sec.pin}')">Show</button></div>
+    <div class="row"><span class="t"><b>Online payments</b></span><button class="badge ${c.online?'ok':''}" onclick="S.card.online=!S.card.online;save();render()">${c.online?'On':'Off'}</button></div>
+    <div class="row"><span class="t"><b>Magnetic stripe</b></span><button class="badge ${c.mag?'ok':''}" onclick="S.card.mag=!S.card.mag;save();render()">${c.mag?'On':'Off'}</button></div>
+    <div class="row"><span class="t"><b>ATM limit</b><span>Daily</span></span><span class="amt small">${gbp0(c.atm)}</span></div>
+    <button class="btn ghost" style="margin-top:14px" onclick="toast('Virtual card created')">Create virtual card</button>
+    <button class="btn ghost" style="margin-top:8px" onclick="toast('Added to Google Wallet')">Add to Google Wallet</button>
+  </div>`;
+}
+
+function vNotifPrefs(){
+  return topbar('Notifications',{back:true})+`<div class="pad">
+    ${[['tx','Transactions'],['dd','Direct Debits'],['pot','Pot activity'],['market','Market moves']].map(([k,l])=>
+      `<div class="row"><span class="t"><b>${l}</b></span><button class="badge ${S.prefs.notif[k]?'ok':''}" onclick="S.prefs.notif['${k}']=!S.prefs.notif['${k}'];save();render()">${S.prefs.notif[k]?'On':'Off'}</button></div>`).join('')}
+  </div>`;
+}
+
+function vHelp(){
+  const faq=[['How do I transfer an ISA?','Ask the receiving provider to raise a transfer. Your allowance is unaffected.'],['What is the ISA limit?','£20,000 per tax year across all ISA types.'],['When is interest paid?','Monthly, on the last day of the month.'],['How do I cancel a Direct Debit?','Open Direct Debits, pick the mandate and cancel.']];
+  return topbar('Help',{back:true})+`<div class="pad">
+    ${faq.map(([q,a])=>`<div class="card w" style="margin-bottom:10px"><b class="small">${q}</b><div class="small muted" style="margin-top:6px">${a}</div></div>`).join('')}
+  </div>`;
+}
+
+function vMove(){
+  return topbar('Move money',{back:true})+`<div class="pad">
+    <div class="card w small muted">From <b>Current account</b> · ${gbp(S.acct.current)}</div>
+    ${S.pots.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="potMove('${p.id}',1);back()"><span class="ico" style="background:${p.col}20">${p.ico}</span><span class="t"><b>${esc(p.n)}</b><span>${gbp(p.a)}</span></span><span class="muted">›</span></button>`).join('')}
+    <button class="row" style="width:100%;text-align:left" onclick="isaAdd();back()"><span class="ico coral">ISA</span><span class="t"><b>Stocks &amp; Shares ISA</b></span><span class="muted">›</span></button>
+  </div>`;
+}
+
+function vPay(){
+  return topbar('Pay',{back:true})+`<div class="pad">
+    <div class="sec" style="padding:0">Payees</div>
+    ${S.payees.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="toast('Payment to ${esc(p.n)} sent')"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b><span>${esc(p.s)} · ${esc(p.a)}</span></span></button>`).join('')}
+  </div>`;
+}
+
+function vSettings(){
+  return topbar('Settings',{back:true})+`<div class="pad">
+    <button class="row" style="width:100%;text-align:left" onclick="go('pd')"><span class="t"><b>Personal details</b></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="go('security')"><span class="t"><b>Security &amp; privacy</b></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="go('notifprefs')"><span class="t"><b>Notifications</b></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="go('budgets')"><span class="t"><b>Targets</b></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="exportAll()"><span class="t"><b>Export all data</b><span>JSON backup</span></span><span class="muted">›</span></button>
+    <button class="row" style="width:100%;text-align:left" onclick="wipe()"><span class="t"><b>Reset account</b></span><span class="muted">›</span></button>
+  </div>`;
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function isaAdd(){
+  const used=tyUsed(),lim=ISA_LIMITS[taxYear()]||20000,room=lim-used;
+  if(room<=0){toast('Allowance used for '+tyLabel(taxYear()));return}
+  sheet(`<h2>Add to ISA</h2><p class="small muted">${tyLabel(taxYear())} allowance: ${gbp(used)} used of ${gbp(lim)}. ${gbp(room)} remaining.</p>
+    <label class="f">Amount</label><input id="isaAmt" type="number" inputmode="decimal" placeholder="0.00"/>
+    <div style="display:flex;gap:8px;margin-top:10px">${[100,500,1000].map(v=>`<button class="badge" onclick="document.getElementById('isaAmt').value=${v}">${gbp0(v)}</button>`).join('')}<button class="badge" onclick="document.getElementById('isaAmt').value=${room.toFixed(2)}">Max</button></div>
+    <button class="btn" style="margin-top:16px" onclick="doIsaAdd(${room})">Add</button>`);
+}
+function doIsaAdd(room){
+  let v=parseFloat($('#isaAmt').value||'0');
+  if(!(v>0)){toast('Enter an amount');return}
+  if(v>room){v=room;toast('Capped at remaining allowance')}
+  if(v>S.acct.current){toast('Not enough in current account');return}
+  S.acct.current=+(S.acct.current-v).toFixed(2);
+  S.acct.isaCash=+(S.acct.isaCash+v).toFixed(2);
+  const last=S.ledger.isa[S.ledger.isa.length-1];
+  last.contrib=+(last.contrib+v).toFixed(2);last.closing=+(last.closing+v).toFixed(2);
+  const ty=taxYear();
+  S.notifs.unshift({t:'ISA contribution',b:`${gbp(v)} added for ${tyLabel(ty)}`,d:'now',i:'ISA'});
+  save();closeSheet();render();toast(`${gbp(v)} added to your ISA`);
+}
+function potMove(id,sign){
+  const p=S.pots.find(x=>x.id===id);
+  sheet(`<h2>${sign>0?'Add to':'Withdraw from'} ${esc(p.n)}</h2>
+    <label class="f">Amount</label><input id="pmAmt" type="number" inputmode="decimal" placeholder="0.00"/>
+    <button class="btn" style="margin-top:16px" onclick="doPotMove('${id}',${sign})">Confirm</button>`);
+}
+function doPotMove(id,sign){
+  const p=S.pots.find(x=>x.id===id);const v=parseFloat($('#pmAmt').value||'0');
+  if(!(v>0)){toast('Enter an amount');return}
+  if(sign>0&&v>S.acct.current){toast('Not enough available');return}
+  if(sign<0&&v>p.a){toast('Not enough in pot');return}
+  p.a=+(p.a+sign*v).toFixed(2);
+  S.acct.current=+(S.acct.current-sign*v).toFixed(2);
+  S.acct.savings=+S.pots.reduce((s,x)=>s+x.a,0).toFixed(2);
+  save();closeSheet();render();toast(sign>0?`${gbp(v)} moved to ${p.n}`:`${gbp(v)} moved back`);
+}
+function newPot(){
+  sheet(`<h2>New pot</h2><label class="f">Name</label><input id="npName" placeholder="e.g. New car"/>
+    <label class="f">Goal</label><input id="npGoal" type="number" inputmode="decimal" placeholder="0"/>
+    <button class="btn" style="margin-top:16px" onclick="doNewPot()">Create</button>`);
+}
+function doNewPot(){
+  const n=$('#npName').value.trim()||'New pot';const g=parseFloat($('#npGoal').value||'500');
+  S.pots.push({id:'p'+Date.now(),n,a:0,rate:2.80,goal:g,lock:null,ico:'🎯',col:'#7A5AF8'});
+  save();closeSheet();render();toast('Pot created');
+}
+function archivePot(id){
+  const p=S.pots.find(x=>x.id===id);if(p.a>0){S.acct.current=+(S.acct.current+p.a).toFixed(2)}
+  S.pots=S.pots.filter(x=>x.id!==id);S.acct.savings=+S.pots.reduce((s,x)=>s+x.a,0).toFixed(2);
+  save();back();toast('Pot archived');
+}
+function odMove(sign){
+  if(sign>0){
+    const room=S.acct.odLimit-S.acct.odDrawn;
+    if(room<=0){toast('At limit');return}
+    const v=Math.min(100,room);
+    S.acct.odDrawn=+(S.acct.odDrawn+v).toFixed(2);S.acct.current=+(S.acct.current+v).toFixed(2);
+    toast(`${gbp(v)} drawn`);
+  }else{
+    if(S.acct.odDrawn<=0){toast('Nothing to repay');return}
+    const v=Math.min(100,S.acct.odDrawn,S.acct.current);
+    if(v<=0){toast('No funds');return}
+    S.acct.odDrawn=+(S.acct.odDrawn-v).toFixed(2);S.acct.current=+(S.acct.current-v).toFixed(2);
+    toast(`${gbp(v)} repaid`);
+  }
+  save();render();
+}
+function ddSheet(id){
+  const d=S.dd.find(x=>x.id===id);
+  sheet(`<h2>${esc(d.n)}</h2><p class="small muted">${gbp(d.a)} monthly · day ${d.day} · ref ${esc(d.ref)} · since ${esc(d.since)}</p>
+    <div class="row"><span class="t"><b>Last collected</b><span>${MON[new Date().getMonth()]} ${d.day}</span></span><span class="amt">${gbp(d.a)}</span></div>
+    <button class="btn" style="margin-top:16px" onclick="cancelDD('${id}')">Cancel Direct Debit</button>
+    <button class="btn ghost" style="margin-top:8px" data-close>Keep it</button>`);
+}
+function cancelDD(id){
+  const d=S.dd.find(x=>x.id===id);
+  S.dd=S.dd.filter(x=>x.id!==id);save();closeSheet();render();toast(d.n+' cancelled');
+}
+function editCat(id){
+  const t=S.tx.find(x=>x.id===id);
+  sheet(`<h2>Category</h2>${S.cats.map(c=>`<button class="row" style="width:100%;text-align:left" onclick="setCat('${id}','${c}')"><span class="t"><b>${c}</b></span>${t.c===c?'<span class="badge ok">Current</span>':''}</button>`).join('')}`);
+}
+function setCat(id,c){const t=S.tx.find(x=>x.id===id);t.c=c;save();closeSheet();render();toast('Category set to '+c)}
+function noteTx(id){
+  sheet(`<h2>Note</h2><textarea id="ntx" rows="3" placeholder="Add a note"></textarea><button class="btn" style="margin-top:14px" onclick="doNote('${id}')">Save</button>`);
+}
+function doNote(id){const t=S.tx.find(x=>x.id===id);t.note=$('#ntx').value.trim();save();closeSheet();render();toast('Note saved')}
+function splitTx(id){
+  sheet(`<h2>Split bill</h2><p class="small muted">Choose a contact to split with.</p>
+    ${S.payees.map(p=>`<button class="row" style="width:100%;text-align:left" onclick="toast('Split request sent to ${esc(p.n)}');closeSheet()"><span class="ico">${esc(p.i)}</span><span class="t"><b>${esc(p.n)}</b></span></button>`).join('')}`);
+}
+function changePin(){
+  sheet(`<h2>Change PIN</h2><input id="npin" inputmode="numeric" maxlength="4" placeholder="New 4-digit PIN"/><button class="btn" style="margin-top:14px" onclick="S.sec.pin=document.getElementById('npin').value||S.sec.pin;save();closeSheet();toast('PIN changed')">Save</button>`);
+}
+function exportAll(){
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='monzo-backup.json';a.click();
+  toast('Backup downloaded');
+}
+function wipe(){localStorage.removeItem(KEY);location.href=location.pathname+'?reset=1'}
+function dlYear(y){
+  const rows=S.ledger.isa.filter(r=>r.y===y);
+  const csv=['Month,Opening,Contribution,Dividend,Market,Fee,Closing,Source']
+    .concat(rows.map(r=>[ymLabel(r.ym),r.opening,r.contrib,r.div,r.mkt,r.fee,r.closing,r.imported?r.src:'Monzo'].join(',')));
+  const b=new Blob([csv.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`isa-${y}.csv`;a.click();
+  toast(`${y} statement downloaded`);
+}
+
+/* ============================================================
+   LOCK
+   ============================================================ */
+function lockScreen(){
+  $('#app').innerHTML=`<div style="min-height:100vh;display:grid;place-items:center;padding:40px 24px">
+    <div class="center">
+      <div class="mark" style="margin-bottom:22px">${MARK}</div>
+      <div style="font-size:22px;font-weight:800;letter-spacing:-.5px">Welcome back, Jason</div>
+      <div class="small muted" style="margin-top:4px">Touch the sensor to unlock</div>
+      <button onclick="unlock()" aria-label="Unlock with fingerprint" style="margin:26px auto 0;display:block;width:104px;height:104px;border-radius:50%;background:#FFF1F0;display:grid;place-items:center">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#FF4F40" stroke-width="1.6" stroke-linecap="round">
+          <path d="M12 4c-4.4 0-8 3.6-8 8v1"/><path d="M20 13v-1c0-4.4-3.6-8-8-8"/>
+          <path d="M8.5 12a3.5 3.5 0 0 1 7 0v3.5"/><path d="M12 12v6"/><path d="M15.5 18.5V19"/><path d="M8.5 15.5V19"/>
+        </svg>
+      </button>
+      <button class="btn ghost sm" style="margin-top:22px" onclick="unlock()">Use passcode</button>
+    </div>
+  </div>`;
+}
+function unlock(){render()}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  const c=cur();const [r,p]=c.split(':');
+  const map={home:vHome,hub:vHub,trends:vTrends,savings:vSavings,isa:vISA,inv:vInv,hold:vHold,pot:vPot,tx:vTx,
+    flex:vFlex,od:vOD,dd:vDD,sched:vSched,search:vSearch,stmts:vStmts,notifs:vNotifs,budgets:vBudgets,
+    profile:vProfile,pd:vPD,security:vSecurity,card:vCard,notifprefs:vNotifPrefs,help:vHelp,move:vMove,pay:vPay,settings:vSettings};
+  const fn=map[r]||vHome;
+  $('#app').innerHTML=fn(p);
+  $$('[data-count]').forEach(n=>{
+    if(REDUCED)return;
+    const target=parseFloat(n.dataset.count);let cur=0;
+    const step=target/22;
+    const t=setInterval(()=>{cur+=step;if(cur>=target){cur=target;clearInterval(t)}n.textContent=gbp(cur)},16);
+  });
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+(function boot(){
+  if(location.search.includes('reset=1')){localStorage.removeItem(KEY);history.replaceState({},'',location.pathname)}
+  load();
+  const p=new URLSearchParams(location.search);
+  if(p.get('screen'))stack=[p.get('screen')];
+  if(S.sec.bio&&!sessionStorage.getItem('unlocked')){lockScreen();sessionStorage.setItem('unlocked','1')}
+  else render();
+})();
 </script>
 </body>
 </html>
