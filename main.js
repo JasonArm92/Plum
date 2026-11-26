@@ -1,7 +1,7 @@
 /* src/main.js — boot: hydrate state, apply appearance, wire chrome and lock, register screens. */
 
 import {
-  load, getState, subscribe, TODAY, setCredId, togglePriv
+  load, getState, subscribe, runInterest, runTick, togglePriv
 } from './core.js';
 import { initRouter, register, go, bindGlobalChrome, toast } from './ui.js';
 
@@ -17,6 +17,7 @@ import {
   mountDisputes, mountJoint, mountPersonal, mountSecurity, mountTxDetail
 } from './screens-b.js';
 
+/* ---------------- appearance ---------------- */
 function applyTheme(){ document.documentElement.dataset.theme = getState().theme; }
 function applyZoom(){ document.documentElement.style.setProperty('--zoom', getState().zoom); }
 function applyMotion(){ document.documentElement.dataset.motion = getState().motion ? 'on' : 'off'; }
@@ -30,6 +31,7 @@ function paintAvatar(){
   document.getElementById('hName').textContent = s.profile.name.split(' ')[0];
 }
 
+/* ---------------- lock ---------------- */
 let pinBuffer = '';
 
 function paintDots(){
@@ -91,8 +93,15 @@ async function biometricUnlock(){
   } catch { toast('Fingerprint not recognised'); }
 }
 
+/* ---------------- boot ---------------- */
 function boot(){
   load();
+
+  /* monthly money movements — interest on savings pots, flex instalments,
+     loan repayments. Both are idempotent per calendar month. */
+  runInterest();
+  runTick();
+
   applyAll();
   paintAvatar();
 
