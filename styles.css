@@ -391,3 +391,7 @@ body.locked .tabbar{display:none}
 /* privacy mode */
 html[data-priv="1"] .rev{filter:blur(7px)}
 html[data-priv="1"] .rev.open{filter:none}
+
+/* focus target for a freshly mounted screen */
+.view:focus{outline:0}
+.view:focus-visible{outline:2px solid var(--focus);outline-offset:4px}
