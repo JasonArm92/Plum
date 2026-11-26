@@ -11,7 +11,7 @@ import {
 } from './screens-a.js';
 
 import {
-  mountPayees, mountCards, mountPlan, mountLimits, mountBorrow, mountFlex, mountAura,
+  mountPayees, mountRequest, mountCards, mountPlan, mountLimits, mountBorrow, mountFlex, mountAura,
   mountOverdraft, mountLoans, mountConnected, mountCredit, mountChallenge, mountBillsback,
   mountInsurance, mountAccounts, mountAppearance, mountSearch, mountNotifs, mountChat,
   mountDisputes, mountJoint, mountPersonal, mountSecurity, mountTxDetail
@@ -107,13 +107,13 @@ function boot(){
   const screens = {
     home: mountHome, save: mountSave, grow: mountGrow, pay: mountPay, trends: mountTrends,
     account: mountAccount, acc: mountAcc, pots: mountPots, potdetail: mountPotDetail,
-    invest: mountInvest, statements: mountStatements, payees: mountPayees, cards: mountCards,
-    plan: mountPlan, limits: mountLimits, borrow: mountBorrow, flex: mountFlex, aura: mountAura,
-    overdraft: mountOverdraft, loans: mountLoans, connected: mountConnected, credit: mountCredit,
-    challenge: mountChallenge, billsback: mountBillsback, insurance: mountInsurance,
-    accounts: mountAccounts, appearance: mountAppearance, search: mountSearch,
-    notifs: mountNotifs, chat: mountChat, disputes: mountDisputes, joint: mountJoint,
-    personal: mountPersonal, security: mountSecurity, txdetail: mountTxDetail
+    invest: mountInvest, statements: mountStatements, payees: mountPayees, request: mountRequest,
+    cards: mountCards, plan: mountPlan, limits: mountLimits, borrow: mountBorrow, flex: mountFlex,
+    aura: mountAura, overdraft: mountOverdraft, loans: mountLoans, connected: mountConnected,
+    credit: mountCredit, challenge: mountChallenge, billsback: mountBillsback,
+    insurance: mountInsurance, accounts: mountAccounts, appearance: mountAppearance,
+    search: mountSearch, notifs: mountNotifs, chat: mountChat, disputes: mountDisputes,
+    joint: mountJoint, personal: mountPersonal, security: mountSecurity, txdetail: mountTxDetail
   };
   Object.entries(screens).forEach(([name, mount]) => register(name, mount));
 
@@ -159,7 +159,7 @@ function boot(){
 
   if ('serviceWorker' in navigator){
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=17').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=18').catch(() => {});
     });
   }
 }
