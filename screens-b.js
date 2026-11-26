@@ -3,12 +3,14 @@
 import {
   getState, commit, esc, fmt, TODAY, round2, plan, PLANS_BANK, CATS, BANKS, BB_CAP,
   setProfile, setPin, setCredId, setTheme, setZoom, setMotion, togglePriv, toggleRoundups,
-  addPayee, updatePayee, deletePayee, sendMoney, addVirtualCard, freezeVCard, renameVCard,
+  addPayee, updatePayee, deletePayee, sendMoney, requestMoney, settleRequest, cancelRequest,
+  addVirtualCard, freezeVCard, renameVCard,
   deleteVCard, toggleFreeze, setPlan, setFamily, flexAvail, flexPurchase, flexMonthly,
   settleFlex, arrangeOverdraft, cancelOverdraft, takeLoan, loanMonthly, aprForLoan, overpayLoan,
   challengeSave, restartChallenge, billsbackOptIn, billsbackDraw, bbBills, connectBank,
-  removeBank, addExtraAccount, updateExtraAccount, closeExtraAccount, setActiveAccount,
-  takeAura, setAura, raiseDispute, closeDispute,
+  removeBank, addExtraAccount, updateExtraAccount, closeExtraAccount, moveToExtraAccount,
+  closeAccount, reopenAccount, setActiveAccount,
+  takeAura, setAura, payOutCashback, CASHBACK_MIN, raiseDispute, closeDispute,
   creditAction, CREDIT_ACTIONS, pushChat, clearNotifs, markAllRead, updateTx, deleteTx,
   balNow, addTx
 } from './core.js';
@@ -86,6 +88,49 @@ export function mountPayees(root){
   render();
 }
 
+export function mountRequest(root){
+  let payeeId = '';
+  const render = () => {
+    const s = getState();
+    if (!payeeId && s.payees.length) payeeId = s.payees[0].id;
+    root.innerHTML = `<div class="h-sec"><h2>Request money</h2></div>
+      <div class="card"><h2>New request</h2>
+        <div class="field"><label for="rqWho">From</label><select id="rqWho">
+          ${s.payees.map(p => `<option value="${p.id}" ${p.id === payeeId ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
+        </select></div>
+        <div class="field"><label for="rqAmt">Amount</label><input id="rqAmt" type="number" min="1" step="0.01"></div>
+        <div class="field"><label for="rqNote">What for</label><input id="rqNote" placeholder="Steak night"></div>
+        <button class="btn" data-send>Send request</button></div>
+      <div class="card"><h2>Outstanding</h2>
+        ${s.requests.length ? s.requests.map(r => `<div class="pot"><span class="lg"><span class="lg__i">${esc(r.name[0])}</span></span>
+          <span class="mid"><span class="nm">${esc(r.name)}</span><span class="sub">${esc(r.note || 'Request')} · ${esc(r.date)}</span></span>
+          <span class="amt rev">${fmt(r.amount)}</span>
+          <button class="btn ghost sm" data-paid="${r.id}">Received</button>
+          <button class="iconbtn" data-cancel="${r.id}" aria-label="Cancel">✕</button></div>`).join('')
+          : empty('Nothing outstanding')}</div>
+      <p class="note">Tap Received when the money lands and it is credited to your balance.</p>`;
+  };
+  root.addEventListener('change', e => { if (e.target.id === 'rqWho') payeeId = e.target.value; });
+  root.addEventListener('click', e => {
+    if (e.target.closest('[data-send]')){
+      const amt = +root.querySelector('#rqAmt').value;
+      const note = root.querySelector('#rqNote').value.trim();
+      const r = requestMoney(payeeId, amt, note);
+      if (!r.ok) return toast(r.msg);
+      render(); return toast('Request sent');
+    }
+    const paid = e.target.closest('[data-paid]');
+    if (paid){
+      const r = settleRequest(paid.dataset.paid);
+      if (!r.ok) return toast(r.msg);
+      render(); return toast('Marked received');
+    }
+    const c = e.target.closest('[data-cancel]');
+    if (c){ cancelRequest(c.dataset.cancel); render(); toast('Cancelled'); }
+  });
+  render();
+}
+
 export function mountCards(root){
   const render = () => {
     const s = getState(), p = plan();
@@ -152,6 +197,8 @@ export function mountPlan(root){
     const diff = round2(to.price - from.price);
     sheet(`<h2>Switch to ${to.name}</h2><div class="sub">${to.price ? '£' + to.price + '/month' : 'Free'}</div>
       ${diff > 0 ? kv('Charged today', `<span class="rev">${fmt(diff)}</span>`) : ''}
+      ${from.cover && !to.cover ? kv('Insurance', 'Policies end today') : ''}
+      ${!from.cover && to.cover ? kv('Insurance', 'Policies start today') : ''}
       <button class="btn" id="spGo">Confirm</button>`);
     document.getElementById('spGo').onclick = () => { setPlan(key); closeSheet(); render(); toast('Plan updated'); };
   });
@@ -243,23 +290,32 @@ export function mountFlex(root){
 export function mountAura(root){
   const render = () => {
     const a = getState().aura;
+    const cash = round2(a.cashback || 0);
     root.innerHTML = `<div class="h-sec"><h2>Monzo Aura</h2></div><div class="card">
-      <div class="sub">£15 per month</div>
+      <div class="sub">£15 per month · 1% cashback on card spend</div>
       ${kv('Status', a.active ? badge('Active', 'ok') : badge('Off'))}
-      ${kv('Cashback', `<span class="rev">${fmt(a.cashback)}</span>`)}
+      ${kv('Cashback earned', `<span class="rev">${fmt(cash)}</span>`)}
       ${kv('Lounge passes', a.lounge)}${kv('Fast track', a.fast)}
       <div class="row2" style="margin-top:10px">
         <button class="btn ghost sm" data-lounge ${a.lounge ? '' : 'disabled'}>Use lounge pass</button>
         <button class="btn ghost sm" data-fast ${a.fast ? '' : 'disabled'}>Use fast track</button></div>
+      <button class="btn ghost sm" data-cashback style="margin-top:10px;width:100%"
+        ${cash >= CASHBACK_MIN ? '' : 'disabled'}>Move ${fmt(cash)} to balance</button>
       <div class="toggle" style="margin-top:10px"><div><div class="t">Auto-invest cashback</div></div>
         <button class="sw ${a.auto ? 'on' : ''}" data-auto aria-label="Auto invest"></button></div>
-      <button class="btn" data-toggle style="margin-top:14px">${a.active ? 'Close Aura' : 'Take out Aura'}</button></div>`;
+      <button class="btn" data-toggle style="margin-top:14px">${a.active ? 'Close Aura' : 'Take out Aura'}</button></div>
+      <p class="note">Cashback accrues at 1% on groceries, eating out, transport, shopping, health, education, entertainment, fitness and kids. £${CASHBACK_MIN} minimum to move out.</p>`;
   };
   root.addEventListener('click', e => {
     const a = getState().aura;
     if (e.target.closest('[data-lounge]') && a.lounge){ setAura({ lounge: a.lounge - 1 }); render(); return toast('Pass used'); }
     if (e.target.closest('[data-fast]') && a.fast){ setAura({ fast: a.fast - 1 }); render(); return toast('Pass used'); }
     if (e.target.closest('[data-auto]')){ setAura({ auto: !a.auto }); return render(); }
+    if (e.target.closest('[data-cashback]')){
+      const r = payOutCashback();
+      if (!r.ok) return toast(r.msg);
+      render(); return toast(`${fmt(r.amt)} moved to your balance`);
+    }
     if (e.target.closest('[data-toggle]')){ const on = takeAura(); render(); toast(on ? 'Aura active' : 'Closed'); }
   });
   render();
@@ -409,36 +465,49 @@ export function mountBillsback(root){
 }
 
 export function mountInsurance(root){
-  const covered = plan().cover;
-  const policies = [
-    ['Worldwide travel insurance', 'POL-TRV-8842190', 'Covers Jason, Chloe and both children up to 31 days per trip.'],
-    ['Worldwide phone insurance', 'POL-PHN-8842191', 'Covers all four handsets, £75 excess per claim.'],
-    ['UK & Europe breakdown cover', 'POL-BRK-8842192', 'Vehicle-based, any driver, home start included.']
-  ];
-  root.innerHTML = `<div class="h-sec"><h2>Insurance</h2></div>` + (covered ? `<div class="card">
-    ${policies.map(([n, p]) => kv(`${n}<br><span style="font-size:12.5px">${p}</span>`,
-      `<button class="btn ghost sm" data-pol="${p}" data-title="${esc(n)}">Document</button>`)).join('')}
-    <p class="note">Held with Aviva. £75 excess per claim.</p></div>` : `<div class="card">
-      <div class="sub">Not on ${plan().name}</div><button class="btn" data-go="plan">See plans</button></div>`);
+  const render = () => {
+    const s = getState();
+    const covered = !!plan().cover;
+    const live = s.policies.filter(p => p.status === 'Active').length;
+    root.innerHTML = `<div class="h-sec"><h2>Insurance</h2></div>
+      ${covered ? '' : `<div class="card"><div class="sub">Not on ${esc(plan().name)} — cover ends when your plan does.</div>
+        <button class="btn" data-go="plan" style="margin-top:10px">See plans</button></div>`}
+      <div class="card">
+        ${s.policies.length ? s.policies.map(p => kv(
+          `${esc(p.name)}<br><span style="font-size:12.5px">${esc(p.number)} · ${p.status === 'Active' ? badge('Active', 'ok') : badge(esc(p.status), 'bad')}</span>`,
+          `<button class="btn ghost sm" data-pol="${p.id}">Document</button>`)).join('') : empty('No policies')}
+        <p class="note">Held with Aviva. ${live} of ${s.policies.length} policies in force. £75 excess per claim on travel and phone.</p></div>`;
+  };
   root.addEventListener('click', e => {
     const t = e.target.closest('[data-pol]');
     if (!t) return;
     const s = getState();
+    const p = s.policies.find(x => x.id === t.dataset.pol);
+    if (!p) return toast('Policy not found');
     const w = window.open('', '_blank');
     if (!w) return toast('Allow pop-ups to print');
-    w.document.write(`<title>${t.dataset.pol}</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#0b1a26}
+    w.document.write(`<title>${esc(p.name)}</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#0b1a26}
       h1{font-size:19px;margin:0 0 4px}.sub{color:#6b7c8a;font-size:13px;margin-bottom:20px}
-      .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #e6ebef;font-size:13px}</style>
-      <h1>${esc(t.dataset.title)}</h1><div class="sub">Policy ${esc(t.dataset.pol)} · Monzo Max</div>
+      .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #e6ebef;font-size:13px}
+      .row span:first-child{color:#6b7c8a}.flag{margin-top:18px;padding:10px 12px;border-radius:8px;font-size:13px;
+      background:${p.status === 'Active' ? '#eaf7ee' : '#fdecec'};color:${p.status === 'Active' ? '#1c6b31' : '#a3121f'}</style>
+      <h1>${esc(p.name)}</h1><div class="sub">Policy ${esc(p.number)} · ${esc(plan().name)} plan</div>
       <div class="row"><span>Policyholder</span><b>${esc(s.profile.name)}</b></div>
-      <div class="row"><span>Address</span><b>${esc(s.profile.a1)}, ${esc(s.profile.post)}</b></div>
+      <div class="row"><span>Address</span><b>${esc(s.profile.a1)}, ${esc(s.profile.city)}, ${esc(s.profile.post)}</b></div>
       <div class="row"><span>Insurer</span><b>Aviva Insurance Ltd</b></div>
-      <div class="row"><span>Excess</span><b>£75</b></div>
+      <div class="row"><span>Status</span><b>${esc(p.status)}</b></div>
+      <div class="row"><span>Cover started</span><b>${esc(p.start)}</b></div>
+      ${p.ended ? `<div class="row"><span>Cover ended</span><b>${esc(p.ended)}</b></div>` : ''}
+      <div class="row"><span>Excess per claim</span><b>${p.excess ? '£' + p.excess : 'None'}</b></div>
       <div class="row"><span>Emergency line</span><b>0800 051 0021</b></div>
-      <p class="sub" style="margin-top:20px">This document confirms cover. Terms apply.</p>`);
+      <div class="flag">${p.status === 'Active'
+        ? 'This document confirms cover is in force today.'
+        : 'This policy is not currently in force. Cover resumes if you return to a plan that includes insurance.'}</div>
+      <p class="sub" style="margin-top:16px">${esc(p.note)}</p>`);
     w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
     toast('Document ready to print');
   });
+  render();
 }
 
 export function mountAccounts(root){
@@ -446,20 +515,65 @@ export function mountAccounts(root){
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Your accounts</h2><button data-add>Add</button></div>
       <div class="card" style="padding:6px 8px">
-        <div class="pot"><span class="lg"><span class="lg__i">PCA</span></span><span class="mid"><span class="nm">${esc(s.acctName)}</span>
-          <span class="sub">${s.activeAccount === 'personal' ? 'Active' : 'Tap Use to switch'}</span></span>
-          <button class="btn ghost sm" data-switch="personal">Use</button></div>
+        <div class="pot"><span class="lg"><span class="lg__i">PCA</span></span>
+          <span class="mid"><span class="nm">${esc(s.acctName)} ${s.acctClosed ? badge('Closed', 'bad') : badge('Active', 'ok')}</span>
+            <span class="sub">${s.acctClosed ? 'Closed — reopen to use it' : fmt(balNow())}</span></span>
+          ${s.acctClosed
+            ? `<button class="btn ghost sm" data-reopen>Reopen</button>`
+            : `<button class="btn ghost sm" data-switch="personal">Use</button>
+               <button class="iconbtn" data-close-personal aria-label="Close account">🗑</button>`}</div>
         <div class="pot"><span class="lg"><span class="lg__i">JNT</span></span><span class="mid"><span class="nm">Joint account</span>
-          <span class="sub">With ${esc(s.partner)}</span></span>
+          <span class="sub">With ${esc(s.partner)} · ${fmt(s.jointBal || 0)}</span></span>
           <button class="btn ghost sm" data-go="joint">Open</button></div>
         ${s.extraAccounts.map(a => `<div class="pot"><span class="lg"><span class="lg__i">${esc(a.name[0])}</span></span>
-          <span class="mid"><span class="nm">${esc(a.name)}</span><span class="sub">${esc(a.type)}</span></span>
+          <span class="mid"><span class="nm">${esc(a.name)}</span><span class="sub">${esc(a.type)} · ${fmt(a.bal || 0)}</span></span>
+          <button class="iconbtn" data-fund="${a.id}" aria-label="Add money">＋</button>
           <button class="iconbtn" data-rename="${a.id}" aria-label="Rename">✎</button>
           <button class="iconbtn" data-close-acc="${a.id}" aria-label="Close">🗑</button></div>`).join('')}</div>`;
   };
   root.addEventListener('click', e => {
     const sw = e.target.closest('[data-switch]');
     if (sw){ setActiveAccount(sw.dataset.switch); render(); return toast('Switched'); }
+
+    if (e.target.closest('[data-reopen]')){
+      const r = reopenAccount();
+      if (!r.ok) return toast(r.msg);
+      render(); return toast('Account reopened');
+    }
+
+    const pc = e.target.closest('[data-close-personal]');
+    if (pc){
+      const bal = balNow();
+      sheet(`<h2>Close your current account</h2>
+        <div class="sub">${bal > 0
+          ? `${fmt(bal)} moves to your joint account.`
+          : 'Your balance is already £0.'}</div>
+        <p class="note">Cards, direct debits and payees stay on file. You can reopen it any time.</p>
+        <button class="btn" id="cpGo">Close account</button>`);
+      document.getElementById('cpGo').onclick = () => {
+        const r = closeAccount();
+        if (!r.ok) return toast(r.msg);
+        closeSheet(); render();
+        toast(r.moved ? `Closed · ${fmt(r.moved)} moved to joint` : 'Account closed');
+      };
+      return;
+    }
+
+    const fund = e.target.closest('[data-fund]');
+    if (fund){
+      const a = getState().extraAccounts.find(x => x.id === fund.dataset.fund);
+      if (!a) return;
+      sheet(`<h2>Add to ${esc(a.name)}</h2><div class="sub">From ${esc(getState().acctName)}</div>
+        <div class="field"><label>Amount</label><input id="faAmt" type="number" min="1"></div>
+        <button class="btn" id="faGo">Move</button>`);
+      document.getElementById('faGo').onclick = () => {
+        const r = moveToExtraAccount(a.id, +document.getElementById('faAmt').value);
+        if (!r.ok) return toast(r.msg);
+        closeSheet(); render(); toast('Moved');
+      };
+      return;
+    }
+
     const rn = e.target.closest('[data-rename]');
     if (rn){
       const a = getState().extraAccounts.find(x => x.id === rn.dataset.rename);
@@ -472,8 +586,25 @@ export function mountAccounts(root){
       };
       return;
     }
+
     const cl = e.target.closest('[data-close-acc]');
-    if (cl){ closeExtraAccount(cl.dataset.closeAcc); render(); return toast('Account closed'); }
+    if (cl){
+      const a = getState().extraAccounts.find(x => x.id === cl.dataset.closeAcc);
+      if (!a) return;
+      sheet(`<h2>Close ${esc(a.name)}</h2>
+        <div class="sub">${a.bal > 0
+          ? `${fmt(a.bal)} will be returned to ${esc(getState().acctName)}.`
+          : 'There is no balance to return.'}</div>
+        <button class="btn" id="caGo">Close account</button>`);
+      document.getElementById('caGo').onclick = () => {
+        const r = closeExtraAccount(a.id);
+        if (!r.ok) return toast(r.msg);
+        closeSheet(); render();
+        toast(r.returned > 0 ? `Closed · ${fmt(r.returned)} returned` : 'Account closed');
+      };
+      return;
+    }
+
     if (!e.target.closest('[data-add]')) return;
     sheet(`<h2>Add an account</h2><div class="field"><label>Type</label><select id="aaType">
       <option>Under 16</option><option>16-17</option><option>Business</option></select></div>
@@ -532,13 +663,15 @@ export function mountSearch(root, params){
 export function mountNotifs(root){
   const render = () => {
     const s = getState();
-    const target = n => /salary|paid/i.test(n.title) ? 'acc'
+    const target = n => /salary|paid early/i.test(n.title) ? 'acc'
       : /interest/i.test(n.title) ? 'pots'
       : /flex/i.test(n.title) ? 'flex'
       : /loan/i.test(n.title) ? 'loans'
       : /billsback/i.test(n.title) ? 'billsback'
       : /plan/i.test(n.title) ? 'plan'
       : /dispute/i.test(n.title) ? 'disputes'
+      : /account/i.test(n.title) ? 'accounts'
+      : /request/i.test(n.title) ? 'request'
       : 'home';
     root.innerHTML = `<div class="h-sec"><h2>Notifications</h2><button data-clear>Clear</button></div>
       <div class="card">${s.notifs.length ? s.notifs.map(n => `<button class="pot" data-notif="${target(n)}">
@@ -684,10 +817,34 @@ export function mountSecurity(root){
   render();
 }
 
+/* Downscale to a 900px JPEG so a receipt survives a localStorage round trip. */
+function readImage(file, done){
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    const max = 900;
+    const scale = Math.min(1, max / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.width * scale));
+    c.height = Math.max(1, Math.round(img.height * scale));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    try { done(c.toDataURL('image/jpeg', 0.7)); } catch { done(null); }
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); done(null); };
+  img.src = url;
+}
+
 export function mountTxDetail(root, params){
   const render = () => {
     const t = getState().tx.find(x => x.id === params.id);
     if (!t){ root.innerHTML = empty('Not found'); return; }
+    const receipt = t.receipt
+      ? `<div class="receipt"><img src="${t.receipt.data}" alt="Receipt">
+          <span class="mid"><span class="nm">${esc(t.receipt.name)}</span>
+            <span class="sub">Attached ${esc(t.receipt.added)}</span></span>
+          <button class="iconbtn" data-unreceipt aria-label="Remove receipt">✕</button></div>`
+      : '';
     root.innerHTML = `<div class="h-sec"><h2>Transaction</h2></div><div class="card">
       <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">${logo(t.name)}
         <div><div style="font-weight:700">${esc(t.name)}</div><div class="sub">${esc(t.cat)}</div></div></div>
@@ -697,13 +854,32 @@ export function mountTxDetail(root, params){
       <div class="field"><label for="txCat">Category</label><select id="txCat">${CATS.map(c => `<option ${c === t.cat ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
       <div class="field"><label for="txNote">Note</label><input id="txNote" value="${esc(t.note || '')}"></div>
       <button class="btn" data-save>Save</button>
-      <button class="btn ghost" data-split style="margin-top:8px">Split with a tab</button>
+      <div class="divider"></div>
+      <div class="receipt-head">Receipt</div>
+      ${receipt || '<p class="note">No receipt attached</p>'}
+      <label class="filebtn" style="margin-top:8px">${t.receipt ? 'Replace receipt' : 'Attach receipt'}
+        <input type="file" accept="image/*" data-receipt></label>
+      <button class="btn ghost" data-split style="margin-top:12px">Split with a tab</button>
       <button class="btn ghost" data-disp style="margin-top:8px">Raise a dispute</button>
       <button class="btn red" data-del style="margin-top:8px">Delete transaction</button></div>`;
   };
+  root.addEventListener('change', e => {
+    const input = e.target.closest('[data-receipt]');
+    if (!input || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    readImage(file, data => {
+      if (!data) return toast('Could not read that image');
+      updateTx(params.id, { receipt: { name: file.name, data, added: TODAY } });
+      render(); toast('Receipt attached');
+    });
+  });
   root.addEventListener('click', e => {
     const t = getState().tx.find(x => x.id === params.id);
     if (!t) return;
+    if (e.target.closest('[data-unreceipt]')){
+      updateTx(t.id, { receipt: null });
+      render(); return toast('Receipt removed');
+    }
     if (e.target.closest('[data-save]')){
       updateTx(t.id, { name: root.querySelector('#txName').value.trim() || t.name,
         cat: root.querySelector('#txCat').value, note: root.querySelector('#txNote').value });
@@ -726,4 +902,4 @@ export function mountTxDetail(root, params){
     if (e.target.closest('[data-del]')){ deleteTx(t.id); toast('Deleted'); go('acc'); }
   });
   render();
-}
+            }
