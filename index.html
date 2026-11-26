@@ -197,7 +197,7 @@ section.on{display:block;animation:fade .2s ease}
 .meter{height:8px;border-radius:var(--pill);background:var(--card3);overflow:hidden;margin:8px 0}
 .meter i{display:block;height:100%;background:var(--coral);border-radius:var(--pill);transition:width .3s}
 .split{display:flex;height:10px;border-radius:var(--pill);overflow:hidden;background:var(--card3);margin:10px 0}
-.split i{display:block;height:100%}
+.split i{display:block;height:100%;flex:0 0 auto;min-width:2px}
 .legend{display:flex;flex-wrap:wrap;gap:10px 14px;font-size:12px;color:var(--ink2)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
 .legend b{width:8px;height:8px;border-radius:2px;display:inline-block}
@@ -926,8 +926,8 @@ function topMerchants(n){
   return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n);
 }
 function monthChange(){
-  const startBal = S.tx.filter(t=>t.date.slice(0,7)!==THIS_YM).length
-    ? S.tx.filter(t=>t.date.slice(0,7)!==THIS_YM)[0].bal : balNow();
+  const prev = S.tx.filter(t=>t.date.slice(0,7)!==THIS_YM);
+  const startBal = prev.length ? prev[0].bal : balNow();
   return round2(balNow() - startBal);
 }
 function nextPayday(){ const d = new Date(NOW.getFullYear(),NOW.getMonth(),28);
@@ -1125,17 +1125,25 @@ function renderGrow(){
     ['Pension', S.pension||0, '#7b5cff'],
     ['Equity', homeEquity(), '#2f9e6b'],
     ['Connected', connTotal(), '#00a3b4']
-  ];
-  const total = parts.reduce((a,p)=>a+p[1],0) || 1;
+  ].filter(p => p[1] > 0);
+  const gross = parts.reduce((a,p)=>a+p[1],0) || 1;
+  const pct = parts.map(([k,v,c]) => ({ k, v, c, p: v/gross*100 }));
+  if (pct.length){
+    let maxI = 0;
+    pct.forEach((p,i)=>{ if (p.p > pct[maxI].p) maxI = i; });
+    const sum = pct.reduce((a,p)=>a+p.p,0);
+    pct[maxI].p += 100 - sum;
+  }
   const sp = document.getElementById('growSplit');
-  if (sp) sp.innerHTML = parts.filter(p=>p[1]>0).map(([k,v,c])=>
-    `<i style="width:${(v/total*100).toFixed(2)}%;background:${c}"></i>`).join('');
+  if (sp) sp.innerHTML = pct.map(p=>
+    `<i style="width:${p.p.toFixed(3)}%;background:${p.c}"></i>`).join('');
   const lg = document.getElementById('growLegend');
-  if (lg) lg.innerHTML = parts.filter(p=>p[1]>0).map(([k,v,c])=>
-    `<span><b style="background:${c}"></b>${k} ${(v/total*100).toFixed(0)}%</span>`).join('');
+  if (lg) lg.innerHTML = `<span>Assets ${fmt(gross)}</span>` +
+    pct.map(p=>`<span><b style="background:${p.c}"></b>${p.k} ${p.p.toFixed(1)}%</span>`).join('') +
+    (loanOwed() > 0 ? `<span><b style="background:var(--bad)"></b>Owed ${fmt(loanOwed())}</span>` : '');
   const ch = monthChange();
   const chEl = document.getElementById('growChange');
-  if (chEl){ chEl.textContent = (ch>=0?'+':'−') + fmt(ch); chEl.className = 'v ' + (ch>=0?'v--pos':'v--neg'); }
+  if (chEl){ chEl.textContent = (ch >= 0 ? '+' : '−') + fmt(ch); chEl.className = 'v ' + (ch >= 0 ? 'v--pos' : 'v--neg'); }
   setTxt('growSaveMeta', `${S.pots.filter(p=>p.type==='savings').length} savings pots`);
   setTxt('growSaveBal', fmt(savingsTotal()));
   setTxt('growSaveRate', plan().ia + '% AER');
