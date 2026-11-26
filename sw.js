@@ -1,4 +1,8 @@
-/* sw.js — v15 */
+/* sw.js — v15
+   Self-contained shell: index.html carries its own CSS and JS, so only the
+   shell, manifest and icons are precached. Navigation is network-first with a
+   cached shell fallback; same-origin assets are cache-first; fonts and logos
+   are stale-while-revalidate. */
 
 const VERSION = 'v15';
 const CACHE = 'monzo-' + VERSION;
@@ -6,18 +10,11 @@ const CACHE = 'monzo-' + VERSION;
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css',
   './manifest.webmanifest',
   './monzo-mark.svg',
   './monzo-mark-white.svg',
   './monzo-tile.svg',
-  './monzo-maskable.svg',
-  './src/main.js',
-  './src/core.js',
-  './src/ui.js',
-  './src/data.js',
-  './src/screens-a.js',
-  './src/screens-b.js'
+  './monzo-maskable.svg'
 ];
 
 self.addEventListener('install', event => {
@@ -36,7 +33,9 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k.startsWith('monzo-') && k !== CACHE).map(k => caches.delete(k)));
+    await Promise.all(
+      keys.filter(k => k.startsWith('monzo-') && k !== CACHE).map(k => caches.delete(k))
+    );
     await self.clients.claim();
   })());
 });
@@ -45,10 +44,12 @@ self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
-const isAsset = url => /\.(?:css|js|mjs|svg|png|jpe?g|webp|gif|ico|woff2?|ttf|otf|json|webmanifest)$/i.test(new URL(url).pathname);
-const isImageHost = url => {
+const isRemoteAsset = url => {
   const host = new URL(url).hostname;
-  return host === 'logo.clearbit.com' || host.endsWith('google.com') || host.endsWith('gstatic.com');
+  return host === 'logo.clearbit.com'
+      || host === 'fonts.googleapis.com'
+      || host === 'fonts.gstatic.com'
+      || host.endsWith('.gstatic.com');
 };
 
 async function navigationHandler(request){
@@ -58,10 +59,12 @@ async function navigationHandler(request){
     if (res && res.ok) cache.put('./index.html', res.clone());
     return res;
   } catch {
-    return (await cache.match(request)) ||
-           (await cache.match('./index.html')) ||
-           (await cache.match('./')) ||
-           new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+    return (await cache.match(request))
+        || (await cache.match('./index.html'))
+        || (await cache.match('./'))
+        || new Response('Offline', {
+             status: 503, headers: { 'Content-Type': 'text/plain' }
+           });
   }
 }
 
@@ -69,9 +72,11 @@ async function cacheFirst(request){
   const cache = await caches.open(CACHE);
   const hit = await cache.match(request, { ignoreSearch: true });
   if (hit){
-    fetch(request).then(res => {
-      if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
-    }).catch(() => {});
+    fetch(request)
+      .then(res => {
+        if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
+      })
+      .catch(() => {});
     return hit;
   }
   const res = await fetch(request);
@@ -82,10 +87,12 @@ async function cacheFirst(request){
 async function staleWhileRevalidate(request){
   const cache = await caches.open(CACHE);
   const hit = await cache.match(request);
-  const network = fetch(request).then(res => {
-    if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
-    return res;
-  }).catch(() => null);
+  const network = fetch(request)
+    .then(res => {
+      if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
+      return res;
+    })
+    .catch(() => null);
   return hit || (await network) || new Response('', { status: 504 });
 }
 
@@ -104,5 +111,5 @@ self.addEventListener('fetch', event => {
     event.respondWith(cacheFirst(request));
     return;
   }
-  if (isImageHost(request.url)) event.respondWith(staleWhileRevalidate(request));
+  if (isRemoteAsset(request.url)) event.respondWith(staleWhileRevalidate(request));
 });
