@@ -254,24 +254,27 @@ const RENT=[
 ];
 const rentFor=ym=>RENT.find(x=>ym>=x.from&&ym<=x.to)||null;
 
-const PROJECTS=[
- {ym:'2024-11',n:'Stewart Park Cafe',a:600},
- {ym:'2025-01',n:'Ropner Park',a:480},
- {ym:'2025-04',n:'Little Rascals Soft Play',a:450},
- {ym:'2025-07',n:'Stockton Town FC',a:700},
- {ym:'2025-10',n:'Billingham Forum',a:380},
- {ym:'2026-01',n:'Stewart Park Cafe',a:950},
- {ym:'2026-04',n:'Ropner Park',a:520}
-];
-const RETAINERS=[
- {n:'Little Rascals Soft Play',a:25,start:'2025-05',day:3},
- {n:'Stockton Town FC',a:40,start:'2025-08',day:3},
- {n:'Billingham Forum',a:30,start:'2025-11',day:3},
- {n:'Stewart Park Cafe',a:45,start:'2026-02',day:3},
- {n:'Ropner Park',a:35,start:'2026-05',day:3}
-];
+const CLIENTS=['Stewart Park Cafe','Ropner Park','Little Rascals Soft Play','Stockton Town FC','Billingham Forum','Cleveland Centre','The Thomas Sheraton','Teesside Park','Middlesbrough FC','Hays Travel','Preston Park Museum','Blue Reef Aquarium'];
+const PROJECTS=(()=>{
+  const r=mulberry32(90210),out=[],now=new Date();let ci=0;
+  for(let y=2020;y<=now.getFullYear();y++){
+    const n=3+(r()<0.45?1:0);
+    const ms=new Set();
+    while(ms.size<n)ms.add(Math.floor(r()*12));
+    [...ms].sort((a,b)=>a-b).forEach(m=>{
+      if(y===now.getFullYear()&&m>now.getMonth())return;
+      out.push({ym:y+'-'+String(m+1).padStart(2,'0'),n:CLIENTS[ci++%CLIENTS.length],a:Math.round((2000+r()*6000)/50)*50});
+    });
+  }
+  return out;
+})();
+const RETAINERS=PROJECTS.map(p=>({n:p.n,a:Math.round((20+(p.a/8000)*45)/5)*5,start:addM(p.ym,1),day:3}));
 const retainerFor=ym=>RETAINERS.filter(r=>ym>=r.start&&ym<=addM(r.start,11));
 const projectFor=ym=>PROJECTS.filter(p=>p.ym===ym);
+function divFor(isa,ym){
+  const row=isa.find(r=>r.ym===ym);
+  return row?Math.max(120,Math.round(row.closing*0.0215/12)):0;
+}
 
 const MERCH=[
  {n:'Arriva North East',c:'Transport',lo:[2,6],cad:.5},{n:'Stagecoach Teesside',c:'Transport',lo:[2,5],cad:.36},
@@ -385,7 +388,7 @@ function buildLedger(rnd,target){
 }
 
 const TX_DAYS=1100;
-function buildHist(rnd){
+function buildHist(rnd,isa){
   const rows=[];let bal=620;
   let d=new Date(2015,9,1);
   const s=new Date();s.setDate(s.getDate()-TX_DAYS);
@@ -399,7 +402,8 @@ function buildHist(rnd){
     const homeEd=ym>='2026-07';
     const kids=d.getFullYear()>=2018?Math.round((170+(d.getFullYear()-2018)*22)*(homeEd?0.85:1)+(rnd()-.5)*60):0;
     const side=projectFor(ym).reduce((s,p)=>s+p.a,0)+retainerFor(ym).reduce((s,r)=>s+r.a,0);
-    const inc=sal+side+(d.getFullYear()>=2019?102.40:0);
+    const dv=Math.round(divFor(isa,ym)*(0.8+rnd()*0.45));
+    const inc=sal+side+dv+(d.getFullYear()>=2019?102.40:0);
     const out=household+kids+(rent?rent.a:0);
     bal=Math.max(-520,bal+inc-out);
     rows.push({ym,in:inc,out,closing:+bal.toFixed(2),rent:rent?rent.n:null});
@@ -408,7 +412,7 @@ function buildHist(rnd){
   return rows;
 }
 
-function buildTx(rnd,startBal){
+function buildTx(rnd,startBal,isa){
   const out=[];const today=new Date();today.setHours(0,0,0,0);
   const from=new Date(today);from.setDate(from.getDate()-TX_DAYS);let bal=startBal;
   const epoch=new Date(2019,0,4);
@@ -439,6 +443,20 @@ function buildTx(rnd,startBal){
     if(day.getDate()===15)for(const p of projectFor(ym)){
       bal=+(bal+p.a).toFixed(2);
       out.push({id:'j'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime(),n:p.n,c:'Income',amt:p.a,bal,proj:true});
+      const sweep=Math.round(p.a*0.8);
+      bal=+(bal-sweep).toFixed(2);
+      out.push({id:'js'+out.length+'_'+day.getTime(),d:dstr(day),t:day.getTime()+1,n:'Transfer to House Deposit',c:'Transfers',amt:-sweep,bal});
+    }
+    const lastDay=new Date(day.getFullYear(),day.getMonth()+1,0).getDate();
+    if(day.getDate()===lastDay){
+      const amt=Math.round(divFor(isa,ym)*(0.8+rnd()*0.45));
+      if(amt>0){
+        bal=+(bal+amt).toFixed(2);
+        out.push({id:'dv'+day.getTime(),d:dstr(day),t:day.getTime(),n:'Dividend · ISA portfolio',c:'Dividends',amt,bal,div:true});
+        const sweep=Math.round(amt*0.9);
+        bal=+(bal-sweep).toFixed(2);
+        out.push({id:'ds'+day.getTime(),d:dstr(day),t:day.getTime()+1,n:'Transfer to Rainy Day',c:'Transfers',amt:-sweep,bal});
+      }
     }
     if(Math.round((day-epoch)/864e5)%28===0){
       bal=+(bal+102.40).toFixed(2);
@@ -467,10 +485,10 @@ function deriveTargets(tx){
 function fresh(){
   const rnd=mulberry32(19921024);
   const isa=buildLedger(rnd,TARGET);
-  const hist=buildHist(mulberry32(4411));
+  const hist=buildHist(mulberry32(4411),isa);
   const startBal=hist.length?hist[hist.length-1].closing:1800;
-  const tx=buildTx(mulberry32(77021),startBal);
-  const delta=+(2380-(tx[0]?tx[0].bal:startBal)).toFixed(2);
+  const tx=buildTx(mulberry32(77021),startBal,isa);
+  const delta=+(1500-(tx[tx.length-1]?tx[tx.length-1].bal:startBal)).toFixed(2);
   tx.forEach(t=>t.bal=+(t.bal+delta).toFixed(2));
   hist.forEach(h=>h.closing=+(h.closing+delta).toFixed(2));
   const pots=[
@@ -500,7 +518,7 @@ function fresh(){
     notifs:[],card:{frozen:false,online:true,atm:600,mag:true},
     sec:{bio:true,pin:'4821',lock:true,privacy:false,credId:null},
     prefs:{theme:'auto',mark:'tile',motion:!REDUCED,notif:{tx:true,dd:true,pot:true,market:false}},
-    cats:['Groceries','Transport','Eating out','Shopping','Bills','Leisure','Kids','Health','Home','Travel','Rent','Income','Transfers'],
+    cats:['Groceries','Transport','Eating out','Shopping','Bills','Leisure','Kids','Health','Home','Travel','Rent','Dividends','Income','Transfers'],
     importLog:[{d:'2015-10-14',src:'Halifax',n:'ISA transfer-in'},{d:'2015-10-14',src:'Hargreaves Lansdown',n:'Investment account transfer'},{d:'2016-04-06',src:'Legal & General',n:'PEP consolidation'}],
     seen:{}
   };
@@ -696,7 +714,7 @@ function balanceSeries(range){
 function txRow(t,i){
   return `<button class="row stag" style="animation-delay:${Math.min(i*9,150)}ms;width:100%;text-align:left" onclick="go('tx','${t.id}')">
     ${t.amt>0?'<span class="ico coral">↓</span>':logo(t.n,40)}
-    <span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}${t.pend?' · Pending':''}${t.dd?' · Direct Debit':''}${t.maint?' · Maintenance':''}${t.proj?' · Project':''}</span></span>
+    <span class="t"><b>${esc(t.n)}</b><span>${esc(t.c)} · ${new Date(t.t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}${t.pend?' · Pending':''}${t.dd?' · Direct Debit':''}${t.maint?' · Maintenance':''}${t.proj?' · Project':''}${t.div?' · Dividend':''}</span></span>
     <span class="amt ${t.amt>0?'pos':''}">${t.amt>0?'+':''}${gbp(t.amt)}</span></button>`;
 }
 function vHome(){
@@ -882,7 +900,7 @@ function vInv(){
       <div class="money" style="font-size:34px;font-weight:800;letter-spacing:-1.4px">${gbp(total)}</div>
       <div class="small"><span class="pos money">+${gbp(gain)}</span> <span class="muted">(${(gain/cost*100).toFixed(1)}%) since 1992</span></div></div>
     <div class="card" style="margin-top:12px;background:var(--accent-soft)"><div class="row" style="padding:0">
-      <span class="t"><b>Reinvested dividends</b><span>Automatic · last paid 1 Dec</span></span><span class="badge ok">On</span></div></div>
+      <span class="t"><b>Dividends</b><span>Paid to you monthly · last day</span></span><span class="badge ok">On</span></div></div>
     <div class="sec" style="padding:0;margin-top:22px">Holdings · ${S.holdings.length}</div>
     ${S.holdings.slice().sort((a,b)=>b.v-a.v).map(h=>`<button class="row" style="width:100%;text-align:left" onclick="go('hold','${encodeURIComponent(h.n)}')">
       ${logo(h.n,40)}
@@ -928,7 +946,8 @@ function vTx(id){
       ${t.pend?'<div class="badge warn" style="margin-top:10px">Pending</div>':''}
       ${t.dd?'<div class="badge" style="margin-top:10px">Direct Debit</div>':''}
       ${t.proj?'<div class="badge" style="margin-top:10px">Project fee</div>':''}
-      ${t.maint?'<div class="badge" style="margin-top:10px">Maintenance</div>':''}</div>
+      ${t.maint?'<div class="badge" style="margin-top:10px">Maintenance</div>':''}
+      ${t.div?'<div class="badge" style="margin-top:10px">Dividend</div>':''}</div>
     <div class="card w" style="margin-top:12px;padding:0">
       <div class="row" style="padding:13px 16px"><span class="t"><b>Category</b></span><span class="small muted">${esc(t.c)}</span></div>
       <div class="row" style="padding:13px 16px"><span class="t"><b>Balance after</b></span><span class="amt small">${gbp(t.bal)}</span></div>
@@ -1061,7 +1080,7 @@ function vProfile(){
     <button class="row" style="width:100%;text-align:left" onclick="toast('Chat opening…')"><span class="t"><b>Chat with us</b><span>Usually replies in 2 minutes</span></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="go('help')"><span class="t"><b>Help centre</b></span><span class="muted">›</span></button>
     <button class="row" style="width:100%;text-align:left" onclick="toast('All systems operational')"><span class="t"><b>Service status</b></span><span class="badge ok">Operational</span></button>
-    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 5.3.0</div></div>`;
+    <div class="tiny muted center" style="margin:24px 0">Monzo Bank Ltd · version 5.4.0</div></div>`;
 }
 function cycleTheme(){const o=['auto','light','dark'],i=o.indexOf(S.prefs.theme||'auto');setTheme(o[(i+1)%3])}
 function vPlan(){
