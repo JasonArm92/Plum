@@ -72,6 +72,14 @@ body:not(.locked) #lock{display:none}
 .hdr{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:6px;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;background:var(--bg);border-bottom:1px solid transparent;transition:border-color .18s}
 .hdr--scrolled{border-bottom-color:var(--line)}
 .hdr__spacer{flex:1}
+.hdr__back{display:none;width:36px;height:36px;border-radius:50%;place-items:center;color:var(--ink);flex:0 0 auto}
+.hdr__back:active{background:var(--card2)}
+.hdr__back svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.hdr__title{display:none;flex:1;font-size:17px;font-weight:700;letter-spacing:-.02em;min-width:0;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr--sub .hdr__back{display:grid}
+.hdr--sub .hdr__title{display:block}
+.hdr--sub .hdr__spacer,.hdr--sub .avatar,.hdr--sub #searchBtn,.hdr--sub #bellBtn,.hdr--sub #plusBtn{display:none}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--coral);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:0 0 auto;border:2px solid transparent}
 .avatar:active{border-color:var(--line2)}
 .iconbtn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--ink);flex:0 0 auto;transition:background .14s}
@@ -85,7 +93,7 @@ section[data-screen]{display:none;padding-bottom:20px}
 section.on{display:block;animation:fade .2s ease}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
-.h-sec{display:flex;align-items:center;gap:10px;margin:26px 0 12px}
+.h-sec{display:flex;align-items:center;gap:10px;margin:20px 0 12px}
 .h-sec h2{font-size:25px;font-weight:700;letter-spacing:-.035em;flex:1;margin:0;line-height:1.2}
 .h-sec h2.sm{font-size:18px;letter-spacing:-.02em}
 .h-sec button{font-size:13.5px;font-weight:600;color:var(--coral-d)}
@@ -111,13 +119,14 @@ section.on{display:block;animation:fade .2s ease}
 .acct__card svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2}
 .acct__ghost{height:36px;padding:0 15px;border-radius:var(--pill);font-size:13px;font-weight:600;color:var(--ink);background:var(--card3)}
 .acct--frozen .acct__art{filter:grayscale(1);opacity:.5}
+.acct--closed{opacity:.7}
 
 .drawer{position:fixed;inset:0;z-index:59;display:none}
 .drawer.on{display:block}
 .drawer__scrim{position:absolute;inset:0;background:rgba(9,23,35,.4)}
 .drawer__panel{position:absolute;left:0;right:0;top:0;background:var(--bg);border-radius:0 0 var(--r5) var(--r5);
  padding:calc(env(safe-area-inset-top) + 16px) 16px 20px;max-width:520px;margin:0 auto;animation:drop .24s ease;box-shadow:var(--sh3)}
-@keyframes drop{from{transform:translateY(-20px);opacity:.5}to{transform:none;opacity:1}}
+@keyframes drop{from{transform:translateY(-20px);opacity:.6}to{transform:none;opacity:1}}
 .drawer__panel h2{font-size:25px;font-weight:700;letter-spacing:-.035em;margin-bottom:14px}
 .spot{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .spot::-webkit-scrollbar{display:none}
@@ -168,7 +177,6 @@ section.on{display:block;animation:fade .2s ease}
 .kv .k{color:var(--ink2)}
 .kv .v{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.divider{height:1px;background:var(--line);margin:14px 0}
 .note{font-size:12.5px;color:var(--ink3);margin:9px 2px}
 .empty{text-align:center;color:var(--ink3);font-size:13.5px;padding:28px 12px}
 .badge{display:inline-flex;align-items:center;height:21px;padding:0 8px;border-radius:var(--pill);font-size:10.5px;
@@ -179,10 +187,6 @@ section.on{display:block;animation:fade .2s ease}
 .badge.coral{background:rgba(255,79,64,.14);color:var(--coral-d)}
 .meter{height:8px;border-radius:var(--pill);background:var(--card3);overflow:hidden;margin:8px 0}
 .meter i{display:block;height:100%;background:var(--coral);border-radius:var(--pill);transition:width .3s}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:var(--r3);
- background:var(--card2);font-size:11.5px;font-weight:600;text-align:center;line-height:1.25}
-.tile svg{width:22px;height:22px;stroke:var(--ink2);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:48px;border-radius:var(--pill);
  background:var(--coral);color:#fff;font-weight:600;font-size:16px;letter-spacing:-.01em;transition:transform .12s,opacity .15s}
@@ -281,8 +285,11 @@ window.onerror = (m, s, l, c) => {
 
 <div id="app" aria-live="polite">
 <header class="hdr" id="hdr">
+  <button class="hdr__back" id="backBtn" aria-label="Back">
+    <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
   <button class="avatar" id="avatarBtn" aria-label="Profile and settings"></button>
   <div class="hdr__spacer"></div>
+  <span class="hdr__title" id="hdrTitle"></span>
   <button class="iconbtn" id="searchBtn" aria-label="Search">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></button>
   <button class="iconbtn" id="bellBtn" aria-label="Notifications">
@@ -291,7 +298,7 @@ window.onerror = (m, s, l, c) => {
     <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></button>
 </header>
 
-<div class="pull"><button id="pullBtn" aria-label="Show spotlights">
+<div class="pull" id="pullWrap"><button id="pullBtn" aria-label="Show spotlights">
   <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button></div>
 
 <main id="main">
@@ -650,6 +657,7 @@ const dom = (y,m,day) => `${y}-${pad2(m+1)}-${pad2(Math.min(day,monthLen(y,m)))}
 const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; return el; };
+const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
 
 let _seed = 0x9e3779b9;
 function rnd(){ _seed|=0; _seed = _seed + 0x6D2B79F5 | 0;
@@ -693,7 +701,6 @@ function logo(name){
 }
 const CATS = ['Groceries','Eating out','Transport','Shopping','Bills','Rent','Health','Education','Subscriptions','Entertainment','Fitness','Income','Transfers','Savings','Investments'];
 const FLEX = ['Groceries','Eating out','Transport','Shopping','Health','Education','Entertainment','Fitness'];
-const COMMITTED = ['Rent','Bills','Subscriptions'];
 const DEFAULT_TARGETS = {'Groceries':420,'Eating out':140,'Transport':120,'Shopping':180,'Health':60,'Education':90,'Entertainment':70,'Fitness':35};
 const POTS0 = [{name:'Rainy Day', goal:5000, bal:2410.55, type:'regular'},
   {name:'Rent buffer', goal:1700, bal:1700, type:'bills'},
@@ -704,6 +711,7 @@ const TARGET_ISA = 934745.32;
 const BANKS = ['Barclays','HSBC','Lloyds','NatWest','Santander','Nationwide','Starling','Chase'];
 const BB_PROVIDERS = ['British Gas','Northumbrian Water','Virgin Media','EE','Aviva','Stockton Council','OpenRent','Blue Skies Lets','Pointens'];
 const BB_CAP = 150;
+const ATM_STEPS = [200,400,600,800];
 
 function seedISA(){
   const months = []; let d = new Date(1992,9,1);
@@ -789,6 +797,7 @@ function freshState(){
     profile:{name:'Jason Armstrong',dob:'1992-10-07',email:'jasonarm82@gmail.com',phone:'07356170033',
       a1:'259 Piper Knowle Road',a2:'',city:'Stockton-on-Tees',post:'TS19 8JQ',occ:'Security Officer',emp:'Kingdom Services Group'},
     partner:'Chloe Brown',
+    acctName:'Personal current account', acctClosed:false, atmLimit:400, potSort:'name',
     plan:'max', priv:false, roundups:true, credId:null, pin:'2580', frozen:false,
     theme:'auto', zoom:1, motion:true, pension:41250.18, homeValue:168000, mortgage:100000,
     flex:{limit:4000, used:0, plans:[]},
@@ -811,6 +820,9 @@ function load(){
   if (!Array.isArray(S.tx)) S.tx = seedAccount().reverse();
   if (!Array.isArray(S.isa) || !S.isa.length) S.isa = seedISA();
   if (!S.notifs || !S.notifs.length) seedNotifs();
+  if (!S.acctName) S.acctName = 'Personal current account';
+  if (!S.atmLimit) S.atmLimit = 400;
+  if (!S.potSort) S.potSort = 'name';
   if (!S.credit || !S.credit.built){ S.credit = {eq: ri(560,720), tu: ri(540,700), built:true}; save(); }
   runInterest(); runTick();
 }
@@ -824,13 +836,14 @@ function pushTx(name, cat, amt, note, dateOverride){
   save();
 }
 const isaBal = () => S.isa.length ? S.isa[0].value : 0;
-const potTotal = () => S.pots.reduce((a,p)=>a+p.bal,0);
 const savingsTotal = () => S.pots.filter(p=>p.type==='savings').reduce((a,p)=>a+p.bal,0);
 const homeEquity = () => Math.max(0, (S.homeValue||0) - (S.mortgage||0));
 const connTotal = () => S.connected.reduce((a,c)=>a+c.bal,0);
 const loanOwed = () => S.loans.reduce((a,l)=>a+l.outstanding,0);
 const growTotal = () => savingsTotal() + isaBal() + (S.pension||0) + homeEquity() + connTotal() - loanOwed();
 const flexAvail = () => Math.max(0, round2(S.flex.limit - S.flex.used));
+const sortedPots = () => S.pots.slice().sort((a,b)=>
+  S.potSort === 'balance' ? b.bal - a.bal : a.name.localeCompare(b.name));
 
 function runInterest(){
   if (S.lastInterest === THIS_YM) return;
@@ -931,12 +944,20 @@ function donut(host, parts){
 let feedLimit = 12, accLimit = 40, stmtKind = 'acc', catFilter = 'All', trendView = 'balance';
 
 const LAYOUT_NAMES = {personal:'Personal account',joint:'Joint account',pots:'Pots',invest:'Investments',latest:'Activity'};
+const TABS = ['home','save','grow','pay','account'];
+const TITLES = {grow:'Grow',save:'Save',pay:'Pay',trends:'Trends',acc:'Current account',pots:'Pots',invest:'Investments',
+  statements:'Statements',accounts:'Your accounts',borrow:'Borrowing',flex:'Monzo Flex',aura:'Monzo Aura',overdraft:'Overdraft',
+  loans:'Loans',connected:'Connected accounts',credit:'Credit insights',challenge:'Saving Challenge',billsback:'Billsback',
+  insurance:'Insurance',personal:'Personal details',security:'Security',appearance:'Appearance',cards:'Cards',plan:'Plans',
+  limits:'Limits',payees:'Payees',search:'Search',notifs:'Notifications',chat:'Support',disputes:'Disputes',joint:'Joint account',
+  potdetail:'Pot',txdetail:'Transaction'};
+let navStack = [];
 
 function acctCard(kind){
-  if (kind === 'personal') return `<article class="acct ${S.frozen?'acct--frozen':''}">
+  if (kind === 'personal') return `<article class="acct ${S.frozen?'acct--frozen':''} ${S.acctClosed?'acct--closed':''}">
     <div class="acct__top">
       <div class="acct__id">
-        <div class="acct__name">Personal current account <span class="badge coral">${plan().name}</span></div>
+        <div class="acct__name">${esc(S.acctName)} <span class="badge coral">${plan().name}</span>${S.acctClosed?'<span class="badge">Closing</span>':''}</div>
         <div class="acct__num">04-00-04 · 73829104</div>
       </div>
       <div class="acct__art"><svg viewBox="0 0 24 24"><path d="M4 8h16v9H4z" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M4 11h16" stroke="#fff" stroke-width="1.8"/></svg></div>
@@ -973,7 +994,7 @@ const HOME_SECTIONS = {
   pots(){ if (!S.pots.length) return '';
     return `<div class="h-sec"><h2 class="sm">Pots</h2>
       <button class="more" data-pmenu aria-label="Pot options"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></button></div>
-      <div class="potstrip">${S.pots.slice(0,4).map(p=>`<button class="potcard" data-pot="${p.id}">
+      <div class="potstrip">${sortedPots().slice(0,4).map(p=>`<button class="potcard" data-pot="${p.id}">
         <span class="e">${p.type==='savings'?'🌱':p.type==='bills'?'📄':'🏺'}</span>
         <span class="nm">${esc(p.name)}</span><span class="v rev">${fmt(p.bal)}</span>
         <span class="p">${Math.round(p.bal/p.goal*100)}% of ${fmt(p.goal)}</span></button>`).join('')}</div>`;
@@ -1036,17 +1057,16 @@ function fillFeed(id, limit, moreId){
   const mb = document.getElementById(moreId); if (mb) mb.classList.toggle('hide', limit >= S.tx.length);
 }
 function renderSave(){ const h = document.getElementById('saveList'); if (!h) return;
-  h.innerHTML = S.pots.map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('') || '<div class="empty">No pots yet</div>'; }
+  h.innerHTML = sortedPots().map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('') || '<div class="empty">No pots yet</div>'; }
 function renderGrow(){
-  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('growTotal', fmt(growTotal()));
-  set('growSub', `Savings ${fmt(savingsTotal())} · Invested ${fmt(isaBal())} · Pension ${fmt(S.pension||0)} · Equity ${fmt(homeEquity())}${loanOwed()?` · Owed ${fmt(loanOwed())}`:''}`);
-  set('growSaveBal', fmt(savingsTotal()));
-  set('growSaveMeta', `${S.pots.filter(p=>p.type==='savings').length} savings pots · connected ${fmt(connTotal())}`);
-  set('growSaveRate', plan().ia + '% AER');
-  set('growInvBal', fmt(isaBal()));
-  set('growPenBal', fmt(S.pension||0));
-  set('growHomeBal', fmt(homeEquity()));
+  setTxt('growTotal', fmt(growTotal()));
+  setTxt('growSub', `Savings ${fmt(savingsTotal())} · Invested ${fmt(isaBal())} · Pension ${fmt(S.pension||0)} · Equity ${fmt(homeEquity())}${loanOwed()?` · Owed ${fmt(loanOwed())}`:''}`);
+  setTxt('growSaveBal', fmt(savingsTotal()));
+  setTxt('growSaveMeta', `${S.pots.filter(p=>p.type==='savings').length} savings pots · connected ${fmt(connTotal())}`);
+  setTxt('growSaveRate', plan().ia + '% AER');
+  setTxt('growInvBal', fmt(isaBal()));
+  setTxt('growPenBal', fmt(S.pension||0));
+  setTxt('growHomeBal', fmt(homeEquity()));
   const hv = document.getElementById('hv'); if (hv) hv.value = S.homeValue||0;
   const hm = document.getElementById('hm'); if (hm) hm.value = S.mortgage||0;
 }
@@ -1082,18 +1102,17 @@ function renderTrends(){
 }
 function renderAcc(){ fillFeed('accFeed', accLimit, 'accMore'); }
 function renderPots(){ const h = document.getElementById('potsList'); if (!h) return;
-  h.innerHTML = S.pots.map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('') || '<div class="empty">No pots yet</div>'; }
+  h.innerHTML = sortedPots().map(p=>`<div class="card" style="padding:6px 14px;margin:10px 0">${potRow(p)}</div>`).join('') || '<div class="empty">No pots yet</div>'; }
 function renderInvest(){
-  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('isaVal', fmt(isaBal()));
+  setTxt('isaVal', fmt(isaBal()));
   const pct = Math.min(100, isaBal()/TARGET_ISA*100);
   const prog = document.getElementById('isaProg');
   if (prog) prog.innerHTML = `<div class="meter"><i style="width:${pct.toFixed(2)}%"></i></div>
     <div style="font-size:12.5px;color:var(--ink2);margin-bottom:8px">${pct.toFixed(2)}% of target</div>`;
   const used = S.isa.filter(r=>r.date >= TAX_START && r.type==='ISA').reduce((a,r)=>a+r.contrib,0);
-  set('isaUsed', fmt(used));
-  set('isaLeft', fmt(Math.max(0,20000-used)));
-  set('isaFee', plan().cover ? '0.20%' : '0.25%');
+  setTxt('isaUsed', fmt(used));
+  setTxt('isaLeft', fmt(Math.max(0,20000-used)));
+  setTxt('isaFee', plan().cover ? '0.20%' : '0.25%');
   const hold = [{k:'Vanguard FTSE Global All Cap',w:.46},{k:'Vanguard US Equity Index',w:.22},
     {k:'iShares Core MSCI World',w:.16},{k:'Vanguard Emerging Markets',w:.09},{k:'Cash',w:.07}];
   const pl = document.getElementById('portList');
@@ -1157,14 +1176,13 @@ function renderCards(){
     <button class="btn ghost sm" id="freezeBtn" style="margin:10px 0">${S.frozen?'Unfreeze':'Freeze'} card</button>`
     + S.vcards.map(v=>`<div class="kv"><span class="k">${esc(v.label)} · ${v.num}</span>
     <span class="v"><span class="badge ${v.frozen?'bad':'ok'}">${v.frozen?'Frozen':'Active'}</span></span></div>`).join('');
-  const note = document.getElementById('vcNote');
-  if (note) note.textContent = p.vcLive
+  setTxt('vcNote', p.vcLive
     ? `${S.vcards.length} of ${p.vcLive} live virtual cards. Up to ${p.vc30} new per 30 days, 100 per year.`
-    : 'Virtual cards need Extra, Perks or Max.';
+    : 'Virtual cards need Extra, Perks or Max.');
   on('freezeBtn', () => { S.frozen = !S.frozen; save(); renderCards(); renderHome(); toast(S.frozen?'Card frozen':'Card unfrozen'); });
 }
 function renderPlan(){
-  const sub = document.getElementById('planSub'); if (sub) sub.textContent = plan().name;
+  setTxt('planSub', plan().name);
   const host = document.getElementById('planList'); if (!host) return;
   host.innerHTML = Object.entries(PLANS).map(([k,p])=>`
     <div class="card" style="border:2px solid ${k===S.plan?'var(--coral)':'var(--line)'}">
@@ -1183,8 +1201,13 @@ function renderPlan(){
 function renderLimits(){
   const host = document.getElementById('limitBox'); if (!host) return;
   const p = plan();
+  const cap = Math.min(S.atmLimit, p.atmRow);
   host.innerHTML = `
-    <div class="kv"><span class="k">ATM abroad (per 30 days)</span><span class="v">£${p.atmRow}</span></div>
+    <div class="kv"><span class="k">Your daily ATM limit</span><span class="v rev">£${S.atmLimit}</span></div>
+    <div class="pill-row" style="margin:6px 0 14px">${ATM_STEPS.map(v=>
+      `<button class="chip ${v===S.atmLimit?'on':''}" data-atm="${v}">£${v}</button>`).join('')}</div>
+    <div class="kv"><span class="k">Free ATM abroad (per 30 days)</span><span class="v">£${p.atmRow}</span></div>
+    <div class="kv"><span class="k">Allowed at your plan</span><span class="v rev">£${cap}</span></div>
     <div class="kv"><span class="k">ATM UK &amp; EEA (per 30 days)</span><span class="v">${p.atmUK===Infinity?'Unlimited':'£'+p.atmUK}</span></div>
     <div class="kv"><span class="k">Contactless (per day)</span><span class="v">£100</span></div>
     <div class="kv"><span class="k">Card payments (per day)</span><span class="v">£5,000</span></div>
@@ -1192,8 +1215,8 @@ function renderLimits(){
     <div class="kv"><span class="k">Cash deposits</span><span class="v">${p.cover?'3 free/month':'£1 each'}</span></div>`;
 }
 function renderPay(){
-  const sc = document.getElementById('soCount'); if (sc) sc.textContent = S.sos.filter(s=>s.active).length + ' active';
-  const tc = document.getElementById('tabCount'); if (tc) tc.textContent = S.tabs.length + ' open';
+  setTxt('soCount', S.sos.filter(s=>s.active).length + ' active');
+  setTxt('tabCount', S.tabs.length + ' open');
   const so = document.getElementById('soList');
   if (so) so.innerHTML = '<h2>Standing orders</h2><div class="sub">Regular payments</div>' +
     (S.sos.map(s=>`<div class="kv"><span class="k">${esc(s.name)}<br><span style="font-size:12.5px">Day ${s.day}</span></span>
@@ -1205,18 +1228,17 @@ function renderPay(){
 }
 function renderJoint(){
   const inn = S.tx.filter(t=>t.date.slice(0,7)===THIS_YM && t.cat==='Income').reduce((a,t)=>a+t.amt,0);
-  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('jointBal', fmt(round2(inn*0.35)));
-  set('jointIn', fmt(round2(inn*0.35)));
-  set('jointOut', fmt(1240));
+  setTxt('jointBal', fmt(round2(inn*0.35)));
+  setTxt('jointIn', fmt(round2(inn*0.35)));
+  setTxt('jointOut', fmt(1240));
 }
 function renderAccounts(){
   const c = document.getElementById('accCount');
   if (c) c.textContent = (1 + S.extraAccounts.length) + ' account' + (S.extraAccounts.length?'s':'');
   const host = document.getElementById('accList'); if (!host) return;
   host.innerHTML =
-    `<div class="pot"><span class="art">PC</span><span class="mid"><span class="nm">Personal current account</span>
-      <span class="sub">04-00-04 · 73829104</span></span><span class="badge ok">Active</span></div>` +
+    `<div class="pot"><span class="art">PC</span><span class="mid"><span class="nm">${esc(S.acctName)}</span>
+      <span class="sub">04-00-04 · 73829104</span></span><span class="badge ${S.acctClosed?'':'ok'}">${S.acctClosed?'Closing':'Active'}</span></div>` +
     `<div class="pot"><span class="art">JT</span><span class="mid"><span class="nm">Joint account</span>
       <span class="sub">With ${esc(S.partner)}</span></span><span class="badge ok">Active</span></div>` +
     S.extraAccounts.map(a=>`<div class="pot"><span class="art">${esc(a.name[0])}</span>
@@ -1224,13 +1246,12 @@ function renderAccounts(){
       <span class="badge">${a.status}</span></div>`).join('');
 }
 function renderBorrow(){
-  const f = document.getElementById('flexSub'); if (f) f.textContent = `${fmt(flexAvail())} available`;
-  const o = document.getElementById('odSub'); if (o) o.textContent = S.overdraft.limit ? fmt(S.overdraft.limit) + ' arranged' : 'Not arranged';
+  setTxt('flexSub', `${fmt(flexAvail())} available`);
+  setTxt('odSub', S.overdraft.limit ? fmt(S.overdraft.limit) + ' arranged' : 'Not arranged');
 }
 function renderFlex(){
-  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('flexAvail', fmt(flexAvail()));
-  set('flexLimit', fmt(S.flex.limit));
+  setTxt('flexAvail', fmt(flexAvail()));
+  setTxt('flexLimit', fmt(S.flex.limit));
   const m = document.getElementById('flexMeter'); if (m) m.style.width = Math.min(100, S.flex.used/S.flex.limit*100) + '%';
   const host = document.getElementById('flexPlans'); if (!host) return;
   host.innerHTML = S.flex.plans.length ? S.flex.plans.map(p=>{
@@ -1243,18 +1264,18 @@ function renderFlex(){
   }).join('') : '<div class="empty">No plans</div>';
 }
 function renderAura(){
-  const a = S.aura, set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const a = S.aura;
   const st = document.getElementById('auraStatus');
   if (st) st.innerHTML = a.active ? '<span class="badge ok">Active</span>' : '<span class="badge">Not taken out</span>';
-  set('auraCash', fmt(a.cashback)); set('auraLounge', a.lounge); set('auraFast', a.fast);
+  setTxt('auraCash', fmt(a.cashback)); setTxt('auraLounge', a.lounge); setTxt('auraFast', a.fast);
   const au = document.getElementById('auraAuto'); if (au) au.classList.toggle('on', a.auto);
-  set('auraToggle', a.active ? 'Close Aura' : 'Take out Aura for £15/month');
+  setTxt('auraToggle', a.active ? 'Close Aura' : 'Take out Aura for £15/month');
 }
 function renderOverdraft(){
-  const o = S.overdraft, set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('odLimit', fmt(o.limit));
-  set('odRate', o.rate ? o.rate + '% EAR' : '—');
-  set('odUsed', fmt(Math.max(0, -balNow())));
+  const o = S.overdraft;
+  setTxt('odLimit', fmt(o.limit));
+  setTxt('odRate', o.rate ? o.rate + '% EAR' : '—');
+  setTxt('odUsed', fmt(Math.max(0, -balNow())));
   const c = document.getElementById('odChoices');
   if (c) c.innerHTML = [250,500,1000,2000].map(v=>
     `<button class="chip ${o.pending===v?'on':''}" data-od="${v}">£${v}</button>`).join('');
@@ -1265,8 +1286,7 @@ function renderLoans(){
   const term = termEl ? (+termEl.value || 24) : 24;
   const apr = amt > 10000 ? 10 : 23;
   const monthly = round2(amt * (1 + apr/100 * term/12) / term);
-  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('lnApr', apr + '%'); set('lnMonth', fmt(monthly)); set('lnTotal', fmt(round2(monthly*term)));
+  setTxt('lnApr', apr + '%'); setTxt('lnMonth', fmt(monthly)); setTxt('lnTotal', fmt(round2(monthly*term)));
   const host = document.getElementById('lnList'); if (!host) return;
   host.innerHTML = S.loans.length ? S.loans.map(l=>`
     <div style="padding:9px 0;border-bottom:1px solid var(--line)">
@@ -1279,8 +1299,7 @@ function renderLoans(){
 function renderConnected(){
   const chips = document.getElementById('bankChips');
   if (chips) chips.innerHTML = BANKS.map(b=>`<button class="chip" data-bank="${b}">${b}</button>`).join('');
-  const cs = document.getElementById('connSub');
-  if (cs) cs.textContent = S.connected.length ? S.connected.length + ' connected' : 'Other banks';
+  setTxt('connSub', S.connected.length ? S.connected.length + ' connected' : 'Other banks');
   const host = document.getElementById('connList'); if (!host) return;
   host.innerHTML = S.connected.length ? S.connected.map(c=>`<div class="kv">
     <span class="k">${esc(c.bank)}<br><span style="font-size:12.5px">${esc(c.kind)}</span></span>
@@ -1288,8 +1307,7 @@ function renderConnected(){
 }
 function renderCredit(){
   const scores = plan().scores;
-  const sub = document.getElementById('creditSub');
-  if (sub) sub.textContent = scores + ' score' + (scores>1?'s':'');
+  setTxt('creditSub', scores + ' score' + (scores>1?'s':''));
   const box = document.getElementById('creditBox');
   if (box) box.innerHTML = `<div style="display:flex;gap:20px">
       <div style="flex:1"><div class="sub" style="margin:0">Equifax</div><div class="score">${S.credit.eq}</div>
@@ -1305,12 +1323,11 @@ function renderCredit(){
 }
 function renderChallenge(){
   const c = S.challenge, target = 667.95;
-  const set = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  set('chBal', fmt(c.saved));
+  setTxt('chBal', fmt(c.saved));
   const m = document.getElementById('chMeter'); if (m) m.style.width = Math.min(100, c.saved/target*100) + '%';
-  set('chDay', `${c.day} of 365`);
-  set('chToday', fmt(round2((c.day+1)/100)));
-  set('chRate', plan().price ? '5% AER' : 'No interest');
+  setTxt('chDay', `${c.day} of 365`);
+  setTxt('chToday', fmt(round2((c.day+1)/100)));
+  setTxt('chRate', plan().price ? '5% AER' : 'No interest');
 }
 function bbBills(){
   return S.tx.filter(t => t.date.slice(0,7)===THIS_YM && t.amt < 0 &&
@@ -1362,13 +1379,14 @@ function accountMenu(kind){
     <button class="sheetrow" data-go="payees"><svg viewBox="0 0 24 24"><path d="M4 12h16"/><path d="M14 6l6 6-6 6"/></svg><span>Send from joint</span></button>
     <button class="sheetrow" data-go="statements"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>Statements</span></button>
     <button class="sheetrow" data-close><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add money</span></button>`);
-  sheet(`<div class="grab"></div><h2>Personal account</h2><div class="sub">04-00-04 · 73829104</div>
+  sheet(`<div class="grab"></div><h2>${esc(S.acctName)}</h2><div class="sub">04-00-04 · 73829104</div>
     <button class="sheetrow" data-act="add"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Add money</span></button>
     <button class="sheetrow" data-go="cards"><svg viewBox="0 0 24 24"><path d="M3 7h18v10H3z"/><path d="M3 11h18"/></svg><span>Card details</span></button>
     <button class="sheetrow" data-act="freeze"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 7l14 10M19 7L5 17"/></svg><span>${S.frozen?'Unfreeze card':'Freeze card'}</span></button>
     <button class="sheetrow" data-go="statements"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6"/></svg><span>Statements</span></button>
     <button class="sheetrow" data-go="pots"><svg viewBox="0 0 24 24"><path d="M6 8h12v11H6z"/><path d="M9 8V6h6v2"/></svg><span>Move to pot</span></button>
     <button class="sheetrow" data-go="limits"><svg viewBox="0 0 24 24"><path d="M4 8h16v8H4z"/><path d="M8 12h8"/></svg><span>Limits</span></button>
+    <button class="sheetrow" data-act="rename"><svg viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16z"/></svg><span>Rename account</span></button>
     <button class="sheetrow danger" data-act="close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Close account</span></button>`);
 }
 function activityMenu(){
@@ -1383,6 +1401,8 @@ function potsMenu(){
   sheet(`<div class="grab"></div><h2>Pots</h2>
     <button class="sheetrow" data-act="newpot"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span>Create a pot</span></button>
     <button class="sheetrow" data-go="save"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>See all pots</span></button>
+    <button class="sheetrow" data-act="sortname"><svg viewBox="0 0 24 24"><path d="M4 7h10M4 12h7M4 17h4"/></svg><span>Sort by name</span></button>
+    <button class="sheetrow" data-act="sortbal"><svg viewBox="0 0 24 24"><path d="M4 17h10M4 12h7M4 7h4"/></svg><span>Sort by balance</span></button>
     <button class="sheetrow" data-act="hidepots"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><path d="M3 3l18 18"/></svg><span>Hide pots from Home</span></button>`);
 }
 
@@ -1393,8 +1413,16 @@ const RENDER = { home:renderHome, save:renderSave, grow:renderGrow, pay:renderPa
   limits:renderLimits, joint:renderJoint, accounts:renderAccounts, borrow:renderBorrow, flex:renderFlex,
   aura:renderAura, overdraft:renderOverdraft, loans:renderLoans, connected:renderConnected,
   credit:renderCredit, challenge:renderChallenge, billsback:renderBillsback, insurance:renderInsurance };
-function go(name){
+function go(name, back){
+  if (!back && name !== screen){
+    if (TABS.includes(name)) navStack = [];
+    else navStack.push(screen);
+  }
   closeSheet(); closeDrawer(); screen = name;
+  const sub = !TABS.includes(name);
+  const hdr = document.getElementById('hdr');
+  if (hdr) hdr.classList.toggle('hdr--sub', sub);
+  setTxt('hdrTitle', sub ? (TITLES[name] || '') : '');
   document.querySelectorAll('section[data-screen]').forEach(s=>s.classList.toggle('on', s.dataset.screen===name));
   document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on', b.dataset.go===name));
   try { if (RENDER[name]) RENDER[name](); } catch(e){ window.onerror('render ' + name + ': ' + e.message, 'script', 0, 0); }
@@ -1403,6 +1431,7 @@ function go(name){
   if (name==='appearance') syncAppearance();
   window.scrollTo(0,0);
 }
+function goBack(){ const prev = navStack.pop(); go(prev || 'home', true); }
 function fillPersonal(){ const p = S.profile;
   const set = (id,v) => { const el = document.getElementById(id); if (el) el.value = v; };
   set('pName',p.name); set('pDob',p.dob); set('pEmail',p.email); set('pPhone',p.phone);
@@ -1442,7 +1471,7 @@ function moveToPot(potId, amt, dir){
     p.bal = round2(p.bal+amt); pushTx(p.name,'Transfers',-amt,'Moved to pot'); }
   else { if (amt > p.bal) return toast('Not enough in that pot');
     p.bal = round2(p.bal-amt); pushTx(p.name,'Transfers',amt,'Moved from pot'); }
-  save(); closeSheet(); go(screen); toast('Done');
+  save(); closeSheet(); go(screen, true); toast('Done');
 }
 function addTxSheet(){
   sheet(`<div class="grab"></div><h2>Add transaction</h2><div class="sub">Record something you've spent or received</div>
@@ -1458,12 +1487,12 @@ function addTxSheet(){
     const signed = cat==='Income' || cat==='Investments' ? amt : -amt;
     if (signed < 0 && Math.abs(signed) > balNow()) return toast('Not enough in your balance');
     pushTx(name, cat, signed, '', document.getElementById('atDate').value || TODAY);
-    notif('Transaction added', `${name} — ${fmt(signed)}`); closeSheet(); go(screen); toast('Added');
+    notif('Transaction added', `${name} — ${fmt(signed)}`); closeSheet(); go(screen, true); toast('Added');
   });
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-go],[data-pot],[data-tx],[data-send],[data-fav],[data-editpay],[data-dl],[data-pdf],[data-stmt],[data-tv],[data-plan],[data-theme],[data-zoom],[data-up],[data-down],[data-eye],[data-close],[data-od],[data-bank],[data-pol],[data-term],[data-amenu],[data-tmenu],[data-pmenu],[data-dclose],[data-act]');
+  const t = e.target.closest('[data-go],[data-pot],[data-tx],[data-send],[data-fav],[data-editpay],[data-dl],[data-pdf],[data-stmt],[data-tv],[data-plan],[data-theme],[data-zoom],[data-up],[data-down],[data-eye],[data-close],[data-od],[data-bank],[data-pol],[data-term],[data-amenu],[data-tmenu],[data-pmenu],[data-dclose],[data-act],[data-atm]');
   if (t){
     if (t.dataset.go) return go(t.dataset.go);
     if (t.dataset.dclose !== undefined) closeDrawer();
@@ -1471,13 +1500,17 @@ document.addEventListener('click', e => {
     if (t.dataset.amenu) return accountMenu(t.dataset.amenu);
     if (t.dataset.tmenu !== undefined) return activityMenu();
     if (t.dataset.pmenu !== undefined) return potsMenu();
+    if (t.dataset.atm){ S.atmLimit = +t.dataset.atm; save(); return renderLimits(); }
     if (t.dataset.act){
       const a = t.dataset.act;
       if (a==='add') return addTxSheet();
       if (a==='freeze'){ S.frozen = !S.frozen; save(); closeSheet(); renderHome();
         return toast(S.frozen?'Card frozen':'Card unfrozen'); }
-      if (a==='close'){ save(); closeSheet(); return toast('Account closing — we will email you'); }
+      if (a==='rename'){ closeSheet(); return renameSheet(); }
+      if (a==='close'){ closeSheet(); return closeSheetConfirm(); }
       if (a==='newpot') return newPotSheet();
+      if (a==='sortname'){ S.potSort = 'name'; save(); closeSheet(); renderHome(); return toast('Sorted by name'); }
+      if (a==='sortbal'){ S.potSort = 'balance'; save(); closeSheet(); renderHome(); return toast('Sorted by balance'); }
       if (a==='hidepots'){ const s = S.layout.find(x=>x.id==='pots'); if (s) s.on = false;
         save(); closeSheet(); renderHome(); return toast('Pots hidden from Home'); }
     }
@@ -1588,6 +1621,25 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('change', e => { if (e.target.id === 'lnTerm') renderLoans(); });
 
+function renameSheet(){
+  sheet(`<div class="grab"></div><h2>Rename account</h2><div class="sub">Only you see this name</div>
+    <div class="field"><label>Account name</label><input id="rnName" value="${esc(S.acctName)}" maxlength="28"></div>
+    <button class="btn" id="rnGo">Save name</button>`);
+  on('rnGo', () => { const v = document.getElementById('rnName').value.trim();
+    if (!v) return toast('Enter a name'); S.acctName = v; save(); closeSheet(); renderHome();
+    if (screen === 'accounts') renderAccounts(); toast('Account renamed'); });
+}
+function closeSheetConfirm(){
+  sheet(`<div class="grab"></div><h2>Close this account?</h2>
+    <div class="sub">Your balance must be moved out first. This cannot be undone.</div>
+    <div class="kv"><span class="k">Balance to move</span><span class="v rev">${fmt(balNow())}</span></div>
+    <div class="kv"><span class="k">Open pots</span><span class="v">${S.pots.length}</span></div>
+    <button class="btn red" id="clGo" style="margin-top:14px">Close account</button>
+    <button class="btn ghost" id="clBack" style="margin-top:8px">Keep it open</button>`);
+  on('clBack', closeSheet);
+  on('clGo', () => { S.acctClosed = true; save(); closeSheet(); renderHome();
+    if (screen === 'accounts') renderAccounts(); notif('Account closing', 'We will confirm by email'); toast('Account closing'); });
+}
 function newPotSheet(){
   sheet(`<div class="grab"></div><h2>New pot</h2><div class="field"><label>Name</label><input id="npName"></div>
     <div class="field"><label>Type</label><select id="npType"><option value="regular">Regular</option>
@@ -1662,13 +1714,12 @@ function moveLayout(id, dir){
 let curPot = null;
 function openPot(id){
   const p = S.pots.find(x=>x.id===id); if (!p) return; curPot = p;
-  const set = (id2,v) => { const el = document.getElementById(id2); if (el) el.textContent = v; };
-  set('pdName', p.name);
-  set('pdBal', fmt(p.bal));
-  set('pdGoal', `${Math.round(p.bal/p.goal*100)}% of ${fmt(p.goal)} goal`);
+  setTxt('pdName', p.name);
+  setTxt('pdBal', fmt(p.bal));
+  setTxt('pdGoal', `${Math.round(p.bal/p.goal*100)}% of ${fmt(p.goal)} goal`);
   const bar = document.getElementById('pdBar'); if (bar) bar.style.width = Math.min(100, p.bal/p.goal*100) + '%';
   const rr = document.getElementById('pdRateRow'); if (rr) rr.classList.toggle('hide', p.type !== 'savings');
-  set('pdRate', plan().ia + '% AER (variable)');
+  setTxt('pdRate', plan().ia + '% AER (variable)');
   const hist = document.getElementById('pdHist');
   if (hist) hist.innerHTML = S.tx.filter(t=>t.name===p.name).slice(0,15)
     .map(t=>`<div class="kv"><span class="k">${esc(t.note||'Move')}</span>
@@ -1865,6 +1916,7 @@ on('bellBtn', () => go('notifs'));
 on('searchBtn', () => go('search'));
 on('pullBtn', openDrawer);
 on('plusBtn', plusSheet);
+on('backBtn', goBack);
 on('editLayout2', renderLayout);
 
 function plusSheet(){
