@@ -5,9 +5,9 @@ import {
   DOMAINS, POTS0, TARGET_ISA, buildSeed, uid
 } from './data.js';
 
-export const VERSION = 15;
-export const KEY = 'monzo_v15';
-const LEGACY_KEYS = ['monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
+export const VERSION = 16;
+export const KEY = 'monzo_v16';
+const LEGACY_KEYS = ['monzo_v15', 'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
 
 export const NOW = new Date();
 export const TODAY = iso(NOW);
@@ -19,6 +19,7 @@ export const TAX_START = `${NOW.getMonth() >= 3 ? NOW.getFullYear() : NOW.getFul
 
 export const CASHBACK_RATE = 0.01;
 export const CASHBACK_MIN = 1;
+const MAX_CATCHUP_DAYS = 400;
 
 function p2(n){ return String(n).padStart(2, '0'); }
 export function iso(d){ return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; }
@@ -123,6 +124,8 @@ export function freshState(){
     loans: [], connected: [], extraAccounts: [],
     sorter: { on: false, splits: {} },
     gpeMonth: '',
+    lastRun: TODAY,
+    roundupPotId: '',
     credit: { eq: 560 + Math.floor(Math.random() * 160), tu: 540 + Math.floor(Math.random() * 160), done: [] },
     challenge: { day: 0, saved: 0, level: '1p' },
     billsback: { optIn: false, history: [] },
@@ -196,6 +199,16 @@ const migrations = [
           .reduce((a, t) => a + Math.abs(t.amt), 0);
         s.aura.cashback = round2(spent * CASHBACK_RATE);
       }
+    }
+    return s;
+  },
+  /* 15 -> 16: the scheduler watermark and the round-up target */
+  s => {
+    s.v = 16;
+    s.lastRun ||= TODAY;
+    s.roundupPotId ||= '';
+    if (!Array.isArray(s.policies) || !s.policies.length){
+      s.policies = policySeed(!!(PLANS[s.plan] || {}).cover);
     }
     return s;
   }
@@ -361,12 +374,35 @@ function accrueCashback(amt, cat){
   S.aura.cashback = round2((S.aura.cashback || 0) + gain);
 }
 
+/* The round-up target is a chosen pot, falling back to anything called Rainy
+   Day and then to the first pot that exists. */
+function roundupPot(){
+  const chosen = S.pots.find(p => p.id === S.roundupPotId);
+  if (chosen) return chosen;
+  return S.pots.find(p => /rainy/i.test(p.name)) || S.pots[0] || null;
+}
+export const roundupPotName = () => (roundupPot() || {}).name || '';
+
+/* Round-ups fire per transaction, immediately, on the spare change only. */
+function accrueRoundup(amt, cat){
+  if (!S.roundups || amt >= 0 || !FLEX.includes(cat)) return;
+  const up = round2(Math.ceil(Math.abs(amt)) - Math.abs(amt));
+  if (up < 0.01 || up > balNow()) return;
+  const p = roundupPot();
+  if (!p) return;
+  p.bal = round2(p.bal + up);
+  insertTx({ id: uid(), date: TODAY, time: NOWT, name: p.name, cat: 'Transfers',
+    amt: -up, bal: 0, note: 'Round-up' });
+}
+
 export function addTx(name, cat, amt, note = '', dateOverride){
   const date = dateOverride || TODAY;
   const time = dateOverride && dateOverride !== TODAY ? '12:00' : NOWT;
   insertTx({ id: uid(), date, time, name, cat, amt: round2(amt), bal: 0, note });
   recompute();
   accrueCashback(round2(amt), cat);
+  accrueRoundup(round2(amt), cat);
+  recompute();
   commit();
 }
 export function updateTx(id, patch){
@@ -416,6 +452,7 @@ export function deletePot(id){
   const bal = p.bal;
   S.pots = S.pots.filter(x => x.id !== id);
   if (S.sorter.splits[id] !== undefined) delete S.sorter.splits[id];
+  if (S.roundupPotId === id) S.roundupPotId = '';
   if (bal > 0) addTx('Pot closed', 'Transfers', bal, p.name + ' returned');
   else commit();
   return { ok: true };
@@ -427,6 +464,15 @@ export function togglePotLock(id){
   commit();
   return { ok: true, locked: p.locked };
 }
+export function setRoundupPot(id){
+  const p = S.pots.find(x => x.id === id);
+  if (!p) return { ok: false, msg: 'No such pot' };
+  S.roundupPotId = p.id;
+  S.roundups = true;
+  commit();
+  return { ok: true, name: p.name };
+}
+export function clearRoundupPot(){ S.roundupPotId = ''; commit(); }
 
 export function sendMoney(payeeId, amount, ref){
   const p = S.payees.find(x => x.id === payeeId);
@@ -496,25 +542,103 @@ export function setSorter(splits, on = true){
 }
 export function setSorterOn(on){ S.sorter.on = !!on; commit(); return { ok: true }; }
 
-/* Runs the stored splits against whatever just landed. Bounded by the money
-   actually in the account, so an oversized split can't drive the balance under. */
-function applySorter(){
+/* ---------------- scheduled money ---------------- */
+/* A single running figure for the whole replay, so a day's debits can't each
+   independently decide there is enough money. The ledger is recomputed once at
+   the end; the checks are a guard rail, not a simulation of history. */
+let runBal = 0;
+
+function takeFunds(amt){
+  const v = round2(Math.min(Number(amt) || 0, Math.max(0, runBal)));
+  if (v <= 0) return 0;
+  runBal = round2(runBal - v);
+  return v;
+}
+
+/* Splits are bounded by the money that actually arrived. */
+function applySorter(date = TODAY){
   if (!S.sorter || !S.sorter.on) return [];
-  let left = balNow();
   const done = [];
   for (const [potId, raw] of Object.entries(S.sorter.splits || {})){
     const p = S.pots.find(x => x.id === potId);
     if (!p) continue;
-    const amt = round2(Math.min(Number(raw) || 0, left));
-    if (amt <= 0) continue;
-    left = round2(left - amt);
+    const amt = takeFunds(raw);
+    if (!amt) continue;
     p.bal = round2(p.bal + amt);
-    insertTx({ id: uid(), date: TODAY, time: NOWT, name: p.name, cat: 'Transfers',
+    insertTx({ id: uid(), date, time: '06:05', name: p.name, cat: 'Transfers',
       amt: -amt, bal: 0, note: 'Salary sorter' });
-    done.push({ pot: p.name, amt });
+    done.push({ kind: 'sorter', pot: p.name, amt, date });
   }
-  if (done.length) recompute();
   return done;
+}
+
+/* One salary per calendar month, whether it arrives by engine or by claim. */
+function paySalary(date){
+  const ym = date.slice(0, 7);
+  if (S.gpeMonth === ym) return [];
+  const salary = salaryAmount();
+  if (salary <= 0) return [];
+  S.gpeMonth = ym;
+  runBal = round2(runBal + salary);
+  insertTx({ id: uid(), date, time: '06:00', name: 'Kingdom Services Group',
+    cat: 'Income', amt: salary, bal: 0, note: 'Net salary' });
+  return [{ kind: 'salary', amt: salary, date }, ...applySorter(date)];
+}
+
+function autoSavePots(date){
+  const done = [];
+  for (const p of S.pots){
+    if (!p.autoSave || p.autoSave <= 0) continue;
+    const amt = takeFunds(p.autoSave);
+    if (!amt) continue;
+    p.bal = round2(p.bal + amt);
+    insertTx({ id: uid(), date, time: '07:05', name: p.name, cat: 'Transfers',
+      amt: -amt, bal: 0, note: 'Auto-save' });
+    done.push({ kind: 'auto-save', pot: p.name, amt, date });
+  }
+  return done;
+}
+
+/* Replays every day between the watermark and `until`, applying salary, sorter,
+   standing orders and pot auto-save in day order. Idempotent per day because the
+   watermark only ever moves forward. */
+export function runScheduled(until = TODAY){
+  if (!S) return [];
+  const from = S.lastRun || TODAY;
+  if (until <= from){
+    if (until > (S.lastRun || '')){ S.lastRun = until; commit(); }
+    return [];
+  }
+  const start = asDate(from);
+  const end = asDate(until);
+  const span = Math.min(MAX_CATCHUP_DAYS, Math.round((end - start) / 86400000));
+
+  runBal = balNow();
+  const applied = [];
+  let short = 0;
+
+  for (let i = 1; i <= span; i++){
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const date = iso(d), day = d.getDate();
+
+    if (day === 28) applied.push(...paySalary(date));
+    if (day === 1) applied.push(...autoSavePots(date));
+
+    S.sos.filter(s => s.active && s.day === day).forEach(s => {
+      const amt = takeFunds(s.amt);
+      if (!amt){ short++; return; }
+      insertTx({ id: uid(), date, time: '07:00', name: s.name, cat: 'Bills',
+        amt: -amt, bal: 0, note: 'Standing order' });
+      applied.push({ kind: 'standing-order', name: s.name, amt, date });
+    });
+  }
+
+  S.lastRun = until;
+  recompute();
+  commit();
+  if (applied.length) notif('Scheduled payments', `${applied.length} applied to your account`);
+  if (short) notif('Standing orders', `${short} skipped — not enough in your balance`);
+  return applied;
 }
 
 export const gpeClaimed = () => S.gpeMonth === THIS_YM;
@@ -525,7 +649,9 @@ export function getPaidEarly(){
   if (salary <= 0) return { ok: false, msg: 'No salary due' };
   S.gpeMonth = THIS_YM;
   addTx('Kingdom Services Group', 'Income', salary, 'Salary paid early');
+  runBal = balNow();
   const split = applySorter();
+  if (split.length) recompute();
   notif('Paid early', `${fmt(salary)} is in your account`);
   commit();
   return { ok: true, salary, split };
@@ -603,7 +729,7 @@ export function setProfile(patch){ Object.assign(S.profile, patch); commit(); }
 export function setPin(pin){ S.pin = pin; commit(); }
 export function setCredId(id){ S.credId = id; commit(); }
 export function togglePriv(){ S.priv = !S.priv; commit(); return S.priv; }
-export function toggleRoundups(){ S.roundups = !S.roundups; commit(); }
+export function toggleRoundups(){ S.roundups = !S.roundups; commit(); return S.roundups; }
 export function setTheme(t){ S.theme = t; commit(); }
 export function setZoom(z){ S.zoom = z; commit(); }
 export function setMotion(on){ S.motion = on; commit(); }
