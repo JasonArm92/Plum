@@ -17,7 +17,6 @@ import {
   mountDisputes, mountJoint, mountPersonal, mountSecurity, mountTxDetail
 } from './screens-b.js';
 
-/* ---------------- appearance ---------------- */
 function applyTheme(){ document.documentElement.dataset.theme = getState().theme; }
 function applyZoom(){ document.documentElement.style.setProperty('--zoom', getState().zoom); }
 function applyMotion(){ document.documentElement.dataset.motion = getState().motion ? 'on' : 'off'; }
@@ -31,7 +30,6 @@ function paintAvatar(){
   document.getElementById('hName').textContent = s.profile.name.split(' ')[0];
 }
 
-/* ---------------- lock ---------------- */
 let pinBuffer = '';
 
 function paintDots(){
@@ -93,12 +91,8 @@ async function biometricUnlock(){
   } catch { toast('Fingerprint not recognised'); }
 }
 
-/* ---------------- boot ---------------- */
 function boot(){
   load();
-
-  /* monthly money movements — interest on savings pots, flex instalments,
-     loan repayments. Both are idempotent per calendar month. */
   runInterest();
   runTick();
 
@@ -140,9 +134,8 @@ function boot(){
     if (node && getState().priv) node.classList.toggle('open');
   });
 
-  /* row navigation — skipped when a data-go ancestor already navigated */
   document.getElementById('main').addEventListener('click', e => {
-    if (e.monzoHandled || e.target.closest('[data-go]')) return;
+    if (e.target.closest('[data-go]')) return;
     const tx = e.target.closest('[data-tx]');
     if (tx) return go('txdetail', { id: tx.dataset.tx });
     const pot = e.target.closest('[data-pot]');
@@ -160,7 +153,7 @@ function boot(){
 
   if ('serviceWorker' in navigator){
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=12').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=13').catch(() => {});
     });
   }
 }
