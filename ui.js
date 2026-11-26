@@ -1,5 +1,4 @@
-/* src/ui.js — router, sheet, toast, charts, logo, shared components.
-   Knows DOM, not banking. Imports core only for formatting. */
+/* src/ui.js — router, sheet, toast, charts, logo, shared components. */
 
 import { esc, fmt, pct } from './core.js';
 import { DOMAINS } from './data.js';
@@ -130,11 +129,13 @@ export function meter(value, total, tone){
   return `<div class="meter"><i style="width:${width}%;background:${colour}"></i></div>`;
 }
 
+/* values are coerced to strings so numeric and dotted keys both read back cleanly */
 export function chipRow(items, active, attr){
+  const activeKey = active == null ? null : String(active);
   return `<div class="pill-row">${items.map(item => {
-    const value = typeof item === 'string' ? item : item.value;
+    const value = String(typeof item === 'string' ? item : item.value);
     const label = typeof item === 'string' ? item : item.label;
-    return `<button class="chip ${value === active ? 'on' : ''}" data-${attr}="${esc(value)}">${esc(label)}</button>`;
+    return `<button class="chip ${value === activeKey ? 'on' : ''}" data-${attr}="${esc(value)}">${esc(label)}</button>`;
   }).join('')}</div>`;
 }
 
@@ -193,12 +194,19 @@ export function sectionHead(title, actionLabel, actionAttrs = ''){
     ${actionLabel ? `<button ${actionAttrs}>${esc(actionLabel)}</button>` : ''}</div>`;
 }
 
-/* delegated global navigation + sheet dismissal */
+/* One delegated listener for navigation and sheet dismissal.
+   Marks the event so row-level listeners can skip work they'd duplicate. */
 export function bindGlobalChrome(){
   document.addEventListener('click', e => {
     const nav = e.target.closest('[data-go]');
-    if (nav){ go(nav.dataset.go); return; }
+    if (nav){
+      e.monzoHandled = true;
+      go(nav.dataset.go);
+      return;
+    }
     if (e.target.matches('[data-close]') || e.target.id === 'sheet' ||
-        e.target.classList.contains('scrim')) closeSheet();
+        e.target.classList.contains('scrim')){
+      closeSheet();
+    }
   });
 }
