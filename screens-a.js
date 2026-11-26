@@ -396,6 +396,7 @@ export function mountAccount(root){
       ${row('Personal details', esc(s.profile.name), 'data-go="personal"')}
       ${row('Security &amp; privacy', s.credId ? 'Biometrics on' : 'Passcode only', 'data-go="security"')}
       ${row('Statements', 'PDF and CSV', 'data-go="statements"')}
+      ${row('Backup', s.lastBackup ? 'Last ' + esc(s.lastBackup) : 'Never exported', 'data-go="backup"')}
       ${row('Payees', s.payees.length + ' saved', 'data-go="payees"')}
       ${row('Cards', s.vcards.length + ' virtual', 'data-go="cards"')}
       ${row('Credit insights', s.credit.eq + ' Equifax', 'data-go="credit"')}
