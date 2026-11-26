@@ -1,7 +1,7 @@
 /* src/screens-b.js — settings, tools and detail surfaces. */
 
 import {
-  getState, esc, fmt, TODAY, round2, plan, planPrice, PLANS_BANK, CATS, BANKS, BB_CAP,
+  getState, commit, esc, fmt, TODAY, round2, plan, PLANS_BANK, CATS, BANKS, BB_CAP,
   setProfile, setPin, setCredId, setTheme, setZoom, setMotion, togglePriv, toggleRoundups,
   addPayee, updatePayee, deletePayee, sendMoney, addVirtualCard, freezeVCard, renameVCard,
   deleteVCard, toggleFreeze, setPlan, setFamily, flexAvail, flexPurchase, flexMonthly,
@@ -9,14 +9,13 @@ import {
   challengeSave, restartChallenge, billsbackOptIn, billsbackDraw, bbBills, connectBank,
   removeBank, addExtraAccount, setActiveAccount, takeAura, setAura, raiseDispute, closeDispute,
   creditAction, CREDIT_ACTIONS, pushChat, clearNotifs, markAllRead, updateTx, deleteTx,
-  isaBal, setPension
+  balNow, addTx
 } from './core.js';
 
 import {
   go, toast, sheet, closeSheet, logo, kv, badge, empty, txRow, meter, chipRow
 } from './ui.js';
 
-/* ---------- payees ---------- */
 export function mountPayees(root){
   const render = () => {
     const s = getState();
@@ -81,7 +80,6 @@ export function mountPayees(root){
   render();
 }
 
-/* ---------- cards ---------- */
 export function mountCards(root){
   const render = () => {
     const s = getState(), p = plan();
@@ -116,7 +114,6 @@ export function mountCards(root){
   render();
 }
 
-/* ---------- plan ---------- */
 export function mountPlan(root){
   const render = () => {
     const s = getState();
@@ -132,8 +129,8 @@ export function mountPlan(root){
           ${kv('Insurance', p.cover ? 'Yes' : 'No')}
           ${k === s.plan ? `<div style="margin-top:10px">${badge('Your plan', 'coral')}</div>`
             : `<button class="btn" data-plan="${k}" style="margin-top:10px">Switch to ${p.name}</button>`}</div>`).join('') +
-      `<div class="card"><h2>Family add-on</h2><div class="sub">Max only · +£4/month</div>
-        <div class="toggle"><div><div class="t">Cover Chloe and the kids</div></div>
+      `<div class="card"><h2>Family add-on</h2><div class="sub">Max only · +£4/month · covers 2 adults and 2 children</div>
+        <div class="toggle"><div><div class="t">Cover the household</div></div>
           <button class="sw ${s.family ? 'on' : ''}" data-family></button></div></div>`;
   };
   root.addEventListener('click', e => {
@@ -155,11 +152,24 @@ export function mountPlan(root){
 }
 
 export function mountLimits(root){
-  const p = plan();
-  root.innerHTML = `<div class="h-sec"><h2>Limits</h2></div><div class="card">
-    ${kv('ATM abroad', '£' + p.atmRow)}${kv('ATM UK & EEA', p.atmUK === Infinity ? 'Unlimited' : '£' + p.atmUK)}
-    ${kv('Contactless', '£100/day')}${kv('Card payments', '£5,000/day')}${kv('Transfers', '£10,000/day')}
-    ${kv('Cash deposits', p.cover ? '3 free/month' : '£1 each')}</div>`;
+  const render = () => {
+    const p = plan(), s = getState();
+    const max = p.atmRow;
+    const current = Math.min(s.atmLimit || max, max);
+    root.innerHTML = `<div class="h-sec"><h2>Limits</h2></div><div class="card">
+      <h2>Daily ATM limit</h2><div class="sub">Your plan allows up to £${max}</div>
+      ${chipRow([50, 100, 200, 300, 500, 600].filter(v => v <= max).map(v => ({ value: v, label: '£' + v })), current, 'atm')}
+      ${kv('Abroad', '£' + max + ' per 30 days')}
+      ${kv('Contactless', '£100/day')}${kv('Card payments', '£5,000/day')}${kv('Transfers', '£10,000/day')}
+      ${kv('Cash deposits', p.cover ? '3 free/month' : '£1 each')}</div>`;
+  };
+  root.addEventListener('click', e => {
+    const c = e.target.closest('[data-atm]');
+    if (!c) return;
+    getState().atmLimit = +c.dataset.atm;
+    commit(); render(); toast('Limit set to £' + c.dataset.atm);
+  });
+  render();
 }
 
 export function mountBorrow(root){
@@ -175,7 +185,6 @@ export function mountBorrow(root){
       <span class="sub">Up to £35,000</span></span><span class="amt">›</span></button></div>`;
 }
 
-/* ---------- flex ---------- */
 export function mountFlex(root){
   let term = 3;
   const render = () => {
@@ -232,12 +241,18 @@ export function mountAura(root){
       ${kv('Status', a.active ? badge('Active', 'ok') : badge('Off'))}
       ${kv('Cashback', `<span class="rev">${fmt(a.cashback)}</span>`)}
       ${kv('Lounge passes', a.lounge)}${kv('Fast track', a.fast)}
-      <div class="toggle"><div><div class="t">Auto-invest</div></div>
+      <div class="row2" style="margin-top:10px">
+        <button class="btn ghost sm" data-lounge ${a.lounge ? '' : 'disabled'}>Use lounge pass</button>
+        <button class="btn ghost sm" data-fast ${a.fast ? '' : 'disabled'}>Use fast track</button></div>
+      <div class="toggle" style="margin-top:10px"><div><div class="t">Auto-invest cashback</div></div>
         <button class="sw ${a.auto ? 'on' : ''}" data-auto></button></div>
       <button class="btn" data-toggle style="margin-top:14px">${a.active ? 'Close Aura' : 'Take out Aura'}</button></div>`;
   };
   root.addEventListener('click', e => {
-    if (e.target.closest('[data-auto]')){ setAura({ auto: !getState().aura.auto }); return render(); }
+    const a = getState().aura;
+    if (e.target.closest('[data-lounge]') && a.lounge){ setAura({ lounge: a.lounge - 1 }); render(); return toast('Pass used'); }
+    if (e.target.closest('[data-fast]') && a.fast){ setAura({ fast: a.fast - 1 }); render(); return toast('Pass used'); }
+    if (e.target.closest('[data-auto]')){ setAura({ auto: !a.auto }); return render(); }
     if (e.target.closest('[data-toggle]')){ const on = takeAura(); render(); toast(on ? 'Aura active' : 'Closed'); }
   });
   render();
@@ -246,7 +261,7 @@ export function mountAura(root){
 export function mountOverdraft(root){
   let pending = 0;
   const render = () => {
-    const o = getState().overdraft, bal = getState().tx[0].bal;
+    const o = getState().overdraft, bal = balNow();
     root.innerHTML = `<div class="h-sec"><h2>Overdraft</h2></div><div class="card">
       <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(o.limit)}</div>
       ${kv('Rate', o.rate ? o.rate + '% EAR' : '—')}${kv('Used', `<span class="rev">${fmt(Math.max(0, -bal))}</span>`)}
@@ -388,13 +403,34 @@ export function mountBillsback(root){
 
 export function mountInsurance(root){
   const covered = plan().cover;
+  const policies = [
+    ['Worldwide travel insurance', 'POL-TRV-8842190', 'Covers Jason, Chloe and both children up to 31 days per trip.'],
+    ['Worldwide phone insurance', 'POL-PHN-8842191', 'Covers all four handsets, £75 excess per claim.'],
+    ['UK & Europe breakdown cover', 'POL-BRK-8842192', 'Vehicle-based, any driver, home start included.']
+  ];
   root.innerHTML = `<div class="h-sec"><h2>Insurance</h2></div>` + (covered ? `<div class="card">
-    ${[['Travel', 'POL-TRV-8842190'], ['Phone', 'POL-PHN-8842191'], ['Breakdown', 'POL-BRK-8842192']]
-      .map(([n, p]) => kv(`${n} cover<br><span style="font-size:12.5px">${p}</span>`,
-        `<button class="btn ghost sm" data-pol="${p}">Document</button>`)).join('')}
-    <p class="note">Held with Aviva. £75 excess.</p></div>` : `<div class="card"><div class="sub">Not on ${plan().name}</div>
-      <button class="btn" data-go="plan">See plans</button></div>`);
-  root.addEventListener('click', e => { const t = e.target.closest('[data-pol]'); if (t) toast('Document ' + t.dataset.pol + ' queued'); });
+    ${policies.map(([n, p]) => kv(`${n}<br><span style="font-size:12.5px">${p}</span>`,
+      `<button class="btn ghost sm" data-pol="${p}" data-title="${n}">Document</button>`)).join('')}
+    <p class="note">Held with Aviva. £75 excess per claim.</p></div>` : `<div class="card">
+      <div class="sub">Not on ${plan().name}</div><button class="btn" data-go="plan">See plans</button></div>`);
+  root.addEventListener('click', e => {
+    const t = e.target.closest('[data-pol]');
+    if (!t) return;
+    const s = getState();
+    const w = window.open('', '_blank');
+    w.document.write(`<title>${t.dataset.pol}</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#0b1a26}
+      h1{font-size:19px;margin:0 0 4px}.sub{color:#6b7c8a;font-size:13px;margin-bottom:20px}
+      .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #e6ebef;font-size:13px}</style>
+      <h1>${esc(t.dataset.title)}</h1><div class="sub">Policy ${esc(t.dataset.pol)} · Monzo Max</div>
+      <div class="row"><span>Policyholder</span><b>${esc(s.profile.name)}</b></div>
+      <div class="row"><span>Address</span><b>${esc(s.profile.a1)}, ${esc(s.profile.post)}</b></div>
+      <div class="row"><span>Insurer</span><b>Aviva Insurance Ltd</b></div>
+      <div class="row"><span>Excess</span><b>£75</b></div>
+      <div class="row"><span>Emergency line</span><b>0800 051 0021</b></div>
+      <p class="sub" style="margin-top:20px">This document confirms cover. Terms apply.</p>`);
+    w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
+    toast('Document ready to print');
+  });
 }
 
 export function mountAccounts(root){
@@ -403,22 +439,40 @@ export function mountAccounts(root){
     root.innerHTML = `<div class="h-sec"><h2>Your accounts</h2><button data-add>Add</button></div>
       <div class="card" style="padding:6px 8px">
         <div class="pot"><span class="lg">PCA</span><span class="mid"><span class="nm">Personal current account</span>
-          <span class="sub">${s.activeAccount === 'personal' ? 'Active' : 'Tap to switch'}</span></span>
+          <span class="sub">${s.activeAccount === 'personal' ? 'Active' : 'Tap Use to switch'}</span></span>
           <button class="btn ghost sm" data-switch="personal">Use</button></div>
         <div class="pot"><span class="lg">JNT</span><span class="mid"><span class="nm">Joint account</span>
           <span class="sub">With ${esc(s.partner)}</span></span>
           <button class="btn ghost sm" data-go="joint">Open</button></div>
         ${s.extraAccounts.map(a => `<div class="pot"><span class="lg">${esc(a.name[0])}</span>
           <span class="mid"><span class="nm">${esc(a.name)}</span><span class="sub">${esc(a.type)}</span></span>
-          ${badge(a.status)}</div>`).join('')}</div>`;
+          <button class="iconbtn" data-rename="${a.id}">✎</button>
+          <button class="iconbtn" data-close-acc="${a.id}">🗑</button></div>`).join('')}</div>`;
   };
   root.addEventListener('click', e => {
     const sw = e.target.closest('[data-switch]');
     if (sw){ setActiveAccount(sw.dataset.switch); render(); return toast('Switched'); }
+    const rn = e.target.closest('[data-rename]');
+    if (rn){
+      const a = getState().extraAccounts.find(x => x.id === rn.dataset.rename);
+      sheet(`<h2>Rename account</h2><div class="field"><label>Name</label><input id="raName" value="${esc(a.name)}"></div>
+        <button class="btn" id="raGo">Save</button>`);
+      document.getElementById('raGo').onclick = () => {
+        a.name = document.getElementById('raName').value.trim() || a.name;
+        commit(); closeSheet(); render(); toast('Renamed');
+      };
+      return;
+    }
+    const cl = e.target.closest('[data-close-acc]');
+    if (cl){
+      const s = getState();
+      s.extraAccounts = s.extraAccounts.filter(x => x.id !== cl.dataset.closeAcc);
+      commit(); render(); return toast('Account closed');
+    }
     if (!e.target.closest('[data-add]')) return;
     sheet(`<h2>Add an account</h2><div class="field"><label>Type</label><select id="aaType">
       <option>Under 16</option><option>16-17</option><option>Business</option></select></div>
-      <div class="field"><label>Name</label><input id="aaName"></div>
+      <div class="field"><label>Name</label><input id="aaName" placeholder="Child or trading name"></div>
       <button class="btn" id="aaGo">Open</button>`);
     document.getElementById('aaGo').onclick = () => {
       const n = document.getElementById('aaName').value.trim();
@@ -473,13 +527,27 @@ export function mountSearch(root, params){
 export function mountNotifs(root){
   const render = () => {
     const s = getState();
+    const target = n => /salary|paid/i.test(n.title) ? 'acc'
+      : /interest/i.test(n.title) ? 'pots'
+      : /flex/i.test(n.title) ? 'flex'
+      : /loan/i.test(n.title) ? 'loans'
+      : /billsback/i.test(n.title) ? 'billsback'
+      : /plan/i.test(n.title) ? 'plan'
+      : /dispute/i.test(n.title) ? 'disputes'
+      : 'home';
     root.innerHTML = `<div class="h-sec"><h2>Notifications</h2><button data-clear>Clear</button></div>
-      <div class="card">${s.notifs.length ? s.notifs.map(n => kv(
-        `${esc(n.title)}<br><span style="font-size:12.5px">${esc(n.body)}</span>`,
-        `<span style="font-size:12px;color:var(--muted)">${esc(n.date)} ${esc(n.time)}</span>`)).join('') : empty('Nothing new')}</div>`;
+      <div class="card">${s.notifs.length ? s.notifs.map(n => `<button class="pot" data-notif="${target(n)}">
+        <span class="lg">${n.read ? '·' : '●'}</span>
+        <span class="mid"><span class="nm">${esc(n.title)}</span><span class="sub">${esc(n.body)}</span></span>
+        <span class="amt" style="font-size:12px;color:var(--muted)">${esc(n.time)}</span></button>`).join('')
+        : empty('Nothing new')}</div>`;
     markAllRead();
   };
-  root.addEventListener('click', e => { if (e.target.closest('[data-clear]')){ clearNotifs(); render(); } });
+  root.addEventListener('click', e => {
+    if (e.target.closest('[data-clear]')){ clearNotifs(); return render(); }
+    const n = e.target.closest('[data-notif]');
+    if (n) go(n.dataset.notif);
+  });
   render();
 }
 
@@ -522,13 +590,32 @@ export function mountDisputes(root){
 }
 
 export function mountJoint(root){
-  const s = getState();
-  const income = s.tx.filter(t => t.date.slice(0, 7) === TODAY.slice(0, 7) && t.cat === 'Income').reduce((a, t) => a + t.amt, 0);
-  root.innerHTML = `<div class="h-sec"><h2>Joint account</h2></div><div class="card">
-    <div class="sub">Shared with ${esc(s.partner)}</div>
-    <div class="balance rev" style="font-size:28px;margin:4px 0">${fmt(round2(income * 0.35))}</div>
-    ${kv('Contributions', `<span class="rev">${fmt(round2(income * 0.35))}</span>`)}
-    ${kv('Joint bills', `<span class="rev">${fmt(1240)}</span>`)}</div>`;
+  const render = () => {
+    const s = getState();
+    const income = s.tx.filter(t => t.date.slice(0, 7) === TODAY.slice(0, 7) && t.cat === 'Income').reduce((a, t) => a + t.amt, 0);
+    root.innerHTML = `<div class="h-sec"><h2>Joint account</h2></div><div class="card">
+      <div class="sub">Shared with ${esc(s.partner)} · FSCS to £240,000</div>
+      <div class="balance rev" style="font-size:28px;margin:4px 0">${fmt(s.jointBal || 0)}</div>
+      ${kv('Contributions this month', `<span class="rev">${fmt(round2(income * 0.35))}</span>`)}
+      ${kv('Joint bills', `<span class="rev">${fmt(1240)}</span>`)}
+      <button class="btn" data-contrib style="margin-top:12px">Add money</button></div>`;
+  };
+  root.addEventListener('click', e => {
+    if (!e.target.closest('[data-contrib]')) return;
+    sheet(`<h2>Add to joint</h2><div class="sub">From your personal account</div>
+      <div class="field"><label>Amount</label><input id="jcAmt" type="number" min="1"></div>
+      <button class="btn" id="jcGo">Move</button>`);
+    document.getElementById('jcGo').onclick = () => {
+      const v = +document.getElementById('jcAmt').value;
+      if (!v || v <= 0) return toast('Enter an amount');
+      if (v > balNow()) return toast('Not enough in your balance');
+      const s = getState();
+      s.jointBal = round2((s.jointBal || 0) + v);
+      addTx('Joint account', 'Transfers', -v, 'Moved to joint');
+      closeSheet(); render(); toast('Moved');
+    };
+  });
+  render();
 }
 
 export function mountPersonal(root){
@@ -616,8 +703,11 @@ export function mountTxDetail(root, params){
         <div class="field"><label>People</label><input id="spPpl" type="number" min="2" value="2"></div>
         <button class="btn" id="spGo">Create tab</button>`);
       document.getElementById('spGo').onclick = () => {
-        addSharedTabSafe(t.name, +document.getElementById('spTot').value, Math.max(2, +document.getElementById('spPpl').value));
-        closeSheet(); toast('Tab created');
+        const s = getState();
+        const tot = +document.getElementById('spTot').value;
+        const ppl = Math.max(2, +document.getElementById('spPpl').value);
+        s.tabs.push({ id: 't' + Date.now(), name: t.name, total: tot, mine: round2(tot / ppl), people: ppl });
+        commit(); closeSheet(); toast('Tab created');
       };
     }
     if (e.target.closest('[data-disp]')){ raiseDispute(t.name, 'Query raised from transaction'); toast('Raised'); go('disputes'); }
@@ -625,6 +715,3 @@ export function mountTxDetail(root, params){
   });
   render();
 }
-
-import { addSharedTab as addSharedTabCore } from './core.js';
-const addSharedTabSafe = (n, t, p) => addSharedTabCore(n, t, p);
