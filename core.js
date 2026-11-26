@@ -5,8 +5,9 @@ import {
   DOMAINS, POTS0, TARGET_ISA, buildSeed, uid
 } from './data.js';
 
-export const VERSION = 13;
-const KEY = 'monzo_v13';
+export const VERSION = 14;
+export const KEY = 'monzo_v14';
+const LEGACY_KEYS = ['monzo_v13', 'monzo_v12', 'monzo_v11'];
 
 export const NOW = new Date();
 export const TODAY = iso(NOW);
@@ -20,7 +21,11 @@ function p2(n){ return String(n).padStart(2, '0'); }
 export function iso(d){ return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; }
 export function asDate(s){ return new Date(s + 'T12:00:00'); }
 export function monthLen(y, m){ return new Date(y, m + 1, 0).getDate(); }
-export function dom(y, m, day){ return `${y}-${p2(m + 1)}-${p2(Math.min(day, monthLen(y, m)))}`; }
+export function dom(y, m, day){
+  const d = new Date(y, m, 1);
+  const last = monthLen(d.getFullYear(), d.getMonth());
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(Math.min(day, last))}`;
+}
 
 export function prettyDate(s){
   const diff = Math.round((asDate(TODAY) - asDate(s)) / 86400000);
@@ -87,7 +92,9 @@ export function freshState(){
     },
     partner: 'Chloe Brown',
     plan: 'max', family: false, priv: false, roundups: true, credId: null, pin: '2580', frozen: false,
-    theme: 'auto', zoom: 1, motion: true, activeAccount: 'personal',
+    theme: 'auto', zoom: 1, motion: true,
+    activeAccount: 'personal', acctName: 'Personal current account', acctClosed: false,
+    atmLimit: 400, potSort: 'name', jointBal: 0,
     pension: 41250.18, pensionMonthly: 180, homeValue: 168000, mortgage: 100000,
     flex: { limit: 4000, used: 0, plans: [] },
     aura: { active: true, auto: true, lounge: 2, fast: 2, cashback: 0 },
@@ -96,12 +103,13 @@ export function freshState(){
     credit: { eq: 560 + Math.floor(Math.random() * 160), tu: 540 + Math.floor(Math.random() * 160), done: [] },
     challenge: { day: 0, saved: 0, level: '1p' },
     billsback: { optIn: false, history: [] },
-    lastInterest: '', lastTick: '',
+    lastInterest: '', lastTick: '', notifsCleared: false,
     notifs: [], chat: [], disputes: [], revealed: []
   };
 }
 
 const migrations = [
+  /* 11 -> 12 */
   s => {
     s.v = 12;
     s.flex ||= { limit: 4000, used: 0, plans: [] };
@@ -121,6 +129,7 @@ const migrations = [
     s.notifs ||= []; s.chat ||= []; s.disputes ||= [];
     return s;
   },
+  /* 12 -> 13 */
   s => {
     s.v = 13;
     s.family ??= false;
@@ -130,12 +139,25 @@ const migrations = [
     s.pots = (s.pots || []).map(p => ({ locked: false, autoSave: 0, ...p }));
     s.vcards = (s.vcards || []).map(v => ({ single: false, ...v }));
     return s;
+  },
+  /* 13 -> 14: fields the modular build needs, and a ledger re-order */
+  s => {
+    s.v = 14;
+    s.acctName ||= 'Personal current account';
+    s.acctClosed ??= false;
+    s.atmLimit ||= 400;
+    s.potSort ||= 'name';
+    s.jointBal ||= 0;
+    s.notifsCleared ??= false;
+    s.tx = (s.tx || []).slice().sort((a, b) =>
+      (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
+    return s;
   }
 ];
 
 export function migrate(raw){
   let s = raw;
-  const from = s.v || 11;
+  const from = Math.max(11, s.v || 11);
   for (let v = from; v < VERSION; v++){
     const step = migrations[v - 11];
     if (step) s = step(s);
@@ -144,14 +166,29 @@ export function migrate(raw){
   return s;
 }
 
+function readLegacy(){
+  for (const k of LEGACY_KEYS){
+    let raw = null;
+    try { raw = JSON.parse(localStorage.getItem(k)); } catch { raw = null; }
+    if (raw && typeof raw === 'object'){ localStorage.removeItem(k); return raw; }
+  }
+  return null;
+}
+
 export function load(){
   const params = new URLSearchParams(location.search);
-  if (params.get('reset') === '1') localStorage.removeItem(KEY);
+  if (params.get('reset') === '1'){
+    localStorage.removeItem(KEY);
+    LEGACY_KEYS.forEach(k => localStorage.removeItem(k));
+  }
   let raw = null;
   try { raw = JSON.parse(localStorage.getItem(KEY)); } catch { raw = null; }
+  if (!raw) raw = readLegacy();
+
   S = (!raw || (raw.v || 0) > VERSION) ? freshState() : migrate(raw);
   S.revealed = new Set(S.revealed || []);
-  if (!S.notifs.length) seedNotifs();
+  if (!S.notifs.length && !S.notifsCleared) seedNotifs();
+  recompute();
   save();
   return S;
 }
@@ -172,6 +209,7 @@ export const PLANS_BANK = () => PLANS;
 export const balNow = () => S.tx.length ? S.tx[0].bal : 0;
 export const isaBal = () => S.isa.length ? S.isa[0].value : 0;
 export const savingsTotal = () => S.pots.filter(p => p.type === 'savings').reduce((a, p) => a + p.bal, 0);
+export const interestThisMonth = () => round2(savingsTotal() * (plan().ia / 100 / 12));
 export const homeEquity = () => Math.max(0, (S.homeValue || 0) - (S.mortgage || 0));
 export const connTotal = () => S.connected.reduce((a, c) => a + c.bal, 0);
 export const loanOwed = () => S.loans.reduce((a, l) => a + l.outstanding, 0);
@@ -188,13 +226,24 @@ export const spentCat = c => S.tx
 export const spentToday = () => S.tx
   .filter(t => t.date === TODAY && t.amt < 0).reduce((a, t) => a + Math.abs(t.amt), 0);
 
+/* Projected from the most recent occurrence of each recurring commitment
+   rather than a hardcoded list, so it tracks the ledger. */
 export function committedLeft(){
-  const d = daysToPayday();
+  const pay = nextPayday();
+  const since = iso(new Date(NOW.getFullYear(), NOW.getMonth() - 2, 1));
+  const latest = new Map();
+  for (const t of S.tx){
+    if (t.date < since) break;
+    if (t.amt >= 0 || !COMMITTED.includes(t.cat)) continue;
+    if (!latest.has(t.name)) latest.set(t.name, t);
+  }
   let sum = 0;
-  if (d >= 1) sum += planPrice() + 11.99 + 10.99;
-  if (d >= 2) sum += 96 + 38.2 + 148;
-  if (d >= 4) sum += 32 + 22;
-  if (d >= 5) sum += 24.4;
+  latest.forEach(t => {
+    const day = Number(t.date.slice(8, 10));
+    let due = dom(NOW.getFullYear(), NOW.getMonth(), day);
+    if (due < TODAY) due = dom(NOW.getFullYear(), NOW.getMonth() + 1, day);
+    if (due >= TODAY && due < pay) sum += Math.abs(t.amt);
+  });
   return round2(sum);
 }
 export const leftToSpend = () => Math.max(0, round2(balNow() - committedLeft()));
@@ -237,17 +286,29 @@ export function loanMonthly(amount, term){
 }
 
 /* ---------------- ledger ---------------- */
+/* Insert by position, newest first, so a backdated row lands where it belongs
+   and no sort is needed on the hot path. */
+function insertTx(row){
+  const key = row.date + row.time;
+  let i = 0;
+  while (i < S.tx.length && (S.tx[i].date + S.tx[i].time) > key) i++;
+  S.tx.splice(i, 0, row);
+}
+
 function recompute(){
-  const asc = S.tx.slice().reverse();
-  let bal = asc.length ? round2(asc[0].bal - asc[0].amt) : 0;
-  asc.forEach(t => { bal = round2(bal + t.amt); t.bal = bal; });
-  S.tx = asc.reverse();
+  if (!S.tx.length) return;
+  const last = S.tx.length - 1;
+  let bal = round2(S.tx[last].bal - S.tx[last].amt);
+  for (let i = last; i >= 0; i--){
+    bal = round2(bal + S.tx[i].amt);
+    S.tx[i].bal = bal;
+  }
 }
 
 export function addTx(name, cat, amt, note = '', dateOverride){
   const date = dateOverride || TODAY;
   const time = dateOverride && dateOverride !== TODAY ? '12:00' : NOWT;
-  S.tx.unshift({ id: uid(), date, time, name, cat, amt: round2(amt), bal: 0, note });
+  insertTx({ id: uid(), date, time, name, cat, amt: round2(amt), bal: 0, note });
   recompute();
   commit();
 }
@@ -281,7 +342,6 @@ export function moveToPot(potId, amt, dir){
     p.bal = round2(p.bal - amt);
     addTx(p.name, 'Transfers', amt, 'Moved from pot');
   }
-  commit();
   return { ok: true };
 }
 export function createPot(name, type, goal){
@@ -296,9 +356,10 @@ export function updatePot(id, patch){
 export function deletePot(id){
   const p = S.pots.find(x => x.id === id);
   if (!p) return { ok: false, msg: 'No such pot' };
-  if (p.bal > 0) addTx('Pot closed', 'Transfers', p.bal, p.name + ' returned');
+  const bal = p.bal;
   S.pots = S.pots.filter(x => x.id !== id);
-  commit();
+  if (bal > 0) addTx('Pot closed', 'Transfers', bal, p.name + ' returned');
+  else commit();
   return { ok: true };
 }
 export function togglePotLock(id){
@@ -313,10 +374,9 @@ export function sendMoney(payeeId, amount, ref){
   const p = S.payees.find(x => x.id === payeeId);
   if (!p) return { ok: false, msg: 'No such payee' };
   if (amount > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-  addTx(p.name, 'Transfers', -amount, ref || 'Payment');
   p.last = TODAY;
+  addTx(p.name, 'Transfers', -amount, ref || 'Payment');
   notif('Payment sent', `${fmt(amount)} to ${p.name}`);
-  commit();
   return { ok: true };
 }
 export function addPayee(data){ S.payees.push({ id: uid(), fav: false, last: '', ...data }); commit(); }
@@ -344,9 +404,8 @@ export function settleTab(id){
   const t = S.tabs.find(x => x.id === id);
   if (!t) return { ok: false };
   if (t.mine > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-  addTx(t.name, 'Transfers', -t.mine, 'Shared tab settled');
   S.tabs = S.tabs.filter(x => x.id !== id);
-  commit();
+  addTx(t.name, 'Transfers', -t.mine, 'Shared tab settled');
   return { ok: true };
 }
 
@@ -382,15 +441,15 @@ export function setPlan(key){
   const diff = round2(to.price - from.price);
   S.plan = key;
   if (diff > 0) addTx('Monzo', 'Subscriptions', -diff, `${to.name} plan`);
+  else commit();
   notif('Plan changed', `You're now on ${to.name}`);
-  commit();
   return { ok: true, diff };
 }
 export function setFamily(on){
   if (S.plan !== 'max') return { ok: false, msg: 'Family add-on needs Max' };
   S.family = on;
   if (on) addTx('Monzo', 'Subscriptions', -4, 'Max family add-on');
-  commit();
+  else commit();
   return { ok: true };
 }
 
@@ -411,7 +470,7 @@ export function setActiveAccount(key){ S.activeAccount = key; commit(); }
 export function setLayout(next){ S.layout = next; commit(); }
 export function moveLayoutSection(id, dir){
   const i = S.layout.findIndex(s => s.id === id), j = i + dir;
-  if (j < 0 || j >= S.layout.length) return;
+  if (i < 0 || j < 0 || j >= S.layout.length) return;
   [S.layout[i], S.layout[j]] = [S.layout[j], S.layout[i]];
   commit();
 }
@@ -424,7 +483,7 @@ export function flexPurchase(name, amount, term){
   if (!amount || amount <= 0) return { ok: false, msg: 'Enter an amount' };
   if (amount > flexAvail()) return { ok: false, msg: 'Over your available limit' };
   S.flex.used = round2(S.flex.used + amount);
-  S.flex.plans.unshift({ id: uid(), name, amount, remaining: amount, term,
+  S.flex.plans.unshift({ id: uid(), name, amount, remaining: amount, principal: amount, term,
     monthly: flexMonthly(amount, term) });
   notif('Paid with Flex', `${name} — ${fmt(amount)} over ${term} months`);
   commit();
@@ -434,10 +493,9 @@ export function settleFlex(id){
   const p = S.flex.plans.find(x => x.id === id);
   if (!p) return { ok: false };
   if (p.remaining > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-  addTx('Monzo Flex', 'Transfers', -p.remaining, 'Settled early — ' + p.name);
-  S.flex.used = Math.max(0, round2(S.flex.used - p.remaining));
   S.flex.plans = S.flex.plans.filter(x => x.id !== id);
-  commit();
+  S.flex.used = Math.max(0, round2(S.flex.used - p.remaining));
+  addTx('Monzo Flex', 'Transfers', -p.remaining, 'Settled early — ' + p.name);
   return { ok: true };
 }
 
@@ -457,9 +515,8 @@ export function takeLoan(amount, term){
   const apr = aprForLoan(amount);
   const monthly = loanMonthly(amount, term);
   S.loans.push({ id: uid(), amount, term, apr, monthly, outstanding: round2(monthly * term), paid: 0 });
-  addTx('Monzo Loans', 'Income', amount, 'Loan advance');
   notif('Loan approved', `${fmt(amount)} paid into your account`);
-  commit();
+  addTx('Monzo Loans', 'Income', amount, 'Loan advance');
   return { ok: true };
 }
 export function overpayLoan(id, amt){
@@ -468,10 +525,9 @@ export function overpayLoan(id, amt){
   if (amt <= 0) return { ok: false, msg: 'Enter an amount' };
   if (amt > balNow()) return { ok: false, msg: 'Not enough in your balance' };
   const pay = Math.min(amt, l.outstanding);
-  addTx('Monzo Loans', 'Transfers', -pay, 'Overpayment');
   l.outstanding = round2(l.outstanding - pay);
   if (l.outstanding <= 0.01) S.loans = S.loans.filter(x => x.id !== id);
-  commit();
+  addTx('Monzo Loans', 'Transfers', -pay, 'Overpayment');
   return { ok: true };
 }
 
@@ -483,13 +539,13 @@ export function challengeSave(){
   c.day++;
   c.saved = round2(c.saved + amt);
   addTx('Saving Challenge', 'Savings', -amt, 'Day ' + c.day);
-  commit();
   return { ok: true, amt };
 }
 export function restartChallenge(){
-  if (S.challenge.saved > 0) addTx('Saving Challenge', 'Savings', S.challenge.saved, 'Challenge reset');
+  const back = S.challenge.saved;
   S.challenge = { day: 0, saved: 0, level: '1p' };
-  commit();
+  if (back > 0) addTx('Saving Challenge', 'Savings', back, 'Challenge reset');
+  else commit();
 }
 
 export function billsbackOptIn(){
@@ -498,20 +554,22 @@ export function billsbackOptIn(){
   commit();
   return { ok: true, on: S.billsback.optIn };
 }
-export function billsbackDraw(){
+export function billsbackDraw(rng = Math.random){
   if (!plan().billsback) return { ok: false, msg: 'Billsback needs Extra' };
   if (!S.billsback.optIn) return { ok: false, msg: 'Opt in first' };
   const bills = bbBills();
   if (!bills.length) return { ok: false, msg: 'No eligible bills this month' };
-  const won = Math.random() < 0.25;
-  const bill = bills[Math.floor(Math.random() * bills.length)];
+  const won = rng() < 0.25;
+  const bill = bills[Math.floor(rng() * bills.length)] || bills[0];
   const amount = won ? round2(Math.min(Math.abs(bill.amt), BB_CAP)) : 0;
   S.billsback.history.unshift({ month: MONTHS[NOW.getMonth()], won, amount, bill: won ? bill.name : '' });
   if (won){
-    addTx('Monzo Billsback', 'Income', amount, bill.name + ' paid back');
     notif('Billsback', `${bill.name} — ${fmt(amount)} paid back`);
-  } else notif('Billsback', 'No win this month');
-  commit();
+    addTx('Monzo Billsback', 'Income', amount, bill.name + ' paid back');
+  } else {
+    notif('Billsback', 'No win this month');
+    commit();
+  }
   return { ok: true, won, amount };
 }
 
@@ -532,12 +590,21 @@ export function addExtraAccount(name, type){
   notif('Account opened', `${type} account for ${name}`);
   commit();
 }
+export function updateExtraAccount(id, patch){
+  const a = S.extraAccounts.find(x => x.id === id);
+  if (a) Object.assign(a, patch);
+  commit();
+}
+export function closeExtraAccount(id){
+  S.extraAccounts = S.extraAccounts.filter(x => x.id !== id);
+  commit();
+}
 export function setAura(patch){ Object.assign(S.aura, patch); commit(); }
 export function takeAura(){
   const next = !S.aura.active;
   S.aura.active = next;
   if (next) addTx('Monzo Aura', 'Subscriptions', -15, 'Aura monthly fee');
-  commit();
+  else commit();
   return next;
 }
 
@@ -573,6 +640,7 @@ export function closeDispute(id){
 export function notif(title, body){
   S.notifs.unshift({ title, body, date: TODAY, time: NOWT, read: false });
   S.notifs = S.notifs.slice(0, 40);
+  S.notifsCleared = false;
   commit();
 }
 export function seedNotifs(){
@@ -582,34 +650,47 @@ export function seedNotifs(){
     { title: 'Salary received', body: '£2,850.00 from Kingdom Services Group', date: back(1), time: '06:00', read: true },
     { title: 'Round-ups', body: '£1.42 moved to Rainy Day', date: back(2), time: '18:24', read: true }
   ];
+  S.notifsCleared = false;
 }
-export function markAllRead(){ S.notifs.forEach(n => { n.read = true; }); commit(); }
-export function clearNotifs(){ S.notifs = []; commit(); }
+export const unread = () => S.notifs.filter(n => !n.read).length;
+export function syncBell(){
+  const d = document.getElementById('bellDot');
+  if (d) d.classList.toggle('on', unread() > 0);
+}
+export function markAllRead(){ S.notifs.forEach(n => { n.read = true; }); commit(); syncBell(); }
+export function clearNotifs(){ S.notifs = []; S.notifsCleared = true; commit(); syncBell(); }
 export function pushChat(who, text){ S.chat.push({ who, text, time: NOWT }); commit(); }
 
 export function runInterest(){
   if (S.lastInterest === THIS_YM) return;
-  S.lastInterest = THIS_YM;
   let paid = 0;
   S.pots.forEach(p => {
     if (p.type !== 'savings' || p.bal <= 0) return;
     const int = round2(p.bal * (plan().ia / 100 / 12));
     if (int > 0){ p.bal = round2(p.bal + int); paid = round2(paid + int); }
   });
-  if (paid > 0) S.notifs.unshift({ title: 'Interest paid', body: `${fmt(paid)} across your savings pots`, date: TODAY, time: NOWT, read: false });
+  S.lastInterest = THIS_YM;
+  if (paid > 0){
+    S.notifs.unshift({ title: 'Interest paid', body: `${fmt(paid)} across your savings pots`,
+      date: TODAY, time: NOWT, read: false });
+  }
   commit();
 }
+
 export function runTick(){
   if (S.lastTick === THIS_YM) return;
-  S.lastTick = THIS_YM;
   let flexPaid = 0, loanPaid = 0;
   S.flex.plans.forEach(p => {
     if (p.remaining <= 0) return;
     const pay = round2(Math.min(p.monthly, p.remaining));
     if (pay > balNow()) return;
-    addTx('Monzo Flex', 'Transfers', -pay, `Instalment of ${p.term}`);
     p.remaining = round2(p.remaining - pay);
-    S.flex.used = Math.max(0, round2(S.flex.used - pay));
+    /* the limit recovers on principal, not on interest */
+    const principal = round2(Math.min(pay, p.principal));
+    p.principal = round2(p.principal - principal);
+    S.flex.used = Math.max(0, round2(S.flex.used - principal));
+    insertTx({ id: uid(), date: TODAY, time: NOWT, name: 'Monzo Flex', cat: 'Transfers',
+      amt: -pay, bal: 0, note: `Instalment of ${p.term}` });
     flexPaid = round2(flexPaid + pay);
   });
   S.flex.plans = S.flex.plans.filter(p => p.remaining > 0.01);
@@ -617,12 +698,15 @@ export function runTick(){
     if (l.outstanding <= 0) return;
     const pay = round2(Math.min(l.monthly, l.outstanding));
     if (pay > balNow()) return;
-    addTx('Monzo Loans', 'Transfers', -pay, `Repayment ${l.paid + 1} of ${l.term}`);
     l.outstanding = round2(l.outstanding - pay);
     l.paid += 1;
+    insertTx({ id: uid(), date: TODAY, time: NOWT, name: 'Monzo Loans', cat: 'Transfers',
+      amt: -pay, bal: 0, note: `Repayment ${l.paid} of ${l.term}` });
     loanPaid = round2(loanPaid + pay);
   });
   S.loans = S.loans.filter(l => l.outstanding > 0.01);
+  S.lastTick = THIS_YM;
+  recompute();
   if (flexPaid) S.notifs.unshift({ title: 'Flex instalment', body: `${fmt(flexPaid)} taken`, date: TODAY, time: NOWT, read: false });
   if (loanPaid) S.notifs.unshift({ title: 'Loan repayment', body: `${fmt(loanPaid)} taken`, date: TODAY, time: NOWT, read: false });
   commit();
