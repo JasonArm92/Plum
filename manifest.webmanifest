@@ -1,5 +1,5 @@
 {
-  "id": "/",
+  "id": "/jasonarm92.github.io/",
   "name": "Monzo",
   "short_name": "Monzo",
   "description": "Your money, in one place.",
@@ -13,9 +13,9 @@
   "categories": ["finance", "productivity"],
   "prefer_related_applications": false,
   "icons": [
-    { "src": "monzo-maskable.svg?v=2", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" },
-    { "src": "monzo-tile.svg?v=2", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "monzo-tile.svg?v=2", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
-    { "src": "monzo-mark.svg?v=2", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "monzo-maskable.svg?v=17", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" },
+    { "src": "monzo-tile.svg?v=17", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "monzo-tile.svg?v=17", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "monzo-mark.svg?v=17", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }
