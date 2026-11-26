@@ -3,7 +3,9 @@
 import {
   load, getState, subscribe, runInterest, runTick, runScheduled, togglePriv, syncBell
 } from './core.js';
-import { initRouter, register, go, goBack, bindGlobalChrome, toast } from './ui.js';
+import {
+  initRouter, register, go, goBack, reload, closeSheet, bindGlobalChrome, toast
+} from './ui.js';
 
 import {
   mountHome, mountSave, mountGrow, mountPay, mountTrends, mountAccount, mountAcc, mountPots,
@@ -11,11 +13,14 @@ import {
 } from './screens-a.js';
 
 import {
-  mountPayees, mountRequest, mountCards, mountPlan, mountLimits, mountBorrow, mountFlex, mountAura,
-  mountOverdraft, mountLoans, mountConnected, mountCredit, mountChallenge, mountBillsback,
-  mountInsurance, mountAccounts, mountAppearance, mountSearch, mountNotifs, mountChat,
-  mountDisputes, mountJoint, mountPersonal, mountSecurity, mountTxDetail
+  mountPayees, mountRequest, mountBackup, mountCards, mountPlan, mountLimits, mountBorrow,
+  mountFlex, mountAura, mountOverdraft, mountLoans, mountConnected, mountCredit, mountChallenge,
+  mountBillsback, mountInsurance, mountAccounts, mountAppearance, mountSearch, mountNotifs,
+  mountChat, mountDisputes, mountJoint, mountPersonal, mountSecurity, mountTxDetail
 } from './screens-b.js';
+
+/* How long the app can sit in the background before it re-locks. */
+const RELOCK_AFTER = 60 * 1000;
 
 function applyTheme(){ document.documentElement.dataset.theme = getState().theme; }
 function applyZoom(){ document.documentElement.style.setProperty('--zoom', getState().zoom); }
@@ -30,6 +35,7 @@ function paintAvatar(){
 }
 
 let pinBuffer = '';
+let hiddenAt = 0;
 
 function paintDots(){
   const dots = document.getElementById('dots');
@@ -68,11 +74,25 @@ function unlock(){
   sessionStorage.setItem('unlocked', '1');
   document.body.classList.remove('locked');
   pinBuffer = '';
+  hiddenAt = 0;
   paintDots();
   const pad = document.getElementById('pinpad');
   if (pad) pad.classList.remove('on');
   runScheduled();
-  go('home');
+  /* back where they were, not home */
+  reload();
+}
+
+/* Covers the app and drops the session flag, leaving the screen mounted
+   underneath so unlocking can restore it. */
+function lockNow(){
+  if (document.body.classList.contains('locked')) return;
+  sessionStorage.removeItem('unlocked');
+  closeSheet();
+  document.body.classList.add('locked');
+  pinBuffer = '';
+  paintDots();
+  showPinPad();
 }
 
 function showPinPad(){
@@ -111,12 +131,13 @@ function boot(){
     home: mountHome, save: mountSave, grow: mountGrow, pay: mountPay, trends: mountTrends,
     account: mountAccount, acc: mountAcc, pots: mountPots, potdetail: mountPotDetail,
     invest: mountInvest, statements: mountStatements, payees: mountPayees, request: mountRequest,
-    cards: mountCards, plan: mountPlan, limits: mountLimits, borrow: mountBorrow, flex: mountFlex,
-    aura: mountAura, overdraft: mountOverdraft, loans: mountLoans, connected: mountConnected,
-    credit: mountCredit, challenge: mountChallenge, billsback: mountBillsback,
-    insurance: mountInsurance, accounts: mountAccounts, appearance: mountAppearance,
-    search: mountSearch, notifs: mountNotifs, chat: mountChat, disputes: mountDisputes,
-    joint: mountJoint, personal: mountPersonal, security: mountSecurity, txdetail: mountTxDetail
+    backup: mountBackup, cards: mountCards, plan: mountPlan, limits: mountLimits,
+    borrow: mountBorrow, flex: mountFlex, aura: mountAura, overdraft: mountOverdraft,
+    loans: mountLoans, connected: mountConnected, credit: mountCredit,
+    challenge: mountChallenge, billsback: mountBillsback, insurance: mountInsurance,
+    accounts: mountAccounts, appearance: mountAppearance, search: mountSearch,
+    notifs: mountNotifs, chat: mountChat, disputes: mountDisputes, joint: mountJoint,
+    personal: mountPersonal, security: mountSecurity, txdetail: mountTxDetail
   };
   Object.entries(screens).forEach(([name, mount]) => register(name, mount));
 
@@ -153,9 +174,22 @@ function boot(){
 
   subscribe(() => { paintAvatar(); applyAll(); syncBell(); });
 
-  /* the app can be left open across midnight, so re-run the scheduler on return */
+  /* --- locking --- */
+  document.addEventListener('monzo:lock', lockNow);
+
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') runScheduled();
+    if (document.visibilityState === 'hidden'){
+      hiddenAt = Date.now();
+      return;
+    }
+    runScheduled();
+    if (hiddenAt && Date.now() - hiddenAt > RELOCK_AFTER) lockNow();
+    hiddenAt = 0;
+  });
+
+  /* a reload or a closed tab always needs the passcode again */
+  window.addEventListener('pagehide', () => {
+    sessionStorage.removeItem('unlocked');
   });
 
   if (sessionStorage.getItem('unlocked') === '1') document.body.classList.remove('locked');
@@ -167,7 +201,7 @@ function boot(){
 
   if ('serviceWorker' in navigator){
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=19').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=20').catch(() => {});
     });
   }
 }
