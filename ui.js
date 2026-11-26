@@ -13,7 +13,7 @@ const TITLES = {
   billsback:'Billsback', insurance:'Insurance', personal:'Personal details', security:'Security',
   appearance:'Appearance', cards:'Cards', plan:'Plans', limits:'Limits', payees:'Payees',
   search:'Search', notifs:'Notifications', chat:'Support', disputes:'Disputes',
-  joint:'Joint account', potdetail:'Pot', txdetail:'Transaction'
+  joint:'Joint account', potdetail:'Pot', txdetail:'Transaction', request:'Request money'
 };
 
 let cleanup = null;
@@ -192,7 +192,7 @@ export function txRow(t){
   const signed = t.amt > 0 ? '+' : '';
   return `<button class="tx" data-tx="${t.id}">
     ${logo(t.name)}
-    <span class="mid"><span class="nm">${esc(t.name)}</span>
+    <span class="mid"><span class="nm">${esc(t.name)}${t.receipt ? '<span class="txattach">📎</span>' : ''}</span>
       <span class="mt">${esc(t.cat)} · ${esc(t.time)}</span></span>
     <span class="amt ${t.amt > 0 ? 'in' : ''} rev">${signed}${fmt(t.amt)}</span>
   </button>`;
