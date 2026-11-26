@@ -1,0 +1,13 @@
+{
+  "name": "Monzo",
+  "short_name": "Monzo",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF4F40",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "monzo-tile.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "monzo-mark.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
