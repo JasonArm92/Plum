@@ -1,6 +1,6 @@
-/* sw.js — v12 */
+/* sw.js — v13 */
 
-const VERSION = 'v12';
+const VERSION = 'v13';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
