@@ -5,9 +5,9 @@ import {
   DOMAINS, POTS0, TARGET_ISA, buildSeed, uid
 } from './data.js';
 
-export const VERSION = 16;
-export const KEY = 'monzo_v16';
-const LEGACY_KEYS = ['monzo_v15', 'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
+export const VERSION = 17;
+export const KEY = 'monzo_v17';
+const LEGACY_KEYS = ['monzo_v16', 'monzo_v15', 'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
 
 export const NOW = new Date();
 export const TODAY = iso(NOW);
@@ -126,6 +126,7 @@ export function freshState(){
     gpeMonth: '',
     lastRun: TODAY,
     roundupPotId: '',
+    lastBackup: '',
     credit: { eq: 560 + Math.floor(Math.random() * 160), tu: 540 + Math.floor(Math.random() * 160), done: [] },
     challenge: { day: 0, saved: 0, level: '1p' },
     billsback: { optIn: false, history: [] },
@@ -211,6 +212,12 @@ const migrations = [
       s.policies = policySeed(!!(PLANS[s.plan] || {}).cover);
     }
     return s;
+  },
+  /* 16 -> 17: backup watermark */
+  s => {
+    s.v = 17;
+    s.lastBackup ||= '';
+    return s;
   }
 ];
 
@@ -260,6 +267,36 @@ export function save(){
   }, 60);
 }
 export function commit(){ save(); notify(S); }
+
+/* ---------------- backup ---------------- */
+/* The export is the whole state as plain JSON. Nothing is trimmed, so a restore
+   is a faithful replacement rather than a partial merge. */
+export function exportState(){
+  S.lastBackup = TODAY;
+  save();
+  notify(S);
+  return JSON.stringify({ ...S, revealed: [...S.revealed], exported: NOW.toISOString() }, null, 2);
+}
+
+/* Import is deliberately strict about shape and version, then fills any gaps
+   from a fresh state so a thin or hand-edited file cannot leave holes. */
+export function importState(text){
+  let raw;
+  try { raw = JSON.parse(text); } catch { return { ok: false, msg: 'That is not valid JSON' }; }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, msg: 'Unexpected file shape' };
+  if (!Array.isArray(raw.tx)) return { ok: false, msg: 'No ledger in that file' };
+  if ((raw.v || 0) > VERSION) return { ok: false, msg: 'That backup is from a newer version' };
+
+  const migrated = migrate(raw);
+  const base = freshState();
+  S = { ...base, ...migrated, v: VERSION, lastBackup: TODAY };
+  S.revealed = new Set(S.revealed || []);
+  if (!S.notifs.length && !S.notifsCleared) seedNotifs();
+  recompute();
+  save();
+  notify(S);
+  return { ok: true, rows: S.tx.length };
+}
 
 /* ---------------- selectors ---------------- */
 export const plan = () => PLANS[S.plan];
