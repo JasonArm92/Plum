@@ -7,7 +7,8 @@ import {
   deleteVCard, toggleFreeze, setPlan, setFamily, flexAvail, flexPurchase, flexMonthly,
   settleFlex, arrangeOverdraft, cancelOverdraft, takeLoan, loanMonthly, aprForLoan, overpayLoan,
   challengeSave, restartChallenge, billsbackOptIn, billsbackDraw, bbBills, connectBank,
-  removeBank, addExtraAccount, setActiveAccount, takeAura, setAura, raiseDispute, closeDispute,
+  removeBank, addExtraAccount, updateExtraAccount, closeExtraAccount, setActiveAccount,
+  takeAura, setAura, raiseDispute, closeDispute,
   creditAction, CREDIT_ACTIONS, pushChat, clearNotifs, markAllRead, updateTx, deleteTx,
   balNow, addTx
 } from './core.js';
@@ -22,12 +23,12 @@ export function mountPayees(root){
     const sorted = s.payees.slice().sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || (b.last || '').localeCompare(a.last || ''));
     root.innerHTML = `<div class="h-sec"><h2>Payees</h2><button data-add>Add</button></div>
       <div class="card" style="padding:6px 8px">${sorted.map(p => `
-        <div class="pot"><span class="lg">${esc(p.name.split(' ').map(w => w[0]).join('').slice(0, 2))}</span>
+        <div class="pot"><span class="lg"><span class="lg__i">${esc(p.name.split(' ').map(w => w[0]).join('').slice(0, 2))}</span></span>
           <span class="mid"><span class="nm">${esc(p.name)} ${p.fav ? badge('Fav', 'ok') : ''}${p.last === TODAY ? badge('Recent') : ''}</span>
             <span class="sub">${esc(p.sc)} · ${esc(p.ac)}</span></span>
-          <button class="iconbtn" data-send="${p.id}">➤</button>
-          <button class="iconbtn" data-fav="${p.id}">${p.fav ? '★' : '☆'}</button>
-          <button class="iconbtn" data-edit="${p.id}">✎</button></div>`).join('') || empty('No payees yet')}</div>`;
+          <button class="iconbtn" data-send="${p.id}" aria-label="Send">➤</button>
+          <button class="iconbtn" data-fav="${p.id}" aria-label="Favourite">${p.fav ? '★' : '☆'}</button>
+          <button class="iconbtn" data-edit="${p.id}" aria-label="Edit">✎</button></div>`).join('') || empty('No payees yet')}</div>`;
   };
   const form = id => {
     const p = id ? getState().payees.find(x => x.id === id) : { name: '', sc: '', ac: '' };
@@ -41,7 +42,7 @@ export function mountPayees(root){
       const name = document.getElementById('pyName').value.trim();
       if (!name) return toast('Enter a name');
       const data = { name, sc: document.getElementById('pySc').value, ac: document.getElementById('pyAc').value };
-      id ? updatePayee(id, data) : addPayee(data);
+      if (id) updatePayee(id, data); else addPayee(data);
       closeSheet(); render(); toast('Saved');
     };
     const del = document.getElementById('pyDel');
@@ -49,6 +50,7 @@ export function mountPayees(root){
   };
   const send = id => {
     const p = getState().payees.find(x => x.id === id);
+    if (!p) return;
     sheet(`<h2>Send to ${esc(p.name)}</h2><div class="sub">${esc(p.sc)} · ${esc(p.ac)}</div>
       <div class="field"><label>Amount</label><input id="sdAmt" type="number" min="1"></div>
       <div class="field"><label>Reference</label><input id="sdRef" value="Payment"></div>
@@ -74,7 +76,11 @@ export function mountPayees(root){
     if (!t) return;
     if (t.hasAttribute('data-add')) return form(null);
     if (t.dataset.send) return send(t.dataset.send);
-    if (t.dataset.fav){ const p = getState().payees.find(x => x.id === t.dataset.fav); updatePayee(p.id, { fav: !p.fav }); return render(); }
+    if (t.dataset.fav){
+      const p = getState().payees.find(x => x.id === t.dataset.fav);
+      if (p) updatePayee(p.id, { fav: !p.fav });
+      return render();
+    }
     if (t.dataset.edit) return form(t.dataset.edit);
   });
   render();
@@ -86,11 +92,11 @@ export function mountCards(root){
     root.innerHTML = `<div class="h-sec"><h2>Cards</h2><button data-new>New virtual</button></div>
       <div class="card">${kv('Physical card · 4000 1234', badge(s.frozen ? 'Frozen' : 'Active', s.frozen ? 'bad' : 'ok'))}
         <button class="btn ghost sm" data-freeze style="margin:10px 0">${s.frozen ? 'Unfreeze' : 'Freeze'}</button>
-        ${s.vcards.map(v => `<div class="pot"><span class="lg">${esc(v.label[0])}</span>
+        ${s.vcards.map(v => `<div class="pot"><span class="lg"><span class="lg__i">${esc(v.label[0])}</span></span>
           <span class="mid"><span class="nm">${esc(v.label)}</span><span class="sub">${esc(v.num)}</span></span>
-          <button class="iconbtn" data-vf="${v.id}">${v.frozen ? '❄' : '✓'}</button>
-          <button class="iconbtn" data-vr="${v.id}">✎</button>
-          <button class="iconbtn" data-vd="${v.id}">🗑</button></div>`).join('')}</div>
+          <button class="iconbtn" data-vf="${v.id}" aria-label="Freeze">${v.frozen ? '❄' : '✓'}</button>
+          <button class="iconbtn" data-vr="${v.id}" aria-label="Rename">✎</button>
+          <button class="iconbtn" data-vd="${v.id}" aria-label="Delete">🗑</button></div>`).join('')}</div>
       <p class="note">${p.vcLive ? `${s.vcards.length} of ${p.vcLive} live virtual cards.` : 'Virtual cards need Extra, Perks or Max.'}</p>`;
   };
   root.addEventListener('click', e => {
@@ -103,6 +109,7 @@ export function mountCards(root){
     const vr = e.target.closest('[data-vr]');
     if (vr){
       const v = getState().vcards.find(x => x.id === vr.dataset.vr);
+      if (!v) return;
       sheet(`<h2>Rename card</h2><div class="field"><label>Label</label><input id="vcLabel" value="${esc(v.label)}"></div>
         <button class="btn" id="vcSave">Save</button>`);
       document.getElementById('vcSave').onclick = () => {
@@ -131,7 +138,7 @@ export function mountPlan(root){
             : `<button class="btn" data-plan="${k}" style="margin-top:10px">Switch to ${p.name}</button>`}</div>`).join('') +
       `<div class="card"><h2>Family add-on</h2><div class="sub">Max only · +£4/month · covers 2 adults and 2 children</div>
         <div class="toggle"><div><div class="t">Cover the household</div></div>
-          <button class="sw ${s.family ? 'on' : ''}" data-family></button></div></div>`;
+          <button class="sw ${s.family ? 'on' : ''}" data-family aria-label="Family add-on"></button></div></div>`;
   };
   root.addEventListener('click', e => {
     if (e.target.closest('[data-family]')){
@@ -155,7 +162,7 @@ export function mountLimits(root){
   const render = () => {
     const p = plan(), s = getState();
     const max = p.atmRow;
-    const current = Math.min(s.atmLimit || max, max);
+    const current = Math.min(Number(s.atmLimit) || max, max);
     root.innerHTML = `<div class="h-sec"><h2>Limits</h2></div><div class="card">
       <h2>Daily ATM limit</h2><div class="sub">Your plan allows up to £${max}</div>
       ${chipRow([50, 100, 200, 300, 500, 600].filter(v => v <= max).map(v => ({ value: v, label: '£' + v })), current, 'atm')}
@@ -175,13 +182,13 @@ export function mountLimits(root){
 export function mountBorrow(root){
   const s = getState();
   root.innerHTML = `<div class="h-sec"><h2>Borrowing</h2></div><div class="card" style="padding:6px 8px">
-    <button class="pot" data-go="flex"><span class="lg">FLX</span><span class="mid"><span class="nm">Monzo Flex</span>
+    <button class="pot" data-go="flex"><span class="lg"><span class="lg__i">FLX</span></span><span class="mid"><span class="nm">Monzo Flex</span>
       <span class="sub">${fmt(flexAvail())} available</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="aura"><span class="lg">AUR</span><span class="mid"><span class="nm">Monzo Aura</span>
+    <button class="pot" data-go="aura"><span class="lg"><span class="lg__i">AUR</span></span><span class="mid"><span class="nm">Monzo Aura</span>
       <span class="sub">Cashback card</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="overdraft"><span class="lg">OVD</span><span class="mid"><span class="nm">Overdraft</span>
+    <button class="pot" data-go="overdraft"><span class="lg"><span class="lg__i">OVD</span></span><span class="mid"><span class="nm">Overdraft</span>
       <span class="sub">${s.overdraft.limit ? fmt(s.overdraft.limit) : 'Not arranged'}</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="loans"><span class="lg">LN</span><span class="mid"><span class="nm">Loans</span>
+    <button class="pot" data-go="loans"><span class="lg"><span class="lg__i">LN</span></span><span class="mid"><span class="nm">Loans</span>
       <span class="sub">Up to £35,000</span></span><span class="amt">›</span></button></div>`;
 }
 
@@ -198,7 +205,7 @@ export function mountFlex(root){
         ${s.flex.plans.length ? s.flex.plans.map(p => `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between;font-size:14px"><span>${esc(p.name)}</span><b class="rev">${fmt(p.remaining)}</b></div>
           ${meter(round2(p.amount - p.remaining), p.amount)}
-          <div style="font-size:12.5px;color:var(--muted)">${p.term} months · ${fmt(p.monthly)}/mo</div>
+          <div style="font-size:12.5px;color:var(--ink2)">${p.term} months · ${fmt(p.monthly)}/mo</div>
           <button class="btn ghost sm" data-settle="${p.id}" style="margin-top:6px">Settle ${fmt(p.remaining)}</button></div>`).join('')
           : empty('No plans')}</div>`;
   };
@@ -245,7 +252,7 @@ export function mountAura(root){
         <button class="btn ghost sm" data-lounge ${a.lounge ? '' : 'disabled'}>Use lounge pass</button>
         <button class="btn ghost sm" data-fast ${a.fast ? '' : 'disabled'}>Use fast track</button></div>
       <div class="toggle" style="margin-top:10px"><div><div class="t">Auto-invest cashback</div></div>
-        <button class="sw ${a.auto ? 'on' : ''}" data-auto></button></div>
+        <button class="sw ${a.auto ? 'on' : ''}" data-auto aria-label="Auto invest"></button></div>
       <button class="btn" data-toggle style="margin-top:14px">${a.active ? 'Close Aura' : 'Take out Aura'}</button></div>`;
   };
   root.addEventListener('click', e => {
@@ -323,10 +330,10 @@ export function mountConnected(root){
     root.innerHTML = `<div class="h-sec"><h2>Connected</h2></div>
       <div class="card"><h2>Add a bank</h2>${chipRow(BANKS, null, 'bank')}</div>
       <div class="card"><h2>Connected</h2>
-        ${s.connected.length ? s.connected.map(c => `<div class="pot"><span class="lg">${esc(c.bank[0])}</span>
+        ${s.connected.length ? s.connected.map(c => `<div class="pot"><span class="lg"><span class="lg__i">${esc(c.bank[0])}</span></span>
           <span class="mid"><span class="nm">${esc(c.bank)}</span><span class="sub">${esc(c.kind)}</span></span>
           <span class="amt rev">${fmt(c.bal)}</span>
-          <button class="iconbtn" data-rm="${c.id}">🗑</button></div>`).join('') : empty('None connected')}</div>`;
+          <button class="iconbtn" data-rm="${c.id}" aria-label="Remove">🗑</button></div>`).join('') : empty('None connected')}</div>`;
   };
   root.addEventListener('click', e => {
     const b = e.target.closest('[data-bank]');
@@ -349,7 +356,7 @@ export function mountCredit(root){
       </div></div>
       <div class="card"><h2>Boost your score</h2>
         ${CREDIT_ACTIONS.map(a => { const done = s.credit.done.includes(a.key);
-          return `<div class="pot"><span class="lg">${done ? '✓' : '+'}</span>
+          return `<div class="pot"><span class="lg"><span class="lg__i">${done ? '✓' : '+'}</span></span>
             <span class="mid"><span class="nm">${esc(a.label)}</span><span class="sub">+${a.gain} points</span></span>
             ${done ? badge('Done', 'ok') : `<button class="btn ghost sm" data-do="${a.key}">Do it</button>`}</div>`; }).join('')}</div>`;
   };
@@ -386,7 +393,7 @@ export function mountBillsback(root){
     root.innerHTML = `<div class="h-sec"><h2>Billsback</h2></div>
       <div class="card">${kv('Eligible', plan().billsback ? badge('Yes', 'ok') : badge('Needs Extra', 'bad'))}
         <div class="toggle"><div><div class="t">Opt in</div></div>
-          <button class="sw ${s.billsback.optIn ? 'on' : ''}" data-opt></button></div>
+          <button class="sw ${s.billsback.optIn ? 'on' : ''}" data-opt aria-label="Opt in"></button></div>
         <button class="btn" data-draw style="margin-top:14px">Enter draw</button></div>
       <div class="card"><h2>Eligible bills</h2>
         ${bills.length ? bills.map(b => kv(`${esc(b.name)} · ${fmt(Math.min(Math.abs(b.amt), BB_CAP))}`, esc(b.date))).join('') : empty('None this month')}</div>
@@ -410,7 +417,7 @@ export function mountInsurance(root){
   ];
   root.innerHTML = `<div class="h-sec"><h2>Insurance</h2></div>` + (covered ? `<div class="card">
     ${policies.map(([n, p]) => kv(`${n}<br><span style="font-size:12.5px">${p}</span>`,
-      `<button class="btn ghost sm" data-pol="${p}" data-title="${n}">Document</button>`)).join('')}
+      `<button class="btn ghost sm" data-pol="${p}" data-title="${esc(n)}">Document</button>`)).join('')}
     <p class="note">Held with Aviva. £75 excess per claim.</p></div>` : `<div class="card">
       <div class="sub">Not on ${plan().name}</div><button class="btn" data-go="plan">See plans</button></div>`);
   root.addEventListener('click', e => {
@@ -418,6 +425,7 @@ export function mountInsurance(root){
     if (!t) return;
     const s = getState();
     const w = window.open('', '_blank');
+    if (!w) return toast('Allow pop-ups to print');
     w.document.write(`<title>${t.dataset.pol}</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#0b1a26}
       h1{font-size:19px;margin:0 0 4px}.sub{color:#6b7c8a;font-size:13px;margin-bottom:20px}
       .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #e6ebef;font-size:13px}</style>
@@ -438,16 +446,16 @@ export function mountAccounts(root){
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Your accounts</h2><button data-add>Add</button></div>
       <div class="card" style="padding:6px 8px">
-        <div class="pot"><span class="lg">PCA</span><span class="mid"><span class="nm">Personal current account</span>
+        <div class="pot"><span class="lg"><span class="lg__i">PCA</span></span><span class="mid"><span class="nm">${esc(s.acctName)}</span>
           <span class="sub">${s.activeAccount === 'personal' ? 'Active' : 'Tap Use to switch'}</span></span>
           <button class="btn ghost sm" data-switch="personal">Use</button></div>
-        <div class="pot"><span class="lg">JNT</span><span class="mid"><span class="nm">Joint account</span>
+        <div class="pot"><span class="lg"><span class="lg__i">JNT</span></span><span class="mid"><span class="nm">Joint account</span>
           <span class="sub">With ${esc(s.partner)}</span></span>
           <button class="btn ghost sm" data-go="joint">Open</button></div>
-        ${s.extraAccounts.map(a => `<div class="pot"><span class="lg">${esc(a.name[0])}</span>
+        ${s.extraAccounts.map(a => `<div class="pot"><span class="lg"><span class="lg__i">${esc(a.name[0])}</span></span>
           <span class="mid"><span class="nm">${esc(a.name)}</span><span class="sub">${esc(a.type)}</span></span>
-          <button class="iconbtn" data-rename="${a.id}">✎</button>
-          <button class="iconbtn" data-close-acc="${a.id}">🗑</button></div>`).join('')}</div>`;
+          <button class="iconbtn" data-rename="${a.id}" aria-label="Rename">✎</button>
+          <button class="iconbtn" data-close-acc="${a.id}" aria-label="Close">🗑</button></div>`).join('')}</div>`;
   };
   root.addEventListener('click', e => {
     const sw = e.target.closest('[data-switch]');
@@ -455,20 +463,17 @@ export function mountAccounts(root){
     const rn = e.target.closest('[data-rename]');
     if (rn){
       const a = getState().extraAccounts.find(x => x.id === rn.dataset.rename);
+      if (!a) return;
       sheet(`<h2>Rename account</h2><div class="field"><label>Name</label><input id="raName" value="${esc(a.name)}"></div>
         <button class="btn" id="raGo">Save</button>`);
       document.getElementById('raGo').onclick = () => {
-        a.name = document.getElementById('raName').value.trim() || a.name;
-        commit(); closeSheet(); render(); toast('Renamed');
+        updateExtraAccount(a.id, { name: document.getElementById('raName').value.trim() || a.name });
+        closeSheet(); render(); toast('Renamed');
       };
       return;
     }
     const cl = e.target.closest('[data-close-acc]');
-    if (cl){
-      const s = getState();
-      s.extraAccounts = s.extraAccounts.filter(x => x.id !== cl.dataset.closeAcc);
-      commit(); render(); return toast('Account closed');
-    }
+    if (cl){ closeExtraAccount(cl.dataset.closeAcc); render(); return toast('Account closed'); }
     if (!e.target.closest('[data-add]')) return;
     sheet(`<h2>Add an account</h2><div class="field"><label>Type</label><select id="aaType">
       <option>Under 16</option><option>16-17</option><option>Business</option></select></div>
@@ -493,7 +498,7 @@ export function mountAppearance(root){
       <div class="toggle"><div><div class="t">Text size</div></div>
         ${chipRow([{ value: 1, label: 'A' }, { value: 1.12, label: 'A+' }, { value: 1.24, label: 'A++' }], s.zoom, 'zoom')}</div>
       <div class="toggle"><div><div class="t">Reduce motion</div></div>
-        <button class="sw ${s.motion ? '' : 'on'}" data-motion></button></div></div>`;
+        <button class="sw ${s.motion ? '' : 'on'}" data-motion aria-label="Reduce motion"></button></div></div>`;
   };
   root.addEventListener('click', e => {
     const t = e.target.closest('[data-theme]'); if (t){ setTheme(t.dataset.theme); return render(); }
@@ -513,7 +518,7 @@ export function mountSearch(root, params){
   const paintChips = () => { chips.innerHTML = chipRow(['All', ...CATS], cat, 'cat'); };
   const paintList = () => {
     const res = getState().tx.filter(t => (cat === 'All' || t.cat === cat) &&
-      (!q || t.name.toLowerCase().includes(q) || t.note.toLowerCase().includes(q))).slice(0, 60);
+      (!q || t.name.toLowerCase().includes(q) || (t.note || '').toLowerCase().includes(q))).slice(0, 60);
     list.innerHTML = res.length ? res.map(txRow).join('') : '<li class="empty">No matches</li>';
   };
   input.addEventListener('input', () => { q = input.value.toLowerCase(); paintList(); });
@@ -537,9 +542,9 @@ export function mountNotifs(root){
       : 'home';
     root.innerHTML = `<div class="h-sec"><h2>Notifications</h2><button data-clear>Clear</button></div>
       <div class="card">${s.notifs.length ? s.notifs.map(n => `<button class="pot" data-notif="${target(n)}">
-        <span class="lg">${n.read ? '·' : '●'}</span>
+        <span class="lg"><span class="lg__i">${n.read ? '·' : '●'}</span></span>
         <span class="mid"><span class="nm">${esc(n.title)}</span><span class="sub">${esc(n.body)}</span></span>
-        <span class="amt" style="font-size:12px;color:var(--muted)">${esc(n.time)}</span></button>`).join('')
+        <span class="amt" style="font-size:12px;color:var(--ink3)">${esc(n.time)}</span></button>`).join('')
         : empty('Nothing new')}</div>`;
     markAllRead();
   };
@@ -552,13 +557,14 @@ export function mountNotifs(root){
 }
 
 export function mountChat(root){
+  const timers = [];
   const render = () => {
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Support</h2></div>
       <div class="card">${s.chat.length ? s.chat.map(m => `<div style="margin:9px 0;text-align:${m.who === 'me' ? 'right' : 'left'}">
         <div style="display:inline-block;max-width:82%;padding:10px 14px;border-radius:16px;
           background:${m.who === 'me' ? 'var(--coral)' : 'var(--line)'};color:${m.who === 'me' ? '#fff' : 'var(--ink)'}">${esc(m.text)}</div>
-        <div style="font-size:11.5px;color:var(--muted)">${esc(m.time)}</div></div>`).join('') : empty('Say hello')}</div>
+        <div style="font-size:11.5px;color:var(--ink3)">${esc(m.time)}</div></div>`).join('') : empty('Say hello')}</div>
       <div style="display:flex;gap:8px;margin-bottom:20px">
         <input id="chatIn" class="chatinput" placeholder="Type a message">
         <button class="btn sm" data-send>Send</button></div>`;
@@ -568,16 +574,20 @@ export function mountChat(root){
     const i = root.querySelector('#chatIn'), v = i.value.trim();
     if (!v) return;
     pushChat('me', v); render();
-    setTimeout(() => { pushChat('them', 'Thanks Jason — looking into that now.'); render(); }, 900);
+    timers.push(setTimeout(() => {
+      pushChat('them', 'Thanks Jason — looking into that now.');
+      render();
+    }, 900));
   });
   render();
+  return () => timers.forEach(clearTimeout);
 }
 
 export function mountDisputes(root){
   const render = () => {
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Disputes</h2></div><div class="card">
-      ${s.disputes.length ? s.disputes.map(d => `<div class="pot"><span class="lg">${d.status === 'Open' ? '!' : '✓'}</span>
+      ${s.disputes.length ? s.disputes.map(d => `<div class="pot"><span class="lg"><span class="lg__i">${d.status === 'Open' ? '!' : '✓'}</span></span>
         <span class="mid"><span class="nm">${esc(d.name)}</span><span class="sub">${esc(d.reason)}</span></span>
         ${d.status === 'Open' ? `<button class="btn ghost sm" data-close-d="${d.id}">Close</button>` : badge('Closed', 'ok')}</div>`).join('')
         : empty('No disputes')}</div>`;
@@ -620,18 +630,19 @@ export function mountJoint(root){
 
 export function mountPersonal(root){
   const p = getState().profile;
-  const field = (id, label, v, t = 'text') => `<div class="field"><label>${label}</label><input id="${id}" type="${t}" value="${esc(v || '')}"></div>`;
+  const field = (id, label, v, t = 'text') => `<div class="field"><label for="${id}">${label}</label><input id="${id}" type="${t}" value="${esc(v || '')}"></div>`;
   root.innerHTML = `<div class="h-sec"><h2>Personal details</h2></div><div class="card">
     ${field('pName', 'Full name', p.name)}${field('pDob', 'Date of birth', p.dob, 'date')}
     ${field('pEmail', 'Email', p.email, 'email')}${field('pPhone', 'Phone', p.phone, 'tel')}
-    ${field('pAddr1', 'Address line 1', p.a1)}${field('pCity', 'Town', p.city)}
-    ${field('pPost', 'Postcode', p.post)}${field('pOcc', 'Occupation', p.occ)}${field('pEmp', 'Employer', p.emp)}
+    ${field('pAddr1', 'Address line 1', p.a1)}${field('pAddr2', 'Address line 2', p.a2)}
+    ${field('pCity', 'Town', p.city)}${field('pPost', 'Postcode', p.post)}
+    ${field('pOcc', 'Occupation', p.occ)}${field('pEmp', 'Employer', p.emp)}
     <button class="btn" data-save>Save</button></div>`;
   root.addEventListener('click', e => {
     if (!e.target.closest('[data-save]')) return;
-    const v = id => root.querySelector('#' + id).value;
+    const v = id => { const el = root.querySelector('#' + id); return el ? el.value : ''; };
     setProfile({ name: v('pName'), dob: v('pDob'), email: v('pEmail'), phone: v('pPhone'),
-      a1: v('pAddr1'), city: v('pCity'), post: v('pPost'), occ: v('pOcc'), emp: v('pEmp') });
+      a1: v('pAddr1'), a2: v('pAddr2'), city: v('pCity'), post: v('pPost'), occ: v('pOcc'), emp: v('pEmp') });
     toast('Saved');
   });
 }
@@ -641,12 +652,12 @@ export function mountSecurity(root){
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Security</h2></div><div class="card">
       <div class="toggle"><div><div class="t">Fingerprint</div><div class="d">${s.credId ? 'Enabled' : 'Off'}</div></div>
-        <button class="sw ${s.credId ? 'on' : ''}" data-bio></button></div>
+        <button class="sw ${s.credId ? 'on' : ''}" data-bio aria-label="Fingerprint"></button></div>
       <div class="toggle"><div><div class="t">Privacy mode</div></div>
-        <button class="sw ${s.priv ? 'on' : ''}" data-priv></button></div>
+        <button class="sw ${s.priv ? 'on' : ''}" data-priv aria-label="Privacy mode"></button></div>
       <div class="toggle"><div><div class="t">Round-ups</div></div>
-        <button class="sw ${s.roundups ? 'on' : ''}" data-round></button></div>
-      <div class="field"><label>New passcode</label><input id="newPin" maxlength="4" inputmode="numeric"></div>
+        <button class="sw ${s.roundups ? 'on' : ''}" data-round aria-label="Round-ups"></button></div>
+      <div class="field"><label for="newPin">New passcode</label><input id="newPin" maxlength="4" inputmode="numeric"></div>
       <button class="btn" data-pin>Update</button></div>`;
   };
   root.addEventListener('click', async e => {
@@ -682,9 +693,9 @@ export function mountTxDetail(root, params){
         <div><div style="font-weight:700">${esc(t.name)}</div><div class="sub">${esc(t.cat)}</div></div></div>
       <div class="balance rev" style="font-size:28px;margin:0 0 12px">${t.amt > 0 ? '+' : ''}${fmt(t.amt)}</div>
       ${kv('Date', t.date)}${kv('Time', esc(t.time))}${kv('Balance after', `<span class="rev">${fmt(t.bal)}</span>`)}
-      <div class="field"><label>Name</label><input id="txName" value="${esc(t.name)}"></div>
-      <div class="field"><label>Category</label><select id="txCat">${CATS.map(c => `<option ${c === t.cat ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
-      <div class="field"><label>Note</label><input id="txNote" value="${esc(t.note)}"></div>
+      <div class="field"><label for="txName">Name</label><input id="txName" value="${esc(t.name)}"></div>
+      <div class="field"><label for="txCat">Category</label><select id="txCat">${CATS.map(c => `<option ${c === t.cat ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label for="txNote">Note</label><input id="txNote" value="${esc(t.note || '')}"></div>
       <button class="btn" data-save>Save</button>
       <button class="btn ghost" data-split style="margin-top:8px">Split with a tab</button>
       <button class="btn ghost" data-disp style="margin-top:8px">Raise a dispute</button>
@@ -692,6 +703,7 @@ export function mountTxDetail(root, params){
   };
   root.addEventListener('click', e => {
     const t = getState().tx.find(x => x.id === params.id);
+    if (!t) return;
     if (e.target.closest('[data-save]')){
       updateTx(t.id, { name: root.querySelector('#txName').value.trim() || t.name,
         cat: root.querySelector('#txCat').value, note: root.querySelector('#txNote').value });
@@ -705,7 +717,7 @@ export function mountTxDetail(root, params){
       document.getElementById('spGo').onclick = () => {
         const s = getState();
         const tot = +document.getElementById('spTot').value;
-        const ppl = Math.max(2, +document.getElementById('spPpl').value);
+        const ppl = Math.max(2, +document.getElementById('spPpl').value || 2);
         s.tabs.push({ id: 't' + Date.now(), name: t.name, total: tot, mine: round2(tot / ppl), people: ppl });
         commit(); closeSheet(); toast('Tab created');
       };
