@@ -2,6 +2,7 @@
 
 import {
   getState, commit, esc, fmt, TODAY, round2, plan, PLANS_BANK, CATS, BANKS, BB_CAP,
+  jointBills, jointContribution, JOINT_SHARE,
   setProfile, setPin, setCredId, setTheme, setZoom, setMotion, togglePriv, toggleRoundups,
   roundupPotName, exportState, importState,
   addPayee, updatePayee, deletePayee, sendMoney, requestMoney, settleRequest, cancelRequest,
@@ -17,21 +18,8 @@ import {
 } from './core.js';
 
 import {
-  getState, commit, esc, fmt, TODAY, round2, plan, PLANS_BANK, CATS, BANKS, BB_CAP,
-  jointBills, jointContribution, JOINT_SHARE,
-  setProfile, setPin, setCredId, setTheme, setZoom, setMotion, togglePriv, toggleRoundups,
-  roundupPotName, exportState, importState,
-  addPayee, updatePayee, deletePayee, sendMoney, requestMoney, settleRequest, cancelRequest,
-  addVirtualCard, freezeVCard, renameVCard,
-  deleteVCard, toggleFreeze, setPlan, setFamily, flexAvail, flexPurchase, flexMonthly,
-  settleFlex, arrangeOverdraft, cancelOverdraft, takeLoan, loanMonthly, aprForLoan, overpayLoan,
-  challengeSave, restartChallenge, billsbackOptIn, billsbackDraw, bbBills, connectBank,
-  removeBank, addExtraAccount, updateExtraAccount, closeExtraAccount, moveToExtraAccount,
-  closeAccount, reopenAccount, setActiveAccount,
-  takeAura, setAura, payOutCashback, CASHBACK_MIN, raiseDispute, closeDispute,
-  creditAction, CREDIT_ACTIONS, pushChat, clearNotifs, markAllRead, updateTx, deleteTx,
-  balNow, addTx
-} from './core.js';
+  go, toast, sheet, closeSheet, logo, kv, badge, empty, txRow, meter, chipRow
+} from './ui.js';
 
 export function mountPayees(root){
   const render = () => {
@@ -967,4 +955,4 @@ export function mountTxDetail(root, params){
     if (e.target.closest('[data-del]')){ deleteTx(t.id); toast('Deleted'); go('acc'); }
   });
   render();
-                        }
+}
