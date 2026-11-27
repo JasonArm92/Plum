@@ -1,8 +1,8 @@
-import { FUNDS, CATEGORY_IDS, RISK_FUNDS } from './data.js?v=38';
+import { FUNDS, CATEGORY_IDS, RISK_FUNDS } from './data.js?v=39';
 
-export const VERSION = 27;
-export const KEY = 'monzo_v27';
-export const LEGACY_KEYS = ['monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 28;
+export const KEY = 'monzo_v28';
+export const LEGACY_KEYS = ['monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -198,6 +198,30 @@ function seedHistory() {
   return [...monthSeed(2), ...monthSeed(1)];
 }
 
+export const OVERDRAFT_LIMITS = [250, 500];
+export const OVERDRAFT_EAR = 0.39;
+export const LOAN_MIN = 1000;
+export const LOAN_MAX = 25000;
+export const LOAN_TERMS = [12, 24, 36, 48, 60];
+
+export function loanApr(amount, months) {
+  if (amount <= 4000) return 0.189;
+  if (amount <= 10000) return 0.129;
+  if (amount <= 18000) return 0.099;
+  return 0.079;
+}
+
+export function loanQuote(amount, months) {
+  const a = round2(amount);
+  const apr = loanApr(a, months);
+  const total = round2(a * (1 + apr * (months / 12)));
+  return {apr, total, per: round2(total / months)};
+}
+
+export function overdraftDaily(limit) {
+  return round2((limit * OVERDRAFT_EAR) / 365);
+}
+
 function defaultState() {
   const base = now();
   const mk = (name, amount, cat, daysAgo, acct) => ({
@@ -263,7 +287,9 @@ function defaultState() {
     splits: [],
     budgets: JSON.parse(JSON.stringify(BUDGET_SEED)),
     budgetSeeded: true,
-    flex: {limit: 1000, used: 214.40, plan: 'flex', active: true},
+    flex: {limit: 1000, plans: [], active: true},
+    loans: [],
+    overdraft: {enabled: false, limit: 0},
     plan: 'plus',
     plus: {since: base - 200*86400000, renews: base + 15*86400000},
     invest: {
@@ -347,9 +373,22 @@ const migrations = [
       s.settings.payOrder = ['send','request','split','bank','scheduled','payees'];
     }
     if (!Array.isArray(s.settings.payHidden)) s.settings.payHidden = [];
-    if (Array.isArray(s.payees)) {
-      for (const p of s.payees) if (typeof p.fav !== 'boolean') p.fav = false;
+    if (Array.isArray(s.payees)) for (const p of s.payees) if (typeof p.fav !== 'boolean') p.fav = false;
+    return s;
+  }},
+  {v: 28, fn: s => {
+    if (!s.flex) s.flex = {};
+    if (!Array.isArray(s.flex.plans)) s.flex.plans = [];
+    if (typeof s.flex.used === 'number' && s.flex.used > 0 && !s.flex.plans.length) {
+      s.flex.plans.push({
+        id: uid('fxp'), name: 'Existing plan', principal: s.flex.used,
+        months: 12, per: round2(s.flex.used / 12), apr: 0.29,
+        remaining: s.flex.used, ts: now()
+      });
     }
+    delete s.flex.used;
+    if (!Array.isArray(s.loans)) s.loans = [];
+    if (!s.overdraft) s.overdraft = {enabled: false, limit: 0};
     return s;
   }}
 ];
@@ -425,9 +464,15 @@ export function normalise(input) {
 
   if (typeof s.savings !== 'number') s.savings = 0;
 
-  if (!s.flex) s.flex = {limit: 1000, used: 0, plan: 'flex', active: true};
+  if (!s.flex) s.flex = {limit: 1000, plans: [], active: true};
+  if (!Array.isArray(s.flex.plans)) s.flex.plans = [];
   if (typeof s.flex.limit !== 'number') s.flex.limit = 1000;
-  if (typeof s.flex.used !== 'number') s.flex.used = 0;
+  for (const p of s.flex.plans) if (typeof p.remaining !== 'number') p.remaining = 0;
+
+  if (!Array.isArray(s.loans)) s.loans = [];
+  if (!s.overdraft) s.overdraft = {enabled: false, limit: 0};
+  if (typeof s.overdraft.limit !== 'number') s.overdraft.limit = 0;
+  if (typeof s.overdraft.enabled !== 'boolean') s.overdraft.enabled = false;
 
   if (!s.pension) s.pension = {};
   s.pension = Object.assign({provider:'Nest', balance:0, monthly:0, employer:0, growth:0.055, joined: now()}, s.pension);
@@ -524,18 +569,15 @@ export function payeesSorted() {
     return a.name.localeCompare(b.name);
   });
 }
-
 export function addPayee({name, sort, acct}) {
   const p = {
     id: uid('pay'), name: String(name).trim(),
-    sort: String(sort).trim(), acct: String(acct).trim(),
-    initials: '', fav: false
+    sort: String(sort).trim(), acct: String(acct).trim(), initials: '', fav: false
   };
   state.payees.push(p);
   save();
   return p;
 }
-
 export function updatePayee(id, patch) {
   const p = state.payees.find(x => x.id === id);
   if (!p) return false;
@@ -543,19 +585,16 @@ export function updatePayee(id, patch) {
   save();
   return true;
 }
-
 export function removePayee(id) {
   state.payees = state.payees.filter(x => x.id !== id);
   save();
 }
-
 export function toggleFav(id) {
   const p = state.payees.find(x => x.id === id);
   if (!p) return;
   p.fav = !p.fav;
   save();
 }
-
 export function recentPayments(payeeId) {
   const p = state.payees.find(x => x.id === payeeId);
   if (!p) return [];
@@ -570,35 +609,28 @@ export function createSplit(txId, people) {
   const total = Math.abs(round2(t.amount));
   const base = Math.floor((total / people.length) * 100) / 100;
   let remainder = round2(total - base * people.length);
-  const rows = people.map((p, i) => {
+  const rows = people.map(p => {
     let share = base;
     if (remainder > 0) { share = round2(share + 0.01); remainder = round2(remainder - 0.01); }
     return {payeeId: p.id, name: p.name, amount: share, paid: false};
   });
-  const split = {
-    id: uid('spl'), txId, name: t.name, ts: now(),
-    total, people: rows
-  };
+  const split = {id: uid('spl'), txId, name: t.name, ts: now(), total, people: rows};
   state.splits.unshift(split);
   save();
   return split;
 }
-
 export function splitOutstanding(split) {
   return round2(split.people.filter(p => !p.paid).reduce((s, p) => s + p.amount, 0));
 }
-
 export function splitsOutstandingTotal() {
   return round2(state.splits.reduce((s, x) => s + splitOutstanding(x), 0));
 }
-
 export function markSplitPaid(splitId, index) {
   const s = state.splits.find(x => x.id === splitId);
   if (!s || !s.people[index]) return;
   s.people[index].paid = !s.people[index].paid;
   save();
 }
-
 export function removeSplit(splitId) {
   state.splits = state.splits.filter(x => x.id !== splitId);
   save();
@@ -610,22 +642,17 @@ export function budgets() {
   if (!state.budgets[state.active]) state.budgets[state.active] = {};
   return state.budgets[state.active];
 }
-export function budgetFor(catId) {
-  return round2(budgets()[catId] || 0);
-}
+export function budgetFor(catId) { return round2(budgets()[catId] || 0); }
 export function setBudget(catId, amount) {
   const v = round2(amount);
   const b = budgets();
-  if (v > 0) b[catId] = v;
-  else delete b[catId];
+  if (v > 0) b[catId] = v; else delete b[catId];
   save();
 }
 export function totalBudget() {
   return round2(Object.values(budgets()).reduce((s, v) => s + (Number(v) || 0), 0));
 }
-export function hasBudget() {
-  return totalBudget() > 0;
-}
+export function hasBudget() { return totalBudget() > 0; }
 export function budgetLeft() {
   if (!hasBudget()) return null;
   return round2(totalBudget() - spentThisMonth());
@@ -680,46 +707,32 @@ export function totalPots() {
   return round2(state.pots.reduce((s, p) => s + (p.saved || 0), 0));
 }
 
-export function planInfo(id = state.plan) {
-  return PLANS[id] || PLANS.free;
-}
-
-export function riskInfo(id) {
-  return RISK_FUNDS.find(f => f.id === id) || RISK_FUNDS[1];
-}
-
+export function planInfo(id = state.plan) { return PLANS[id] || PLANS.free; }
+export function riskInfo(id) { return RISK_FUNDS.find(f => f.id === id) || RISK_FUNDS[1]; }
 export function portfolioValue() {
   return round2(RISK_FUNDS.reduce((s, f) => s + (state.invest.funds[f.id] || 0), 0));
 }
-
-export function fundValue(id) {
-  return round2(state.invest.funds[id] || 0);
-}
-
+export function fundValue(id) { return round2(state.invest.funds[id] || 0); }
 export function platformFeeAnnual() {
   const p = planInfo();
   return round2(Math.min(portfolioValue() * p.feeRate, p.feeCap));
 }
-export function platformFeeMonthly() {
-  return round2(platformFeeAnnual() / 12);
-}
+export function platformFeeMonthly() { return round2(platformFeeAnnual() / 12); }
 
 export function ledgerAdd(type, fund, amount, ts = now()) {
   state.invest.ledger.push({id: uid('led'), ts, type, fund, amount: round2(amount)});
   save();
 }
-
 export function ledgerNetInvested() {
   return round2(state.invest.ledger
     .filter(e => e.type === 'buy' || e.type === 'gift' || e.type === 'sell')
     .reduce((s, e) => s + e.amount, 0));
 }
-
 export function ledgerIncome() {
-  return round2(state.invest.ledger
-    .filter(e => e.type === 'div')
-    .reduce((s, e) => s + e.amount, 0));
+  return round2(state.invest.ledger.filter(e => e.type === 'div').reduce((s, e) => s + e.amount, 0));
 }
+
+/* ---------- flex ---------- */
 
 export const FLEX_MIN = 100;
 export const FLEX_MONTHS = [3, 6, 12];
@@ -728,15 +741,24 @@ export function flexApr(amount, months) {
   if (months === 3 && amount >= FLEX_MIN) return 0;
   return 0.29;
 }
+export function flexUsed() {
+  return round2(state.flex.plans.reduce((s, p) => s + (p.remaining || 0), 0));
+}
+export function flexAvailable() {
+  return round2(Math.max(0, state.flex.limit - flexUsed()));
+}
 
 export function flexPurchase(amount, months, name = 'Flex purchase') {
   const a = round2(amount);
   if (a < FLEX_MIN) return {ok:false, reason:'minimum'};
   if (!FLEX_MONTHS.includes(months)) return {ok:false, reason:'term'};
+  if (a > flexAvailable()) return {ok:false, reason:'limit'};
   const apr = flexApr(a, months);
   const total = round2(a * (1 + apr * (months / 12)));
   const per = round2(total / months);
-  state.flex.used = round2(state.flex.used + a);
+  state.flex.plans.push({
+    id: uid('fxp'), name, principal: a, months, per, apr, remaining: total, ts: now()
+  });
   addTx({name, amount: -a, category: 'general'});
   for (let i = 0; i < months; i++) {
     const when = now() + (i + 1) * 30 * 86400000;
@@ -749,6 +771,51 @@ export function flexPurchase(amount, months, name = 'Flex purchase') {
   return {ok:true, per, total, apr};
 }
 
+export function flexSettle(planId) {
+  const p = state.flex.plans.find(x => x.id === planId);
+  if (!p) return null;
+  const saved = round2(p.remaining * 0.02);
+  const due = round2(p.remaining - saved);
+  if (!takeFunds(due)) return null;
+  state.flex.plans = state.flex.plans.filter(x => x.id !== planId);
+  state.scheduled = state.scheduled.filter(s => !(s.flex && s.name === 'Flex · ' + p.name));
+  addTx({name: 'Flex settlement · ' + p.name, amount: -due, category: 'finance'});
+  save();
+  return {due, saved};
+}
+
+/* ---------- loans ---------- */
+
+export function totalLoanRemaining() {
+  return round2(state.loans.reduce((s, l) => s + (l.remaining || 0), 0));
+}
+
+export function takeLoan(amount, months) {
+  const a = clamp(round2(amount), LOAN_MIN, LOAN_MAX);
+  const q = loanQuote(a, months);
+  const loan = {
+    id: uid('loan'), principal: a, months, apr: q.apr, per: q.per,
+    remaining: q.total, ts: now()
+  };
+  state.loans.push(loan);
+  addTx({name: 'Personal loan', amount: a, category: 'finance'});
+  for (let i = 0; i < months; i++) {
+    const when = now() + (i + 1) * 30 * 86400000;
+    state.scheduled.push({
+      id: uid('sch'), name: 'Loan repayment', amount: -q.per, category: 'finance',
+      day: new Date(when).getDate(), freq: 'once', next: when, acct: state.active
+    });
+  }
+  save();
+  return loan;
+}
+
+export function totalBorrowed() {
+  return round2(flexUsed() + totalLoanRemaining() + (state.overdraft.enabled ? Math.max(0, -bal()) : 0));
+}
+
+/* ---------- investments ---------- */
+
 export function investBuy(fundId, amount) {
   const f = RISK_FUNDS.find(x => x.id === fundId);
   if (!f) return false;
@@ -760,7 +827,6 @@ export function investBuy(fundId, amount) {
   save();
   return true;
 }
-
 export function investSell(fundId, amount) {
   const held = round2(state.invest.funds[fundId] || 0);
   if (held <= 0) return false;
@@ -772,7 +838,6 @@ export function investSell(fundId, amount) {
   save();
   return true;
 }
-
 export function investDeposit(amount) {
   const a = round2(amount);
   if (!takeFunds(a)) return false;
@@ -781,7 +846,6 @@ export function investDeposit(amount) {
   save();
   return true;
 }
-
 export function setChosenFund(id) {
   if (!RISK_FUNDS.some(f => f.id === id)) return;
   state.invest.chosen = id;
@@ -878,4 +942,4 @@ export function lastMonthByCategory() {
 
 export function ensureCategory(id) {
   return CATEGORY_IDS.includes(id) ? id : 'general';
-}
+    }
