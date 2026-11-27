@@ -1,7 +1,7 @@
-const CACHE = 'monzo-v34';
+const CACHE = 'monzo-v35';
 const ASSETS = [
-  './', './index.html', './styles.css', './main.js', './core.js', './data.js',
-  './ui.js', './screens-a.js', './screens-b.js'
+  './', './index.html', './styles.css', './boot.js', './main.js', './core.js',
+  './data.js', './ui.js', './screens-a.js', './screens-b.js'
 ];
 
 self.addEventListener('install', e => {
@@ -27,7 +27,7 @@ self.addEventListener('fetch', e => {
 
   if (url.origin === location.origin) {
     e.respondWith(
-      fetch(req)
+      fetch(req, { cache: 'no-store' })
         .then(res => {
           if (res && res.ok) {
             const copy = res.clone();
