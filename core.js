@@ -1,49 +1,42 @@
-/* src/core.js — clock, format, DOM helpers, storage, state, actions, selectors. */
+/* src/core.js — clock, format, storage, state, actions, selectors. */
 
 import {
   PLANS, CATS, FLEX, COMMITTED, DEFAULT_TARGETS, BANKS, BB_PROVIDERS, BB_CAP,
   DOMAINS, POTS0, TARGET_ISA, DIVIDEND_RATE, buildSeed, uid
 } from './data.js';
 
-export const VERSION = 19;
-export const KEY = 'monzo_v19';
-const LEGACY_KEYS = ['monzo_v18', 'monzo_v17', 'monzo_v16', 'monzo_v15', 'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
+const VERSION = 20;
+const KEY = 'monzo_v20';
+const LEGACY_KEYS = ['monzo_v19', 'monzo_v18', 'monzo_v17', 'monzo_v16', 'monzo_v15',
+  'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
 
-export const NOW = new Date();
+const NOW = new Date();
+const NOWT = `${p2(NOW.getHours())}:${p2(NOW.getMinutes())}`;
 export const TODAY = iso(NOW);
-export const NOWT = `${p2(NOW.getHours())}:${p2(NOW.getMinutes())}`;
-export const THIS_YM = TODAY.slice(0, 7);
+const THIS_YM = TODAY.slice(0, 7);
 export const MONTHS = ['January','February','March','April','May','June','July',
   'August','September','October','November','December'];
-export const TAX_START = `${NOW.getMonth() >= 3 ? NOW.getFullYear() : NOW.getFullYear() - 1}-04-06`;
+const TAX_START = `${NOW.getMonth() >= 3 ? NOW.getFullYear() : NOW.getFullYear() - 1}-04-06`;
 
-export const CASHBACK_RATE = 0.01;
+const CASHBACK_RATE = 0.01;
 export const CASHBACK_MIN = 1;
 export const JOINT_SHARE = 0.35;
-export const FALLBACK_SALARY = 2480;
+const FALLBACK_SALARY = 2480;
 
 /* The replay window. Longer absences are clipped rather than replayed against
    today's balance, which would invent a history that never happened. */
 const MAX_CATCHUP_DAYS = 35;
 
 function p2(n){ return String(n).padStart(2, '0'); }
-export function iso(d){ return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; }
-export function asDate(s){ return new Date(s + 'T12:00:00'); }
-export function monthLen(y, m){ return new Date(y, m + 1, 0).getDate(); }
-export function dom(y, m, day){
+function iso(d){ return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; }
+function asDate(s){ return new Date(s + 'T12:00:00'); }
+function monthLen(y, m){ return new Date(y, m + 1, 0).getDate(); }
+function dom(y, m, day){
   const d = new Date(y, m, 1);
   const last = monthLen(d.getFullYear(), d.getMonth());
   return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(Math.min(day, last))}`;
 }
-
-export function prettyDate(s){
-  const diff = Math.round((asDate(TODAY) - asDate(s)) / 86400000);
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Yesterday';
-  const d = asDate(s);
-  return `${d.getDate()} ${MONTHS[d.getMonth()].slice(0, 3)} ${d.getFullYear()}`;
-}
-export function nextPayday(){
+function nextPayday(){
   const d = new Date(NOW.getFullYear(), NOW.getMonth(), 28);
   if (TODAY >= iso(d)) d.setMonth(d.getMonth() + 1);
   return iso(d);
@@ -59,9 +52,6 @@ export const round2 = n => Math.round(n * 100) / 100;
 export const esc = s => String(s).replace(/[&<>"']/g,
   c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 export const pct = (a, b) => b ? Math.min(100, (a / b) * 100) : 0;
-
-export const $ = (sel, root = document) => root.querySelector(sel);
-export function clear(node){ while (node.firstChild) node.removeChild(node.firstChild); }
 
 /* ---------------- state ---------------- */
 let S = null;
@@ -121,7 +111,7 @@ export function freshState(){
     theme: 'auto', zoom: 1, motion: true,
     activeAccount: 'personal', acctName: 'Personal current account', acctClosed: false,
     atmLimit: 400, jointBal: 4180,
-    pension: 96400.18, pensionMonthly: 240, homeValue: 265000, mortgage: 78500,
+    pension: 96400.18, pensionMonthly: 240,
     flex: { limit: 4000, used: 0, plans: [] },
     aura: { active: true, auto: true, lounge: 2, fast: 2, cashback: 0 },
     policies: policySeed(true),
@@ -156,7 +146,7 @@ const migrations = [
       { id: 'latest', on: true }];
     s.partner ||= 'Chloe Brown';
     s.theme ||= 'auto'; s.zoom ||= 1; s.motion ??= true;
-    s.pension ||= 41250.18; s.homeValue ||= 168000; s.mortgage ||= 100000;
+    s.pension ||= 41250.18;
     s.targets ||= { ...DEFAULT_TARGETS };
     s.notifs ||= []; s.chat ||= []; s.disputes ||= [];
     return s;
@@ -237,13 +227,18 @@ const migrations = [
     s.v = 19;
     if (s.pension === 41250.18) s.pension = 96400.18;
     if (s.pensionMonthly === 180) s.pensionMonthly = 240;
-    if (s.homeValue === 168000) s.homeValue = 265000;
-    if (s.mortgage === 100000) s.mortgage = 78500;
     if (!s.jointBal) s.jointBal = 4180;
     s.pots = (s.pots || []).map(p => {
       const base = POTS0.find(x => x.name === p.name);
       return base && p.bal < base.bal ? { ...p, bal: base.bal } : p;
     });
+    return s;
+  },
+  /* 19 -> 20: no property, so the mortgage and valuation fields go */
+  s => {
+    s.v = 20;
+    delete s.homeValue;
+    delete s.mortgage;
     return s;
   }
 ];
@@ -325,16 +320,14 @@ export function importState(text){
 
 /* ---------------- selectors ---------------- */
 export const plan = () => PLANS[S.plan];
-export const planPrice = () => plan().price + (S.family && S.plan === 'max' ? 4 : 0);
 export const PLANS_BANK = () => PLANS;
 export const balNow = () => S.tx.length ? S.tx[0].bal : 0;
 export const isaBal = () => S.isa.length ? S.isa[0].value : 0;
 export const savingsTotal = () => S.pots.filter(p => p.type === 'savings').reduce((a, p) => a + p.bal, 0);
 export const interestThisMonth = () => round2(savingsTotal() * (plan().ia / 100 / 12));
-export const homeEquity = () => Math.max(0, (S.homeValue || 0) - (S.mortgage || 0));
 export const connTotal = () => S.connected.reduce((a, c) => a + c.bal, 0);
 export const loanOwed = () => S.loans.reduce((a, l) => a + l.outstanding, 0);
-export const growTotal = () => savingsTotal() + isaBal() + (S.pension || 0) + homeEquity() + connTotal() - loanOwed();
+export const growTotal = () => savingsTotal() + isaBal() + (S.pension || 0) + connTotal() - loanOwed();
 export const flexAvail = () => Math.max(0, round2(S.flex.limit - S.flex.used));
 
 export const spentThisMonth = () => S.tx
@@ -828,12 +821,9 @@ export function toggleRoundups(){ S.roundups = !S.roundups; commit(); return S.r
 export function setTheme(t){ S.theme = t; commit(); }
 export function setZoom(z){ S.zoom = z; commit(); }
 export function setMotion(on){ S.motion = on; commit(); }
-export function setHomeEstimate(v, owed){ S.homeValue = v; S.mortgage = owed; commit(); }
-export function setPension(v){ S.pension = v; commit(); }
 export function setPensionMonthly(v){ S.pensionMonthly = v; commit(); }
 export function setActiveAccount(key){ S.activeAccount = key; commit(); }
 
-export function setLayout(next){ S.layout = next; commit(); }
 export function moveLayoutSection(id, dir){
   const i = S.layout.findIndex(s => s.id === id), j = i + dir;
   if (i < 0 || j < 0 || j >= S.layout.length) return;
@@ -1070,13 +1060,13 @@ export function closeDispute(id){
   commit();
 }
 
-export function notif(title, body){
+function notif(title, body){
   S.notifs.unshift({ title, body, date: TODAY, time: NOWT, read: false });
   S.notifs = S.notifs.slice(0, 40);
   S.notifsCleared = false;
   commit();
 }
-export function seedNotifs(){
+function seedNotifs(){
   const back = n => iso(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() - n));
   S.notifs = [
     { title: 'Left to spend updated', body: 'Recalculated for the days before payday', date: TODAY, time: NOWT, read: false },
@@ -1085,7 +1075,7 @@ export function seedNotifs(){
   ];
   S.notifsCleared = false;
 }
-export const unread = () => S.notifs.filter(n => !n.read).length;
+const unread = () => S.notifs.filter(n => !n.read).length;
 export function syncBell(){
   const d = document.getElementById('bellDot');
   if (d) d.classList.toggle('on', unread() > 0);
