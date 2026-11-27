@@ -1,12 +1,11 @@
 /* src/logos.js — merchant, company and holding logo resolution.
 
    DOMAINS in data.js is the single source of truth for merchant → domain, so
-   this module reads it rather than keeping a second copy. Anything without a
-   domain, or whose logo fails to load, falls back to the initials badge the
-   app already uses, so a missing or dead logo never leaves a hole.
+   this module reads it rather than keeping a second copy. Resolution chain per
+   name: Clearbit logo → Google favicon → the initials badge. A missing, dead
+   or blocked logo therefore never leaves a hole in the list. */
 
-   Resolution chain per name: Clearbit logo → Google favicon → initials. */
-
+import { esc } from './core.js';
 import { DOMAINS } from './data.js';
 
 /* Funds and tickers. Extend when a holding is added. */
@@ -23,6 +22,7 @@ export const TICKERS = {
 const CDN = 'https://logo.clearbit.com/';
 const FAV = 'https://www.google.com/s2/favicons?sz=128&domain=';
 
+/* Tolerates the suffixes the ledger appends to merchant names. */
 const norm = s => String(s || '')
   .toLowerCase()
   .replace(/[’‘]/g, "'")
@@ -44,27 +44,24 @@ export function hasLogo(name){
 
 export function initials(name){
   const words = String(name || '').replace(/[^A-Za-z ]/g, ' ').split(/\s+/).filter(Boolean);
-  const out = ((words[0] || '?')[0] + (words[1] || '')[0] || '').toUpperCase();
-  return out || '?';
+  return (((words[0] || '?')[0] + (words[1] || '')[0]) || '?').toUpperCase();
 }
 
-/* HTML string form, for the template-built lists. */
-export function logoHTML(name, size = 40, extra = ''){
+/* Same .lg markup the app already uses, so styles.css keeps control of size,
+   shape and spacing. */
+export function logoHTML(name, big){
   const d = domainFor(name);
-  const i = initials(name);
-  const style = `--logo-size:${size}px`;
-  const cls = extra ? `logo ${extra}` : 'logo';
-  if (!d) return `<span class="${cls} logo--initials" style="${style}" aria-hidden="true">${i}</span>`;
-  return `<span class="${cls}" style="${style}">`
-    + `<span class="logo__ini" aria-hidden="true">${i}</span>`
-    + `<img class="logo__img" src="${CDN}${d}" alt="" loading="lazy" decoding="async" data-fb="${FAV}${d}">`
-    + `</span>`;
+  const ini = esc(initials(name));
+  const cls = big ? 'lg lg--lg' : 'lg';
+  if (!d) return `<span class="${cls}"><span class="lg__i">${ini}</span></span>`;
+  return `<span class="${cls}"><span class="lg__i">${ini}</span>`
+    + `<img src="${CDN}${d}" alt="" loading="lazy" decoding="async"`
+    + ` referrerpolicy="no-referrer" data-fb="${FAV}${d}"></span>`;
 }
 
-/* Element form, for the places that build nodes directly. */
-export function logoEl(name, size = 40, extra = ''){
+export function logoEl(name, big){
   const wrap = document.createElement('span');
-  wrap.innerHTML = logoHTML(name, size, extra);
+  wrap.innerHTML = logoHTML(name, big);
   return wrap.firstElementChild;
 }
 
@@ -72,45 +69,35 @@ export function logoEl(name, size = 40, extra = ''){
 export function paintLogos(root){
   if (!root || !root.querySelectorAll) return;
   root.querySelectorAll('[data-logo]').forEach(el => {
-    const name = el.dataset.logo;
-    el.replaceWith(logoEl(name, Number(el.dataset.logoSize) || 40, el.className));
+    el.replaceWith(logoEl(el.dataset.logo, el.dataset.logoBig === '1'));
   });
 }
 
-/* `error` does not bubble, so it is captured. One listener for the whole app:
-   step down the chain, then settle on the initials badge. */
+/* `error` does not bubble, so it is captured: one listener serves the whole app.
+   Steps down the chain, then settles on the initials badge. */
 document.addEventListener('error', e => {
   const img = e.target;
-  if (!(img instanceof HTMLImageElement) || !img.classList.contains('logo__img')) return;
-  const chain = (img.dataset.fb || '').split('|').filter(Boolean);
-  if (chain.length){
-    img.dataset.fb = chain.slice(1).join('|');
-    img.src = chain[0];
-  } else {
-    const box = img.parentElement;
-    img.remove();
-    if (box) box.classList.add('logo--initials');
-  }
+  if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
+  const next = img.dataset.fb;
+  if (next){ img.removeAttribute('data-fb'); img.src = next; }
+  else img.remove();
 }, true);
 
 document.addEventListener('load', e => {
   const img = e.target;
-  if (img instanceof HTMLImageElement && img.classList.contains('logo__img')) img.classList.add('is-loaded');
+  if (img instanceof HTMLImageElement && img.parentElement?.classList.contains('lg')){
+    img.classList.add('is-loaded');
+  }
 }, true);
 
 if (!document.getElementById('logo-css')){
   const style = document.createElement('style');
   style.id = 'logo-css';
   style.textContent = `
-.logo{position:relative;display:inline-flex;align-items:center;justify-content:center;
-  width:var(--logo-size,40px);height:var(--logo-size,40px);border-radius:50%;overflow:hidden;
-  background:#fff;border:1px solid rgba(0,0,0,.08);flex:0 0 auto;
-  font:600 calc(var(--logo-size,40px) * .38)/1 system-ui,sans-serif;color:#4a4a4a;
-  text-transform:uppercase;letter-spacing:0}
-.logo__img{width:100%;height:100%;object-fit:contain;padding:14%;box-sizing:border-box;
-  opacity:0;transition:opacity .18s ease}
-.logo__img.is-loaded{opacity:1}
-.logo--initials{background:#eef1f4}
-@media (prefers-reduced-motion:reduce){.logo__img{transition:none}}`;
+.lg{position:relative;overflow:hidden}
+.lg>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  background:#fff;padding:12%;box-sizing:border-box;opacity:0;transition:opacity .18s ease}
+.lg>img.is-loaded{opacity:1}
+@media (prefers-reduced-motion:reduce){.lg>img{transition:none}}`;
   document.head.append(style);
 }
