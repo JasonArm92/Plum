@@ -686,4 +686,4 @@ export function layoutSheet() {
 
   draw();
   sheet({title: 'Edit home', body});
-}
+    }
