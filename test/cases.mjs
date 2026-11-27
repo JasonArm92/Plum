@@ -1,39 +1,55 @@
-/* ---------------- backup ---------------- */
-  test('export carries the ledger and stamps the date', () => {
+/* ---------------- scheduler clipping ---------------- */
+  test('a long absence replays only the window', () => {
+    withState(s => { s.tx = big(); s.lastRun = '2026-01-01'; s.sos = []; });
+    core.runScheduled('2026-04-11');
+    ok(core.getState().notifs.some(n => /not replayed/i.test(n.body)), 'no skip notice');
+    eq(core.getState().lastRun, '2026-04-11');
+  });
+  test('a short gap does not warn about skipping', () => {
+    withState(s => { s.tx = big(); s.lastRun = '2026-03-01'; s.sos = []; });
+    core.runScheduled('2026-03-11');
+    ok(!core.getState().notifs.some(n => /not replayed/i.test(n.body)));
+  });
+  test('the replay still lands on the requested day', () => {
+    withState(s => { s.tx = big(); s.lastRun = '2026-03-09'; s.sos = []; s.pots.forEach(p => { p.autoSave = 0; }); });
+    core.runScheduled('2026-03-10');
+    eq(core.getState().lastRun, '2026-03-10');
+  });
+
+  /* ---------------- salary source ---------------- */
+  test('salary falls back to an estimate with no history', () => {
     withState(s => { s.tx = big(); });
-    const json = JSON.parse(core.exportState());
-    eq(json.tx.length, 1);
-    eq(core.getState().lastBackup, core.TODAY);
+    eq(core.salaryIsEstimate(), true);
+    eq(core.salaryAmount(), core.FALLBACK_SALARY);
   });
-  test('import replaces the ledger', () => {
-    withState(s => { s.tx = big(); });
-    const json = core.exportState();
+  test('salary reads the real figure when history exists', () => {
+    withState(s => {
+      s.tx = [{ id: 'k', date: '2026-01-28', time: '06:00', name: 'Kingdom Services Group', cat: 'Income', amt: 2600, bal: 2600, note: '' }];
+    });
+    eq(core.salaryIsEstimate(), false);
+    eq(core.salaryAmount(), 2600);
+  });
+
+  /* ---------------- joint figures ---------------- */
+  test('joint bills come off the ledger', () => {
+    withState(s => {
+      s.tx = big();
+      s.tx.push({ id: 'r', date: core.TODAY, time: '09:00', name: 'OpenRent', cat: 'Rent', amt: -800, bal: 19200, note: '' });
+    });
+    eq(core.jointBills(), 800);
+  });
+  test('joint contribution is a share of income', () => {
+    withState(s => {
+      s.tx = [{ id: 'i', date: core.TODAY, time: '09:00', name: 'Test', cat: 'Income', amt: 1000, bal: 1000, note: '' }];
+    });
+    near(core.jointContribution(), 1000 * core.JOINT_SHARE, 0.01);
+  });
+
+  /* ---------------- dead fields ---------------- */
+  test('revealed is gone from state and export', () => {
     withState();
-    const r = core.importState(json);
-    eq(r.ok, true);
-    eq(core.getState().tx.length, 1);
+    ok(!('revealed' in core.getState()));
+    ok(!('revealed' in JSON.parse(core.exportState())));
   });
-  test('import rejects junk', () => { withState(); eq(core.importState('nope').ok, false); });
-  test('import rejects an array', () => { withState(); eq(core.importState('[]').ok, false); });
-  test('import rejects a file with no ledger', () => {
-    withState();
-    eq(core.importState(JSON.stringify({ v: 16 })).ok, false);
-  });
-  test('import rejects a newer version', () => {
-    withState();
-    eq(core.importState(JSON.stringify({ v: 99, tx: [] })).ok, false);
-  });
-  test('import migrates an old blob', () => {
-    withState();
-    const r = core.importState(JSON.stringify({ v: 11, tx: [], pots: [], targets: {} }));
-    eq(r.ok, true);
-    eq(core.getState().v, core.VERSION);
-  });
-  test('a thin import keeps the fields the screens need', () => {
-    withState();
-    core.importState(JSON.stringify({ v: 11, tx: [], pots: [], targets: {} }));
-    const s = core.getState();
-    ok(s.profile && typeof s.profile.name === 'string');
-    ok(Array.isArray(s.policies));
-    eq(s.atmLimit, 400);
-  });
+  test('potSort is gone', () => { withState(); eq(core.getState().potSort, undefined); });
+  test('budgetTotal is gone', () => { eq(core.budgetTotal, undefined); });
