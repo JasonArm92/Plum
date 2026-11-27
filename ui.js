@@ -3,10 +3,15 @@
 import { esc, fmt, pct } from './core.js';
 import { DOMAINS } from './data.js';
 
-/* --- logo resolution -------------------------------------------------------
-   Self-contained, no second module and no stylesheet dependency: the tile is
-   styled with inline attributes so no rule can push the image out of view.
-   Chain: Google favicon → DuckDuckGo icon → initials. */
+/* --- logo marks ------------------------------------------------------------
+   A branded inline-SVG tile is always drawn first, then a real logo is layered
+   over it inline-styled. If the image resolves you see the logo; if it does not
+   you keep the brand-coloured tile. Chain: icon.horse → favicane → Google
+   favicon. */
+
+const ICON = 'https://icon.horse/icon/';
+const FAV  = 'https://favicone.com/';
+const GOOG = 'https://www.google.com/s2/favicons?sz=128&domain=';
 
 const FUNDS = {
   iShares: 'ishares.com',
@@ -18,7 +23,7 @@ const FUNDS = {
   'Scottish Widows': 'scottishwidows.co.uk'
 };
 
-export const TICKERS = {
+const TICKERS = {
   VUSA: 'vanguardinvestor.co.uk',
   VWRL: 'vanguardinvestor.co.uk',
   VUKE: 'vanguardinvestor.co.uk',
@@ -28,9 +33,6 @@ export const TICKERS = {
   VWRP: 'vanguardinvestor.co.uk'
 };
 
-const GOOG = 'https://www.google.com/s2/favicons?sz=128&domain=';
-const DDG = 'https://icons.duckduckgo.com/ip3/';
-
 const norm = s => String(s || '')
   .toLowerCase()
   .replace(/[’‘]/g, "'")
@@ -38,35 +40,123 @@ const norm = s => String(s || '')
   .replace(/[^a-z0-9'& ]/g, '')
   .trim();
 
-const LOOKUP = new Map();
-const addDomain = (k, v) => { if (v) LOOKUP.set(norm(k), v); };
+const DOMAIN_MAP = new Map();
+const addDomain = (k, v) => { if (v) DOMAIN_MAP.set(norm(k), v); };
 Object.entries(DOMAINS).forEach(([k, v]) => addDomain(k, v));
 Object.entries(FUNDS).forEach(([k, v]) => addDomain(k, v));
 Object.entries(TICKERS).forEach(([k, v]) => addDomain(k, v));
 
 const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const MATCHERS = [...LOOKUP.keys()]
+const DOMAIN_MATCHERS = [...DOMAIN_MAP.keys()]
   .sort((a, b) => b.length - a.length)
-  .map(k => [new RegExp(`(^|[^a-z0-9])${escapeRe(k)}([^a-z0-9]|$)`), LOOKUP.get(k)]);
+  .map(k => [new RegExp(`(^|[^a-z0-9])${escapeRe(k)}([^a-z0-9]|$)`), DOMAIN_MAP.get(k)]);
 
-export function domainFor(name){
+function domainFor(name){
   const n = norm(name);
   if (!n) return '';
-  const exact = LOOKUP.get(n);
+  const exact = DOMAIN_MAP.get(n);
   if (exact) return exact;
-  for (const [re, domain] of MATCHERS) if (re.test(n)) return domain;
+  for (const [re, domain] of DOMAIN_MATCHERS) if (re.test(n)) return domain;
   return '';
 }
 
-export function hasLogo(name){ return !!domainFor(name); }
+/* --- brand colours, for the base tile -------------------------------------- */
 
-/* charAt, not [0], so a missing second word cannot yield "undefined" */
-export function initials(name){
-  const words = String(name || '').replace(/[^A-Za-z ]/g, ' ').split(/\s+/).filter(Boolean);
-  const a = (words[0] || '?').charAt(0) || '?';
-  const b = words[1] ? words[1].charAt(0) : '';
-  return (a + b).toUpperCase();
-}
+const BRANDS = new Map();
+const addBrand = (k, bg, fg) => BRANDS.set(norm(k), { bg, fg });
+
+addBrand('Tesco', '#00539F', '#fff');
+addBrand('Aldi', '#00005A', '#fff');
+addBrand('Asda', '#6DBE45', '#053B2C');
+addBrand('Morrisons', '#00703C', '#fff');
+addBrand('Lidl', '#0050AA', '#FFDD00');
+addBrand('Iceland', '#CC0000', '#fff');
+addBrand('Farmfoods', '#003C71', '#fff');
+addBrand("Sainsbury's", '#F06C00', '#fff');
+addBrand('Costa', '#6C1D45', '#fff');
+addBrand('Greggs', '#004B8D', '#fff');
+addBrand('The Masham', '#5A3E2B', '#fff');
+addBrand('Hope & Union', '#1F3A5F', '#fff');
+addBrand('Cena', '#7A2E2E', '#fff');
+addBrand('Borge', '#3B3B3B', '#fff');
+addBrand('The Twisted Peel', '#4A2C6B', '#fff');
+addBrand("McDonald's", '#FFC72C', '#DA291C');
+addBrand('KFC', '#E4002B', '#fff');
+addBrand("Domino's", '#006491', '#fff');
+addBrand("Nando's", '#1A1A1A', '#E4002B');
+addBrand('Stagecoach', '#00539F', '#fff');
+addBrand('Arriva', '#005EB8', '#fff');
+addBrand('BP', '#009B3A', '#fff');
+addBrand('Shell', '#FBCE07', '#DD1D21');
+addBrand('Amazon', '#FF9900', '#131A22');
+addBrand('Argos', '#DA291C', '#fff');
+addBrand('Matalan', '#E30613', '#fff');
+addBrand('Sports Direct', '#00205B', '#fff');
+addBrand('Smyths', '#003DA5', '#fff');
+addBrand('Next', '#111111', '#fff');
+addBrand('B&M', '#00447C', '#fff');
+addBrand('Home Bargains', '#DA291C', '#fff');
+addBrand('Screwfix', '#003A70', '#fff');
+addBrand('Boots', '#00539B', '#fff');
+addBrand('Specsavers', '#007A33', '#fff');
+addBrand('PureGym', '#1A1A1A', '#fff');
+addBrand('Everyone Active', '#005EB8', '#fff');
+addBrand('Odeon', '#00205B', '#fff');
+addBrand('Cineworld', '#00205B', '#fff');
+addBrand('Steam', '#1B2838', '#66C0F4');
+addBrand('Netflix', '#0B0B0B', '#E50914');
+addBrand('Spotify', '#1DB954', '#0B0B0B');
+addBrand('Monzo', '#FF4F40', '#fff');
+addBrand('Monzo Flex', '#FF4F40', '#fff');
+addBrand('Monzo Aura', '#FF4F40', '#fff');
+addBrand('Monzo Loans', '#FF4F40', '#fff');
+addBrand('Monzo Billsback', '#FF4F40', '#fff');
+addBrand('Saving Challenge', '#FF4F40', '#fff');
+addBrand('Twinkl', '#1F9BD1', '#fff');
+addBrand('The Works', '#C8102E', '#fff');
+addBrand('Clarks', '#4A3B2A', '#fff');
+addBrand('Preston Park Museum', '#4F6B3A', '#fff');
+addBrand("St Aidan's School", '#1F3A5F', '#fff');
+addBrand('British Gas', '#003C71', '#fff');
+addBrand('Northumbrian Water', '#005EB8', '#fff');
+addBrand('Virgin Media', '#E10A0A', '#fff');
+addBrand('EE', '#00A5A8', '#fff');
+addBrand('Aviva', '#FFD100', '#00205B');
+addBrand('Stockton Council', '#003C71', '#fff');
+addBrand('Kingdom Services Group', '#00205B', '#fff');
+addBrand('Vanguard', '#96151D', '#fff');
+addBrand('iShares', '#111111', '#fff');
+addBrand('Invesco', '#00205B', '#fff');
+addBrand('Legal & General', '#00205B', '#fff');
+addBrand('Fidelity', '#0B5C33', '#fff');
+addBrand('BlackRock', '#111111', '#fff');
+addBrand('abrdn', '#003D7C', '#fff');
+addBrand('Scottish Widows', '#0B3B6F', '#fff');
+addBrand('Pointens', '#00539F', '#fff');
+addBrand('OpenRent', '#005EB8', '#fff');
+addBrand('Blue Skies Lets', '#38A3DC', '#fff');
+addBrand('Barclays', '#00AEEF', '#002D62');
+addBrand('HSBC', '#DB0011', '#fff');
+addBrand('Lloyds', '#006A4D', '#fff');
+addBrand('NatWest', '#42145F', '#fff');
+addBrand('Santander', '#EC0000', '#fff');
+addBrand('Nationwide', '#00205B', '#fff');
+addBrand('Starling', '#00555A', '#fff');
+addBrand('Chase', '#117ACA', '#fff');
+addBrand('Child Benefit', '#1D70B8', '#fff');
+addBrand('Universal Credit', '#1D70B8', '#fff');
+addBrand('Savings interest', '#005EA5', '#fff');
+addBrand('Cash', '#6B7C8A', '#fff');
+addBrand('Rainy Day', '#2F6F8F', '#fff');
+addBrand('Emergency', '#8F3B2F', '#fff');
+addBrand('Holiday', '#2F8F6A', '#fff');
+addBrand('Rent buffer', '#6B5B2F', '#fff');
+addBrand('Home education', '#4B5B8F', '#fff');
+addBrand("Kids' savings", '#8F2F6A', '#fff');
+
+const BRAND_MATCHERS = [...BRANDS.keys()]
+  .sort((a, b) => b.length - a.length)
+  .map(k => [new RegExp(`(^|[^a-z0-9])${escapeRe(k)}([^a-z0-9]|$)`), BRANDS.get(k)]);
 
 const hueOf = s => {
   let h = 0;
@@ -75,41 +165,43 @@ const hueOf = s => {
   return h;
 };
 
-function tileStyle(name, size){
-  const h = hueOf(name);
-  return `position:relative;display:inline-flex;align-items:center;justify-content:center;`
-    + `width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex:0 0 auto;`
-    + `font:600 ${Math.round(size * 0.32)}px/1 system-ui,sans-serif;text-transform:uppercase;`
-    + `background:hsl(${h} 38% 30%);color:#fff;box-sizing:border-box`;
+function brandOf(name){
+  const n = norm(name);
+  if (!n) return { bg: '#6B7C8A', fg: '#fff' };
+  const exact = BRANDS.get(n);
+  if (exact) return exact;
+  for (const [re, brand] of BRAND_MATCHERS) if (re.test(n)) return brand;
+  return { bg: `hsl(${hueOf(n)} 38% 32%)`, fg: '#fff' };
+}
+
+function initials(name){
+  const words = String(name || '').replace(/[^A-Za-z ]/g, ' ').split(/\s+/).filter(Boolean);
+  const a = (words[0] || '?').charAt(0) || '?';
+  const b = words[1] ? words[1].charAt(0) : '';
+  return (a + b).toUpperCase();
 }
 
 const IMG_STYLE = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;'
-  + 'background:#fff;padding:12%;box-sizing:border-box';
+  + 'background:#fff;padding:14%;box-sizing:border-box';
 
-export function logoHTML(name, big){
-  const d = domainFor(name);
-  const ini = esc(initials(name));
+function logoHTML(name, big){
   const size = big ? 48 : 40;
-  const h = hueOf(name);
-  const cls = big ? 'lg lg--lg' : 'lg';
-  if (!d) return `<span class="${cls}" style="${tileStyle(name, size)}">${ini}</span>`;
-  return `<span class="${cls}" style="${tileStyle(name, size)};background:#fff">`
-    + `<span class="lg__i" style="position:absolute;color:hsl(${h} 55% 32%)">${ini}</span>`
-    + `<img style="${IMG_STYLE}" src="${GOOG}${d}" alt="" decoding="async"`
-    + ` referrerpolicy="no-referrer" data-fb="${DDG}${d}.ico"></span>`;
-}
+  const { bg, fg } = brandOf(name);
+  const mono = esc(initials(name));
+  const fs = Math.round(size * (mono.length > 1 ? 0.32 : 0.42));
+  const wrap = `position:relative;display:inline-flex;align-items:center;justify-content:center;`
+    + `width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex:0 0 auto;background:${bg}`;
+  const tile = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true"`
+    + ` focusable="false" style="display:block"><rect width="${size}" height="${size}" fill="${bg}"/>`
+    + `<text x="50%" y="50%" dy=".36em" text-anchor="middle" fill="${fg}"`
+    + ` font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-weight="700"`
+    + ` font-size="${fs}" letter-spacing=".4">${mono}</text></svg>`;
 
-export function logoEl(name, big){
-  const wrap = document.createElement('span');
-  wrap.innerHTML = logoHTML(name, big);
-  return wrap.firstElementChild;
-}
-
-export function paintLogos(root){
-  if (!root || !root.querySelectorAll) return;
-  root.querySelectorAll('[data-logo]').forEach(el => {
-    el.replaceWith(logoEl(el.dataset.logo, el.dataset.logoBig === '1'));
-  });
+  const d = domainFor(name);
+  if (!d) return `<span class="lg" style="${wrap}">${tile}</span>`;
+  return `<span class="lg" style="${wrap}">${tile}`
+    + `<img src="${ICON}${d}" alt="" decoding="async" referrerpolicy="no-referrer"`
+    + ` style="${IMG_STYLE}" data-fb="${FAV}${d}?s=128|${GOOG}${d}"></span>`;
 }
 
 function stepDown(img){
@@ -127,14 +219,6 @@ document.addEventListener('error', e => {
   const img = e.target;
   if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
   stepDown(img);
-}, true);
-
-/* a 200 with an empty body still counts as a failure */
-document.addEventListener('load', e => {
-  const img = e.target;
-  if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
-  if (img.naturalWidth > 0) img.removeAttribute('data-fb');
-  else stepDown(img);
 }, true);
 
 /* -------------------------------------------------------------------------- */
@@ -372,7 +456,7 @@ export function potRow(p, rate){
   const progress = pct(p.bal, p.goal);
   const rateNote = p.type === 'savings' && rate ? `${rate}% AER · ` : '';
   return `<button class="pot ${p.locked ? 'pot--locked' : ''}" data-pot="${p.id}">
-    <span class="lg" style="${tileStyle(p.name, 40)}">${esc(p.name.charAt(0))}</span>
+    ${logo(p.name)}
     <span class="mid"><span class="nm">${esc(p.name)}</span>
       <span class="sub">${rateNote}${Math.round(progress)}% of ${fmt(p.goal)}</span>
       <span class="bar"><i style="width:${progress}%"></i></span></span>
