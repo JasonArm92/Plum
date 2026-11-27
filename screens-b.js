@@ -1,7 +1,7 @@
 import {
-  state, fmt, round2, addTx, save, uid, investBuy, investSell,
+  state, fmt, fmtShort, round2, addTx, save, uid, investBuy, investSell,
   investDeposit, portfolioValue, platformFeeMonthly, planInfo, PLANS,
-  pensionProjection, reset, dateStr, timeStr, scan, restoreFrom, recoveredFrom
+  pensionProjection, reset, dateStr, timeStr, acc, unitsOf
 } from './core.js?v=34';
 import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js?v=34';
 import {
@@ -13,20 +13,20 @@ const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.len
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
 
 export function cardSheet() {
+  const card = acc().card;
   const body = el('div');
-  body.appendChild(cardArt(state.cards[0]));
-  const freeze = el('button', 'btn btn--block btn--ghost',
-    state.cards[0].frozen ? 'Unfreeze card' : 'Freeze card');
+  body.appendChild(cardArt(card));
+  const freeze = el('button', 'btn btn--block btn--ghost', card.frozen ? 'Unfreeze card' : 'Freeze card');
   body.appendChild(list([
-    row({title: 'View card number', onClick: () => toast('•••• •••• •••• ' + state.cards[0].last4)}),
+    row({title: 'View card number', onClick: () => toast('•••• •••• •••• ' + card.last4)}),
     row({title: 'Card PIN', onClick: () => toast('PIN 2580')}),
     row({title: 'Add to Apple Pay', onClick: () => toast('Added to Apple Pay')})
   ]));
   freeze.onclick = () => {
-    state.cards[0].frozen = !state.cards[0].frozen;
+    card.frozen = !card.frozen;
     save();
-    freeze.textContent = state.cards[0].frozen ? 'Unfreeze card' : 'Freeze card';
-    toast(state.cards[0].frozen ? 'Card frozen' : 'Card unfrozen');
+    freeze.textContent = card.frozen ? 'Unfreeze card' : 'Freeze card';
+    toast(card.frozen ? 'Card frozen' : 'Card unfrozen');
   };
   sheet({title: 'Your card', body, foot: freeze});
 }
@@ -53,7 +53,7 @@ export function addTxSheet() {
   body.appendChild(field({label: 'Amount', input: amount, hint: 'Use a minus sign for spending'}));
   body.appendChild(field({label: 'Category', input: cats}));
   const go = el('button', 'btn btn--primary btn--block', 'Add transaction');
-  const s = sheet({title: 'Add transaction', body, foot: go});
+  const s = sheet({title: 'Add transaction · ' + acc().name, body, foot: go});
   go.onclick = () => {
     const a = round2(Number(amount.value) || 0);
     if (!a) return toast('Enter an amount');
@@ -75,7 +75,7 @@ export function txScreen(id) {
   c.appendChild(tl);
   c.appendChild(el('div', 'ringwrap__v', (t.amount > 0 ? '+' : '') + fmt(t.amount)));
   c.appendChild(el('div', 'row__t', t.name));
-  c.appendChild(el('div', 'hint', dateStr(t.ts) + ' · ' + timeStr(t.ts)));
+  c.appendChild(el('div', 'hint', dateStr(t.ts) + ' · ' + timeStr(t.ts) + ' · ' + (t.acct === 'joint' ? 'Joint' : 'Personal')));
   body.appendChild(c);
 
   body.appendChild(list([
@@ -231,13 +231,15 @@ export function editPotSheet(id) {
   };
 }
 
+/* ---------- investments ---------- */
+
 export function investScreen() {
   const value = portfolioValue();
   const body = el('div');
   const c = el('div', 'card');
   c.appendChild(el('div', 'ringwrap__l', 'Portfolio value'));
   c.appendChild(el('div', 'ringwrap__v', fmt(value)));
-  c.appendChild(el('div', 'hint', 'Platform fee ' + fmt(platformFeeMonthly()) + '/month on ' + planInfo().name));
+  c.appendChild(el('div', 'hint', state.invest.holdings.length + ' holdings · platform fee ' + fmt(platformFeeMonthly()) + '/month'));
   body.appendChild(c);
 
   const cash = el('div', 'card card--flat');
@@ -251,24 +253,28 @@ export function investScreen() {
 
   body.appendChild(section('Holdings'));
   const l = el('div', 'list list--boxed');
-  for (const f of FUNDS) {
-    if (f.id === 'cash') continue;
-    const units = state.invest.units[f.id] || 0;
-    if (units <= 0) continue;
+  const sorted = state.invest.holdings.slice().sort((a, b) => b.v - a.v);
+  for (const h of sorted) {
+    const f = FUNDS.find(x => x.id === h.f);
+    if (!f) continue;
+    const weight = value ? Math.round((h.v / value) * 1000) / 10 : 0;
     l.appendChild(row({
-      title: f.name, sub: units.toFixed(3) + ' units · ' + f.ticker,
-      value: fmt(units * f.price),
+      title: f.name,
+      sub: unitsOf(h).toFixed(3) + ' units · ' + f.ticker + ' · ' + weight + '%',
+      value: fmt(h.v),
       onClick: () => { location.hash = '#/fund/' + f.id; }
     }));
   }
-  if (!l.children.length) l.appendChild(empty('No holdings yet', 'Buy your first fund'));
   body.appendChild(l);
 
-  body.appendChild(section('Available funds'));
+  body.appendChild(section('All funds'));
   const l2 = el('div', 'list list--boxed');
   for (const f of FUNDS) {
-    if (f.id === 'cash') continue;
-    l2.appendChild(row({title: f.name, sub: f.region + ' · risk ' + f.risk + '/7', value: fmt(f.price), onClick: () => { location.hash = '#/fund/' + f.id; }}));
+    l2.appendChild(row({
+      title: f.name, sub: f.region + ' · risk ' + f.risk + '/7',
+      value: fmt(f.price),
+      onClick: () => { location.hash = '#/fund/' + f.id; }
+    }));
   }
   body.appendChild(l2);
 
@@ -292,7 +298,8 @@ export function depositSheet() {
 export function fundScreen(id) {
   const f = FUNDS.find(x => x.id === id);
   if (!f) return screen('fund', {title: 'Fund', back: '#/invest', body: empty('Not found')});
-  const units = state.invest.units[f.id] || 0;
+  const h = state.invest.holdings.find(x => x.f === f.id);
+  const held = h ? h.v : 0;
   const body = el('div');
   const c = el('div', 'card');
   c.appendChild(el('div', 'row__t', f.name));
@@ -300,11 +307,11 @@ export function fundScreen(id) {
   c.appendChild(el('div', 'ringwrap__v', fmt(f.price)));
   body.appendChild(c);
 
-  const held = el('div', 'card card--flat');
-  held.appendChild(el('div', 'row__t', 'Your holding'));
-  held.appendChild(el('div', 'row__v', units.toFixed(4) + ' units'));
-  held.appendChild(el('div', 'hint', fmt(units * f.price)));
-  body.appendChild(held);
+  const heldCard = el('div', 'card card--flat');
+  heldCard.appendChild(el('div', 'row__t', 'Your holding'));
+  heldCard.appendChild(el('div', 'row__v', held ? (held / f.price).toFixed(4) + ' units' : 'None'));
+  heldCard.appendChild(el('div', 'hint', fmt(held)));
+  body.appendChild(heldCard);
 
   const amt = input({type: 'number', step: '0.01', placeholder: '0.00'});
   body.appendChild(field({label: 'Amount', input: amt}));
@@ -329,6 +336,8 @@ export function fundScreen(id) {
 
   return screen('fund-' + id, {title: f.ticker, back: '#/invest', body});
 }
+
+/* ---------- pension & ISA ---------- */
 
 export function pensionScreen() {
   const p = pensionProjection();
@@ -435,65 +444,11 @@ export function profileScreen() {
   return screen('profile', {title: 'Personal details', back: '#/account', body});
 }
 
-export function dataScreen() {
-  const body = el('div');
-  if (recoveredFrom) {
-    const p = el('p', 'hint');
-    p.textContent = 'Restored from ' + recoveredFrom + '.';
-    body.appendChild(p);
-  }
-  const note = el('p', 'hint');
-  note.textContent = 'Every stored copy is listed below, richest first. Use any of them to replace the current data.';
-  body.appendChild(note);
-
-  const rows = scan();
-  if (!rows.length) {
-    body.appendChild(empty('No stored data found'));
-  } else {
-    const l = el('div', 'list list--boxed');
-    for (const r of rows) {
-      const isCurrent = r.key === (recoveredFrom || 'monzo_v22');
-      const m = el('div', 'row__main');
-      m.appendChild(el('div', 'row__t', r.key));
-      m.appendChild(el('div', 'row__s',
-        fmt(r.balance) + ' balance · ' + r.pots + ' pots · ' + fmt(r.portfolio) + ' invested · ' + r.tx + ' tx'));
-      const b = el('button', 'row');
-      b.type = 'button';
-      b.appendChild(m);
-      b.appendChild(el('div', 'row__v', isCurrent ? 'now' : 'use'));
-      b.onclick = () => {
-        if (!restoreFrom(r.key)) return toast('Could not read that copy');
-        toast('Restored ' + r.key);
-        rerender();
-      };
-      l.appendChild(b);
-    }
-    body.appendChild(l);
-  }
-
-  const dump = el('button', 'btn btn--ghost btn--block', 'Copy current data');
-  dump.onclick = async () => {
-    const txt = JSON.stringify(state);
-    try {
-      await navigator.clipboard.writeText(txt);
-      toast('Copied to clipboard');
-    } catch {
-      const box = el('pre', 'errbox', txt);
-      body.appendChild(box);
-      toast('Copy from the box below');
-    }
-  };
-  body.appendChild(dump);
-
-  return screen('data', {title: 'Stored data', back: '#/account', body});
-}
-
 export function securityScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Change PIN', onClick: () => toast('PIN change')}),
-    row({title: 'Biometrics', value: state.settings.biometrics ? 'On' : 'Off', chev: false}),
-    row({title: 'Stored data', onClick: () => { location.hash = '#/data'; }})
+    row({title: 'Biometrics', value: state.settings.biometrics ? 'On' : 'Off', chev: false})
   ]));
   const b = el('button', 'btn btn--danger btn--block', 'Log out');
   b.onclick = () => {
@@ -504,7 +459,7 @@ export function securityScreen() {
   body.appendChild(b);
   const r = el('button', 'btn btn--ghost btn--block', 'Reset app data');
   r.onclick = () => confirmSheet({
-    title: 'Reset everything', text: 'This wipes the current copy. Older copies stay in Stored data.', danger: true, confirm: 'Reset',
+    title: 'Reset everything', text: 'This wipes all local data.', danger: true, confirm: 'Reset',
     onConfirm: () => { reset(); location.hash = '#/login'; rerender(); }
   });
   body.appendChild(r);
@@ -606,7 +561,7 @@ const LAYOUT_LABELS = {
   card: 'Card', balance: 'Balance', ring: 'Left to spend',
   carousel: 'Save & invest', activity: 'Activity'
 };
-const CAROUSEL_LABELS = {pots: 'Pots', pension: 'Pension', isa: 'ISA'};
+const CAROUSEL_LABELS = {pots: 'Pots', invest: 'Investments', pension: 'Pension', isa: 'ISA'};
 
 export function layoutSheet() {
   const body = el('div');
@@ -647,7 +602,7 @@ export function layoutSheet() {
     }
 
     body.appendChild(el('div', 'sect', 'Carousel'));
-    for (const key of ['pots', 'pension', 'isa']) {
+    for (const key of ['pots', 'invest', 'pension', 'isa']) {
       const r = el('div', 'row');
       r.appendChild(el('div', 'row__main', CAROUSEL_LABELS[key]));
       r.appendChild(switchEl(L.carousel.includes(key), v => {
