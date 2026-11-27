@@ -5,6 +5,7 @@ import {
   balNow, isaBal, growTotal, savingsTotal, connTotal, loanOwed,
   spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend, interestThisMonth,
   daysToPayday, balanceSeries, tyUsed, TARGET_ISA, addTx,
+  platformFeeRate, platformFeeCap, platformFeeAnnual, platformFeeMonthly,
   moveToPot, createPot, updatePot, deletePot, togglePotLock, setRoundupPot, clearRoundupPot,
   setPensionMonthly, setTarget,
   moveLayoutSection, toggleLayoutSection, addStandingOrder, addSharedTab,
@@ -46,7 +47,7 @@ const sections = {
     const s = getState();
     if (!s.pots.length) return '';
     return sectionHead('Pots', 'See all', 'data-go="pots"') +
-      `<div class="card" style="padding:6px 18px">${s.pots.slice(0, 2).map(p => potRow(p, plan().ia)).join('')}</div>`;
+      `<div class="card p6-18">${s.pots.slice(0, 2).map(p => potRow(p, plan().ia)).join('')}</div>`;
   },
   invest(){
     return sectionHead('Investments', 'Open', 'data-go="invest"') +
@@ -56,9 +57,9 @@ const sections = {
   latest(){
     const s = getState();
     return sectionHead('Latest', 'Add', 'data-add') +
-      `<div class="card" style="padding:4px 14px"><ul class="txlist" id="feed">
+      `<div class="card p4-14"><ul class="txlist" id="feed">
         ${s.tx.slice(0, 12).map(txRow).join('')}</ul>
-        <button class="btn ghost sm" data-more style="margin:8px 0 12px;width:100%">Load more</button></div>`;
+        <button class="btn ghost sm w100 my12" data-more>Load more</button></div>`;
   }
 };
 
@@ -104,13 +105,13 @@ export function mountHome(root){
   const render = () => {
     const s = getState();
     root.innerHTML = s.layout.filter(x => x.on).map(sec => sections[sec.id] ? sections[sec.id]() : '').join('') +
-      `<div class="row2" style="margin:12px 0">
+      `<div class="row2 my12">
         <button class="btn" data-go="payees">Send</button>
         <button class="btn ghost" data-go="pots">Move to pot</button></div>
-      <div class="row2" style="margin:12px 0">
+      <div class="row2 my12">
         <button class="btn ghost" data-go="flex">Pay with Flex</button>
         <button class="btn ghost" data-go="search">Search</button></div>
-      <button class="btn ghost sm" data-layout style="margin:8px 0 20px;width:100%">Edit layout</button>`;
+      <button class="btn ghost sm w100 mb20" data-layout>Edit layout</button>`;
     const feed = root.querySelector('#feed');
     if (feed){
       feed.innerHTML = s.tx.slice(0, limit).map(txRow).join('');
@@ -125,7 +126,7 @@ export function mountHome(root){
         <button class="iconbtn" data-up="${sec.id}" aria-label="Move up">↑</button>
         <button class="iconbtn" data-down="${sec.id}" aria-label="Move down">↓</button>
         <button class="sw ${sec.on ? 'on' : ''}" data-eye="${sec.id}" aria-label="Show section"></button></div>`).join('') +
-      `<button class="btn" style="margin-top:16px" data-close>Done</button>`);
+      `<button class="btn mt12" data-close>Done</button>`);
     document.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { moveLayoutSection(b.dataset.up, -1); layoutSheet(); render(); });
     document.querySelectorAll('[data-down]').forEach(b => b.onclick = () => { moveLayoutSection(b.dataset.down, 1); layoutSheet(); render(); });
     document.querySelectorAll('[data-eye]').forEach(b => b.onclick = () => { toggleLayoutSection(b.dataset.eye); layoutSheet(); render(); });
@@ -151,12 +152,12 @@ export function mountSave(root){
       if (!items.length) return '';
       return `<div class="h-sec"><h2 class="sm">${label}</h2></div>
         <p class="note">${blurb}</p>
-        <div class="card" style="padding:6px 14px">${items.map(p => potRow(p, plan().ia)).join('')}</div>`;
+        <div class="card p6-14">${items.map(p => potRow(p, plan().ia)).join('')}</div>`;
     }).join('');
     root.innerHTML = `<div class="h-sec"><h2>Save</h2><button data-new>Create</button></div>
       <div class="card"><div class="sub">Interest this month</div>
         <div class="balance rev">${fmt(interestThisMonth())}</div>
-        <div class="sub" style="margin:6px 0 0">${plan().ia}% AER variable on ${s.pots.filter(p => p.type === 'savings').length} savings pots</div></div>
+        <div class="sub mt8">${plan().ia}% AER variable on ${s.pots.filter(p => p.type === 'savings').length} savings pots</div></div>
       ${body || empty('No pots yet')}
       <p class="note">Savings pots earn your plan rate. Bills pots hold direct debits. Regular pots are for goals.</p>`;
   };
@@ -171,16 +172,16 @@ export function mountGrow(root){
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Grow</h2></div>
       <div class="card"><div class="sub">Everything you're building</div>
-        <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(growTotal())}</div>
-        <div class="sub" style="margin:0">Net of ${fmt(loanOwed())} owed</div></div>
+        <div class="balance rev fs30">${fmt(growTotal())}</div>
+        <div class="sub m0">Net of ${fmt(loanOwed())} owed</div></div>
       <button class="accard" data-go="pots"><div class="accrow"><div><div class="accname">Savings</div>
         <div class="accmeta">${s.pots.filter(p => p.type === 'savings').length} pots · ${plan().ia}% AER</div></div>
         <span class="badge coral">${fmt(savingsTotal())}</span></div></button>
       ${accCard({ label: 'Investments', meta: 'Stocks &amp; shares ISA', balance: fmt(isaBal()), tag: badge('ISA', 'coral'), go: 'invest' })}
-      <div class="card"><div style="display:flex;gap:10px;align-items:center">
-          <h2 style="margin:0">Pension</h2>${logo('Vanguard')}</div>
+      <div class="card"><div class="fx fx-c gap10">
+          <h2 class="m0">Pension</h2>${logo('Vanguard')}</div>
         <div class="sub">SIPP · ${fmt(s.pensionMonthly)}/month</div>
-        <div class="balance rev" style="font-size:24px;margin:4px 0">${fmt(s.pension)}</div>
+        <div class="balance rev fs24">${fmt(s.pension)}</div>
         <div class="field"><label>Monthly contribution</label><input id="pm" type="number" min="0" value="${s.pensionMonthly}"></div>
         <button class="btn" data-pen>Update contribution</button></div>
       <div class="card"><h2>Connected</h2><div class="sub">${s.connected.length} accounts · ${fmt(connTotal())}</div>
@@ -199,7 +200,7 @@ export function mountPay(root){
   const render = () => {
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Pay</h2></div>
-      <div class="card" style="padding:6px 8px">
+      <div class="card p6-8">
         <button class="pot" data-go="payees"><span class="lg"><span class="lg__i">SND</span></span><span class="mid">
           <span class="nm">Send money</span><span class="sub">To a saved payee</span></span><span class="amt">›</span></button>
         <button class="pot" data-go="request"><span class="lg"><span class="lg__i">RQ</span></span><span class="mid">
@@ -250,9 +251,8 @@ export function mountPay(root){
         : empty('Create a pot first')}
       ${kv('To pots', '<span class="rev" id="stTotal">—</span>')}
       ${kv('Left in account', '<span class="rev" id="stLeft">—</span>')}
-      <button class="btn" id="stSave" style="margin-top:14px">Save sorter</button>`);
+      <button class="btn mt14" id="stSave">Save sorter</button>`);
     totals();
-    /* the sheet panel lives outside the view node, so this is a document query */
     document.querySelectorAll('[data-split]').forEach(i => i.oninput = () => {
       draft[i.dataset.split] = Math.max(0, +i.value || 0);
       totals();
@@ -315,7 +315,7 @@ export function mountPay(root){
         ${est ? `<p class="note">No salary in your history to read, so ${fmt(salaryAmount())} is an estimate.</p>` : ''}
         ${kv('Salary', `<span class="rev">${fmt(salaryAmount())}</span>`)}
         ${getState().sorter.on ? kv('Sorter', 'Runs on credit') : ''}
-        <button class="btn" id="gpeGo" ${claimed ? 'disabled' : ''} style="margin-top:14px">Claim early</button>`);
+        <button class="btn mt14" id="gpeGo" ${claimed ? 'disabled' : ''}>Claim early</button>`);
       document.getElementById('gpeGo').onclick = () => {
         const r = getPaidEarly();
         if (!r.ok) return toast(r.msg);
@@ -336,7 +336,7 @@ export function mountTrends(root){
     let body = '';
     if (view === 'balance'){
       body = `<div class="card"><h2>Projected balance</h2><div class="sub">After bills before payday</div>
-        <div class="balance rev" style="font-size:26px;margin:4px 0">${fmt(leftToSpend())}</div>
+        <div class="balance rev fs26">${fmt(leftToSpend())}</div>
         <div id="tbChart"></div></div>`;
     } else if (view === 'spending'){
       body = `<div class="card"><h2>${fmt(spentThisMonth())}</h2>
@@ -349,12 +349,12 @@ export function mountTrends(root){
             <span class="amt">›</span></button>`).join('')}</div>`;
     } else {
       body = `<div class="card"><h2>Targets</h2><div class="sub">Flexible categories</div>
-        ${FLEX.map(c => `<div style="margin:10px 0">
-          <div style="display:flex;justify-content:space-between;font-size:13px">
+        ${FLEX.map(c => `<div class="mt10">
+          <div class="fx fx-b fs13">
             <span>${c}</span><span class="rev">${fmt(spentCat(c))} / ${fmt(s.targets[c] || 0)}</span></div>
           ${meter(spentCat(c), s.targets[c] || 0)}
           <input type="number" min="0" step="5" value="${s.targets[c] || 0}" data-target="${c}" class="tinput"></div>`).join('')}
-        <button class="btn" data-save style="margin-top:12px">Save targets</button></div>`;
+        <button class="btn mt12" data-save>Save targets</button></div>`;
     }
     root.innerHTML = `<div class="h-sec"><h2>Trends</h2></div>
       ${chipRow([{ value: 'balance', label: 'Balance' }, { value: 'spending', label: 'Spending' },
@@ -386,7 +386,7 @@ export function mountAccount(root){
   const row = (code, label, sub, attrs) => `<button class="pot" ${attrs}><span class="lg"><span class="lg__i">${code}</span></span>
     <span class="mid"><span class="nm">${label}</span><span class="sub">${sub}</span></span><span class="amt">›</span></button>`;
   root.innerHTML = `<div class="h-sec"><h2>Account</h2></div>
-    <div class="card" style="padding:6px 8px">
+    <div class="card p6-8">
       ${row('ACC', 'Your accounts', (1 + s.extraAccounts.length) + ' accounts', 'data-go="accounts"')}
       ${row('PER', 'Personal details', esc(s.profile.name), 'data-go="personal"')}
       ${row('SEC', 'Security &amp; privacy', s.credId ? 'Biometrics on' : 'Passcode only', 'data-go="security"')}
@@ -406,7 +406,7 @@ export function mountAccount(root){
       ${row('SUP', 'Support', 'Chat to us', 'data-go="chat"')}
       ${row('APP', 'Appearance', 'Theme, text size', 'data-go="appearance"')}
     </div>
-    <button class="btn ghost" data-logout style="margin:0 0 20px">Log out of all devices</button>`;
+    <button class="btn ghost mb20" data-logout>Log out of all devices</button>`;
   root.addEventListener('click', e => {
     if (!e.target.closest('[data-logout]')) return;
     sessionStorage.removeItem('unlocked');
@@ -422,9 +422,9 @@ export function mountAcc(root){
     const list = filter === 'All' ? s.tx : s.tx.filter(t => t.cat === filter);
     root.innerHTML = `<div class="h-sec"><h2>Current account</h2><button data-add>Add</button></div>
       ${chipRow(['All', 'Groceries', 'Bills', 'Kids', 'Income'], filter, 'filter')}
-      <div class="card" style="padding:4px 14px"><ul class="txlist">
+      <div class="card p4-14"><ul class="txlist">
         ${list.slice(0, limit).map(txRow).join('') || '<li class="empty">Nothing here</li>'}</ul>
-        <button class="btn ghost sm" data-more style="margin:8px 0 12px;width:100%">Load more</button></div>`;
+        <button class="btn ghost sm w100 my12" data-more>Load more</button></div>`;
   };
   root.addEventListener('click', e => {
     const f = e.target.closest('[data-filter]');
@@ -455,7 +455,7 @@ export function mountPotDetail(root, params){
     const history = getState().tx.filter(t => t.name === p.name).slice(0, 15);
     const isRoundup = getState().roundupPotId === p.id;
     root.innerHTML = `<div class="h-sec"><h2>${esc(p.name)}</h2><button data-edit>Edit</button></div>
-      <div class="card"><div class="balance rev" style="font-size:30px;margin:0 0 4px">${fmt(p.bal)}</div>
+      <div class="card"><div class="balance rev fs30">${fmt(p.bal)}</div>
         <div class="sub">${Math.round(p.bal / p.goal * 100)}% of ${fmt(p.goal)}</div>
         ${meter(p.bal, p.goal)}
         ${p.type === 'savings' ? kv('Interest', plan().ia + '% AER') : ''}
@@ -464,9 +464,9 @@ export function mountPotDetail(root, params){
         ${kv('Round-ups', isRoundup
           ? `${badge('This pot', 'ok')} <button class="btn ghost sm" data-roundup-off>Stop</button>`
           : `<button class="btn ghost sm" data-roundup-on>Send here</button>`)}
-        <div class="row2" style="margin-top:12px"><button class="btn" data-in>Add money</button>
+        <div class="row2 mt12"><button class="btn" data-in>Add money</button>
           <button class="btn ghost" data-out ${p.locked ? 'disabled' : ''}>Withdraw</button></div>
-        <div class="row2" style="margin-top:10px">
+        <div class="row2 mt10">
           <button class="btn ghost" data-lock>${p.locked ? 'Unlock' : 'Lock'} pot</button>
           <button class="btn ghost" data-del>Close pot</button></div></div>
       <div class="card"><h2>History</h2>
@@ -532,24 +532,26 @@ export function mountInvest(root){
   const render = () => {
     const s = getState();
     const share = isaBal() / TARGET_ISA * 100;
-    root.innerHTML = `<div class="card" style="margin-top:16px">
+    root.innerHTML = `<div class="card mt12">
         <div class="sub">Stocks &amp; shares ISA · transferred in October 1992</div>
-        <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(isaBal())}</div>
+        <div class="balance rev fs30">${fmt(isaBal())}</div>
         ${meter(isaBal(), TARGET_ISA)}
-        <div style="font-size:12.5px;color:var(--ink3);margin-bottom:8px">${share.toFixed(2)}% of target</div>
+        <div class="fs125 ink3 mb20">${share.toFixed(2)}% of target</div>
         ${kv('Allowance used', `<span class="rev">${fmt(tyUsed())}</span>`)}
         ${kv('Allowance remaining', `<span class="rev">${fmt(Math.max(0, 20000 - tyUsed()))}</span>`)}
-        ${kv('Platform fee', plan().cover ? '0.20%' : '0.25%')}
-        <button class="btn" data-contrib style="margin-top:12px">Add to ISA</button></div>
+        ${kv('Platform fee', (platformFeeRate() * 100).toFixed(2) + '% · capped at ' + fmt(platformFeeCap()))}
+        ${kv('Fee this year', `<span class="rev">${fmt(platformFeeAnnual())}</span>`)}
+        ${kv('Fee this month', `<span class="rev">${fmt(platformFeeMonthly())}</span>`)}
+        <button class="btn mt12" data-contrib>Add to ISA</button></div>
       <div class="card"><h2>Portfolio</h2>
-        ${[['Vanguard FTSE Global All Cap', .46], ['Vanguard US Equity Index', .22],
-          ['iShares Core MSCI World', .16], ['Vanguard Emerging Markets', .09], ['Cash', .07]]
-          .map(([n, w]) => `<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;
-            gap:10px;align-items:center;font-size:13px">${logo(n)}<span style="flex:1">${n}</span>
-            <b class="rev">${fmt(isaBal() * w)}</b></div>${meter(w * 100, 100, 'var(--ink)')}</div>`).join('')}</div>
+        ${[['iShares Core MSCI World', .38], ['iShares Core FTSE 100', .22],
+          ['iShares S&amp;P 500', .18], ['iShares Global Aggregate Bond', .14], ['Cash', .08]]
+          .map(([n, w]) => `<div class="mt8"><div class="fx fx-b fx-c gap10 fs13">${logo(n)}
+            <span class="grow">${n}</span><b class="rev">${fmt(isaBal() * w)}</b></div>
+            ${meter(w * 100, 100, 'var(--ink)')}</div>`).join('')}</div>
       <div class="card"><h2>Value over time</h2><div id="isaChart"></div></div>
       <div class="h-sec"><h2>Ledger</h2><button data-go="statements">Statements</button></div>
-      <div class="card" style="padding:4px 14px"><ul class="txlist">
+      <div class="card p4-14"><ul class="txlist">
         ${s.isa.slice(0, 40).map(r => `<li class="tx">${logo('Vanguard')}
           <span class="mid"><span class="nm">${esc(r.note)}</span><span class="mt">${r.date} · ${r.type}</span></span>
           <span class="amt rev">${fmt(r.value)}</span></li>`).join('')}</ul></div>`;
@@ -647,4 +649,4 @@ function download(kind, ym, asPdf){
     <tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td class="${i === 4 ? 'amt' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
   w.document.close(); w.focus(); setTimeout(() => w.print(), 350);
   toast('Statement ready to print');
-                                             }
+}
