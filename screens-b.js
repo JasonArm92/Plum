@@ -27,7 +27,7 @@ export function mountPayees(root){
     const sorted = s.payees.slice().sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || (b.last || '').localeCompare(a.last || ''));
     root.innerHTML = `<div class="h-sec"><h2>Payees</h2><button data-add>Add</button></div>
       <div class="card" style="padding:6px 8px">${sorted.map(p => `
-        <div class="pot"><span class="lg"><span class="lg__i">${esc(p.name.split(' ').map(w => w[0]).join('').slice(0, 2))}</span></span>
+        <div class="pot">${logo(p.name)}
           <span class="mid"><span class="nm">${esc(p.name)} ${p.fav ? badge('Fav', 'ok') : ''}${p.last === TODAY ? badge('Recent') : ''}</span>
             <span class="sub">${esc(p.sc)} · ${esc(p.ac)}</span></span>
           <button class="iconbtn" data-send="${p.id}" aria-label="Send">➤</button>
@@ -104,7 +104,7 @@ export function mountRequest(root){
         <div class="field"><label for="rqNote">What for</label><input id="rqNote" placeholder="Steak night"></div>
         <button class="btn" data-send>Send request</button></div>
       <div class="card"><h2>Outstanding</h2>
-        ${s.requests.length ? s.requests.map(r => `<div class="pot"><span class="lg"><span class="lg__i">${esc(r.name[0])}</span></span>
+        ${s.requests.length ? s.requests.map(r => `<div class="pot">${logo(r.name)}
           <span class="mid"><span class="nm">${esc(r.name)}</span><span class="sub">${esc(r.note || 'Request')} · ${esc(r.date)}</span></span>
           <span class="amt rev">${fmt(r.amount)}</span>
           <button class="btn ghost sm" data-paid="${r.id}">Received</button>
@@ -184,9 +184,12 @@ export function mountCards(root){
   const render = () => {
     const s = getState(), p = plan();
     root.innerHTML = `<div class="h-sec"><h2>Cards</h2><button data-new>New virtual</button></div>
-      <div class="card">${kv('Physical card · 4000 1234', badge(s.frozen ? 'Frozen' : 'Active', s.frozen ? 'bad' : 'ok'))}
+      <div class="card"><div class="pot">${logo('Monzo')}
+          <span class="mid"><span class="nm">Physical card · 4000 1234</span>
+            <span class="sub">${s.frozen ? 'Frozen' : 'Active'}</span></span>
+          ${badge(s.frozen ? 'Frozen' : 'Active', s.frozen ? 'bad' : 'ok')}</div>
         <button class="btn ghost sm" data-freeze style="margin:10px 0">${s.frozen ? 'Unfreeze' : 'Freeze'}</button>
-        ${s.vcards.map(v => `<div class="pot"><span class="lg"><span class="lg__i">${esc(v.label[0])}</span></span>
+        ${s.vcards.map(v => `<div class="pot">${logo(v.label)}
           <span class="mid"><span class="nm">${esc(v.label)}</span><span class="sub">${esc(v.num)}</span></span>
           <button class="iconbtn" data-vf="${v.id}" aria-label="Freeze">${v.frozen ? '❄' : '✓'}</button>
           <button class="iconbtn" data-vr="${v.id}" aria-label="Rename">✎</button>
@@ -221,7 +224,8 @@ export function mountPlan(root){
     root.innerHTML = `<div class="h-sec"><h2>Plans</h2></div>` +
       Object.entries(PLANS_BANK()).map(([k, p]) => `
         <div class="card" style="border:2px solid ${k === s.plan ? 'var(--coral)' : 'transparent'}">
-          <div style="display:flex;justify-content:space-between"><h2 style="margin:0">${p.name}</h2>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="display:flex;gap:10px;align-items:center">${logo('Monzo')}<h2 style="margin:0">${p.name}</h2></div>
             <b>${p.price ? '£' + p.price + '/mo' : 'Free'}</b></div>
           <div class="sub">${p.age}</div>
           ${kv('Instant Access rate', p.ia + '% AER')}
@@ -278,13 +282,13 @@ export function mountLimits(root){
 export function mountBorrow(root){
   const s = getState();
   root.innerHTML = `<div class="h-sec"><h2>Borrowing</h2></div><div class="card" style="padding:6px 8px">
-    <button class="pot" data-go="flex"><span class="lg"><span class="lg__i">FLX</span></span><span class="mid"><span class="nm">Monzo Flex</span>
+    <button class="pot" data-go="flex">${logo('Monzo Flex')}<span class="mid"><span class="nm">Monzo Flex</span>
       <span class="sub">${fmt(flexAvail())} available</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="aura"><span class="lg"><span class="lg__i">AUR</span></span><span class="mid"><span class="nm">Monzo Aura</span>
+    <button class="pot" data-go="aura">${logo('Monzo Aura')}<span class="mid"><span class="nm">Monzo Aura</span>
       <span class="sub">Cashback card</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="overdraft"><span class="lg"><span class="lg__i">OVD</span></span><span class="mid"><span class="nm">Overdraft</span>
+    <button class="pot" data-go="overdraft">${logo('Monzo')}<span class="mid"><span class="nm">Overdraft</span>
       <span class="sub">${s.overdraft.limit ? fmt(s.overdraft.limit) : 'Not arranged'}</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="loans"><span class="lg"><span class="lg__i">LN</span></span><span class="mid"><span class="nm">Loans</span>
+    <button class="pot" data-go="loans">${logo('Monzo Loans')}<span class="mid"><span class="nm">Loans</span>
       <span class="sub">Up to £35,000</span></span><span class="amt">›</span></button></div>`;
 }
 
@@ -299,7 +303,8 @@ export function mountFlex(root){
         <button class="btn" data-new style="margin-top:12px">Pay with Flex</button></div>
       <div class="card"><h2>Plans</h2>
         ${s.flex.plans.length ? s.flex.plans.map(p => `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
-          <div style="display:flex;justify-content:space-between;font-size:14px"><span>${esc(p.name)}</span><b class="rev">${fmt(p.remaining)}</b></div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;gap:10px;align-items:center">
+            ${logo(p.name)}<span style="flex:1">${esc(p.name)}</span><b class="rev">${fmt(p.remaining)}</b></div>
           ${meter(round2(p.amount - p.remaining), p.amount)}
           <div style="font-size:12.5px;color:var(--ink2)">${p.term} months · ${fmt(p.monthly)}/mo</div>
           <button class="btn ghost sm" data-settle="${p.id}" style="margin-top:6px">Settle ${fmt(p.remaining)}</button></div>`).join('')
@@ -341,7 +346,8 @@ export function mountAura(root){
     const a = getState().aura;
     const cash = round2(a.cashback || 0);
     root.innerHTML = `<div class="h-sec"><h2>Monzo Aura</h2></div><div class="card">
-      <div class="sub">£15 per month · 1% cashback on card spend</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logo('Monzo Aura')}
+        <div class="sub" style="margin:0">£15 per month · 1% cashback on card spend</div></div>
       ${kv('Status', a.active ? badge('Active', 'ok') : badge('Off'))}
       ${kv('Cashback earned', `<span class="rev">${fmt(cash)}</span>`)}
       ${kv('Lounge passes', a.lounge)}${kv('Fast track', a.fast)}
@@ -375,6 +381,8 @@ export function mountOverdraft(root){
   const render = () => {
     const o = getState().overdraft, bal = balNow();
     root.innerHTML = `<div class="h-sec"><h2>Overdraft</h2></div><div class="card">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logo('Monzo')}
+        <div class="sub" style="margin:0">Arranged overdraft on your current account</div></div>
       <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(o.limit)}</div>
       ${kv('Rate', o.rate ? o.rate + '% EAR' : '—')}${kv('Used', `<span class="rev">${fmt(Math.max(0, -bal))}</span>`)}
       ${chipRow([250, 500, 1000, 2000].map(v => ({ value: v, label: '£' + v })), pending || null, 'od')}
@@ -396,6 +404,8 @@ export function mountLoans(root){
     const term = +((root.querySelector('#lnTerm') || {}).value) || 24;
     const apr = aprForLoan(amt), monthly = loanMonthly(amt, term);
     root.innerHTML = `<div class="h-sec"><h2>Loans</h2></div><div class="card">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logo('Monzo Loans')}
+        <div class="sub" style="margin:0">Borrow £1,000 to £35,000</div></div>
       <div class="field"><label>Amount</label><input id="lnAmt" type="number" min="1000" max="35000" step="500" value="${amt}"></div>
       <div class="field"><label>Term</label><select id="lnTerm">${[12,24,36,48,60].map(t => `<option ${t === term ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       ${kv('APR', apr + '%')}${kv('Monthly', `<span class="rev">${fmt(monthly)}</span>`)}
@@ -433,9 +443,10 @@ export function mountConnected(root){
   const render = () => {
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Connected</h2></div>
-      <div class="card"><h2>Add a bank</h2>${chipRow(BANKS, null, 'bank')}</div>
+      <div class="card"><h2>Add a bank</h2><div class="pill-row">${BANKS.map(b =>
+        `<button class="chip" data-bank="${esc(b)}">${logo(b)}${esc(b)}</button>`).join('')}</div></div>
       <div class="card"><h2>Connected</h2>
-        ${s.connected.length ? s.connected.map(c => `<div class="pot"><span class="lg"><span class="lg__i">${esc(c.bank[0])}</span></span>
+        ${s.connected.length ? s.connected.map(c => `<div class="pot">${logo(c.bank)}
           <span class="mid"><span class="nm">${esc(c.bank)}</span><span class="sub">${esc(c.kind)}</span></span>
           <span class="amt rev">${fmt(c.bal)}</span>
           <button class="iconbtn" data-rm="${c.id}" aria-label="Remove">🗑</button></div>`).join('') : empty('None connected')}</div>`;
@@ -479,7 +490,9 @@ export function mountChallenge(root){
   const render = () => {
     const c = getState().challenge;
     root.innerHTML = `<div class="h-sec"><h2>Saving Challenge</h2></div>
-      <div class="card"><div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(c.saved)}</div>
+      <div class="card"><div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logo('Saving Challenge')}
+        <div class="sub" style="margin:0">Save 1p more than yesterday, every day</div></div>
+        <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(c.saved)}</div>
         ${meter(c.saved, 667.95)}${kv('Day', `${c.day} of 365`)}
         ${kv('Today', `<span class="rev">${fmt(round2((c.day + 1) / 100))}</span>`)}
         <button class="btn" data-save style="margin-top:12px">Save today's amount</button>
@@ -501,7 +514,7 @@ export function mountBillsback(root){
           <button class="sw ${s.billsback.optIn ? 'on' : ''}" data-opt aria-label="Opt in"></button></div>
         <button class="btn" data-draw style="margin-top:14px">Enter draw</button></div>
       <div class="card"><h2>Eligible bills</h2>
-        ${bills.length ? bills.map(b => kv(`${esc(b.name)} · ${fmt(Math.min(Math.abs(b.amt), BB_CAP))}`, esc(b.date))).join('') : empty('None this month')}</div>
+        ${bills.length ? bills.map(b => kv(`${logo(b.name)}<span class="billname">${esc(b.name)}</span> · ${fmt(Math.min(Math.abs(b.amt), BB_CAP))}`, esc(b.date))).join('') : empty('None this month')}</div>
       <div class="card"><h2>Results</h2>
         ${s.billsback.history.length ? s.billsback.history.map(h => kv(`${esc(h.month)}${h.bill ? ' · ' + esc(h.bill) : ''}`,
           h.won ? badge(fmt(h.amount) + ' back', 'ok') : badge('No win'))).join('') : empty('No draws')}</div>`;
@@ -522,6 +535,8 @@ export function mountInsurance(root){
       ${covered ? '' : `<div class="card"><div class="sub">Not on ${esc(plan().name)} — cover ends when your plan does.</div>
         <button class="btn" data-go="plan" style="margin-top:10px">See plans</button></div>`}
       <div class="card">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">${logo('Aviva')}
+          <div class="sub" style="margin:0">Policies held with Aviva</div></div>
         ${s.policies.length ? s.policies.map(p => kv(
           `${esc(p.name)}<br><span style="font-size:12.5px">${esc(p.number)} · ${p.status === 'Active' ? badge('Active', 'ok') : badge(esc(p.status), 'bad')}</span>`,
           `<button class="btn ghost sm" data-pol="${p.id}">Document</button>`)).join('') : empty('No policies')}
@@ -564,17 +579,17 @@ export function mountAccounts(root){
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Your accounts</h2><button data-add>Add</button></div>
       <div class="card" style="padding:6px 8px">
-        <div class="pot"><span class="lg"><span class="lg__i">PCA</span></span>
+        <div class="pot">${logo('Monzo')}
           <span class="mid"><span class="nm">${esc(s.acctName)} ${s.acctClosed ? badge('Closed', 'bad') : badge('Active', 'ok')}</span>
             <span class="sub">${s.acctClosed ? 'Closed — reopen to use it' : fmt(balNow())}</span></span>
           ${s.acctClosed
             ? `<button class="btn ghost sm" data-reopen>Reopen</button>`
             : `<button class="btn ghost sm" data-switch="personal">Use</button>
                <button class="iconbtn" data-close-personal aria-label="Close account">🗑</button>`}</div>
-        <div class="pot"><span class="lg"><span class="lg__i">JNT</span></span><span class="mid"><span class="nm">Joint account</span>
+        <div class="pot">${logo('Monzo')}<span class="mid"><span class="nm">Joint account</span>
           <span class="sub">With ${esc(s.partner)} · ${fmt(s.jointBal || 0)}</span></span>
           <button class="btn ghost sm" data-go="joint">Open</button></div>
-        ${s.extraAccounts.map(a => `<div class="pot"><span class="lg"><span class="lg__i">${esc(a.name[0])}</span></span>
+        ${s.extraAccounts.map(a => `<div class="pot">${logo(a.name)}
           <span class="mid"><span class="nm">${esc(a.name)}</span><span class="sub">${esc(a.type)} · ${fmt(a.bal || 0)}</span></span>
           <button class="iconbtn" data-fund="${a.id}" aria-label="Add money">＋</button>
           <button class="iconbtn" data-rename="${a.id}" aria-label="Rename">✎</button>
@@ -701,7 +716,7 @@ export function mountSearch(root, params){
       (!q || t.name.toLowerCase().includes(q) || (t.note || '').toLowerCase().includes(q))).slice(0, 60);
     list.innerHTML = res.length ? res.map(txRow).join('') : '<li class="empty">No matches</li>';
   };
-  input.addEventListener('input', () => { q = input.value.toLowerCase(); paintList(); });
+  input.addEventListener('input', () => { q = input.value.toLowerCase(); paintChips(); paintList(); });
   root.addEventListener('click', e => {
     const c = e.target.closest('[data-cat]');
     if (c){ cat = c.dataset.cat; paintChips(); paintList(); }
@@ -769,7 +784,7 @@ export function mountDisputes(root){
   const render = () => {
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Disputes</h2></div><div class="card">
-      ${s.disputes.length ? s.disputes.map(d => `<div class="pot"><span class="lg"><span class="lg__i">${d.status === 'Open' ? '!' : '✓'}</span></span>
+      ${s.disputes.length ? s.disputes.map(d => `<div class="pot">${logo(d.name)}
         <span class="mid"><span class="nm">${esc(d.name)}</span><span class="sub">${esc(d.reason)}</span></span>
         ${d.status === 'Open' ? `<button class="btn ghost sm" data-close-d="${d.id}">Close</button>` : badge('Closed', 'ok')}</div>`).join('')
         : empty('No disputes')}</div>`;
@@ -955,4 +970,4 @@ export function mountTxDetail(root, params){
     if (e.target.closest('[data-del]')){ deleteTx(t.id); toast('Deleted'); go('acc'); }
   });
   render();
-}
+      }
