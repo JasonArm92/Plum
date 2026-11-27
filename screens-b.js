@@ -1,975 +1,628 @@
-/* src/screens-b.js — settings, tools and detail surfaces. */
-
 import {
-  getState, commit, esc, fmt, TODAY, round2, plan, PLANS_BANK, CATS, BANKS, BB_CAP,
-  jointBills, jointContribution, JOINT_SHARE,
-  setProfile, setPin, setCredId, setTheme, setZoom, setMotion, togglePriv, toggleRoundups,
-  roundupPotName, exportState, importState,
-  addPayee, updatePayee, deletePayee, sendMoney, requestMoney, settleRequest, cancelRequest,
-  addVirtualCard, freezeVCard, renameVCard,
-  deleteVCard, toggleFreeze, setPlan, setFamily, flexAvail, flexPurchase, flexMonthly,
-  settleFlex, arrangeOverdraft, cancelOverdraft, takeLoan, loanMonthly, aprForLoan, overpayLoan,
-  challengeSave, restartChallenge, billsbackOptIn, billsbackDraw, bbBills, connectBank,
-  removeBank, addExtraAccount, updateExtraAccount, closeExtraAccount, moveToExtraAccount,
-  closeAccount, reopenAccount, setActiveAccount,
-  takePlus, setPlus, payOutCashback, CASHBACK_MIN, raiseDispute, closeDispute,
-  creditAction, CREDIT_ACTIONS, pushChat, clearNotifs, markAllRead, updateTx, deleteTx,
-  balNow, addTx
+  state, fmt, fmtShort, round2, addTx, save, uid, investBuy, investSell,
+  investDeposit, portfolioValue, platformFeeMonthly, planInfo, PLANS,
+  pensionProjection, reset, dateStr, timeStr
 } from './core.js';
-
+import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js';
 import {
-  go, toast, sheet, closeSheet, logo, kv, badge, empty, txRow, meter, chipRow
+  el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
+  field, input, seg, switchEl, pill, cardArt, avatar
 } from './ui.js';
 
-export function mountPayees(root){
-  const render = () => {
-    const s = getState();
-    const sorted = s.payees.slice().sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || (b.last || '').localeCompare(a.last || ''));
-    root.innerHTML = `<div class="h-sec"><h2>Payees</h2><button data-add>Add</button></div>
-      <div class="card p6-8">${sorted.map(p => `
-        <div class="pot">${logo(p.name)}
-          <span class="mid"><span class="nm">${esc(p.name)} ${p.fav ? badge('Fav', 'ok') : ''}${p.last === TODAY ? badge('Recent') : ''}</span>
-            <span class="sub">${esc(p.sc)} · ${esc(p.ac)}</span></span>
-          <button class="iconbtn" data-send="${p.id}" aria-label="Send">➤</button>
-          <button class="iconbtn" data-fav="${p.id}" aria-label="Favourite">${p.fav ? '★' : '☆'}</button>
-          <button class="iconbtn" data-edit="${p.id}" aria-label="Edit">✎</button></div>`).join('') || empty('No payees yet')}</div>`;
+const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
+const rerender = () => document.dispatchEvent(new CustomEvent('render'));
+
+/* ---------- card ---------- */
+
+export function cardSheet() {
+  const body = el('div');
+  body.appendChild(cardArt(state.cards[0]));
+  const freeze = el('button', 'btn btn--block btn--ghost',
+    state.cards[0].frozen ? 'Unfreeze card' : 'Freeze card');
+  body.appendChild(list([
+    row({title: 'View card number', onClick: () => toast('•••• •••• •••• ' + state.cards[0].last4)}),
+    row({title: 'Card PIN', onClick: () => toast('PIN 2580')}),
+    row({title: 'Add to Apple Pay', onClick: () => toast('Added to Apple Pay')})
+  ]));
+  freeze.onclick = () => {
+    state.cards[0].frozen = !state.cards[0].frozen;
+    save();
+    freeze.textContent = state.cards[0].frozen ? 'Unfreeze card' : 'Freeze card';
+    toast(state.cards[0].frozen ? 'Card frozen' : 'Card unfrozen');
   };
-  const form = id => {
-    const p = id ? getState().payees.find(x => x.id === id) : { name: '', sc: '', ac: '' };
-    sheet(`<h2>${id ? 'Edit' : 'New'} payee</h2>
-      <div class="field"><label>Name</label><input id="pyName" value="${esc(p.name)}"></div>
-      <div class="field"><label>Sort code</label><input id="pySc" value="${esc(p.sc)}"></div>
-      <div class="field"><label>Account number</label><input id="pyAc" value="${esc(p.ac)}"></div>
-      <button class="btn" id="pySave">Save</button>
-      ${id ? `<button class="btn ghost mt10" id="pyDel">Delete</button>` : ''}`);
-    document.getElementById('pySave').onclick = () => {
-      const name = document.getElementById('pyName').value.trim();
-      if (!name) return toast('Enter a name');
-      const data = { name, sc: document.getElementById('pySc').value, ac: document.getElementById('pyAc').value };
-      if (id) updatePayee(id, data); else addPayee(data);
-      closeSheet(); render(); toast('Saved');
+  sheet({title: 'Your card', body, foot: freeze});
+}
+
+/* ---------- add transaction ---------- */
+
+export function addTxSheet() {
+  const body = el('div');
+  const name = input({placeholder: 'Merchant or description'});
+  const amount = input({type: 'number', step: '0.01', placeholder: '0.00'});
+  let category = 'general';
+  const cats = el('div');
+  cats.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+  for (const c of CATEGORIES) {
+    const b = el('button', 'pill');
+    b.type = 'button';
+    b.textContent = c.emoji + ' ' + c.name;
+    b.onclick = () => {
+      category = c.id;
+      cats.querySelectorAll('.pill').forEach(x => x.className = 'pill');
+      b.className = 'pill pill--coral';
     };
-    const del = document.getElementById('pyDel');
-    if (del) del.onclick = () => { deletePayee(id); closeSheet(); render(); toast('Deleted'); };
+    cats.appendChild(b);
+  }
+  body.appendChild(field({label: 'Name', input: name}));
+  body.appendChild(field({label: 'Amount', input: amount, hint: 'Use a minus sign for spending'}));
+  body.appendChild(field({label: 'Category', input: cats}));
+  const go = el('button', 'btn btn--primary btn--block', 'Add transaction');
+  const s = sheet({title: 'Add transaction', body, foot: go});
+  go.onclick = () => {
+    const a = round2(Number(amount.value) || 0);
+    if (!a) return toast('Enter an amount');
+    addTx({name: name.value || 'Transaction', amount: a, category});
+    s.close();
+    toast('Added ' + fmt(a));
+    rerender();
   };
-  const send = id => {
-    const p = getState().payees.find(x => x.id === id);
-    if (!p) return;
-    sheet(`<h2>Send to ${esc(p.name)}</h2><div class="sub">${esc(p.sc)} · ${esc(p.ac)}</div>
-      <div class="field"><label>Amount</label><input id="sdAmt" type="number" min="1"></div>
-      <div class="field"><label>Reference</label><input id="sdRef" value="Payment"></div>
-      <button class="btn" id="sdNext">Continue</button>`);
-    document.getElementById('sdNext').onclick = () => {
-      const v = +document.getElementById('sdAmt').value;
-      const ref = document.getElementById('sdRef').value || 'Payment';
-      if (!v || v <= 0) return toast('Enter an amount');
-      sheet(`<h2>Confirm</h2>${kv('To', esc(p.name))}${kv('Sort code', esc(p.sc))}${kv('Account', esc(p.ac))}
-        ${kv('Reference', esc(ref))}${kv('Amount', `<span class="rev">${fmt(v)}</span>`)}
-        <button class="btn mt14" id="sdGo">Send ${fmt(v)}</button>
-        <button class="btn ghost mt8" id="sdBack">Back</button>`);
-      document.getElementById('sdBack').onclick = () => send(id);
-      document.getElementById('sdGo').onclick = () => {
-        const res = sendMoney(id, v, ref);
-        if (!res.ok) return toast(res.msg);
-        closeSheet(); go('home'); toast('Sent');
-      };
+}
+
+/* ---------- transaction detail ---------- */
+
+export function txScreen(id) {
+  const t = state.tx.find(x => x.id === id);
+  if (!t) return screen('tx', {title: 'Transaction', back: '#/home', body: empty('Not found')});
+  const body = el('div');
+  const c = el('div', 'card');
+  c.style.textAlign = 'center';
+  const tl = tile(t.name, 60);
+  tl.style.margin = '0 auto 12px';
+  c.appendChild(tl);
+  c.appendChild(el('div', 'ringwrap__v', (t.amount > 0 ? '+' : '') + fmt(t.amount)));
+  c.appendChild(el('div', 'row__t', t.name));
+  c.appendChild(el('div', 'hint', dateStr(t.ts) + ' · ' + timeStr(t.ts)));
+  body.appendChild(c);
+
+  body.appendChild(list([
+    row({title: 'Category', value: cat(t.category).emoji + ' ' + cat(t.category).name, onClick: () => categorySheet(t.id)}),
+    row({title: 'Note', value: t.note || 'Add', onClick: () => noteSheet(t.id)}),
+    row({title: 'Receipt', value: t.receipt ? 'Attached' : 'Add', onClick: () => receiptSheet(t.id)}),
+    row({title: 'Split bill', onClick: () => splitSheet(t.id)}),
+    row({title: 'Repeat', onClick: () => toast('Repeat payment set up')})
+  ]));
+
+  return screen('tx-' + id, {title: 'Transaction', back: '#/home', body});
+}
+
+export function categorySheet(id) {
+  const t = state.tx.find(x => x.id === id);
+  if (!t) return;
+  const body = el('div');
+  const l = el('div', 'list list--boxed');
+  const s = sheet({title: 'Category', body});
+  for (const c of CATEGORIES) {
+    l.appendChild(row({
+      title: c.emoji + ' ' + c.name, chev: false,
+      value: t.category === c.id ? '✓' : '',
+      onClick: () => {
+        t.category = c.id;
+        save(); s.close(); toast('Category updated'); rerender();
+      }
+    }));
+  }
+  body.appendChild(l);
+}
+
+export function noteSheet(id) {
+  const t = state.tx.find(x => x.id === id);
+  if (!t) return;
+  const body = el('div');
+  const i = input({value: t.note || '', placeholder: 'Add a note'});
+  body.appendChild(field({label: 'Note', input: i}));
+  const go = el('button', 'btn btn--primary btn--block', 'Save note');
+  const s = sheet({title: 'Note', body, foot: go});
+  go.onclick = () => {
+    t.note = i.value.trim();
+    save(); s.close(); toast('Note saved'); rerender();
+  };
+}
+
+export function receiptSheet(id) {
+  const t = state.tx.find(x => x.id === id);
+  if (!t) return;
+  const body = el('div');
+  const i = input({placeholder: 'Receipt reference'});
+  body.appendChild(field({label: 'Receipt', input: i, hint: 'Keep a reference with this transaction'}));
+  const go = el('button', 'btn btn--primary btn--block', 'Attach');
+  const s = sheet({title: 'Receipt', body, foot: go});
+  go.onclick = () => {
+    t.receipt = i.value.trim() || 'Attached';
+    save(); s.close(); toast('Receipt attached'); rerender();
+  };
+}
+
+export function splitSheet(id) {
+  const t = state.tx.find(x => x.id === id);
+  if (!t) return;
+  const body = el('div');
+  const n = input({type: 'number', value: 2, min: 2, max: 12});
+  const each = el('p', 'hint');
+  const update = () => {
+    const c = Math.max(2, Number(n.value) || 2);
+    each.textContent = fmt(round2(Math.abs(t.amount) / c)) + ' each across ' + c + ' people';
+  };
+  update();
+  n.oninput = update;
+  body.appendChild(field({label: 'Split between', input: n}));
+  body.appendChild(each);
+  const go = el('button', 'btn btn--primary btn--block', 'Request shares');
+  const s = sheet({title: 'Split bill', body, foot: go});
+  go.onclick = () => { s.close(); toast('Requests sent'); };
+}
+
+/* ---------- pots ---------- */
+
+export function newPotSheet() {
+  const body = el('div');
+  const name = input({placeholder: 'Pot name'});
+  const target = input({type: 'number', step: '1', placeholder: '500'});
+  let emoji = POT_EMOJI[0], colour = POT_COLOURS[0];
+
+  const emojis = el('div');
+  emojis.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+  POT_EMOJI.forEach(e => {
+    const b = el('button', 'pill');
+    b.type = 'button';
+    b.textContent = e;
+    b.onclick = () => {
+      emoji = e;
+      emojis.querySelectorAll('.pill').forEach(x => x.className = 'pill');
+      b.className = 'pill pill--coral';
     };
-  };
-  root.addEventListener('click', e => {
-    const t = e.target.closest('[data-add],[data-send],[data-fav],[data-edit]');
-    if (!t) return;
-    if (t.hasAttribute('data-add')) return form(null);
-    if (t.dataset.send) return send(t.dataset.send);
-    if (t.dataset.fav){
-      const p = getState().payees.find(x => x.id === t.dataset.fav);
-      if (p) updatePayee(p.id, { fav: !p.fav });
-      return render();
-    }
-    if (t.dataset.edit) return form(t.dataset.edit);
+    emojis.appendChild(b);
   });
-  render();
-}
 
-export function mountRequest(root){
-  let payeeId = '';
-  const render = () => {
-    const s = getState();
-    if (!payeeId && s.payees.length) payeeId = s.payees[0].id;
-    root.innerHTML = `<div class="h-sec"><h2>Request money</h2></div>
-      <div class="card"><h2>New request</h2>
-        <div class="field"><label for="rqWho">From</label><select id="rqWho">
-          ${s.payees.map(p => `<option value="${p.id}" ${p.id === payeeId ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}
-        </select></div>
-        <div class="field"><label for="rqAmt">Amount</label><input id="rqAmt" type="number" min="1" step="0.01"></div>
-        <div class="field"><label for="rqNote">What for</label><input id="rqNote" placeholder="Steak night"></div>
-        <button class="btn" data-send>Send request</button></div>
-      <div class="card"><h2>Outstanding</h2>
-        ${s.requests.length ? s.requests.map(r => `<div class="pot">${logo(r.name)}
-          <span class="mid"><span class="nm">${esc(r.name)}</span><span class="sub">${esc(r.note || 'Request')} · ${esc(r.date)}</span></span>
-          <span class="amt rev">${fmt(r.amount)}</span>
-          <button class="btn ghost sm" data-paid="${r.id}">Received</button>
-          <button class="iconbtn" data-cancel="${r.id}" aria-label="Cancel">✕</button></div>`).join('')
-          : empty('Nothing outstanding')}</div>
-      <p class="note">Tap Received when the money lands and it is credited to your balance.</p>`;
-  };
-  root.addEventListener('change', e => { if (e.target.id === 'rqWho') payeeId = e.target.value; });
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-send]')){
-      const amt = +root.querySelector('#rqAmt').value;
-      const note = root.querySelector('#rqNote').value.trim();
-      const r = requestMoney(payeeId, amt, note);
-      if (!r.ok) return toast(r.msg);
-      render(); return toast('Request sent');
-    }
-    const paid = e.target.closest('[data-paid]');
-    if (paid){
-      const r = settleRequest(paid.dataset.paid);
-      if (!r.ok) return toast(r.msg);
-      render(); return toast('Marked received');
-    }
-    const c = e.target.closest('[data-cancel]');
-    if (c){ cancelRequest(c.dataset.cancel); render(); toast('Cancelled'); }
-  });
-  render();
-}
-
-export function mountBackup(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Backup</h2></div>
-      <div class="card"><h2>Export</h2>
-        <div class="sub">Your whole ledger, pots, policies and settings in one file.</div>
-        ${s.lastBackup ? kv('Last export', esc(s.lastBackup)) : `<p class="note">${badge('Never exported', 'warn')}</p>`}
-        <button class="btn mt12" data-export>Download backup</button></div>
-      <div class="card"><h2>Restore</h2>
-        <div class="sub">Replaces everything currently on this device.</div>
-        <label class="filebtn mt8">Choose file
-          <input type="file" accept="application/json,.json" data-import></label></div>
-      <p class="note">The file is plain JSON and contains your name, address and full history, so keep it somewhere you trust.</p>`;
-  };
-  root.addEventListener('click', e => {
-    if (!e.target.closest('[data-export]')) return;
-    const json = exportState();
-    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `monzo-backup-${TODAY}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    render(); toast('Backup downloaded');
-  });
-  root.addEventListener('change', async e => {
-    const input = e.target.closest('[data-import]');
-    if (!input || !input.files || !input.files[0]) return;
-    const file = input.files[0];
-    let text = '';
-    try { text = await file.text(); } catch { return toast('Could not read that file'); }
-    let rows = 0;
-    try { const parsed = JSON.parse(text); rows = Array.isArray(parsed.tx) ? parsed.tx.length : 0; }
-    catch { rows = 0; }
-    sheet(`<h2>Restore this backup?</h2>
-      <div class="sub">${esc(file.name)} · ${rows} transactions</div>
-      <p class="note">Everything currently on this device is replaced. Export first if you are unsure.</p>
-      <button class="btn" id="rsGo">Replace everything</button>`);
-    document.getElementById('rsGo').onclick = () => {
-      const r = importState(text);
-      if (!r.ok) return toast(r.msg);
-      closeSheet(); go('home'); toast(`Restored ${r.rows} transactions`);
+  const colours = el('div');
+  colours.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  POT_COLOURS.forEach(c => {
+    const b = el('button');
+    b.type = 'button';
+    b.style.cssText = 'width:30px;height:30px;border-radius:50%;background:' + c;
+    b.onclick = () => {
+      colour = c;
+      colours.querySelectorAll('button').forEach(x => x.style.outline = 'none');
+      b.style.outline = '3px solid currentColor';
     };
+    colours.appendChild(b);
   });
-  render();
-}
 
-export function mountCards(root){
-  const render = () => {
-    const s = getState(), p = plan();
-    root.innerHTML = `<div class="h-sec"><h2>Cards</h2><button data-new>New virtual</button></div>
-      <div class="card"><div class="pot">${logo('Monzo')}
-          <span class="mid"><span class="nm">Physical card · 4000 1234</span>
-            <span class="sub">${s.frozen ? 'Frozen' : 'Active'}</span></span>
-          ${badge(s.frozen ? 'Frozen' : 'Active', s.frozen ? 'bad' : 'ok')}</div>
-        <button class="btn ghost sm mt10" data-freeze>${s.frozen ? 'Unfreeze' : 'Freeze'}</button>
-        ${s.vcards.map(v => `<div class="pot">${logo(v.label)}
-          <span class="mid"><span class="nm">${esc(v.label)}</span><span class="sub">${esc(v.num)}</span></span>
-          <button class="iconbtn" data-vf="${v.id}" aria-label="Freeze">${v.frozen ? '❄' : '✓'}</button>
-          <button class="iconbtn" data-vr="${v.id}" aria-label="Rename">✎</button>
-          <button class="iconbtn" data-vd="${v.id}" aria-label="Delete">🗑</button></div>`).join('')}</div>
-      <p class="note">${p.vcLive ? `${s.vcards.length} of ${p.vcLive} live virtual cards.` : 'Virtual cards need Extra, Perks or Max.'}</p>`;
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-freeze]')){ toggleFreeze(); return render(); }
-    if (e.target.closest('[data-new]')){ const r = addVirtualCard(); if (!r.ok) return toast(r.msg); render(); return toast('Card created'); }
-    const vf = e.target.closest('[data-vf]');
-    if (vf){ freezeVCard(vf.dataset.vf); return render(); }
-    const vd = e.target.closest('[data-vd]');
-    if (vd){ deleteVCard(vd.dataset.vd); return render(); }
-    const vr = e.target.closest('[data-vr]');
-    if (vr){
-      const v = getState().vcards.find(x => x.id === vr.dataset.vr);
-      if (!v) return;
-      sheet(`<h2>Rename card</h2><div class="field"><label>Label</label><input id="vcLabel" value="${esc(v.label)}"></div>
-        <button class="btn" id="vcSave">Save</button>`);
-      document.getElementById('vcSave').onclick = () => {
-        renameVCard(v.id, document.getElementById('vcLabel').value.trim() || v.label);
-        closeSheet(); render(); toast('Renamed');
-      };
-    }
-  });
-  render();
-}
+  body.appendChild(field({label: 'Name', input: name}));
+  body.appendChild(field({label: 'Target', input: target}));
+  body.appendChild(field({label: 'Icon', input: emojis}));
+  body.appendChild(field({label: 'Colour', input: colours}));
 
-export function mountPlan(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Plans</h2></div>` +
-      Object.entries(PLANS_BANK()).map(([k, p]) => `
-        <div class="card" style="border:2px solid ${k === s.plan ? 'var(--coral)' : 'transparent'}">
-          <div class="fx fx-b fx-c">
-            <div class="fx fx-c gap10">${logo('Monzo')}<h2 class="m0">${p.name}</h2></div>
-            <b>${p.price ? '£' + p.price + '/mo' : 'Free'}</b></div>
-          <div class="sub">${p.age}</div>
-          ${kv('Instant Access rate', p.ia + '% AER')}
-          ${kv('ATM abroad', '£' + p.atmRow)}
-          ${kv('Billsback', p.billsback ? 'Yes' : 'No')}
-          ${kv('Insurance', p.cover ? 'Yes' : 'No')}
-          ${kv('Platform fee', p.cover ? '0.20% capped at £200' : '0.25% capped at £250')}
-          ${k === s.plan ? `<div class="mt10">${badge('Your plan', 'coral')}</div>`
-            : `<button class="btn mt10" data-plan="${k}">Switch to ${p.name}</button>`}</div>`).join('') +
-      `<div class="card"><h2>Family add-on</h2><div class="sub">Max only · +£4/month · covers 2 adults and 2 children</div>
-        <div class="toggle"><div><div class="t">Cover the household</div></div>
-          <button class="sw ${s.family ? 'on' : ''}" data-family aria-label="Family add-on"></button></div></div>`;
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-family]')){
-      const r = setFamily(!getState().family);
-      if (!r.ok) return toast(r.msg);
-      return render();
-    }
-    const t = e.target.closest('[data-plan]');
-    if (!t) return;
-    const key = t.dataset.plan, to = PLANS_BANK()[key], from = plan();
-    const diff = round2(to.price - from.price);
-    sheet(`<h2>Switch to ${to.name}</h2><div class="sub">${to.price ? '£' + to.price + '/month' : 'Free'}</div>
-      ${diff > 0 ? kv('Charged today', `<span class="rev">${fmt(diff)}</span>`) : ''}
-      ${from.cover && !to.cover ? kv('Insurance', 'Policies end today') : ''}
-      ${!from.cover && to.cover ? kv('Insurance', 'Policies start today') : ''}
-      <button class="btn" id="spGo">Confirm</button>`);
-    document.getElementById('spGo').onclick = () => { setPlan(key); closeSheet(); render(); toast('Plan updated'); };
-  });
-  render();
-}
-
-export function mountLimits(root){
-  const render = () => {
-    const p = plan(), s = getState();
-    const max = p.atmRow;
-    const current = Math.min(Number(s.atmLimit) || max, max);
-    root.innerHTML = `<div class="h-sec"><h2>Limits</h2></div><div class="card">
-      <h2>Daily ATM limit</h2><div class="sub">Your plan allows up to £${max}</div>
-      ${chipRow([50, 100, 200, 300, 500, 600].filter(v => v <= max).map(v => ({ value: v, label: '£' + v })), current, 'atm')}
-      ${kv('Abroad', '£' + max + ' per 30 days')}
-      ${kv('Contactless', '£100/day')}${kv('Card payments', '£5,000/day')}${kv('Transfers', '£10,000/day')}
-      ${kv('Cash deposits', p.cover ? '3 free/month' : '£1 each')}</div>`;
-  };
-  root.addEventListener('click', e => {
-    const c = e.target.closest('[data-atm]');
-    if (!c) return;
-    getState().atmLimit = +c.dataset.atm;
-    commit(); render(); toast('Limit set to £' + c.dataset.atm);
-  });
-  render();
-}
-
-export function mountBorrow(root){
-  const s = getState();
-  root.innerHTML = `<div class="h-sec"><h2>Borrowing</h2></div><div class="card p6-8">
-    <button class="pot" data-go="flex">${logo('Monzo Flex')}<span class="mid"><span class="nm">Monzo Flex</span>
-      <span class="sub">${fmt(flexAvail())} available</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="plus">${logo('Monzo Plus')}<span class="mid"><span class="nm">Monzo Plus</span>
-      <span class="sub">Cashback card</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="overdraft">${logo('Monzo')}<span class="mid"><span class="nm">Overdraft</span>
-      <span class="sub">${s.overdraft.limit ? fmt(s.overdraft.limit) : 'Not arranged'}</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="loans">${logo('Monzo Loans')}<span class="mid"><span class="nm">Loans</span>
-      <span class="sub">Up to £35,000</span></span><span class="amt">›</span></button></div>`;
-}
-
-export function mountFlex(root){
-  let term = 3;
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Monzo Flex</h2></div>
-      <div class="card"><div class="sub">Available</div>
-        <div class="balance rev fs30">${fmt(flexAvail())}</div>
-        ${meter(s.flex.used, s.flex.limit)}${kv('Limit', `<span class="rev">${fmt(s.flex.limit)}</span>`)}
-        <button class="btn mt12" data-new>Pay with Flex</button></div>
-      <div class="card"><h2>Plans</h2>
-        ${s.flex.plans.length ? s.flex.plans.map(p => `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
-          <div class="fx fx-b fx-c gap10 fs14">
-            ${logo(p.name)}<span class="grow">${esc(p.name)}</span><b class="rev">${fmt(p.remaining)}</b></div>
-          ${meter(round2(p.amount - p.remaining), p.amount)}
-          <div class="fs125 ink2">${p.term} months · ${fmt(p.monthly)}/mo</div>
-          <button class="btn ghost sm mt8" data-settle="${p.id}">Settle ${fmt(p.remaining)}</button></div>`).join('')
-          : empty('No plans')}</div>`;
-  };
-  const form = () => {
-    term = 3;
-    sheet(`<h2>Pay with Flex</h2><div class="sub">${fmt(flexAvail())} available · £100 minimum</div>
-      <div class="field"><label>Where</label><input id="fxName"></div>
-      <div class="field"><label>Amount</label><input id="fxAmt" type="number" min="100"></div>
-      ${chipRow([{ value: 3, label: '3 months · 0%' }, { value: 6, label: '6 · 29%' }, { value: 12, label: '12 · 29%' }], 3, 'term')}
-      <p class="note">0% applies to three months on £100 or more. Longer terms are 29% APR.</p>
-      ${kv('Monthly', '<span class="rev" id="fxMonthly">—</span>')}
-      <button class="btn mt12" id="fxGo">Confirm</button>`);
-    const quote = () => {
-      const a = +document.getElementById('fxAmt').value || 0;
-      document.getElementById('fxMonthly').textContent = a ? fmt(flexMonthly(a, term)) : '—';
-      document.querySelectorAll('[data-term]').forEach(b => b.classList.toggle('on', +b.dataset.term === term));
-    };
-    document.getElementById('fxAmt').oninput = quote;
-    document.querySelectorAll('[data-term]').forEach(b => b.onclick = () => { term = +b.dataset.term; quote(); });
-    document.getElementById('fxGo').onclick = () => {
-      const n = document.getElementById('fxName').value.trim();
-      if (!n) return toast('Where was it?');
-      const r = flexPurchase(n, +document.getElementById('fxAmt').value, term);
-      if (!r.ok) return toast(r.msg);
-      closeSheet(); render(); toast('Flexed');
-    };
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-new]')) return form();
-    const s = e.target.closest('[data-settle]');
-    if (s){ const r = settleFlex(s.dataset.settle); if (!r.ok) return toast(r.msg); render(); toast('Settled'); }
-  });
-  render();
-}
-
-export function mountPlus(root){
-  const render = () => {
-    const a = getState().plus;
-    const cash = round2(a.cashback || 0);
-    root.innerHTML = `<div class="h-sec"><h2>Monzo Plus</h2></div><div class="card">
-      <div class="fx fx-c gap10 mb20">${logo('Monzo Plus')}
-        <div class="sub m0">£15 per month · 1% cashback on card spend</div></div>
-      ${kv('Status', a.active ? badge('Active', 'ok') : badge('Off'))}
-      ${kv('Cashback earned', `<span class="rev">${fmt(cash)}</span>`)}
-      ${kv('Lounge passes', a.lounge)}${kv('Fast track', a.fast)}
-      <div class="row2 mt10">
-        <button class="btn ghost sm" data-lounge ${a.lounge ? '' : 'disabled'}>Use lounge pass</button>
-        <button class="btn ghost sm" data-fast ${a.fast ? '' : 'disabled'}>Use fast track</button></div>
-      <button class="btn ghost sm w100 mt10" data-cashback
-        ${cash >= CASHBACK_MIN ? '' : 'disabled'}>Move ${fmt(cash)} to balance</button>
-      <div class="toggle mt10"><div><div class="t">Auto-invest cashback</div></div>
-        <button class="sw ${a.auto ? 'on' : ''}" data-auto aria-label="Auto invest"></button></div>
-      <button class="btn mt14" data-toggle>${a.active ? 'Close Plus' : 'Take out Plus'}</button></div>
-      <p class="note">Cashback accrues at 1% on groceries, eating out, transport, shopping, health, education, entertainment, fitness and kids. £${CASHBACK_MIN} minimum to move out.</p>`;
-  };
-  root.addEventListener('click', e => {
-    const a = getState().plus;
-    if (e.target.closest('[data-lounge]') && a.lounge){ setPlus({ lounge: a.lounge - 1 }); render(); return toast('Pass used'); }
-    if (e.target.closest('[data-fast]') && a.fast){ setPlus({ fast: a.fast - 1 }); render(); return toast('Pass used'); }
-    if (e.target.closest('[data-auto]')){ setPlus({ auto: !a.auto }); return render(); }
-    if (e.target.closest('[data-cashback]')){
-      const r = payOutCashback();
-      if (!r.ok) return toast(r.msg);
-      render(); return toast(`${fmt(r.amt)} moved to your balance`);
-    }
-    if (e.target.closest('[data-toggle]')){ const on = takePlus(); render(); toast(on ? 'Plus active' : 'Closed'); }
-  });
-  render();
-}
-
-export function mountOverdraft(root){
-  let pending = 0;
-  const render = () => {
-    const o = getState().overdraft, bal = balNow();
-    root.innerHTML = `<div class="h-sec"><h2>Overdraft</h2></div><div class="card">
-      <div class="fx fx-c gap10 mb20">${logo('Monzo')}
-        <div class="sub m0">Arranged overdraft on your current account</div></div>
-      <div class="balance rev fs30">${fmt(o.limit)}</div>
-      ${kv('Rate', o.rate ? o.rate + '% EAR' : '—')}${kv('Used', `<span class="rev">${fmt(Math.max(0, -bal))}</span>`)}
-      ${chipRow([250, 500, 1000, 2000].map(v => ({ value: v, label: '£' + v })), pending || null, 'od')}
-      <button class="btn mt12" data-apply>Apply</button>
-      ${o.limit ? `<button class="btn ghost mt8" data-cancel>Cancel overdraft</button>` : ''}</div>`;
-  };
-  root.addEventListener('click', e => {
-    const c = e.target.closest('[data-od]');
-    if (c){ pending = +c.dataset.od; return render(); }
-    if (e.target.closest('[data-apply]')){ if (!pending) return toast('Choose an amount'); arrangeOverdraft(pending); render(); toast('Arranged'); }
-    if (e.target.closest('[data-cancel]')){ cancelOverdraft(); render(); toast('Cancelled'); }
-  });
-  render();
-}
-
-export function mountLoans(root){
-  const render = () => {
-    const amt = +((root.querySelector('#lnAmt') || {}).value) || 8000;
-    const term = +((root.querySelector('#lnTerm') || {}).value) || 24;
-    const apr = aprForLoan(amt), monthly = loanMonthly(amt, term);
-    root.innerHTML = `<div class="h-sec"><h2>Loans</h2></div><div class="card">
-      <div class="fx fx-c gap10 mb20">${logo('Monzo Loans')}
-        <div class="sub m0">Borrow £1,000 to £35,000</div></div>
-      <div class="field"><label>Amount</label><input id="lnAmt" type="number" min="1000" max="35000" step="500" value="${amt}"></div>
-      <div class="field"><label>Term</label><select id="lnTerm">${[12,24,36,48,60].map(t => `<option ${t === term ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
-      ${kv('APR', apr + '%')}${kv('Monthly', `<span class="rev">${fmt(monthly)}</span>`)}
-      ${kv('Total', `<span class="rev">${fmt(round2(monthly * term))}</span>`)}
-      <button class="btn mt12" data-apply>Apply</button></div>
-      <div class="card"><h2>Your loans</h2>
-        ${getState().loans.length ? getState().loans.map(l => `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
-          <div class="fx fx-b fs14"><span>${fmt(l.amount)}</span><b class="rev">${fmt(l.outstanding)}</b></div>
-          ${meter(l.paid, l.term)}
-          <button class="btn ghost sm mt8" data-over="${l.id}">Overpay</button></div>`).join('') : empty('No loans')}</div>`;
-    root.querySelector('#lnAmt').oninput = render;
-    root.querySelector('#lnTerm').onchange = render;
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-apply]')){
-      const r = takeLoan(+root.querySelector('#lnAmt').value, +root.querySelector('#lnTerm').value);
-      if (!r.ok) return toast(r.msg);
-      render(); return toast('Loan paid in');
-    }
-    const o = e.target.closest('[data-over]');
-    if (o){
-      sheet(`<h2>Overpay</h2><div class="field"><label>Amount</label><input id="ovAmt" type="number" min="1"></div>
-        <button class="btn" id="ovGo">Pay</button>`);
-      document.getElementById('ovGo').onclick = () => {
-        const r = overpayLoan(o.dataset.over, +document.getElementById('ovAmt').value);
-        if (!r.ok) return toast(r.msg);
-        closeSheet(); render(); toast('Paid');
-      };
-    }
-  });
-  render();
-}
-
-export function mountConnected(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Connected</h2></div>
-      <div class="card"><h2>Add a bank</h2><div class="pill-row">${BANKS.map(b =>
-        `<button class="chip" data-bank="${esc(b)}">${logo(b)}${esc(b)}</button>`).join('')}</div></div>
-      <div class="card"><h2>Connected</h2>
-        ${s.connected.length ? s.connected.map(c => `<div class="pot">${logo(c.bank)}
-          <span class="mid"><span class="nm">${esc(c.bank)}</span><span class="sub">${esc(c.kind)}</span></span>
-          <span class="amt rev">${fmt(c.bal)}</span>
-          <button class="iconbtn" data-rm="${c.id}" aria-label="Remove">🗑</button></div>`).join('') : empty('None connected')}</div>`;
-  };
-  root.addEventListener('click', e => {
-    const b = e.target.closest('[data-bank]');
-    if (b){ const r = connectBank(b.dataset.bank); if (!r.ok) return toast(r.msg); render(); return toast('Connected'); }
-    const rm = e.target.closest('[data-rm]');
-    if (rm){ removeBank(rm.dataset.rm); render(); toast('Removed'); }
-  });
-  render();
-}
-
-export function mountCredit(root){
-  const render = () => {
-    const s = getState(), scores = plan().scores;
-    root.innerHTML = `<div class="h-sec"><h2>Credit insights</h2></div>
-      <div class="card"><div class="fx" style="gap:20px">
-        <div class="grow"><div class="sub">Equifax</div><div class="score">${s.credit.eq}</div>
-          ${badge(s.credit.eq > 650 ? 'Good' : 'Fair', s.credit.eq > 650 ? 'ok' : 'warn')}</div>
-        ${scores > 1 ? `<div class="grow"><div class="sub">TransUnion</div><div class="score">${s.credit.tu}</div>
-          ${badge(s.credit.tu > 650 ? 'Good' : 'Fair', s.credit.tu > 650 ? 'ok' : 'warn')}</div>` : ''}
-      </div></div>
-      <div class="card"><h2>Boost your score</h2>
-        ${CREDIT_ACTIONS.map(a => { const done = s.credit.done.includes(a.key);
-          return `<div class="pot"><span class="lg"><span class="lg__i">${done ? '✓' : '+'}</span></span>
-            <span class="mid"><span class="nm">${esc(a.label)}</span><span class="sub">+${a.gain} points</span></span>
-            ${done ? badge('Done', 'ok') : `<button class="btn ghost sm" data-do="${a.key}">Do it</button>`}</div>`; }).join('')}</div>`;
-  };
-  root.addEventListener('click', e => {
-    const d = e.target.closest('[data-do]');
-    if (!d) return;
-    const r = creditAction(d.dataset.do);
-    if (!r.ok) return toast(r.msg);
-    render(); toast('+' + r.gain + ' points');
-  });
-  render();
-}
-
-export function mountChallenge(root){
-  const render = () => {
-    const c = getState().challenge;
-    root.innerHTML = `<div class="h-sec"><h2>Saving Challenge</h2></div>
-      <div class="card"><div class="fx fx-c gap10 mb20">${logo('Saving Challenge')}
-        <div class="sub m0">Save 1p more than yesterday, every day</div></div>
-        <div class="balance rev fs30">${fmt(c.saved)}</div>
-        ${meter(c.saved, 667.95)}${kv('Day', `${c.day} of 365`)}
-        ${kv('Today', `<span class="rev">${fmt(round2((c.day + 1) / 100))}</span>`)}
-        <button class="btn mt12" data-save>Save today's amount</button>
-        <button class="btn ghost mt8" data-restart>Restart challenge</button></div>`;
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-save]')){ const r = challengeSave(); if (!r.ok) return toast(r.msg); render(); return toast('Saved ' + fmt(r.amt)); }
-    if (e.target.closest('[data-restart]')){ restartChallenge(); render(); toast('Challenge reset'); }
-  });
-  render();
-}
-
-export function mountBillsback(root){
-  const render = () => {
-    const s = getState(), bills = bbBills();
-    root.innerHTML = `<div class="h-sec"><h2>Billsback</h2></div>
-      <div class="card">${kv('Eligible', plan().billsback ? badge('Yes', 'ok') : badge('Needs Extra', 'bad'))}
-        <div class="toggle"><div><div class="t">Opt in</div></div>
-          <button class="sw ${s.billsback.optIn ? 'on' : ''}" data-opt aria-label="Opt in"></button></div>
-        <button class="btn mt14" data-draw>Enter draw</button></div>
-      <div class="card"><h2>Eligible bills</h2>
-        ${bills.length ? bills.map(b => kv(`${logo(b.name)}<span class="billname">${esc(b.name)}</span> · ${fmt(Math.min(Math.abs(b.amt), BB_CAP))}`, esc(b.date))).join('') : empty('None this month')}</div>
-      <div class="card"><h2>Results</h2>
-        ${s.billsback.history.length ? s.billsback.history.map(h => kv(`${esc(h.month)}${h.bill ? ' · ' + esc(h.bill) : ''}`,
-          h.won ? badge(fmt(h.amount) + ' back', 'ok') : badge('No win'))).join('') : empty('No draws')}</div>`;
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-opt]')){ const r = billsbackOptIn(); if (!r.ok) return toast(r.msg); return render(); }
-    if (e.target.closest('[data-draw]')){ const r = billsbackDraw(); if (!r.ok) return toast(r.msg); render(); toast(r.won ? 'You won ' + fmt(r.amount) : 'No win'); }
-  });
-  render();
-}
-
-export function mountInsurance(root){
-  const render = () => {
-    const s = getState();
-    const covered = !!plan().cover;
-    const live = s.policies.filter(p => p.status === 'Active').length;
-    root.innerHTML = `<div class="h-sec"><h2>Insurance</h2></div>
-      ${covered ? '' : `<div class="card"><div class="sub">Not on ${esc(plan().name)} — cover ends when your plan does.</div>
-        <button class="btn mt10" data-go="plan">See plans</button></div>`}
-      <div class="card">
-        <div class="fx fx-c gap10 mb8">${logo('Aviva')}
-          <div class="sub m0">Policies held with Aviva</div></div>
-        ${s.policies.length ? s.policies.map(p => kv(
-          `${esc(p.name)}<br><span class="fs125">${esc(p.number)} · ${p.status === 'Active' ? badge('Active', 'ok') : badge(esc(p.status), 'bad')}</span>`,
-          `<button class="btn ghost sm" data-pol="${p.id}">Document</button>`)).join('') : empty('No policies')}
-        <p class="note">Held with Aviva. ${live} of ${s.policies.length} policies in force. £75 excess per claim on travel and phone.</p></div>`;
-  };
-  root.addEventListener('click', e => {
-    const t = e.target.closest('[data-pol]');
-    if (!t) return;
-    const s = getState();
-    const p = s.policies.find(x => x.id === t.dataset.pol);
-    if (!p) return toast('Policy not found');
-    const w = window.open('', '_blank');
-    if (!w) return toast('Allow pop-ups to print');
-    w.document.write(`<title>${esc(p.name)}</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#0b1a26}
-      h1{font-size:19px;margin:0 0 4px}.sub{color:#6b7c8a;font-size:13px;margin-bottom:20px}
-      .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #e6ebef;font-size:13px}
-      .row span:first-child{color:#6b7c8a}.flag{margin-top:18px;padding:10px 12px;border-radius:8px;font-size:13px;
-      background:${p.status === 'Active' ? '#eaf7ee' : '#fdecec'};color:${p.status === 'Active' ? '#1c6b31' : '#a3121f'}</style>
-      <h1>${esc(p.name)}</h1><div class="sub">Policy ${esc(p.number)} · ${esc(plan().name)} plan</div>
-      <div class="row"><span>Policyholder</span><b>${esc(s.profile.name)}</b></div>
-      <div class="row"><span>Address</span><b>${esc(s.profile.a1)}, ${esc(s.profile.city)}, ${esc(s.profile.post)}</b></div>
-      <div class="row"><span>Insurer</span><b>Aviva Insurance Ltd</b></div>
-      <div class="row"><span>Status</span><b>${esc(p.status)}</b></div>
-      <div class="row"><span>Cover started</span><b>${esc(p.start)}</b></div>
-      ${p.ended ? `<div class="row"><span>Cover ended</span><b>${esc(p.ended)}</b></div>` : ''}
-      <div class="row"><span>Excess per claim</span><b>${p.excess ? '£' + p.excess : 'None'}</b></div>
-      <div class="row"><span>Emergency line</span><b>0800 051 0021</b></div>
-      <div class="flag">${p.status === 'Active'
-        ? 'This document confirms cover is in force today.'
-        : 'This policy is not currently in force. Cover resumes if you return to a plan that includes insurance.'}</div>
-      <p class="sub" style="margin-top:16px">${esc(p.note)}</p>`);
-    w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
-    toast('Document ready to print');
-  });
-  render();
-}
-
-export function mountAccounts(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Your accounts</h2><button data-add>Add</button></div>
-      <div class="card p6-8">
-        <div class="pot">${logo('Monzo')}
-          <span class="mid"><span class="nm">${esc(s.acctName)} ${s.acctClosed ? badge('Closed', 'bad') : badge('Active', 'ok')}</span>
-            <span class="sub">${s.acctClosed ? 'Closed — reopen to use it' : fmt(balNow())}</span></span>
-          ${s.acctClosed
-            ? `<button class="btn ghost sm" data-reopen>Reopen</button>`
-            : `<button class="btn ghost sm" data-switch="personal">Use</button>
-               <button class="iconbtn" data-close-personal aria-label="Close account">🗑</button>`}</div>
-        <div class="pot">${logo('Monzo')}<span class="mid"><span class="nm">Joint account</span>
-          <span class="sub">With ${esc(s.partner)} · ${fmt(s.jointBal || 0)}</span></span>
-          <button class="btn ghost sm" data-go="joint">Open</button></div>
-        ${s.extraAccounts.map(a => `<div class="pot">${logo(a.name)}
-          <span class="mid"><span class="nm">${esc(a.name)}</span><span class="sub">${esc(a.type)} · ${fmt(a.bal || 0)}</span></span>
-          <button class="iconbtn" data-fund="${a.id}" aria-label="Add money">＋</button>
-          <button class="iconbtn" data-rename="${a.id}" aria-label="Rename">✎</button>
-          <button class="iconbtn" data-close-acc="${a.id}" aria-label="Close">🗑</button></div>`).join('')}</div>`;
-  };
-  root.addEventListener('click', e => {
-    const sw = e.target.closest('[data-switch]');
-    if (sw){ setActiveAccount(sw.dataset.switch); render(); return toast('Switched'); }
-
-    if (e.target.closest('[data-reopen]')){
-      const r = reopenAccount();
-      if (!r.ok) return toast(r.msg);
-      render(); return toast('Account reopened');
-    }
-
-    const pc = e.target.closest('[data-close-personal]');
-    if (pc){
-      const bal = balNow();
-      sheet(`<h2>Close your current account</h2>
-        <div class="sub">${bal > 0
-          ? `${fmt(bal)} moves to your joint account.`
-          : 'Your balance is already £0.'}</div>
-        <p class="note">Cards, direct debits and payees stay on file. You can reopen it any time.</p>
-        <button class="btn" id="cpGo">Close account</button>`);
-      document.getElementById('cpGo').onclick = () => {
-        const r = closeAccount();
-        if (!r.ok) return toast(r.msg);
-        closeSheet(); render();
-        toast(r.moved ? `Closed · ${fmt(r.moved)} moved to joint` : 'Account closed');
-      };
-      return;
-    }
-
-    const fund = e.target.closest('[data-fund]');
-    if (fund){
-      const a = getState().extraAccounts.find(x => x.id === fund.dataset.fund);
-      if (!a) return;
-      sheet(`<h2>Add to ${esc(a.name)}</h2><div class="sub">From ${esc(getState().acctName)}</div>
-        <div class="field"><label>Amount</label><input id="faAmt" type="number" min="1"></div>
-        <button class="btn" id="faGo">Move</button>`);
-      document.getElementById('faGo').onclick = () => {
-        const r = moveToExtraAccount(a.id, +document.getElementById('faAmt').value);
-        if (!r.ok) return toast(r.msg);
-        closeSheet(); render(); toast('Moved');
-      };
-      return;
-    }
-
-    const rn = e.target.closest('[data-rename]');
-    if (rn){
-      const a = getState().extraAccounts.find(x => x.id === rn.dataset.rename);
-      if (!a) return;
-      sheet(`<h2>Rename account</h2><div class="field"><label>Name</label><input id="raName" value="${esc(a.name)}"></div>
-        <button class="btn" id="raGo">Save</button>`);
-      document.getElementById('raGo').onclick = () => {
-        updateExtraAccount(a.id, { name: document.getElementById('raName').value.trim() || a.name });
-        closeSheet(); render(); toast('Renamed');
-      };
-      return;
-    }
-
-    const cl = e.target.closest('[data-close-acc]');
-    if (cl){
-      const a = getState().extraAccounts.find(x => x.id === cl.dataset.closeAcc);
-      if (!a) return;
-      sheet(`<h2>Close ${esc(a.name)}</h2>
-        <div class="sub">${a.bal > 0
-          ? `${fmt(a.bal)} will be returned to ${esc(getState().acctName)}.`
-          : 'There is no balance to return.'}</div>
-        <button class="btn" id="caGo">Close account</button>`);
-      document.getElementById('caGo').onclick = () => {
-        const r = closeExtraAccount(a.id);
-        if (!r.ok) return toast(r.msg);
-        closeSheet(); render();
-        toast(r.returned > 0 ? `Closed · ${fmt(r.returned)} returned` : 'Account closed');
-      };
-      return;
-    }
-
-    if (!e.target.closest('[data-add]')) return;
-    sheet(`<h2>Add an account</h2><div class="field"><label>Type</label><select id="aaType">
-      <option>Under 16</option><option>16-17</option><option>Business</option></select></div>
-      <div class="field"><label>Name</label><input id="aaName" placeholder="Child or trading name"></div>
-      <button class="btn" id="aaGo">Open</button>`);
-    document.getElementById('aaGo').onclick = () => {
-      const n = document.getElementById('aaName').value.trim();
-      if (!n) return toast('Enter a name');
-      addExtraAccount(n, document.getElementById('aaType').value);
-      closeSheet(); render(); toast('Opened');
-    };
-  });
-  render();
-}
-
-export function mountAppearance(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Appearance</h2></div><div class="card">
-      <div class="toggle"><div><div class="t">Theme</div></div>
-        ${chipRow([{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }, { value: 'auto', label: 'Auto' }], s.theme, 'theme')}</div>
-      <div class="toggle"><div><div class="t">Text size</div></div>
-        ${chipRow([{ value: 1, label: 'A' }, { value: 1.12, label: 'A+' }, { value: 1.24, label: 'A++' }], s.zoom, 'zoom')}</div>
-      <div class="toggle"><div><div class="t">Reduce motion</div></div>
-        <button class="sw ${s.motion ? '' : 'on'}" data-motion aria-label="Reduce motion"></button></div></div>`;
-  };
-  root.addEventListener('click', e => {
-    const t = e.target.closest('[data-theme]'); if (t){ setTheme(t.dataset.theme); return render(); }
-    const z = e.target.closest('[data-zoom]'); if (z){ setZoom(+z.dataset.zoom); return render(); }
-    if (e.target.closest('[data-motion]')){ setMotion(!getState().motion); render(); }
-  });
-  render();
-}
-
-export function mountSearch(root, params){
-  let cat = (params && params.cat) || 'All', q = '';
-  root.innerHTML = `<div class="h-sec"><h2>Search</h2></div>
-    <div class="field"><input id="sq" placeholder="Search" autocomplete="off"></div>
-    <div id="schips"></div>
-    <div class="card p4-14"><ul class="txlist" id="sres"></ul></div>`;
-  const chips = root.querySelector('#schips'), list = root.querySelector('#sres'), input = root.querySelector('#sq');
-  const paintChips = () => { chips.innerHTML = chipRow(['All', ...CATS], cat, 'cat'); };
-  const paintList = () => {
-    const res = getState().tx.filter(t => (cat === 'All' || t.cat === cat) &&
-      (!q || t.name.toLowerCase().includes(q) || (t.note || '').toLowerCase().includes(q))).slice(0, 60);
-    list.innerHTML = res.length ? res.map(txRow).join('') : '<li class="empty">No matches</li>';
-  };
-  input.addEventListener('input', () => { q = input.value.toLowerCase(); paintList(); });
-  root.addEventListener('click', e => {
-    const c = e.target.closest('[data-cat]');
-    if (c){ cat = c.dataset.cat; paintChips(); paintList(); }
-  });
-  paintChips(); paintList();
-}
-
-export function mountNotifs(root){
-  const render = () => {
-    const s = getState();
-    const target = n => /salary|paid early|scheduled/i.test(n.title) ? 'acc'
-      : /interest/i.test(n.title) ? 'pots'
-      : /flex/i.test(n.title) ? 'flex'
-      : /loan/i.test(n.title) ? 'loans'
-      : /billsback/i.test(n.title) ? 'billsback'
-      : /plan/i.test(n.title) ? 'plan'
-      : /dispute/i.test(n.title) ? 'disputes'
-      : /account/i.test(n.title) ? 'accounts'
-      : /request/i.test(n.title) ? 'request'
-      : 'home';
-    root.innerHTML = `<div class="h-sec"><h2>Notifications</h2><button data-clear>Clear</button></div>
-      <div class="card">${s.notifs.length ? s.notifs.map(n => `<button class="pot" data-notif="${target(n)}">
-        <span class="lg"><span class="lg__i">${n.read ? '·' : '●'}</span></span>
-        <span class="mid"><span class="nm">${esc(n.title)}</span><span class="sub">${esc(n.body)}</span></span>
-        <span class="amt fs12 ink3">${esc(n.time)}</span></button>`).join('')
-        : empty('Nothing new')}</div>`;
-    markAllRead();
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-clear]')){ clearNotifs(); return render(); }
-    const n = e.target.closest('[data-notif]');
-    if (n) go(n.dataset.notif);
-  });
-  render();
-}
-
-export function mountChat(root){
-  const timers = [];
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Support</h2></div>
-      <div class="card">${s.chat.length ? s.chat.map(m => `<div style="margin:9px 0;text-align:${m.who === 'me' ? 'right' : 'left'}">
-        <div style="display:inline-block;max-width:82%;padding:10px 14px;border-radius:16px;
-          background:${m.who === 'me' ? 'var(--coral)' : 'var(--line)'};color:${m.who === 'me' ? '#fff' : 'var(--ink)'}">${esc(m.text)}</div>
-        <div class="fs11 ink3">${esc(m.time)}</div></div>`).join('') : empty('Say hello')}</div>
-      <div class="fx gap10 mb20">
-        <input id="chatIn" class="chatinput" placeholder="Type a message">
-        <button class="btn sm" data-send>Send</button></div>`;
-  };
-  root.addEventListener('click', e => {
-    if (!e.target.closest('[data-send]')) return;
-    const i = root.querySelector('#chatIn'), v = i.value.trim();
-    if (!v) return;
-    pushChat('me', v); render();
-    timers.push(setTimeout(() => {
-      pushChat('them', 'Thanks Jason — looking into that now.');
-      render();
-    }, 900));
-  });
-  render();
-  return () => timers.forEach(clearTimeout);
-}
-
-export function mountDisputes(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Disputes</h2></div><div class="card">
-      ${s.disputes.length ? s.disputes.map(d => `<div class="pot">${logo(d.name)}
-        <span class="mid"><span class="nm">${esc(d.name)}</span><span class="sub">${esc(d.reason)}</span></span>
-        ${d.status === 'Open' ? `<button class="btn ghost sm" data-close-d="${d.id}">Close</button>` : badge('Closed', 'ok')}</div>`).join('')
-        : empty('No disputes')}</div>`;
-  };
-  root.addEventListener('click', e => {
-    const c = e.target.closest('[data-close-d]');
-    if (c){ closeDispute(c.dataset.closeD); render(); toast('Closed'); }
-  });
-  render();
-}
-
-export function mountJoint(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Joint account</h2></div><div class="card">
-      <div class="sub">Shared with ${esc(s.partner)} · FSCS to £240,000</div>
-      <div class="balance rev fs28">${fmt(s.jointBal || 0)}</div>
-      ${kv('Contributions this month', `<span class="rev">${fmt(jointContribution())}</span>`)}
-      ${kv('Joint bills this month', `<span class="rev">${fmt(jointBills())}</span>`)}
-      <button class="btn mt12" data-contrib>Add money</button></div>
-      <p class="note">Your share is ${Math.round(JOINT_SHARE * 100)}% of income in. Bills come off the current account ledger.</p>`;
-  };
-  root.addEventListener('click', e => {
-    if (!e.target.closest('[data-contrib]')) return;
-    sheet(`<h2>Add to joint</h2><div class="sub">From your personal account</div>
-      <div class="field"><label>Amount</label><input id="jcAmt" type="number" min="1"></div>
-      <button class="btn" id="jcGo">Move</button>`);
-    document.getElementById('jcGo').onclick = () => {
-      const v = +document.getElementById('jcAmt').value;
-      if (!v || v <= 0) return toast('Enter an amount');
-      if (v > balNow()) return toast('Not enough in your balance');
-      const s = getState();
-      s.jointBal = round2((s.jointBal || 0) + v);
-      addTx('Joint account', 'Transfers', -v, 'Moved to joint');
-      closeSheet(); render(); toast('Moved');
-    };
-  });
-  render();
-}
-
-export function mountPersonal(root){
-  const p = getState().profile;
-  const field = (id, label, v, t = 'text') => `<div class="field"><label for="${id}">${label}</label><input id="${id}" type="${t}" value="${esc(v || '')}"></div>`;
-  root.innerHTML = `<div class="h-sec"><h2>Personal details</h2></div><div class="card">
-    ${field('pName', 'Full name', p.name)}${field('pDob', 'Date of birth', p.dob, 'date')}
-    ${field('pEmail', 'Email', p.email, 'email')}${field('pPhone', 'Phone', p.phone, 'tel')}
-    ${field('pAddr1', 'Address line 1', p.a1)}${field('pAddr2', 'Address line 2', p.a2)}
-    ${field('pCity', 'Town', p.city)}${field('pPost', 'Postcode', p.post)}
-    ${field('pOcc', 'Occupation', p.occ)}${field('pEmp', 'Employer', p.emp)}
-    <button class="btn" data-save>Save</button></div>`;
-  root.addEventListener('click', e => {
-    if (!e.target.closest('[data-save]')) return;
-    const v = id => { const el = root.querySelector('#' + id); return el ? el.value : ''; };
-    setProfile({ name: v('pName'), dob: v('pDob'), email: v('pEmail'), phone: v('pPhone'),
-      a1: v('pAddr1'), a2: v('pAddr2'), city: v('pCity'), post: v('pPost'), occ: v('pOcc'), emp: v('pEmp') });
-    toast('Saved');
-  });
-}
-
-export function mountSecurity(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Security</h2></div><div class="card">
-      <div class="toggle"><div><div class="t">Fingerprint</div><div class="d">${s.credId ? 'Enabled' : 'Off'}</div></div>
-        <button class="sw ${s.credId ? 'on' : ''}" data-bio aria-label="Fingerprint"></button></div>
-      <div class="toggle"><div><div class="t">Privacy mode</div></div>
-        <button class="sw ${s.priv ? 'on' : ''}" data-priv aria-label="Privacy mode"></button></div>
-      <div class="toggle"><div><div class="t">Round-ups</div>
-        <div class="d">${roundupPotName() || 'No pot selected'}</div></div>
-        <button class="sw ${s.roundups ? 'on' : ''}" data-round aria-label="Round-ups"></button></div>
-      <div class="field"><label for="newPin">New passcode</label><input id="newPin" maxlength="4" inputmode="numeric"></div>
-      <button class="btn" data-pin>Update</button>
-      <button class="btn ghost mt8" data-lock-now>Lock now</button></div>
-      <p class="note">The app locks itself after a minute in the background. Round-ups go to ${esc(roundupPotName() || 'whichever pot you choose on its page')}.</p>`;
-  };
-  root.addEventListener('click', async e => {
-    if (e.target.closest('[data-priv]')){ togglePriv(); return render(); }
-    if (e.target.closest('[data-round]')){ toggleRoundups(); return render(); }
-    if (e.target.closest('[data-lock-now]')){ document.dispatchEvent(new CustomEvent('monzo:lock')); return; }
-    if (e.target.closest('[data-pin]')){
-      const v = root.querySelector('#newPin').value.trim();
-      if (!/^\d{4}$/.test(v)) return toast('4 digits');
-      setPin(v); return toast('Updated');
-    }
-    if (e.target.closest('[data-bio]')){
-      const s = getState();
-      if (s.credId){ setCredId(null); return render(); }
-      try {
-        const c = await navigator.credentials.create({ publicKey: {
-          challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: 'Monzo', id: location.hostname },
-          user: { id: crypto.getRandomValues(new Uint8Array(16)), name: s.profile.email, displayName: s.profile.name },
-          pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
-          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' } } });
-        setCredId(btoa(String.fromCharCode(...new Uint8Array(c.rawId)))); render(); toast('Enabled');
-      } catch { toast('Failed'); }
-    }
-  });
-  render();
-}
-
-/* Downscale to a 900px JPEG so a receipt survives a localStorage round trip. */
-function readImage(file, done){
-  const img = new Image();
-  const url = URL.createObjectURL(file);
-  img.onload = () => {
-    const max = 900;
-    const scale = Math.min(1, max / Math.max(img.width, img.height));
-    const c = document.createElement('canvas');
-    c.width = Math.max(1, Math.round(img.width * scale));
-    c.height = Math.max(1, Math.round(img.height * scale));
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-    URL.revokeObjectURL(url);
-    try { done(c.toDataURL('image/jpeg', 0.7)); } catch { done(null); }
-  };
-  img.onerror = () => { URL.revokeObjectURL(url); done(null); };
-  img.src = url;
-}
-
-export function mountTxDetail(root, params){
-  const render = () => {
-    const t = getState().tx.find(x => x.id === params.id);
-    if (!t){ root.innerHTML = empty('Not found'); return; }
-    const receipt = t.receipt
-      ? `<div class="receipt"><img src="${t.receipt.data}" alt="Receipt">
-          <span class="mid"><span class="nm">${esc(t.receipt.name)}</span>
-            <span class="sub">Attached ${esc(t.receipt.added)}</span></span>
-          <button class="iconbtn" data-unreceipt aria-label="Remove receipt">✕</button></div>`
-      : '';
-    root.innerHTML = `<div class="h-sec"><h2>Transaction</h2></div><div class="card">
-      <div class="fx fx-c gap10 mb20">${logo(t.name)}
-        <div><div class="strong">${esc(t.name)}</div><div class="sub">${esc(t.cat)}</div></div></div>
-      <div class="balance rev fs28">${t.amt > 0 ? '+' : ''}${fmt(t.amt)}</div>
-      ${kv('Date', t.date)}${kv('Time', esc(t.time))}${kv('Balance after', `<span class="rev">${fmt(t.bal)}</span>`)}
-      <div class="field"><label for="txName">Name</label><input id="txName" value="${esc(t.name)}"></div>
-      <div class="field"><label for="txCat">Category</label><select id="txCat">${CATS.map(c => `<option ${c === t.cat ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
-      <div class="field"><label for="txNote">Note</label><input id="txNote" value="${esc(t.note || '')}"></div>
-      <button class="btn" data-save>Save</button>
-      <div class="divider"></div>
-      <div class="receipt-head">Receipt</div>
-      ${receipt || '<p class="note">No receipt attached</p>'}
-      <label class="filebtn mt8">${t.receipt ? 'Replace receipt' : 'Attach receipt'}
-        <input type="file" accept="image/*" data-receipt></label>
-      <button class="btn ghost mt12" data-split>Split with a tab</button>
-      <button class="btn ghost mt8" data-disp>Raise a dispute</button>
-      <button class="btn red mt8" data-del>Delete transaction</button></div>`;
-  };
-  root.addEventListener('change', e => {
-    const input = e.target.closest('[data-receipt]');
-    if (!input || !input.files || !input.files[0]) return;
-    const file = input.files[0];
-    readImage(file, data => {
-      if (!data) return toast('Could not read that image');
-      updateTx(params.id, { receipt: { name: file.name, data, added: TODAY } });
-      render(); toast('Receipt attached');
+  const go = el('button', 'btn btn--primary btn--block', 'Create pot');
+  const s = sheet({title: 'New pot', body, foot: go});
+  go.onclick = () => {
+    if (!name.value.trim()) return toast('Give your pot a name');
+    state.pots.push({
+      id: uid('pot'), name: name.value.trim(),
+      target: Math.max(1, Number(target.value) || 100),
+      saved: 0, emoji, colour, locked: false, roundUp: false, created: Date.now()
     });
+    save(); s.close(); toast('Pot created'); rerender();
+  };
+}
+
+export function editPotSheet(id) {
+  const p = state.pots.find(x => x.id === id);
+  if (!p) return;
+  const body = el('div');
+  const name = input({value: p.name});
+  const target = input({type: 'number', value: p.target});
+  body.appendChild(field({label: 'Name', input: name}));
+  body.appendChild(field({label: 'Target', input: target}));
+  const rw = el('div', 'row');
+  const m = el('div', 'row__main');
+  m.appendChild(el('div', 'row__t', 'Round-ups'));
+  m.appendChild(el('div', 'row__s', 'Round spending to the nearest pound'));
+  rw.appendChild(m);
+  rw.appendChild(switchEl(p.roundUp, v => { p.roundUp = v; save(); }));
+  body.appendChild(rw);
+  const go = el('button', 'btn btn--primary btn--block', 'Save');
+  const s = sheet({title: 'Edit pot', body, foot: go});
+  go.onclick = () => {
+    p.name = name.value.trim() || p.name;
+    p.target = Math.max(1, Number(target.value) || p.target);
+    save(); s.close(); toast('Pot updated'); rerender();
+  };
+}
+
+/* ---------- investments ---------- */
+
+export function investScreen() {
+  const value = portfolioValue();
+  const body = el('div');
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'ringwrap__l', 'Portfolio value'));
+  c.appendChild(el('div', 'ringwrap__v', fmt(value)));
+  c.appendChild(el('div', 'hint', 'Platform fee ' + fmt(platformFeeMonthly()) + '/month on ' + planInfo().name));
+  body.appendChild(c);
+
+  const cash = el('div', 'card card--flat');
+  cash.appendChild(el('div', 'row__t', 'Cash to invest'));
+  cash.appendChild(el('div', 'row__v', fmt(state.invest.cash)));
+  const dep = el('button', 'btn btn--primary btn--sm btn--block', 'Add money');
+  dep.style.marginTop = '10px';
+  dep.onclick = () => depositSheet();
+  cash.appendChild(dep);
+  body.appendChild(cash);
+
+  body.appendChild(section('Holdings'));
+  const l = el('div', 'list list--boxed');
+  for (const f of FUNDS) {
+    if (f.id === 'cash') continue;
+    const units = state.invest.units[f.id] || 0;
+    if (units <= 0) continue;
+    l.appendChild(row({
+      title: f.name, sub: units.toFixed(3) + ' units · ' + f.ticker,
+      value: fmt(units * f.price),
+      onClick: () => { location.hash = '#/fund/' + f.id; }
+    }));
+  }
+  if (!l.children.length) l.appendChild(empty('No holdings yet', 'Buy your first fund'));
+  body.appendChild(l);
+
+  body.appendChild(section('Available funds'));
+  const l2 = el('div', 'list list--boxed');
+  for (const f of FUNDS) {
+    if (f.id === 'cash') continue;
+    l2.appendChild(row({title: f.name, sub: f.region + ' · risk ' + f.risk + '/7', value: fmt(f.price), onClick: () => { location.hash = '#/fund/' + f.id; }}));
+  }
+  body.appendChild(l2);
+
+  return screen('invest', {title: 'Investments', back: '#/account', body});
+}
+
+export function depositSheet() {
+  const body = el('div');
+  const a = input({type: 'number', step: '0.01', placeholder: '100.00'});
+  body.appendChild(field({label: 'Amount', input: a}));
+  const go = el('button', 'btn btn--primary btn--block', 'Add money');
+  const s = sheet({title: 'Add money', body, foot: go});
+  go.onclick = () => {
+    const v = round2(Number(a.value) || 0);
+    if (!v) return toast('Enter an amount');
+    if (!investDeposit(v)) return toast('Not enough money');
+    s.close(); toast('Added ' + fmt(v)); rerender();
+  };
+}
+
+export function fundScreen(id) {
+  const f = FUNDS.find(x => x.id === id);
+  if (!f) return screen('fund', {title: 'Fund', back: '#/invest', body: empty('Not found')});
+  const units = state.invest.units[f.id] || 0;
+  const body = el('div');
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'row__t', f.name));
+  c.appendChild(el('div', 'hint', f.ticker + ' · ' + f.region + ' · risk ' + f.risk + '/7'));
+  c.appendChild(el('div', 'ringwrap__v', fmt(f.price)));
+  body.appendChild(c);
+
+  const held = el('div', 'card card--flat');
+  held.appendChild(el('div', 'row__t', 'Your holding'));
+  held.appendChild(el('div', 'row__v', units.toFixed(4) + ' units'));
+  held.appendChild(el('div', 'hint', fmt(units * f.price)));
+  body.appendChild(held);
+
+  const amt = input({type: 'number', step: '0.01', placeholder: '0.00'});
+  body.appendChild(field({label: 'Amount', input: amt}));
+
+  const buy = el('button', 'btn btn--primary btn--block', 'Buy');
+  buy.onclick = () => {
+    const v = round2(Number(amt.value) || 0);
+    if (!v) return toast('Enter an amount');
+    if (!investBuy(f.id, v)) return toast('Add cash first');
+    toast('Bought ' + fmt(v)); rerender();
+  };
+  body.appendChild(buy);
+
+  const sell = el('button', 'btn btn--ghost btn--block', 'Sell');
+  sell.onclick = () => {
+    const v = round2(Number(amt.value) || 0);
+    if (!v) return toast('Enter an amount');
+    if (!investSell(f.id, v)) return toast('Nothing to sell');
+    toast('Sold ' + fmt(v)); rerender();
+  };
+  body.appendChild(sell);
+
+  return screen('fund-' + id, {title: f.ticker, back: '#/invest', body});
+}
+
+/* ---------- pension & ISA ---------- */
+
+export function pensionScreen() {
+  const p = pensionProjection();
+  const body = el('div');
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'ringwrap__l', 'Pension pot'));
+  c.appendChild(el('div', 'ringwrap__v', fmt(state.pension.balance)));
+  c.appendChild(el('div', 'hint', state.pension.provider + ' · joined ' + dateStr(state.pension.joined)));
+  body.appendChild(c);
+
+  const proj = el('div', 'card card--flat');
+  proj.appendChild(el('div', 'row__t', 'Projected at 68'));
+  proj.appendChild(el('div', 'row__v', fmt(p.pot)));
+  proj.appendChild(el('div', 'hint', p.years + ' years at ' + (state.pension.growth * 100).toFixed(1) + '% growth'));
+  body.appendChild(proj);
+
+  body.appendChild(section('Contributions'));
+  body.appendChild(list([
+    row({title: 'You', value: fmt(state.pension.monthly) + '/mo', chev: false}),
+    row({title: 'Employer', value: fmt(state.pension.employer) + '/mo', chev: false})
+  ]));
+
+  const amt = input({type: 'number', step: '1', value: state.pension.monthly});
+  body.appendChild(field({label: 'Your monthly contribution', input: amt}));
+  const go = el('button', 'btn btn--primary btn--block', 'Update');
+  go.onclick = () => {
+    state.pension.monthly = Math.max(0, round2(Number(amt.value) || 0));
+    save(); toast('Contribution updated'); rerender();
+  };
+  body.appendChild(go);
+
+  return screen('pension', {title: 'Pension', back: '#/home', body});
+}
+
+export function isaScreen() {
+  const body = el('div');
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'ringwrap__l', 'ISA balance'));
+  c.appendChild(el('div', 'ringwrap__v', fmt(state.isa.balance)));
+  const bar = el('div', 'pbar');
+  bar.style.marginTop = '10px';
+  const f = el('div', 'pbar__f');
+  f.style.width = Math.round((state.isa.used / Math.max(1, state.isa.allowance)) * 100) + '%';
+  bar.appendChild(f);
+  c.appendChild(bar);
+  c.appendChild(el('div', 'hint', fmt(state.isa.used) + ' of ' + fmt(state.isa.allowance) + ' allowance used'));
+  body.appendChild(c);
+
+  const amt = input({type: 'number', step: '1', value: state.isa.contrib});
+  body.appendChild(field({label: 'Monthly contribution', input: amt}));
+  const go = el('button', 'btn btn--primary btn--block', 'Update');
+  go.onclick = () => {
+    state.isa.contrib = Math.max(0, round2(Number(amt.value) || 0));
+    save(); toast('Contribution updated'); rerender();
+  };
+  body.appendChild(go);
+
+  return screen('isa', {title: 'Stocks & Shares ISA', back: '#/home', body});
+}
+
+/* ---------- plus ---------- */
+
+export function plusScreen() {
+  const body = el('div');
+  const cur = planInfo();
+  const c = el('div', 'card');
+  c.appendChild(pill(cur.name.toUpperCase(), 'coral'));
+  c.appendChild(el('div', 'ringwrap__v', fmt(cur.price) + '/mo'));
+  c.appendChild(el('div', 'hint', 'Renews ' + dateStr(state.plus.renews)));
+  body.appendChild(c);
+
+  body.appendChild(section('Plans'));
+  const l = el('div', 'list list--boxed');
+  for (const p of Object.values(PLANS)) {
+    l.appendChild(row({
+      title: p.name,
+      sub: p.price ? fmt(p.price) + '/mo · fee ' + (p.feeRate * 100).toFixed(2) + '%' : 'Free',
+      value: state.plan === p.id ? '✓' : '', chev: false,
+      onClick: () => { state.plan = p.id; save(); toast('Switched to ' + p.name); rerender(); }
+    }));
+  }
+  body.appendChild(l);
+
+  body.appendChild(section('Benefits'));
+  body.appendChild(list([
+    row({title: 'Fee-free spending abroad', chev: false, value: cur.id === 'free' ? '—' : '✓'}),
+    row({title: 'Capped platform fee', chev: false, value: fmt(cur.feeCap)}),
+    row({title: 'Priority support', chev: false, value: (cur.id === 'max' || cur.id === 'perks') ? '✓' : '—'})
+  ]));
+
+  return screen('plus', {title: 'Monzo Plus', back: '#/account', body});
+}
+
+/* ---------- settings ---------- */
+
+export function profileScreen() {
+  const body = el('div');
+  const u = state.user;
+  for (const [label, key, type] of [
+    ['Full name', 'name', 'text'], ['Email', 'email', 'email'],
+    ['Phone', 'phone', 'tel'], ['Address', 'address', 'text'],
+    ['City', 'city', 'text'], ['Postcode', 'postcode', 'text'], ['Date of birth', 'dob', 'date']
+  ]) {
+    const i = input({type, value: u[key] || ''});
+    i.onchange = () => { u[key] = i.value; save(); toast('Saved'); };
+    body.appendChild(field({label, input: i}));
+  }
+  return screen('profile', {title: 'Personal details', back: '#/account', body});
+}
+
+export function securityScreen() {
+  const body = el('div');
+  body.appendChild(list([
+    row({title: 'Change PIN', onClick: () => toast('PIN change')}),
+    row({title: 'Biometrics', value: state.settings.biometrics ? 'On' : 'Off', chev: false})
+  ]));
+  const b = el('button', 'btn btn--danger btn--block', 'Log out');
+  b.onclick = () => {
+    sessionStorage.removeItem('monzo_auth');
+    location.hash = '#/login';
+    rerender();
+  };
+  body.appendChild(b);
+  const r = el('button', 'btn btn--ghost btn--block', 'Reset app data');
+  r.onclick = () => confirmSheet({
+    title: 'Reset everything', text: 'This wipes all local data.', danger: true, confirm: 'Reset',
+    onConfirm: () => { reset(); location.hash = '#/login'; rerender(); }
   });
-  root.addEventListener('click', e => {
-    const t = getState().tx.find(x => x.id === params.id);
-    if (!t) return;
-    if (e.target.closest('[data-unreceipt]')){
-      updateTx(t.id, { receipt: null });
-      render(); return toast('Receipt removed');
-    }
-    if (e.target.closest('[data-save]')){
-      updateTx(t.id, { name: root.querySelector('#txName').value.trim() || t.name,
-        cat: root.querySelector('#txCat').value, note: root.querySelector('#txNote').value });
-      render(); return toast('Saved');
-    }
-    if (e.target.closest('[data-split]')){
-      sheet(`<h2>Split with a tab</h2><div class="field"><label>Total to split</label>
-        <input id="spTot" type="number" value="${Math.abs(t.amt)}"></div>
-        <div class="field"><label>People</label><input id="spPpl" type="number" min="2" value="2"></div>
-        <button class="btn" id="spGo">Create tab</button>`);
-      document.getElementById('spGo').onclick = () => {
-        const s = getState();
-        const tot = +document.getElementById('spTot').value;
-        const ppl = Math.max(2, +document.getElementById('spPpl').value || 2);
-        s.tabs.push({ id: 't' + Date.now(), name: t.name, total: tot, mine: round2(tot / ppl), people: ppl });
-        commit(); closeSheet(); toast('Tab created');
+  body.appendChild(r);
+  return screen('security', {title: 'Security', back: '#/account', body});
+}
+
+export function notificationsScreen() {
+  const body = el('div');
+  const s = state.settings;
+  const mk = (title, sub, key) => {
+    const r = el('div', 'row');
+    const m = el('div', 'row__main');
+    m.appendChild(el('div', 'row__t', title));
+    if (sub) m.appendChild(el('div', 'row__s', sub));
+    r.appendChild(m);
+    r.appendChild(switchEl(s[key], v => { s[key] = v; save(); }));
+    return r;
+  };
+  body.appendChild(list([
+    mk('Push notifications', 'Transactions and bills', 'notifications'),
+    mk('Marketing', 'Offers and product news', 'marketing'),
+    mk('Haptics', 'Vibrate on actions', 'haptics')
+  ]));
+  return screen('notifications', {title: 'Notifications', back: '#/account', body});
+}
+
+export function statementsScreen() {
+  const body = el('div');
+  const l = el('div', 'list list--boxed');
+  const d = new Date();
+  for (let i = 0; i < 12; i++) {
+    const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
+    const label = m.toLocaleDateString('en-GB', {month: 'long', year: 'numeric'});
+    l.appendChild(row({title: label, sub: 'PDF statement', onClick: () => toast('Preparing ' + label)}));
+  }
+  body.appendChild(l);
+  return screen('statements', {title: 'Statements', back: '#/account', body});
+}
+
+export function appearanceScreen() {
+  const body = el('div');
+  const s = state.settings;
+  body.appendChild(field({label: 'Theme', input: seg([
+    {label: 'Light', value: 'light'}, {label: 'Dark', value: 'dark'}, {label: 'System', value: 'system'}
+  ], s.theme, v => { s.theme = v; save(); applyTheme(); })}));
+  const r = el('div', 'row');
+  const m = el('div', 'row__main');
+  m.appendChild(el('div', 'row__t', 'Reduced motion'));
+  m.appendChild(el('div', 'row__s', 'Fewer animations'));
+  r.appendChild(m);
+  r.appendChild(switchEl(s.reducedMotion, v => { s.reducedMotion = v; save(); applyTheme(); }));
+  body.appendChild(list([r]));
+  return screen('appearance', {title: 'Appearance', back: '#/account', body});
+}
+
+export function applyTheme() {
+  const t = state.settings.theme;
+  let dark = t === 'dark';
+  if (t === 'system') {
+    try { dark = matchMedia('(prefers-color-scheme: dark)').matches; } catch {}
+  }
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+}
+
+export function aboutScreen() {
+  const body = el('div');
+  body.appendChild(list([
+    row({title: 'Version', value: '8.10.0 clone', chev: false}),
+    row({title: 'Build', value: 'v22', chev: false}),
+    row({title: 'Made by', value: 'Jason Armstrong', chev: false})
+  ]));
+  return screen('about', {title: 'About', back: '#/account', body});
+}
+
+export function cardsScreen() {
+  const body = el('div');
+  const l = el('div', 'list list--boxed');
+  for (const c of state.cards) {
+    l.appendChild(row({
+      title: c.label + ' card', sub: '•••• ' + c.last4 + (c.frozen ? ' · frozen' : ''),
+      onClick: () => cardSheet()
+    }));
+  }
+  body.appendChild(l);
+  const add = el('button', 'btn btn--ghost btn--block', 'Create virtual card');
+  add.onclick = () => {
+    state.cards.push({
+      id: uid('card'), label: 'Virtual',
+      last4: String(Math.floor(1000 + Math.random() * 9000)),
+      type: 'virtual', frozen: false, virtual: true, network: 'mastercard'
+    });
+    save(); toast('Virtual card created'); rerender();
+  };
+  body.appendChild(add);
+  return screen('cards', {title: 'Cards', back: '#/account', body});
+}
+
+/* ---------- layout editor ---------- */
+
+const LAYOUT_LABELS = {
+  card: 'Card', balance: 'Balance', ring: 'Left to spend',
+  carousel: 'Save & invest', activity: 'Activity'
+};
+const CAROUSEL_LABELS = {pots: 'Pots', pension: 'Pension', isa: 'ISA'};
+
+export function layoutSheet() {
+  const body = el('div');
+  const L = state.layout;
+
+  body.appendChild(el('p', 'hint', 'Reorder with the arrows. Hide anything you do not use.'));
+
+  const draw = () => {
+    body.querySelectorAll('.row').forEach(n => n.remove());
+    for (const key of L.order) {
+      const r = el('div', 'row');
+      r.appendChild(el('div', 'row__main', LAYOUT_LABELS[key] || key));
+
+      const up = el('button', 'hdr__btn');
+      up.type = 'button';
+      up.textContent = '↑';
+      up.onclick = () => {
+        const i = L.order.indexOf(key);
+        if (i > 0) { L.order.splice(i, 1); L.order.splice(i - 1, 0, key); save(); draw(); rerender(); }
       };
+
+      const dn = el('button', 'hdr__btn');
+      dn.type = 'button';
+      dn.textContent = '↓';
+      dn.onclick = () => {
+        const i = L.order.indexOf(key);
+        if (i > -1 && i < L.order.length - 1) { L.order.splice(i, 1); L.order.splice(i + 1, 0, key); save(); draw(); rerender(); }
+      };
+
+      r.appendChild(up);
+      r.appendChild(dn);
+      r.appendChild(switchEl(!L.hidden.includes(key), v => {
+        if (v) L.hidden = L.hidden.filter(x => x !== key);
+        else if (!L.hidden.includes(key)) L.hidden.push(key);
+        save(); rerender();
+      }));
+      body.appendChild(r);
     }
-    if (e.target.closest('[data-disp]')){ raiseDispute(t.name, 'Query raised from transaction'); toast('Raised'); go('disputes'); }
-    if (e.target.closest('[data-del]')){ deleteTx(t.id); toast('Deleted'); go('acc'); }
-  });
-  render();
+
+    body.appendChild(el('div', 'sect', 'Carousel'));
+    for (const key of ['pots', 'pension', 'isa']) {
+      const r = el('div', 'row');
+      r.appendChild(el('div', 'row__main', CAROUSEL_LABELS[key]));
+      r.appendChild(switchEl(L.carousel.includes(key), v => {
+        if (v && !L.carousel.includes(key)) L.carousel.push(key);
+        else if (!v) L.carousel = L.carousel.filter(x => x !== key);
+        save(); rerender();
+      }));
+      body.appendChild(r);
+    }
+  };
+
+  draw();
+  sheet({title: 'Edit home', body});
 }
