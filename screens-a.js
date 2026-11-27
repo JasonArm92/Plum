@@ -1,13 +1,12 @@
 /* src/screens-a.js — daily surfaces. */
 
 import {
-  getState, commit, esc, fmt, TODAY, THIS_YM, MONTHS, round2, plan, planPrice,
-  balNow, isaBal, growTotal, savingsTotal, homeEquity, connTotal, loanOwed,
+  getState, commit, esc, fmt, TODAY, MONTHS, round2, plan,
+  balNow, isaBal, growTotal, savingsTotal, connTotal, loanOwed,
   spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend, interestThisMonth,
-  daysToPayday, balanceSeries, tyUsed, TARGET_ISA, addTx, notif,
-  jointBills, jointContribution,
+  daysToPayday, balanceSeries, tyUsed, TARGET_ISA, addTx,
   moveToPot, createPot, updatePot, deletePot, togglePotLock, setRoundupPot, clearRoundupPot,
-  setHomeEstimate, setPensionMonthly, setTarget, setActiveAccount,
+  setPensionMonthly, setTarget,
   moveLayoutSection, toggleLayoutSection, addStandingOrder, addSharedTab,
   toggleStandingOrder, settleTab, salaryAmount, salaryIsEstimate, setSorter, setSorterOn,
   sorterTotal, getPaidEarly, gpeClaimed, CATS, FLEX
@@ -63,6 +62,28 @@ const sections = {
   }
 };
 
+export function addTxSheet(){
+  sheet(`<h2>Add transaction</h2>
+    <div class="field"><label>Description</label><input id="atName"></div>
+    <div class="field"><label>Amount</label><input id="atAmt" type="number" min="0" step="0.01"></div>
+    <div class="field"><label>Category</label><select id="atCat">
+      ${CATS.map(c => `<option ${c === 'Groceries' ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+    <div class="field"><label>Date</label><input id="atDate" type="date" value="${TODAY}" max="${TODAY}"></div>
+    <div class="field"><label>Note</label><input id="atNote"></div>
+    <button class="btn" id="atGo">Add transaction</button>`);
+  document.getElementById('atGo').onclick = () => {
+    const name = document.getElementById('atName').value.trim();
+    const amt = +document.getElementById('atAmt').value;
+    const cat = document.getElementById('atCat').value;
+    if (!name) return toast('Enter a description');
+    if (!amt || amt <= 0) return toast('Enter an amount');
+    const signed = cat === 'Income' || cat === 'Investments' ? amt : -amt;
+    if (signed < 0 && Math.abs(signed) > balNow()) return toast('Not enough in your balance');
+    addTx(name, cat, signed, document.getElementById('atNote').value, document.getElementById('atDate').value || TODAY);
+    closeSheet(); go(currentScreen() || 'home'); toast('Added');
+  };
+}
+
 function newPotSheet(){
   sheet(`<h2>New pot</h2><div class="field"><label>Name</label><input id="npName"></div>
     <div class="field"><label>Type</label><select id="npType">
@@ -117,28 +138,6 @@ export function mountHome(root){
   render();
 }
 
-function addTxSheet(){
-  sheet(`<h2>Add transaction</h2>
-    <div class="field"><label>Description</label><input id="atName"></div>
-    <div class="field"><label>Amount</label><input id="atAmt" type="number" min="0" step="0.01"></div>
-    <div class="field"><label>Category</label><select id="atCat">
-      ${CATS.map(c => `<option ${c === 'Groceries' ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
-    <div class="field"><label>Date</label><input id="atDate" type="date" value="${TODAY}" max="${TODAY}"></div>
-    <div class="field"><label>Note</label><input id="atNote"></div>
-    <button class="btn" id="atGo">Add transaction</button>`);
-  document.getElementById('atGo').onclick = () => {
-    const name = document.getElementById('atName').value.trim();
-    const amt = +document.getElementById('atAmt').value;
-    const cat = document.getElementById('atCat').value;
-    if (!name) return toast('Enter a description');
-    if (!amt || amt <= 0) return toast('Enter an amount');
-    const signed = cat === 'Income' || cat === 'Investments' ? amt : -amt;
-    if (signed < 0 && Math.abs(signed) > balNow()) return toast('Not enough in your balance');
-    addTx(name, cat, signed, document.getElementById('atNote').value, document.getElementById('atDate').value || TODAY);
-    closeSheet(); go(currentScreen() || 'home'); toast('Added');
-  };
-}
-
 export function mountSave(root){
   const render = () => {
     const s = getState();
@@ -184,19 +183,10 @@ export function mountGrow(root){
         <div class="balance rev" style="font-size:24px;margin:4px 0">${fmt(s.pension)}</div>
         <div class="field"><label>Monthly contribution</label><input id="pm" type="number" min="0" value="${s.pensionMonthly}"></div>
         <button class="btn" data-pen>Update contribution</button></div>
-      ${accCard({ label: 'Home equity', meta: 'Value ' + fmt(s.homeValue) + ' − mortgage ' + fmt(s.mortgage), balance: fmt(homeEquity()), tag: badge('Est.') })}
-      <div class="card"><h2>Home</h2>
-        <div class="field"><label>Property value</label><input id="hv" type="number" value="${s.homeValue}"></div>
-        <div class="field"><label>Mortgage owed</label><input id="hm" type="number" value="${s.mortgage}"></div>
-        <button class="btn" data-save>Save</button></div>
       <div class="card"><h2>Connected</h2><div class="sub">${s.connected.length} accounts · ${fmt(connTotal())}</div>
         <button class="btn ghost sm" data-go="connected">Manage</button></div>`;
   };
   root.addEventListener('click', e => {
-    if (e.target.closest('[data-save]')){
-      setHomeEstimate(+root.querySelector('#hv').value || 0, +root.querySelector('#hm').value || 0);
-      render(); return toast('Saved');
-    }
     if (e.target.closest('[data-pen]')){
       setPensionMonthly(+root.querySelector('#pm').value || 0);
       render(); toast('Contribution updated');
