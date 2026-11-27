@@ -1,13 +1,14 @@
 import {
   state, fmt, fmtShort, round2, addTx, save, uid, investBuy, investSell,
   investDeposit, portfolioValue, platformFeeMonthly, planInfo, PLANS,
-  pensionProjection, reset, dateStr, timeStr, acc, unitsOf
-} from './core.js?v=34';
-import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js?v=34';
+  pensionProjection, reset, dateStr, timeStr, acc, unitsOf,
+  budgetFor, setBudget, totalBudget, spentThisMonth
+} from './core.js?v=35';
+import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js?v=35';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, cardArt, avatar
-} from './ui.js?v=34';
+} from './ui.js?v=35';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -62,6 +63,75 @@ export function addTxSheet() {
     toast('Added ' + fmt(a));
     rerender();
   };
+}
+
+/* ---------- targets & budgets ---------- */
+
+export function targetSheet(catId) {
+  const c = cat(catId);
+  const current = budgetFor(catId);
+  const body = el('div');
+  const i = input({type: 'number', step: '1', value: current || '', placeholder: '0.00'});
+  body.appendChild(field({
+    label: c.emoji + ' ' + c.name + ' target',
+    input: i,
+    hint: 'Monthly. Spent so far ' + fmt(spentThisMonth() ? (0) : 0)
+  }));
+  const hint = body.querySelector('.hint');
+
+  const update = () => {
+    const v = round2(Number(i.value) || 0);
+    const spent = Object.entries({}).length ? 0 : 0;
+    hint.textContent = v
+      ? 'Monthly target ' + fmt(v)
+      : 'No target set';
+  };
+  update();
+  i.oninput = update;
+
+  const saveBtn = el('button', 'btn btn--primary btn--block', 'Save target');
+  const s = sheet({title: 'Monthly target', body, foot: saveBtn});
+  saveBtn.onclick = () => {
+    setBudget(catId, round2(Number(i.value) || 0));
+    s.close();
+    toast(budgetFor(catId) ? 'Target set' : 'Target removed');
+    rerender();
+  };
+
+  if (current) {
+    const rm = el('button', 'btn btn--ghost btn--block', 'Remove target');
+    rm.onclick = () => {
+      setBudget(catId, 0);
+      s.close();
+      toast('Target removed');
+      rerender();
+    };
+    body.appendChild(rm);
+  }
+}
+
+export function budgetSheet() {
+  const body = el('div');
+  body.appendChild(el('p', 'hint',
+    'Set a monthly target per category. Your totals add up to ' + fmt(totalBudget()) + '.'));
+
+  const l = el('div', 'list list--boxed');
+  for (const c of CATEGORIES) {
+    if (c.id === 'transfers' || c.id === 'income') continue;
+    const cur = budgetFor(c.id);
+    const r = el('div', 'row');
+    const m = el('div', 'row__main');
+    m.appendChild(el('div', 'row__t', c.emoji + ' ' + c.name));
+    r.appendChild(m);
+    const b = el('button', 'tgt' + (cur ? ' tgt--on' : ''));
+    b.type = 'button';
+    b.textContent = cur ? fmt(cur, {dp: 0}) : 'Set';
+    b.onclick = () => { s.close(); targetSheet(c.id); };
+    r.appendChild(b);
+    l.appendChild(r);
+  }
+  body.appendChild(l);
+  const s = sheet({title: 'Budgets', body});
 }
 
 export function txScreen(id) {
@@ -528,7 +598,7 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v34', chev: false}),
+    row({title: 'Build', value: 'v35', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   return screen('about', {title: 'About', back: '#/account', body});
