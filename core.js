@@ -16,7 +16,7 @@ export const PLANS = {
 export const uid = (p = 'id') => p + '_' + Math.random().toString(36).slice(2, 9);
 export const now = () => Date.now();
 export const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-export const round2 = n => Math.round(n * 100) / 100;
+export const round2 = n => Math.round((Number(n) || 0) * 100) / 100;
 
 export function fmt(n, opts = {}) {
   const v = Math.abs(Number(n) || 0);
@@ -34,8 +34,7 @@ export function fmtShort(n) {
 }
 
 export function dateStr(ts) {
-  const d = new Date(ts);
-  return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+  return new Date(ts).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
 }
 export function timeStr(ts) {
   return new Date(ts).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
@@ -62,15 +61,10 @@ function defaultState() {
   return {
     v: VERSION,
     user: {
-      name: 'Jason Armstrong',
-      first: 'Jason',
-      dob: '1992-10-07',
-      email: 'jason.armstrong@example.com',
-      phone: '07700 900412',
-      address: '259 Piper Knowle Road',
-      city: 'Stockton-on-Tees',
-      postcode: 'TS19 8JQ',
-      pin: PIN
+      name: 'Jason Armstrong', first: 'Jason', dob: '1992-10-07',
+      email: 'jason.armstrong@example.com', phone: '07700 900412',
+      address: '259 Piper Knowle Road', city: 'Stockton-on-Tees',
+      postcode: 'TS19 8JQ', pin: PIN
     },
     balance: 1842.63,
     savings: 4210.00,
@@ -80,8 +74,8 @@ function defaultState() {
       {id:'pot_xmas', name:'Christmas', target:800, saved:120, emoji:'🎄', colour:'#12a150', locked:true, roundUp:true, created:base - 30*86400000}
     ],
     tx: [
-      mk('Tesco', -42.18, 'groceries', 0, {time:'18:42'}),
-      mk('Greggs', -4.85, 'eating', 0, {time:'12:10'}),
+      mk('Tesco', -42.18, 'groceries', 0),
+      mk('Greggs', -4.85, 'eating', 0),
       mk('Salary', 2450.00, 'income', 1),
       mk('Northern', -8.40, 'transport', 1),
       mk('Amazon', -23.99, 'shopping', 2),
@@ -105,12 +99,7 @@ function defaultState() {
     flex: {limit: 1000, used: 214.40, plan: 'flex', active: true},
     plan: 'plus',
     plus: {since: base - 200*86400000, renews: base + 15*86400000},
-    invest: {
-      cash: 320.00,
-      units: {swda: 6.4, cspx: 0.8, cukx: 24, aggg: 60, cash: 0},
-      contrib: 120,
-      contribDay: 1
-    },
+    invest: {cash: 320.00, units: {swda: 6.4, cspx: 0.8, cukx: 24, aggg: 60, cash: 0}, contrib: 120, contribDay: 1},
     pension: {provider:'Nest', balance: 18420.55, monthly: 240, employer: 120, growth: 0.055, joined: base - 1200*86400000},
     isa: {balance: 6320.00, allowance: 20000, used: 3400, contrib: 200, contribDay: 5},
     goals: [],
@@ -135,28 +124,73 @@ const migrations = [
     if (s.plan === 'aura') s.plan = 'plus';
     return s;
   }},
-  {v: 22, fn: s => {
-    s.layout = s.layout || {};
-    s.layout.order = s.layout.order || ['card','balance','ring','carousel','activity'];
-    s.layout.hidden = s.layout.hidden || [];
-    s.layout.carousel = s.layout.carousel || ['pots','pension','isa'];
-    if (!Array.isArray(s.layout.carousel)) s.layout.carousel = ['pots','pension','isa'];
-    s.pension = s.pension || {provider:'Nest', balance: 0, monthly: 0, employer: 0, growth: 0.055, joined: now()};
-    s.isa = s.isa || {balance: 0, allowance: 20000, used: 0, contrib: 0, contribDay: 5};
-    if (!s.invest) s.invest = {cash: 0, units: {}, contrib: 0, contribDay: 1};
-    if (!s.invest.units) s.invest.units = {};
-    for (const f of FUNDS) if (s.invest.units[f.id] === undefined) s.invest.units[f.id] = 0;
-    return s;
-  }}
+  {v: 22, fn: s => s}
 ];
 
-export let state = defaultState();
+export function normalise(input) {
+  const s = (input && typeof input === 'object') ? input : defaultState();
+
+  s.user = Object.assign({
+    name: 'Jason Armstrong', first: 'Jason', dob: '1992-10-07', email: '',
+    phone: '', address: '', city: '', postcode: '', pin: PIN
+  }, s.user || {});
+
+  s.settings = Object.assign({
+    notifications: true, marketing: false, biometrics: true, theme: 'system',
+    reducedMotion: false, haptics: true, roundUpDefault: true, hideBalance: false
+  }, s.settings || {});
+
+  s.layout = s.layout || {};
+  if (!Array.isArray(s.layout.order) || !s.layout.order.length) {
+    s.layout.order = ['card','balance','ring','carousel','activity'];
+  }
+  if (!Array.isArray(s.layout.hidden)) s.layout.hidden = [];
+  if (!Array.isArray(s.layout.carousel)) s.layout.carousel = ['pots','pension','isa'];
+
+  if (!Array.isArray(s.pots)) s.pots = [];
+  if (!Array.isArray(s.tx)) s.tx = [];
+  if (!Array.isArray(s.scheduled)) s.scheduled = [];
+  if (!Array.isArray(s.payees)) s.payees = [];
+  if (!Array.isArray(s.goals)) s.goals = [];
+  if (!Array.isArray(s.cards) || !s.cards.length) {
+    s.cards = [{id: uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}];
+  }
+
+  if (typeof s.balance !== 'number' || !isFinite(s.balance)) s.balance = 0;
+  if (typeof s.savings !== 'number') s.savings = 0;
+
+  if (!s.flex) s.flex = {limit: 1000, used: 0, plan: 'flex', active: true};
+  if (typeof s.flex.limit !== 'number') s.flex.limit = 1000;
+  if (typeof s.flex.used !== 'number') s.flex.used = 0;
+
+  if (!s.pension) s.pension = {};
+  s.pension = Object.assign({provider:'Nest', balance:0, monthly:0, employer:0, growth:0.055, joined: now()}, s.pension);
+
+  if (!s.isa) s.isa = {};
+  s.isa = Object.assign({balance:0, allowance:20000, used:0, contrib:0, contribDay:5}, s.isa);
+
+  if (!s.invest) s.invest = {};
+  s.invest = Object.assign({cash:0, units:{}, contrib:0, contribDay:1}, s.invest);
+  if (!s.invest.units) s.invest.units = {};
+  for (const f of FUNDS) {
+    if (typeof s.invest.units[f.id] !== 'number') s.invest.units[f.id] = 0;
+  }
+
+  if (!s.plan || !PLANS[s.plan]) s.plan = 'free';
+  if (!s.plus) s.plus = {since: now(), renews: now()};
+  if (typeof s.lastRun !== 'number') s.lastRun = now();
+  if (!s.seen) s.seen = {};
+
+  s.v = VERSION;
+  return s;
+}
+
+export let state = normalise(defaultState());
 
 export function migrate(raw) {
   let s = raw;
-  const from = Number(s.v) || 11;
+  const from = Number(s && s.v) || 11;
   for (const m of migrations) if (from < m.v) s = m.fn(s);
-  s.v = VERSION;
   return s;
 }
 
@@ -171,11 +205,11 @@ export function load() {
       } catch {}
     }
   }
-  if (!raw) { state = defaultState(); save(); return state; }
+  if (!raw) { state = normalise(defaultState()); save(); return state; }
   try {
-    state = migrate(JSON.parse(raw));
+    state = normalise(migrate(JSON.parse(raw)));
   } catch {
-    state = defaultState();
+    state = normalise(defaultState());
   }
   save();
   return state;
@@ -190,7 +224,7 @@ export function save() {
 }
 
 export function reset() {
-  state = defaultState();
+  state = normalise(defaultState());
   save();
 }
 
@@ -226,10 +260,10 @@ export function potMove(potId, amount, dir) {
   const a = round2(amount);
   if (dir === 'in') {
     if (!takeFunds(a)) return false;
-    pot.saved = round2(pot.saved + a);
+    pot.saved = round2((pot.saved || 0) + a);
     addTx({name: pot.name + ' pot', amount: -a, category: 'transfers', potId});
   } else {
-    if (pot.saved < a) return false;
+    if ((pot.saved || 0) < a) return false;
     pot.saved = round2(pot.saved - a);
     state.balance = round2(state.balance + a);
     addTx({name: pot.name + ' pot', amount: a, category: 'transfers', potId});
@@ -239,7 +273,7 @@ export function potMove(potId, amount, dir) {
 }
 
 export function totalPots() {
-  return round2(state.pots.reduce((s, p) => s + p.saved, 0));
+  return round2(state.pots.reduce((s, p) => s + (p.saved || 0), 0));
 }
 
 /* ---------- platform fee ---------- */
@@ -280,10 +314,10 @@ export function flexPurchase(amount, months, name = 'Flex purchase') {
   state.flex.used = round2(state.flex.used + a);
   addTx({name, amount: -a, category: 'general'});
   for (let i = 0; i < months; i++) {
+    const when = now() + (i + 1) * 30 * 86400000;
     state.scheduled.push({
       id: uid('sch'), name: 'Flex · ' + name, amount: -per, category: 'finance',
-      day: new Date(now() + (i + 1) * 30 * 86400000).getDate(),
-      freq: 'once', next: now() + (i + 1) * 30 * 86400000, flex: true
+      day: new Date(when).getDate(), freq: 'once', next: when, flex: true
     });
   }
   save();
@@ -362,8 +396,7 @@ export function runScheduled() {
   state.scheduled = state.scheduled.filter(s => !s.done);
   if (days > 0) {
     state.lastRun = now();
-    const potPct = 0.004;
-    for (const p of state.pots) if (p.roundUp) p.saved = round2(p.saved + 0.35);
+    for (const p of state.pots) if (p.roundUp) p.saved = round2((p.saved || 0) + 0.35);
     save();
   }
   return count;
@@ -373,12 +406,9 @@ export function runScheduled() {
 
 export function upcoming() {
   const cutoff = now() + 7 * 86400000;
-  return state.scheduled.filter(s => s.next <= cutoff && s.amount < 0)
+  return state.scheduled
+    .filter(s => s.next <= cutoff && s.amount < 0)
     .reduce((s, x) => s + Math.abs(x.amount), 0);
-}
-
-export function committed() {
-  return round2(upcoming() + totalPots() * 0);
 }
 
 export function leftToSpend() {
