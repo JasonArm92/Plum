@@ -2,14 +2,15 @@ import {
   state, fmt, fmtShort, round2, addTx, save, uid, investBuy, investSell,
   investDeposit, portfolioValue, fundValue, platformFeeMonthly, planInfo, PLANS,
   pensionProjection, reset, dateStr, timeStr, acc,
-  budgetFor, setBudget, totalBudget,
-  ledgerNetInvested, ledgerIncome, riskInfo, setChosenFund
-} from './core.js?v=37';
-import { FUNDS, CATEGORIES, RISK_FUNDS, CONSTITUENTS, POT_EMOJI, POT_COLOURS } from './data.js?v=37';
+  budgetFor, setBudget, totalBudget, ledgerNetInvested, ledgerIncome,
+  riskInfo, setChosenFund, payeesSorted, createSplit, splitOutstanding,
+  splitsOutstandingTotal, markSplitPaid, removeSplit
+} from './core.js?v=38';
+import { FUNDS, CATEGORIES, RISK_FUNDS, CONSTITUENTS, POT_EMOJI, POT_COLOURS } from './data.js?v=38';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar
-} from './ui.js?v=37';
+} from './ui.js?v=38';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -126,6 +127,219 @@ export function budgetSheet() {
     l.appendChild(r);
   }
   body.appendChild(l);
+}
+
+/* ---------- splits ---------- */
+
+export function splitScreen(txId) {
+  const t = state.tx.find(x => x.id === txId);
+  if (!t) return screen('split', {title: 'Split bill', back: '#/payments', body: empty('Transaction not found')});
+
+  const total = Math.abs(round2(t.amount));
+  const body = el('div');
+  const chosen = new Set();
+
+  const head = el('div', 'card');
+  head.appendChild(tile(t.name, 44));
+  head.appendChild(el('div', 'row__t', t.name));
+  head.appendChild(el('div', 'lts__v', fmt(total)));
+  head.appendChild(el('div', 'hint', new Date(t.ts).toLocaleDateString('en-GB')));
+  body.appendChild(head);
+
+  body.appendChild(section('Split between'));
+  const l = el('div', 'list list--boxed');
+  for (const p of payeesSorted()) {
+    const r = el('button', 'person');
+    r.type = 'button';
+    r.setAttribute('aria-pressed', 'false');
+    r.appendChild(tile(p.name, 34));
+    const m = el('div', 'row__main');
+    m.appendChild(el('div', 'row__t', p.name));
+    r.appendChild(m);
+    const tick = el('span', 'person__tick', '✓');
+    r.appendChild(tick);
+    r.onclick = () => {
+      const on = r.getAttribute('aria-pressed') === 'true';
+      r.setAttribute('aria-pressed', String(!on));
+      if (on) chosen.delete(p.id); else chosen.add(p.id);
+      paint();
+    };
+    l.appendChild(r);
+  }
+  if (!state.payees.length) l.appendChild(empty('No payees', 'Add someone first'));
+  body.appendChild(l);
+
+  const preview = el('div', 'card card--flat');
+  const paint = () => {
+    preview.innerHTML = '';
+    const n = chosen.size;
+    if (!n) {
+      preview.appendChild(el('div', 'hint', 'Pick at least one person'));
+      return;
+    }
+    const each = round2(total / n);
+    preview.appendChild(el('div', 'row__t', fmt(each) + ' each'));
+    preview.appendChild(el('div', 'hint', 'Split evenly between ' + n + (n === 1 ? ' person' : ' people')));
+  };
+  paint();
+  body.appendChild(preview);
+
+  const go = el('button', 'btn btn--primary btn--block', 'Request ' + 'shares');
+  go.onclick = () => {
+    if (!chosen.size) return toast('Pick at least one person');
+    const people = [...chosen].map(id => state.payees.find(p => p.id === id)).filter(Boolean);
+    const s = createSplit(t.id, people);
+    if (!s) return toast('Could not split this');
+    toast('Requested from ' + people.length);
+    location.hash = '#/splits';
+  };
+  body.appendChild(go);
+
+  return screen('split-' + txId, {title: 'Split bill', back: '#/tx/' + txId, body});
+}
+
+export function splitsScreen() {
+  const body = el('div');
+  const total = splitsOutstandingTotal();
+
+  if (total > 0) {
+    const c = el('div', 'card');
+    c.appendChild(el('div', 'lts__l', 'Owed to you'));
+    c.appendChild(el('div', 'lts__v', fmt(total)));
+    body.appendChild(c);
+  }
+
+  if (!state.splits.length) {
+    body.appendChild(empty('No splits yet', 'Open a transaction and choose Split bill'));
+  } else {
+    const l = el('div', 'list list--boxed');
+    for (const s of state.splits) {
+      l.appendChild(row({
+        title: s.name,
+        sub: s.people.length + ' people · ' + fmt(splitOutstanding(s)) + ' outstanding',
+        value: fmt(s.total),
+        onClick: () => { location.hash = '#/split-detail/' + s.id; }
+      }));
+    }
+    body.appendChild(l);
+  }
+
+  return screen('splits', {title: 'Splits', back: '#/payments', body});
+}
+
+export function splitDetailScreen(id) {
+  const s = state.splits.find(x => x.id === id);
+  if (!s) return screen('split-detail', {title: 'Split', back: '#/splits', body: empty('Not found')});
+  const body = el('div');
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'row__t', s.name));
+  c.appendChild(el('div', 'lts__v', fmt(s.total)));
+  c.appendChild(el('div', 'hint', dateStr(s.ts) + ' · ' + fmt(splitOutstanding(s)) + ' outstanding'));
+  body.appendChild(c);
+
+  const l = el('div', 'list list--boxed');
+  s.people.forEach((p, i) => {
+    l.appendChild(row({
+      title: p.name,
+      sub: p.paid ? 'Paid' : 'Waiting',
+      value: fmt(p.amount),
+      chev: false,
+      onClick: () => { markSplitPaid(s.id, i); rerender(); }
+    }));
+  });
+  body.appendChild(l);
+
+  const rm = el('button', 'btn btn--ghost btn--block', 'Delete split');
+  rm.onclick = () => confirmSheet({
+    title: 'Delete split', text: 'This removes the record.', danger: true, confirm: 'Delete',
+    onConfirm: () => { removeSplit(s.id); toast('Deleted'); location.hash = '#/splits'; }
+  });
+  body.appendChild(rm);
+
+  return screen('split-detail-' + id, {title: 'Split', back: '#/splits', body});
+}
+
+export function receiptScreen(txId) {
+  const t = state.tx.find(x => x.id === txId);
+  if (!t) return screen('receipt', {title: 'Receipt', back: '#/payments', body: empty('Not found')});
+
+  const body = el('div');
+  const r = el('div', 'receipt');
+  r.appendChild(el('div', 'receipt__tick', '✓'));
+  r.appendChild(el('div', 'receipt__amt', fmt(t.amount)));
+  r.appendChild(el('div', 'row__t', 'Sent to ' + t.name));
+  r.appendChild(el('div', 'hint', 'Money left your account straight away'));
+
+  const meta = el('div', 'receipt__meta');
+  for (const [k, v] of [
+    ['Date', dateStr(t.ts)],
+    ['Time', timeStr(t.ts)],
+    ['From', acc().name + ' · ' + acc().card.last4],
+    ['Reference', t.ref || t.note || '—'],
+    ['Status', 'Sent']
+  ]) {
+    const line = el('div', 'receipt__line');
+    line.appendChild(el('span', '', k));
+    line.appendChild(el('span', '', v));
+    meta.appendChild(line);
+  }
+  r.appendChild(meta);
+  body.appendChild(r);
+
+  const share = el('button', 'btn btn--ghost btn--block', 'Share receipt');
+  share.onclick = () => toast('Receipt shared');
+  body.appendChild(share);
+
+  const done = el('button', 'btn btn--primary btn--block', 'Done');
+  done.onclick = () => { location.hash = '#/payments'; };
+  body.appendChild(done);
+
+  return screen('receipt-' + txId, {title: 'Receipt', back: '#/payments', body});
+}
+
+export function paymentsEditorSheet() {
+  const body = el('div');
+  body.appendChild(el('p', 'hint', 'Reorder with the arrows. Hide anything you do not use.'));
+  const LABELS = {
+    send: 'Send', request: 'Request', split: 'Split bill',
+    bank: 'Bank transfer', scheduled: 'Scheduled', payees: 'Payees'
+  };
+  const S = state.settings;
+
+  const draw = () => {
+    body.querySelectorAll('.editorrow').forEach(n => n.remove());
+    for (const key of S.payOrder) {
+      const r = el('div', 'editorrow');
+      r.appendChild(el('span', 'editorrow__grip', '≡'));
+      r.appendChild(el('div', 'row__main', LABELS[key] || key));
+
+      const up = el('button', 'hdr__btn');
+      up.type = 'button';
+      up.textContent = '↑';
+      up.onclick = () => {
+        const i = S.payOrder.indexOf(key);
+        if (i > 0) { S.payOrder.splice(i, 1); S.payOrder.splice(i - 1, 0, key); save(); draw(); rerender(); }
+      };
+      const dn = el('button', 'hdr__btn');
+      dn.type = 'button';
+      dn.textContent = '↓';
+      dn.onclick = () => {
+        const i = S.payOrder.indexOf(key);
+        if (i > -1 && i < S.payOrder.length - 1) { S.payOrder.splice(i, 1); S.payOrder.splice(i + 1, 0, key); save(); draw(); rerender(); }
+      };
+      r.appendChild(up);
+      r.appendChild(dn);
+      r.appendChild(switchEl(!S.payHidden.includes(key), v => {
+        if (v) S.payHidden = S.payHidden.filter(x => x !== key);
+        else if (!S.payHidden.includes(key)) S.payHidden.push(key);
+        save(); rerender();
+      }));
+      body.appendChild(r);
+    }
+  };
+
+  draw();
+  sheet({title: 'Edit actions', body});
 }
 
 /* ---------- investments ---------- */
@@ -373,7 +587,7 @@ export function txScreen(id) {
     row({title: 'Category', value: cat(t.category).name, onClick: () => categorySheet(t.id)}),
     row({title: 'Note', value: t.note || 'Add', onClick: () => noteSheet(t.id)}),
     row({title: 'Receipt', value: t.receipt ? 'Attached' : 'Add', onClick: () => receiptSheet(t.id)}),
-    row({title: 'Split bill', onClick: () => splitSheet(t.id)}),
+    row({title: 'Split bill', onClick: () => { location.hash = '#/split/' + t.id; }}),
     row({title: 'Repeat', onClick: () => toast('Repeat payment set up')})
   ]));
 
@@ -427,25 +641,6 @@ export function receiptSheet(id) {
     t.receipt = i.value.trim() || 'Attached';
     save(); s.close(); toast('Receipt attached'); rerender();
   };
-}
-
-export function splitSheet(id) {
-  const t = state.tx.find(x => x.id === id);
-  if (!t) return;
-  const body = el('div');
-  const n = input({type: 'number', value: 2, min: 2, max: 12});
-  const each = el('p', 'hint');
-  const update = () => {
-    const c = Math.max(2, Number(n.value) || 2);
-    each.textContent = fmt(round2(Math.abs(t.amount) / c)) + ' each across ' + c + ' people';
-  };
-  update();
-  n.oninput = update;
-  body.appendChild(field({label: 'Split between', input: n}));
-  body.appendChild(each);
-  const go = el('button', 'btn btn--primary btn--block', 'Request shares');
-  const s = sheet({title: 'Split bill', body, foot: go});
-  go.onclick = () => { s.close(); toast('Requests sent'); };
 }
 
 export function newPotSheet() {
@@ -708,7 +903,7 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v37', chev: false}),
+    row({title: 'Build', value: 'v38', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   return screen('about', {title: 'About', back: '#/account', body});
@@ -796,4 +991,4 @@ export function layoutSheet() {
 
   draw();
   sheet({title: 'Edit home', body});
-}
+      }
