@@ -1,13 +1,13 @@
 import {
-  state, fmt, fmtShort, round2, addTx, save, uid, investBuy, investSell,
+  state, fmt, round2, addTx, save, uid, investBuy, investSell,
   investDeposit, portfolioValue, platformFeeMonthly, planInfo, PLANS,
-  pensionProjection, reset, dateStr, timeStr
-} from './core.js?v=33';
-import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js?v=33';
+  pensionProjection, reset, dateStr, timeStr, scan, restoreFrom, recoveredFrom
+} from './core.js?v=34';
+import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js?v=34';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, cardArt, avatar
-} from './ui.js?v=33';
+} from './ui.js?v=34';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -435,11 +435,65 @@ export function profileScreen() {
   return screen('profile', {title: 'Personal details', back: '#/account', body});
 }
 
+export function dataScreen() {
+  const body = el('div');
+  if (recoveredFrom) {
+    const p = el('p', 'hint');
+    p.textContent = 'Restored from ' + recoveredFrom + '.';
+    body.appendChild(p);
+  }
+  const note = el('p', 'hint');
+  note.textContent = 'Every stored copy is listed below, richest first. Use any of them to replace the current data.';
+  body.appendChild(note);
+
+  const rows = scan();
+  if (!rows.length) {
+    body.appendChild(empty('No stored data found'));
+  } else {
+    const l = el('div', 'list list--boxed');
+    for (const r of rows) {
+      const isCurrent = r.key === (recoveredFrom || 'monzo_v22');
+      const m = el('div', 'row__main');
+      m.appendChild(el('div', 'row__t', r.key));
+      m.appendChild(el('div', 'row__s',
+        fmt(r.balance) + ' balance · ' + r.pots + ' pots · ' + fmt(r.portfolio) + ' invested · ' + r.tx + ' tx'));
+      const b = el('button', 'row');
+      b.type = 'button';
+      b.appendChild(m);
+      b.appendChild(el('div', 'row__v', isCurrent ? 'now' : 'use'));
+      b.onclick = () => {
+        if (!restoreFrom(r.key)) return toast('Could not read that copy');
+        toast('Restored ' + r.key);
+        rerender();
+      };
+      l.appendChild(b);
+    }
+    body.appendChild(l);
+  }
+
+  const dump = el('button', 'btn btn--ghost btn--block', 'Copy current data');
+  dump.onclick = async () => {
+    const txt = JSON.stringify(state);
+    try {
+      await navigator.clipboard.writeText(txt);
+      toast('Copied to clipboard');
+    } catch {
+      const box = el('pre', 'errbox', txt);
+      body.appendChild(box);
+      toast('Copy from the box below');
+    }
+  };
+  body.appendChild(dump);
+
+  return screen('data', {title: 'Stored data', back: '#/account', body});
+}
+
 export function securityScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Change PIN', onClick: () => toast('PIN change')}),
-    row({title: 'Biometrics', value: state.settings.biometrics ? 'On' : 'Off', chev: false})
+    row({title: 'Biometrics', value: state.settings.biometrics ? 'On' : 'Off', chev: false}),
+    row({title: 'Stored data', onClick: () => { location.hash = '#/data'; }})
   ]));
   const b = el('button', 'btn btn--danger btn--block', 'Log out');
   b.onclick = () => {
@@ -450,7 +504,7 @@ export function securityScreen() {
   body.appendChild(b);
   const r = el('button', 'btn btn--ghost btn--block', 'Reset app data');
   r.onclick = () => confirmSheet({
-    title: 'Reset everything', text: 'This wipes all local data.', danger: true, confirm: 'Reset',
+    title: 'Reset everything', text: 'This wipes the current copy. Older copies stay in Stored data.', danger: true, confirm: 'Reset',
     onConfirm: () => { reset(); location.hash = '#/login'; rerender(); }
   });
   body.appendChild(r);
@@ -519,7 +573,7 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v33', chev: false}),
+    row({title: 'Build', value: 'v34', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   return screen('about', {title: 'About', back: '#/account', body});
