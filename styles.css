@@ -307,7 +307,6 @@ textarea.input{padding:var(--s3) var(--s4);min-height:88px;resize:vertical}
 .riskmeter i{flex:1;height:5px;border-radius:3px;background:var(--bg-3)}
 .riskmeter i.on{background:var(--coral)}
 
-/* payee + split */
 .person{display:flex;align-items:center;gap:var(--s3);width:100%;text-align:left;
   padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);background:none}
 .person:last-child{border-bottom:0}
@@ -320,7 +319,6 @@ textarea.input{padding:var(--s3) var(--s4);min-height:88px;resize:vertical}
   background:var(--bg-2);flex:none;font-size:13px;color:var(--ink-3)}
 .fav[aria-pressed="true"]{background:#fff6d6;color:#b25e00}
 
-/* receipt */
 .receipt{background:var(--bg);border-radius:var(--r-card);padding:var(--s5);
   display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s2);
   border:1px solid var(--line)}
@@ -338,6 +336,26 @@ textarea.input{padding:var(--s3) var(--s4);min-height:88px;resize:vertical}
   border-bottom:1px solid var(--line)}
 .editorrow:last-child{border-bottom:0}
 .editorrow__grip{color:var(--ink-4);font-weight:800;width:16px;flex:none;text-align:center}
+
+/* borrowing */
+.slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:3px;
+  background:var(--bg-3);outline:none;margin:14px 0}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;
+  background:var(--coral);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer}
+.slider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--coral);
+  border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer}
+.quote{display:flex;flex-direction:column;gap:2px;padding:var(--s3);border-radius:var(--d2);
+  background:var(--bg-2)}
+.quote__v{font-size:var(--t6);font-weight:800;letter-spacing:-.8px;
+  font-variant-numeric:tabular-nums}
+.plan{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);
+  border-bottom:1px solid var(--line)}
+.plan:last-child{border-bottom:0}
+.plan__main{flex:1;min-width:0}
+
+.grouphdr{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4) var(--s2);
+  font-size:var(--t2);font-weight:800;letter-spacing:.3px;text-transform:uppercase;
+  color:var(--ink-3)}
 
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;transition-duration:.01ms!important}
