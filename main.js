@@ -1,17 +1,17 @@
-import { load, state, runScheduled } from './core.js?v=35';
-import { el, icon, toast } from './ui.js?v=35';
+import { load, state, runScheduled } from './core.js?v=36';
+import { el, icon, toast } from './ui.js?v=36';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
   payeeScreen, sendScreen, requestScreen, bankScreen, scheduledScreen,
   borrowingScreen, accountScreen, potsScreen, potScreen
-} from './screens-a.js?v=35';
+} from './screens-a.js?v=36';
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
-  appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet
-} from './screens-b.js?v=35';
+  appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, ledgerScreen
+} from './screens-b.js?v=36';
 
-const BUILD = 35;
+const BUILD = 36;
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -74,6 +74,7 @@ const SCREENS = {
   bank: () => bankScreen(),
   scheduled: () => scheduledScreen(),
   invest: () => investScreen(),
+  ledger: () => ledgerScreen(),
   pension: () => pensionScreen(),
   isa: () => isaScreen(),
   plus: () => plusScreen(),
