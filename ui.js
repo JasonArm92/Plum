@@ -4,9 +4,9 @@ import { esc, fmt, pct } from './core.js';
 import { DOMAINS } from './data.js';
 
 /* --- logo resolution -------------------------------------------------------
-   Self-contained so no second module has to load. DOMAINS in data.js is the
-   source of truth; FUNDS and TICKERS extend it. Chain per name: Clearbit logo
-   → Google favicon → the initials badge, so a dead logo never leaves a hole. */
+   Self-contained, no second module and no stylesheet dependency: the tile is
+   styled with inline attributes so no rule can push the image out of view.
+   Chain: Google favicon → DuckDuckGo icon → initials. */
 
 const FUNDS = {
   iShares: 'ishares.com',
@@ -28,8 +28,8 @@ export const TICKERS = {
   VWRP: 'vanguardinvestor.co.uk'
 };
 
-const CDN = 'https://logo.clearbit.com/';
-const FAV = 'https://www.google.com/s2/favicons?sz=128&domain=';
+const GOOG = 'https://www.google.com/s2/favicons?sz=128&domain=';
+const DDG = 'https://icons.duckduckgo.com/ip3/';
 
 const norm = s => String(s || '')
   .toLowerCase()
@@ -60,19 +60,43 @@ export function domainFor(name){
 
 export function hasLogo(name){ return !!domainFor(name); }
 
+/* charAt, not [0], so a missing second word cannot yield "undefined" */
 export function initials(name){
   const words = String(name || '').replace(/[^A-Za-z ]/g, ' ').split(/\s+/).filter(Boolean);
-  return (((words[0] || '?')[0] + (words[1] || '')[0]) || '?').toUpperCase();
+  const a = (words[0] || '?').charAt(0) || '?';
+  const b = words[1] ? words[1].charAt(0) : '';
+  return (a + b).toUpperCase();
 }
+
+const hueOf = s => {
+  let h = 0;
+  const t = String(s || '');
+  for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 360;
+  return h;
+};
+
+function tileStyle(name, size){
+  const h = hueOf(name);
+  return `position:relative;display:inline-flex;align-items:center;justify-content:center;`
+    + `width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex:0 0 auto;`
+    + `font:600 ${Math.round(size * 0.32)}px/1 system-ui,sans-serif;text-transform:uppercase;`
+    + `background:hsl(${h} 38% 30%);color:#fff;box-sizing:border-box`;
+}
+
+const IMG_STYLE = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;'
+  + 'background:#fff;padding:12%;box-sizing:border-box';
 
 export function logoHTML(name, big){
   const d = domainFor(name);
   const ini = esc(initials(name));
+  const size = big ? 48 : 40;
+  const h = hueOf(name);
   const cls = big ? 'lg lg--lg' : 'lg';
-  if (!d) return `<span class="${cls}"><span class="lg__i">${ini}</span></span>`;
-  return `<span class="${cls}"><span class="lg__i">${ini}</span>`
-    + `<img src="${CDN}${d}" alt="" loading="lazy" decoding="async"`
-    + ` referrerpolicy="no-referrer" data-fb="${FAV}${d}"></span>`;
+  if (!d) return `<span class="${cls}" style="${tileStyle(name, size)}">${ini}</span>`;
+  return `<span class="${cls}" style="${tileStyle(name, size)};background:#fff">`
+    + `<span class="lg__i" style="position:absolute;color:hsl(${h} 55% 32%)">${ini}</span>`
+    + `<img style="${IMG_STYLE}" src="${GOOG}${d}" alt="" decoding="async"`
+    + ` referrerpolicy="no-referrer" data-fb="${DDG}${d}.ico"></span>`;
 }
 
 export function logoEl(name, big){
@@ -88,35 +112,30 @@ export function paintLogos(root){
   });
 }
 
-/* `error` does not bubble, so it is captured. Steps down the chain, then
-   settles on the initials badge. */
+function stepDown(img){
+  const chain = (img.dataset.fb || '').split('|').filter(Boolean);
+  if (chain.length){
+    img.dataset.fb = chain.slice(1).join('|');
+    img.src = chain[0];
+  } else {
+    img.remove();
+  }
+}
+
+/* `error` does not bubble, so it is captured. */
 document.addEventListener('error', e => {
   const img = e.target;
   if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
-  const next = img.dataset.fb;
-  if (next){ img.removeAttribute('data-fb'); img.src = next; }
-  else img.remove();
+  stepDown(img);
 }, true);
 
+/* a 200 with an empty body still counts as a failure */
 document.addEventListener('load', e => {
   const img = e.target;
-  if (img instanceof HTMLImageElement && img.parentElement
-      && img.parentElement.classList.contains('lg')) img.classList.add('is-loaded');
+  if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
+  if (img.naturalWidth > 0) img.removeAttribute('data-fb');
+  else stepDown(img);
 }, true);
-
-try {
-  if (document.head && !document.getElementById('logo-css')){
-    const style = document.createElement('style');
-    style.id = 'logo-css';
-    style.textContent = `
-.lg{position:relative;overflow:hidden}
-.lg>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
-  background:#fff;padding:12%;box-sizing:border-box;opacity:0;transition:opacity .18s ease}
-.lg>img.is-loaded{opacity:1}
-@media (prefers-reduced-motion:reduce){.lg>img{transition:none}}`;
-    document.head.append(style);
-  }
-} catch { /* never let styling stop the app booting */ }
 
 /* -------------------------------------------------------------------------- */
 
@@ -353,7 +372,7 @@ export function potRow(p, rate){
   const progress = pct(p.bal, p.goal);
   const rateNote = p.type === 'savings' && rate ? `${rate}% AER · ` : '';
   return `<button class="pot ${p.locked ? 'pot--locked' : ''}" data-pot="${p.id}">
-    <span class="lg"><span class="lg__i">${esc(p.name[0])}</span></span>
+    <span class="lg" style="${tileStyle(p.name, 40)}">${esc(p.name.charAt(0))}</span>
     <span class="mid"><span class="nm">${esc(p.name)}</span>
       <span class="sub">${rateNote}${Math.round(progress)}% of ${fmt(p.goal)}</span>
       <span class="bar"><i style="width:${progress}%"></i></span></span>
