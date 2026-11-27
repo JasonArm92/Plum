@@ -383,28 +383,28 @@ export function mountTrends(root){
 
 export function mountAccount(root){
   const s = getState();
-  const row = (label, sub, attrs) => `<button class="pot" ${attrs}><span class="lg"><span class="lg__i">${label.replace(/&amp;/g, '').slice(0, 3)}</span></span>
+  const row = (code, label, sub, attrs) => `<button class="pot" ${attrs}><span class="lg"><span class="lg__i">${code}</span></span>
     <span class="mid"><span class="nm">${label}</span><span class="sub">${sub}</span></span><span class="amt">›</span></button>`;
   root.innerHTML = `<div class="h-sec"><h2>Account</h2></div>
     <div class="card" style="padding:6px 8px">
-      ${row('Your accounts', (1 + s.extraAccounts.length) + ' accounts', 'data-go="accounts"')}
-      ${row('Personal details', esc(s.profile.name), 'data-go="personal"')}
-      ${row('Security &amp; privacy', s.credId ? 'Biometrics on' : 'Passcode only', 'data-go="security"')}
-      ${row('Statements', 'PDF and CSV', 'data-go="statements"')}
-      ${row('Backup', s.lastBackup ? 'Last ' + esc(s.lastBackup) : 'Never exported', 'data-go="backup"')}
-      ${row('Payees', s.payees.length + ' saved', 'data-go="payees"')}
-      ${row('Cards', s.vcards.length + ' virtual', 'data-go="cards"')}
-      ${row('Credit insights', s.credit.eq + ' Equifax', 'data-go="credit"')}
-      ${row('Connected accounts', s.connected.length + ' connected', 'data-go="connected"')}
-      ${row('Borrowing', 'Flex, loans, overdraft', 'data-go="borrow"')}
-      ${row('Plan', plan().name, 'data-go="plan"')}
-      ${row('Limits', 'ATM and card', 'data-go="limits"')}
-      ${row('Insurance', plan().cover ? 'Active' : 'Not included', 'data-go="insurance"')}
-      ${row('Billsback', plan().billsback ? 'Eligible' : 'Needs Extra', 'data-go="billsback"')}
-      ${row('Saving Challenge', s.challenge.day + ' of 365 days', 'data-go="challenge"')}
-      ${row('Disputes', s.disputes.filter(d => d.status === 'Open').length + ' open', 'data-go="disputes"')}
-      ${row('Support', 'Chat to us', 'data-go="chat"')}
-      ${row('Appearance', 'Theme, text size', 'data-go="appearance"')}
+      ${row('ACC', 'Your accounts', (1 + s.extraAccounts.length) + ' accounts', 'data-go="accounts"')}
+      ${row('PER', 'Personal details', esc(s.profile.name), 'data-go="personal"')}
+      ${row('SEC', 'Security &amp; privacy', s.credId ? 'Biometrics on' : 'Passcode only', 'data-go="security"')}
+      ${row('STM', 'Statements', 'PDF and CSV', 'data-go="statements"')}
+      ${row('BAK', 'Backup', s.lastBackup ? 'Last ' + esc(s.lastBackup) : 'Never exported', 'data-go="backup"')}
+      ${row('PAY', 'Payees', s.payees.length + ' saved', 'data-go="payees"')}
+      ${row('CRD', 'Cards', s.vcards.length + ' virtual', 'data-go="cards"')}
+      ${row('CRA', 'Credit insights', s.credit.eq + ' Equifax', 'data-go="credit"')}
+      ${row('CON', 'Connected accounts', s.connected.length + ' connected', 'data-go="connected"')}
+      ${row('BOR', 'Borrowing', 'Flex, loans, overdraft', 'data-go="borrow"')}
+      ${row('PLN', 'Plan', plan().name, 'data-go="plan"')}
+      ${row('LIM', 'Limits', 'ATM and card', 'data-go="limits"')}
+      ${row('INS', 'Insurance', plan().cover ? 'Active' : 'Not included', 'data-go="insurance"')}
+      ${row('BIL', 'Billsback', plan().billsback ? 'Eligible' : 'Needs Extra', 'data-go="billsback"')}
+      ${row('CHA', 'Saving Challenge', s.challenge.day + ' of 365 days', 'data-go="challenge"')}
+      ${row('DIS', 'Disputes', s.disputes.filter(d => d.status === 'Open').length + ' open', 'data-go="disputes"')}
+      ${row('SUP', 'Support', 'Chat to us', 'data-go="chat"')}
+      ${row('APP', 'Appearance', 'Theme, text size', 'data-go="appearance"')}
     </div>
     <button class="btn ghost" data-logout style="margin:0 0 20px">Log out of all devices</button>`;
   root.addEventListener('click', e => {
@@ -647,4 +647,4 @@ function download(kind, ym, asPdf){
     <tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td class="${i === 4 ? 'amt' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
   w.document.close(); w.focus(); setTimeout(() => w.print(), 350);
   toast('Statement ready to print');
-}
+                                             }
