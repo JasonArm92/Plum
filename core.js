@@ -1,8 +1,8 @@
-import { FUNDS, CATEGORY_IDS } from './data.js?v=34';
+import { FUNDS, CATEGORY_IDS } from './data.js?v=35';
 
-export const VERSION = 23;
-export const KEY = 'monzo_v23';
-export const LEGACY_KEYS = ['monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 24;
+export const KEY = 'monzo_v24';
+export const LEGACY_KEYS = ['monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -53,7 +53,7 @@ export function dayLabel(ts) {
   return d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
 }
 
-/* ---------- holdings seed ---------- */
+/* ---------- seed data ---------- */
 
 const HOLDING_SEED = [
   ['f01', 18000], ['f02', 21500], ['f03', 16200], ['f04', 24800],
@@ -72,6 +72,54 @@ const HOLDING_SEED = [
 
 function seedHoldings() {
   return HOLDING_SEED.map(([f, v]) => ({f, v}));
+}
+
+const HISTORY_SEED = [
+  ['Tesco', -38.20, 'groceries', 3, 'joint'],
+  ['Sainsburys', -51.10, 'groceries', 9, 'joint'],
+  ['Asda', -44.75, 'groceries', 17, 'joint'],
+  ['Tesco', -62.40, 'groceries', 23, 'joint'],
+  ['Greggs', -6.20, 'eating', 4],
+  ['Nandos', -34.60, 'eating', 11, 'joint'],
+  ['Pret', -9.85, 'eating', 18],
+  ['Deliveroo', -28.40, 'eating', 24],
+  ['Northern', -8.40, 'transport', 6],
+  ['Trainline', -42.30, 'transport', 15],
+  ['Uber', -14.60, 'transport', 21],
+  ['Amazon', -89.99, 'shopping', 2],
+  ['ASOS', -64.50, 'shopping', 13],
+  ['Argos', -78.66, 'shopping', 22],
+  ['Octopus Energy', -78.00, 'bills', 5, 'joint'],
+  ['TV Licence', -13.25, 'bills', 12],
+  ['Thames Water', -42.60, 'bills', 19, 'joint'],
+  ['Cineworld', -31.50, 'entertainment', 7, 'joint'],
+  ['Spotify', -11.99, 'entertainment', 14],
+  ['Netflix', -10.99, 'entertainment', 25],
+  ['Boots', -12.45, 'health', 8],
+  ['Specsavers', -26.05, 'health', 20],
+  ['PureGym', -24.99, 'fitness', 4],
+  ['PureGym', -24.99, 'fitness', 16],
+  ['IKEA', -96.00, 'home', 10, 'joint'],
+  ['Dunelm', -45.30, 'home', 26, 'joint'],
+  ['Waterstones', -18.40, 'general', 12],
+  ['Royal Mail', -70.00, 'general', 27]
+];
+
+const BUDGET_SEED = {
+  personal: {groceries: 420, eating: 190, transport: 80, shopping: 240, bills: 320,
+    entertainment: 100, health: 40, fitness: 50, home: 150, general: 90},
+  joint: {groceries: 200, eating: 60, bills: 100, home: 150, entertainment: 60}
+};
+
+function seedHistory(base) {
+  const d = new Date(base);
+  return HISTORY_SEED.map(([name, amount, category, day, acct]) => {
+    const when = new Date(d.getFullYear(), d.getMonth() - 1, day, 12, 0, 0);
+    return {
+      id: uid('tx'), name, amount, category, ts: when.getTime(),
+      type: 'out', acct: acct || 'personal', history: true
+    };
+  });
 }
 
 function defaultState() {
@@ -113,7 +161,8 @@ function defaultState() {
       mk('Boots', -12.45, 'health', 6),
       mk('IKEA', -164.00, 'home', 7, 'joint'),
       mk('Spotify', -11.99, 'entertainment', 8),
-      mk('Sainsburys', -63.40, 'groceries', 9, 'joint')
+      mk('Sainsburys', -63.40, 'groceries', 9, 'joint'),
+      ...seedHistory(base)
     ],
     scheduled: [
       {id:uid('sch'), name:'Octopus Energy', amount:-78, category:'bills', day:12, freq:'monthly', next: base + 4*86400000, acct:'joint'},
@@ -128,6 +177,8 @@ function defaultState() {
       {id:uid('pay'), name:'Liam Fletcher', sort:'20-45-11', acct:'87654321', initials:'LF'},
       {id:uid('pay'), name:'Chloe Brown', sort:'30-96-14', acct:'55120934', initials:'CB'}
     ],
+    budgets: JSON.parse(JSON.stringify(BUDGET_SEED)),
+    budgetSeeded: true,
     flex: {limit: 1000, used: 214.40, plan: 'flex', active: true},
     plan: 'plus',
     plus: {since: base - 200*86400000, renews: base + 15*86400000},
@@ -157,7 +208,20 @@ const migrations = [
     return s;
   }},
   {v: 22, fn: s => s},
-  {v: 23, fn: s => s}
+  {v: 23, fn: s => s},
+  {v: 24, fn: s => {
+    const base = now();
+    const hasHistory = Array.isArray(s.tx) &&
+      s.tx.some(t => t.ts < new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime());
+    if (!hasHistory) {
+      s.tx = (Array.isArray(s.tx) ? s.tx : []).concat(seedHistory(base));
+    }
+    if (!s.budgetSeeded) {
+      s.budgets = JSON.parse(JSON.stringify(BUDGET_SEED));
+      s.budgetSeeded = true;
+    }
+    return s;
+  }}
 ];
 
 export function normalise(input) {
@@ -193,6 +257,16 @@ export function normalise(input) {
     if (!a.name) a.name = k === 'joint' ? 'Joint' : 'Personal';
   }
   if (s.active !== 'joint') s.active = 'personal';
+
+  if (!s.budgets || typeof s.budgets !== 'object') s.budgets = {};
+  for (const k of ['personal', 'joint']) {
+    if (!s.budgets[k] || typeof s.budgets[k] !== 'object') s.budgets[k] = {};
+    for (const c of Object.keys(s.budgets[k])) {
+      const v = round2(s.budgets[k][c]);
+      if (v > 0) s.budgets[k][c] = v;
+      else delete s.budgets[k][c];
+    }
+  }
 
   s.layout = s.layout || {};
   if (!Array.isArray(s.layout.order) || !s.layout.order.length) {
@@ -302,6 +376,33 @@ export function isJoint() {
   return state.active === 'joint';
 }
 
+/* ---------- budgets ---------- */
+
+export function budgets() {
+  if (!state.budgets[state.active]) state.budgets[state.active] = {};
+  return state.budgets[state.active];
+}
+export function budgetFor(catId) {
+  return round2(budgets()[catId] || 0);
+}
+export function setBudget(catId, amount) {
+  const v = round2(amount);
+  const b = budgets();
+  if (v > 0) b[catId] = v;
+  else delete b[catId];
+  save();
+}
+export function totalBudget() {
+  return round2(Object.values(budgets()).reduce((s, v) => s + (Number(v) || 0), 0));
+}
+export function hasBudget() {
+  return totalBudget() > 0;
+}
+export function budgetLeft() {
+  if (!hasBudget()) return null;
+  return round2(totalBudget() - spentThisMonth());
+}
+
 /* ---------- money movement ---------- */
 
 export function addTx({name, amount, category = 'general', ts = now(), note = '', receipt = null, potId = null, acct = null}) {
@@ -357,11 +458,6 @@ export function totalPots() {
 
 export function planInfo(id = state.plan) {
   return PLANS[id] || PLANS.free;
-}
-
-export function holdingValue(h) {
-  const f = FUNDS.find(x => x.id === h.f);
-  return f ? round2(h.v) : 0;
 }
 
 export function portfolioValue() {
@@ -450,9 +546,9 @@ export function pensionProjection() {
   const p = state.pension;
   const years = Math.max(0, 68 - (new Date().getFullYear() - new Date(p.joined).getFullYear()));
   const annual = (p.monthly + p.employer) * 12;
-  let bal2 = p.balance;
-  for (let i = 0; i < years; i++) bal2 = bal2 * (1 + p.growth) + annual;
-  return {pot: round2(bal2), years, annual};
+  let b2 = p.balance;
+  for (let i = 0; i < years; i++) b2 = b2 * (1 + p.growth) + annual;
+  return {pot: round2(b2), years, annual};
 }
 
 /* ---------- scheduler ---------- */
@@ -500,6 +596,8 @@ export function upcoming() {
 }
 
 export function leftToSpend() {
+  const b = budgetLeft();
+  if (b !== null) return Math.max(0, b);
   return Math.max(0, round2(bal() - upcoming()));
 }
 
