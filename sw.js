@@ -1,9 +1,9 @@
-/* sw.js — v23
+/* sw.js — v24
    Self-contained shell. Navigation is network-first with a cached shell fallback;
    same-origin assets are cache-first with a background refresh; fonts and logos are
    stale-while-revalidate. */
 
-const VERSION = 'v23';
+const VERSION = 'v24';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
@@ -13,7 +13,6 @@ const PRECACHE = [
   './main.js?v=22',
   './core.js',
   './data.js',
-  './logos.js',
   './ui.js',
   './screens-a.js',
   './screens-b.js',
@@ -56,7 +55,6 @@ const isRemoteAsset = url => {
     const u = new URL(url);
     const host = u.hostname;
     if (host === 'logo.clearbit.com') return true;
-    /* Google's favicon service is the second link in the logo chain */
     if (host === 'www.google.com' || host === 'google.com'){
       return u.pathname.startsWith('/s2/favicons');
     }
@@ -70,7 +68,6 @@ async function navigationHandler(request){
   const cache = await caches.open(CACHE);
   try {
     const res = await fetch(request);
-    /* only the canonical shell replaces the cached shell */
     if (res && res.ok && new URL(request.url).search === '') cache.put('./index.html', res.clone());
     return res;
   } catch {
