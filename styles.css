@@ -94,6 +94,8 @@ main{padding:0 16px}
 section[data-screen]{display:none;padding-bottom:20px}
 section[data-screen].on{display:block}
 .view{animation:fade .2s ease}
+.view:focus{outline:0}
+.view:focus-visible{outline:2px solid var(--focus);outline-offset:4px}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 
 /* ---------- header ---------- */
@@ -391,7 +393,3 @@ body.locked .tabbar{display:none}
 /* privacy mode */
 html[data-priv="1"] .rev{filter:blur(7px)}
 html[data-priv="1"] .rev.open{filter:none}
-
-/* focus target for a freshly mounted screen */
-.view:focus{outline:0}
-.view:focus-visible{outline:2px solid var(--focus);outline-offset:4px}
