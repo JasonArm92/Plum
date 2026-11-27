@@ -1,9 +1,9 @@
-/* sw.js — v25
-   Self-contained shell. Navigation is network-first with a cached shell fallback;
-   same-origin assets are cache-first with a background refresh; fonts and icons are
-   stale-while-revalidate. */
+/* sw.js — v27
+   Navigation and same-origin assets are network-first, falling back to cache for
+   offline. Remote logo icons are passed straight through so the service worker
+   cannot sit between them and the screen. */
 
-const VERSION = 'v25';
+const VERSION = 'v27';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
@@ -50,48 +50,40 @@ self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
-const isRemoteAsset = url => {
+const isIcon = url => {
   try {
     const u = new URL(url);
-    const host = u.hostname;
-    if (host === 'icons.duckduckgo.com') return true;
-    if (host === 'www.google.com' || host === 'google.com'){
-      return u.pathname.startsWith('/s2/favicons');
-    }
+    if (u.hostname === 'icons.duckduckgo.com') return true;
+    return (u.hostname === 'www.google.com' || u.hostname === 'google.com')
+        && u.pathname.startsWith('/s2/favicons');
+  } catch { return false; }
+};
+
+const isFont = url => {
+  try {
+    const host = new URL(url).hostname;
     return host === 'fonts.googleapis.com'
         || host === 'fonts.gstatic.com'
         || host.endsWith('.gstatic.com');
   } catch { return false; }
 };
 
-async function navigationHandler(request){
+async function networkFirst(request){
   const cache = await caches.open(CACHE);
   try {
     const res = await fetch(request);
-    if (res && res.ok && new URL(request.url).search === '') cache.put('./index.html', res.clone());
+    if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
+    if (request.mode === 'navigate' && new URL(request.url).search === ''){
+      cache.put('./index.html', res.clone());
+    }
     return res;
   } catch {
     return (await cache.match(request))
-        || (await cache.match('./index.html'))
+        || (await cache.match(request, { ignoreSearch: true }))
+        || (request.mode === 'navigate' ? await cache.match('./index.html') : null)
         || (await cache.match('./'))
         || new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
   }
-}
-
-async function cacheFirst(request){
-  const cache = await caches.open(CACHE);
-  const hit = await cache.match(request, { ignoreSearch: true });
-  if (hit){
-    fetch(request)
-      .then(res => {
-        if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
-      })
-      .catch(() => {});
-    return hit;
-  }
-  const res = await fetch(request);
-  if (res && (res.ok || res.type === 'opaque')) cache.put(request, res.clone());
-  return res;
 }
 
 async function staleWhileRevalidate(request){
@@ -114,13 +106,11 @@ self.addEventListener('fetch', event => {
   try { url = new URL(request.url); } catch { return; }
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
 
-  if (request.mode === 'navigate'){
-    event.respondWith(navigationHandler(request));
-    return;
-  }
   if (url.origin === location.origin){
-    event.respondWith(cacheFirst(request));
+    event.respondWith(networkFirst(request));
     return;
   }
-  if (isRemoteAsset(request.url)) event.respondWith(staleWhileRevalidate(request));
+  /* no respondWith: the browser fetches and caches these itself */
+  if (isIcon(request.url)) return;
+  if (isFont(request.url)) event.respondWith(staleWhileRevalidate(request));
 });
