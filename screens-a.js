@@ -1,652 +1,688 @@
-/* src/screens-a.js — daily surfaces. */
-
 import {
-  getState, commit, esc, fmt, TODAY, MONTHS, round2, plan,
-  balNow, isaBal, growTotal, savingsTotal, connTotal, loanOwed,
-  spentThisMonth, spentCat, spentToday, committedLeft, leftToSpend, interestThisMonth,
-  daysToPayday, balanceSeries, tyUsed, TARGET_ISA, addTx,
-  platformFeeRate, platformFeeCap, platformFeeAnnual, platformFeeMonthly,
-  moveToPot, createPot, updatePot, deletePot, togglePotLock, setRoundupPot, clearRoundupPot,
-  setPensionMonthly, setTarget,
-  moveLayoutSection, toggleLayoutSection, addStandingOrder, addSharedTab,
-  toggleStandingOrder, settleTab, salaryAmount, salaryIsEstimate, setSorter, setSorterOn,
-  sorterTotal, getPaidEarly, gpeClaimed, CATS, FLEX
+  state, fmt, fmtShort, round2, leftToSpend, spentThisMonth, byCategory,
+  lastMonthByCategory, upcoming, totalPots, flexApr, flexPurchase, FLEX_MIN,
+  FLEX_MONTHS, addTx, takeFunds, potMove, investDeposit, save
 } from './core.js';
-
+import { CATEGORIES, FUNDS, POT_EMOJI, POT_COLOURS, SAVINGS_INTEREST } from './data.js';
 import {
-  go, currentScreen, toast, sheet, closeSheet, lineChart, donut, heatmap, logo, kv, badge,
-  empty, txRow, potRow, meter, chipRow, accCard, spotCard, sectionHead
+  el, on, screen, header, row, list, section, tile, avatar, icon, cardArt,
+  ring, empty, pill, toast, sheet, confirmSheet, field, input, seg, switchEl
 } from './ui.js';
 
-const LAYOUT_NAMES = { spotlights: 'Spotlights', personal: 'Personal account', joint: 'Joint account',
-  pots: 'Pots', invest: 'Investments', latest: 'Latest activity' };
+const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 
-const sections = {
-  spotlights(){
-    const lt = leftToSpend(), d = daysToPayday();
-    return `<div class="spot">
-      ${spotCard({ label: 'Left to spend', value: fmt(lt),
-        note: d === 0 ? 'Payday today' : d + ' days to payday',
-        tone: lt < 150 ? 'bad' : lt < 450 ? 'warn' : 'ok', go: 'trends' })}
-      ${spotCard({ label: 'Spent today', value: fmt(spentToday()),
-        note: getState().tx.filter(t => t.date === TODAY && t.amt < 0).length + ' payments', go: 'acc' })}
-      ${spotCard({ label: 'Bills left', value: fmt(committedLeft()), note: 'Before payday', go: 'trends' })}
-    </div>`;
-  },
-  personal(){
-    return accCard({ cls: 'coral', label: 'Personal current account', meta: '04-00-04 · 73829104',
-      balance: fmt(balNow()), tag: `<span class="badge" style="background:rgba(255,255,255,.24);color:#fff">${plan().name}</span>`,
-      go: 'acc' });
-  },
-  joint(){
-    const s = getState();
-    return accCard({ label: 'Joint account', meta: 'With ' + esc(s.partner),
-      balance: fmt(s.jointBal || 0), tag: badge('Joint'), go: 'joint' });
-  },
-  pots(){
-    const s = getState();
-    if (!s.pots.length) return '';
-    return sectionHead('Pots', 'See all', 'data-go="pots"') +
-      `<div class="card p6-18">${s.pots.slice(0, 2).map(p => potRow(p, plan().ia)).join('')}</div>`;
-  },
-  invest(){
-    return sectionHead('Investments', 'Open', 'data-go="invest"') +
-      accCard({ label: 'Stocks &amp; shares ISA', meta: 'Opened 1992', balance: fmt(isaBal()),
-        tag: badge('ISA', 'coral'), go: 'invest' });
-  },
-  latest(){
-    const s = getState();
-    return sectionHead('Latest', 'Add', 'data-add') +
-      `<div class="card p4-14"><ul class="txlist" id="feed">
-        ${s.tx.slice(0, 12).map(txRow).join('')}</ul>
-        <button class="btn ghost sm w100 my12" data-more>Load more</button></div>`;
+/* ============ HOME ============ */
+
+export function homeScreen() {
+  const s = el('section', 'screen');
+  s.id = 'screen-home';
+
+  const h = el('header', 'hdr');
+  const av = el('button', 'hdr__btn');
+  av.style.padding = '0';
+  av.style.background = 'transparent';
+  av.setAttribute('aria-label', 'Profile');
+  av.appendChild(avatar(36));
+  av.onclick = () => { location.hash = '#/account'; };
+  h.appendChild(av);
+  const title = el('div', 'hdr__title');
+  title.textContent = 'Home';
+  h.appendChild(title);
+  for (const [ic, label, fn] of [
+    ['search', 'Search', () => location.hash = '#/search'],
+    ['plus', 'Add transaction', () => import('./screens-b.js').then(m => m.addTxSheet())]
+  ]) {
+    const b = el('button', 'hdr__btn');
+    b.type = 'button';
+    b.setAttribute('aria-label', label);
+    b.appendChild(icon(ic, 18));
+    b.onclick = fn;
+    h.appendChild(b);
   }
-};
+  s.appendChild(h);
 
-export function addTxSheet(){
-  sheet(`<h2>Add transaction</h2>
-    <div class="field"><label>Description</label><input id="atName"></div>
-    <div class="field"><label>Amount</label><input id="atAmt" type="number" min="0" step="0.01"></div>
-    <div class="field"><label>Category</label><select id="atCat">
-      ${CATS.map(c => `<option ${c === 'Groceries' ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
-    <div class="field"><label>Date</label><input id="atDate" type="date" value="${TODAY}" max="${TODAY}"></div>
-    <div class="field"><label>Note</label><input id="atNote"></div>
-    <button class="btn" id="atGo">Add transaction</button>`);
-  document.getElementById('atGo').onclick = () => {
-    const name = document.getElementById('atName').value.trim();
-    const amt = +document.getElementById('atAmt').value;
-    const cat = document.getElementById('atCat').value;
-    if (!name) return toast('Enter a description');
-    if (!amt || amt <= 0) return toast('Enter an amount');
-    const signed = cat === 'Income' || cat === 'Investments' ? amt : -amt;
-    if (signed < 0 && Math.abs(signed) > balNow()) return toast('Not enough in your balance');
-    addTx(name, cat, signed, document.getElementById('atNote').value, document.getElementById('atDate').value || TODAY);
-    closeSheet(); go(currentScreen() || 'home'); toast('Added');
-  };
-}
+  const body = el('div', 'screen__body');
+  body.style.padding = '16px 0 16px';
 
-function newPotSheet(){
-  sheet(`<h2>New pot</h2><div class="field"><label>Name</label><input id="npName"></div>
-    <div class="field"><label>Type</label><select id="npType">
-      <option value="regular">Regular</option><option value="savings">Savings (earns interest)</option>
-      <option value="bills">Bills (holds direct debits)</option></select></div>
-    <div class="field"><label>Goal</label><input id="npGoal" type="number" min="1" value="500"></div>
-    <button class="btn" id="npGo">Create pot</button>`);
-  document.getElementById('npGo').onclick = () => {
-    const name = document.getElementById('npName').value.trim();
-    if (!name) return toast('Name your pot');
-    createPot(name, document.getElementById('npType').value, +document.getElementById('npGoal').value || 500);
-    closeSheet(); go(currentScreen() || 'pots'); toast('Pot created');
-  };
-}
+  const L = state.layout || {};
+  const hidden = L.hidden || [];
+  const order = L.order || [];
 
-export function mountHome(root){
-  let limit = 12;
-  const render = () => {
-    const s = getState();
-    root.innerHTML = s.layout.filter(x => x.on).map(sec => sections[sec.id] ? sections[sec.id]() : '').join('') +
-      `<div class="row2 my12">
-        <button class="btn" data-go="payees">Send</button>
-        <button class="btn ghost" data-go="pots">Move to pot</button></div>
-      <div class="row2 my12">
-        <button class="btn ghost" data-go="flex">Pay with Flex</button>
-        <button class="btn ghost" data-go="search">Search</button></div>
-      <button class="btn ghost sm w100 mb20" data-layout>Edit layout</button>`;
-    const feed = root.querySelector('#feed');
-    if (feed){
-      feed.innerHTML = s.tx.slice(0, limit).map(txRow).join('');
-      const more = root.querySelector('[data-more]');
-      if (more) more.classList.toggle('hide', limit >= s.tx.length);
+  for (const key of order) {
+    if (hidden.includes(key)) continue;
+    if (key === 'card') {
+      const w = el('div');
+      w.style.padding = '0 16px';
+      w.appendChild(cardArt(state.cards[0], () => import('./screens-b.js').then(m => m.cardSheet())));
+      body.appendChild(w);
     }
-  };
-  const layoutSheet = () => {
-    const s = getState();
-    sheet(`<h2>Edit layout</h2>` + s.layout.map((sec, i) =>
-      `<div class="layoutrow"><span class="mini">${i + 1}</span><span class="mid">${LAYOUT_NAMES[sec.id]}</span>
-        <button class="iconbtn" data-up="${sec.id}" aria-label="Move up">↑</button>
-        <button class="iconbtn" data-down="${sec.id}" aria-label="Move down">↓</button>
-        <button class="sw ${sec.on ? 'on' : ''}" data-eye="${sec.id}" aria-label="Show section"></button></div>`).join('') +
-      `<button class="btn mt12" data-close>Done</button>`);
-    document.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { moveLayoutSection(b.dataset.up, -1); layoutSheet(); render(); });
-    document.querySelectorAll('[data-down]').forEach(b => b.onclick = () => { moveLayoutSection(b.dataset.down, 1); layoutSheet(); render(); });
-    document.querySelectorAll('[data-eye]').forEach(b => b.onclick = () => { toggleLayoutSection(b.dataset.eye); layoutSheet(); render(); });
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-more]')){ limit += 20; return render(); }
-    if (e.target.closest('[data-layout]')) return layoutSheet();
-    if (e.target.closest('[data-add]')) return addTxSheet();
-  });
-  render();
-}
-
-export function mountSave(root){
-  const render = () => {
-    const s = getState();
-    const groups = [
-      ['Savings pots', 'savings', 'Earns interest at your plan rate'],
-      ['Bills pots', 'bills', 'Money set aside for direct debits'],
-      ['Regular pots', 'regular', 'Goals without interest']
-    ];
-    const body = groups.map(([label, type, blurb]) => {
-      const items = s.pots.filter(p => p.type === type);
-      if (!items.length) return '';
-      return `<div class="h-sec"><h2 class="sm">${label}</h2></div>
-        <p class="note">${blurb}</p>
-        <div class="card p6-14">${items.map(p => potRow(p, plan().ia)).join('')}</div>`;
-    }).join('');
-    root.innerHTML = `<div class="h-sec"><h2>Save</h2><button data-new>Create</button></div>
-      <div class="card"><div class="sub">Interest this month</div>
-        <div class="balance rev">${fmt(interestThisMonth())}</div>
-        <div class="sub mt8">${plan().ia}% AER variable on ${s.pots.filter(p => p.type === 'savings').length} savings pots</div></div>
-      ${body || empty('No pots yet')}
-      <p class="note">Savings pots earn your plan rate. Bills pots hold direct debits. Regular pots are for goals.</p>`;
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-new]')) newPotSheet();
-  });
-  render();
-}
-
-export function mountGrow(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Grow</h2></div>
-      <div class="card"><div class="sub">Everything you're building</div>
-        <div class="balance rev fs30">${fmt(growTotal())}</div>
-        <div class="sub m0">Net of ${fmt(loanOwed())} owed</div></div>
-      <button class="accard" data-go="pots"><div class="accrow"><div><div class="accname">Savings</div>
-        <div class="accmeta">${s.pots.filter(p => p.type === 'savings').length} pots · ${plan().ia}% AER</div></div>
-        <span class="badge coral">${fmt(savingsTotal())}</span></div></button>
-      ${accCard({ label: 'Investments', meta: 'Stocks &amp; shares ISA', balance: fmt(isaBal()), tag: badge('ISA', 'coral'), go: 'invest' })}
-      <div class="card"><div class="fx fx-c gap10">
-          <h2 class="m0">Pension</h2>${logo('Vanguard')}</div>
-        <div class="sub">SIPP · ${fmt(s.pensionMonthly)}/month</div>
-        <div class="balance rev fs24">${fmt(s.pension)}</div>
-        <div class="field"><label>Monthly contribution</label><input id="pm" type="number" min="0" value="${s.pensionMonthly}"></div>
-        <button class="btn" data-pen>Update contribution</button></div>
-      <div class="card"><h2>Connected</h2><div class="sub">${s.connected.length} accounts · ${fmt(connTotal())}</div>
-        <button class="btn ghost sm" data-go="connected">Manage</button></div>`;
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-pen]')){
-      setPensionMonthly(+root.querySelector('#pm').value || 0);
-      render(); toast('Contribution updated');
-    }
-  });
-  render();
-}
-
-export function mountPay(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Pay</h2></div>
-      <div class="card p6-8">
-        <button class="pot" data-go="payees"><span class="lg"><span class="lg__i">SND</span></span><span class="mid">
-          <span class="nm">Send money</span><span class="sub">To a saved payee</span></span><span class="amt">›</span></button>
-        <button class="pot" data-go="request"><span class="lg"><span class="lg__i">RQ</span></span><span class="mid">
-          <span class="nm">Request money</span><span class="sub">${s.requests.length} outstanding</span></span><span class="amt">›</span></button>
-        <button class="pot" data-so><span class="lg"><span class="lg__i">SO</span></span><span class="mid">
-          <span class="nm">Standing orders</span><span class="sub">${s.sos.filter(x => x.active).length} active</span></span><span class="amt">›</span></button>
-        <button class="pot" data-tabs><span class="lg"><span class="lg__i">TAB</span></span><span class="mid">
-          <span class="nm">Shared tabs</span><span class="sub">${s.tabs.length} open</span></span><span class="amt">›</span></button>
-        <button class="pot" data-go="joint">${logo('Monzo')}<span class="mid">
-          <span class="nm">Joint account</span><span class="sub">With ${esc(s.partner)}</span></span><span class="amt">›</span></button>
-        <button class="pot" data-sorter><span class="lg"><span class="lg__i">SRT</span></span><span class="mid">
-          <span class="nm">Salary sorter</span><span class="sub">${s.sorter.on ? fmt(sorterTotal()) + ' split' : 'Split your pay'}</span></span><span class="amt">›</span></button>
-        <button class="pot" data-gpe><span class="lg"><span class="lg__i">GPE</span></span><span class="mid">
-          <span class="nm">Get paid early</span><span class="sub">${gpeClaimed() ? 'Claimed this month' : '4pm the day before'}</span></span><span class="amt">›</span></button>
-      </div>
-      <div class="card"><h2>Standing orders</h2>
-        ${s.sos.length ? s.sos.map(x => `<div class="pot">${logo(x.name)}
-          <span class="mid"><span class="nm">${esc(x.name)}</span><span class="sub">Day ${x.day} · ${fmt(x.amt)}</span></span>
-          <button class="sw ${x.active ? 'on' : ''}" data-toggle-so="${x.id}" aria-label="Toggle ${esc(x.name)}"></button></div>`).join('')
-          : empty('None set up')}</div>
-      <div class="card"><h2>Shared tabs</h2>
-        ${s.tabs.length ? s.tabs.map(t => `<div class="pot">${logo(t.name)}
-          <span class="mid"><span class="nm">${esc(t.name)}</span><span class="sub">${t.people} people · your share ${fmt(t.mine)}</span></span>
-          <button class="btn ghost sm" data-settle="${t.id}">Settle</button></div>`).join('')
-          : empty('No open tabs')}</div>`;
-  };
-
-  const sorterSheet = () => {
-    const s = getState();
-    const salary = salaryAmount();
-    const draft = { ...(s.sorter.splits || {}) };
-    const totals = () => {
-      const total = round2(Object.values(draft).reduce((a, b) => a + (Number(b) || 0), 0));
-      const t = document.getElementById('stTotal'), l = document.getElementById('stLeft');
-      if (t) t.textContent = fmt(total);
-      if (l) l.textContent = fmt(Math.max(0, salary - total));
-      return total;
-    };
-    sheet(`<h2>Salary sorter</h2>
-      <div class="sub">Your next pay is ${fmt(salary)}. Choose what goes where.</div>
-      ${salaryIsEstimate() ? `<p class="note">No salary in your history to read, so ${fmt(salary)} is an estimate.</p>` : ''}
-      <div class="toggle"><div><div class="t">Split automatically</div>
-        <div class="d">Runs when your pay lands</div></div>
-        <button class="sw ${s.sorter.on ? 'on' : ''}" data-sorter-on aria-label="Enable sorter"></button></div>
-      ${s.pots.length ? s.pots.map(p => `<div class="field"><label for="st_${p.id}">${esc(p.name)}</label>
-        <input id="st_${p.id}" data-split="${p.id}" type="number" min="0" step="5"
-          value="${(Number(draft[p.id]) || 0).toFixed(2)}"></div>`).join('')
-        : empty('Create a pot first')}
-      ${kv('To pots', '<span class="rev" id="stTotal">—</span>')}
-      ${kv('Left in account', '<span class="rev" id="stLeft">—</span>')}
-      <button class="btn mt14" id="stSave">Save sorter</button>`);
-    totals();
-    document.querySelectorAll('[data-split]').forEach(i => i.oninput = () => {
-      draft[i.dataset.split] = Math.max(0, +i.value || 0);
-      totals();
-    });
-    const sw = document.querySelector('[data-sorter-on]');
-    if (sw) sw.onclick = () => {
-      const on = !getState().sorter.on;
-      setSorterOn(on);
-      sw.classList.toggle('on', on);
-    };
-    document.getElementById('stSave').onclick = () => {
-      const total = totals();
-      setSorter(draft, true);
-      closeSheet(); render();
-      toast(total > salary ? 'Saved — over your salary' : `Saved · ${fmt(total)} split`);
-    };
-  };
-
-  root.addEventListener('click', e => {
-    const so = e.target.closest('[data-toggle-so]');
-    if (so){ toggleStandingOrder(so.dataset.toggleSo); return render(); }
-    const settle = e.target.closest('[data-settle]');
-    if (settle){
-      const res = settleTab(settle.dataset.settle);
-      if (!res.ok) return toast(res.msg);
-      render(); return toast('Tab settled');
-    }
-    if (e.target.closest('[data-so]')){
-      sheet(`<h2>Standing order</h2><div class="field"><label>Payee</label><input id="soName"></div>
-        <div class="field"><label>Amount</label><input id="soAmt" type="number" min="1"></div>
-        <div class="field"><label>Day of month</label><input id="soDay" type="number" min="1" max="28" value="1"></div>
-        <button class="btn" id="soGo">Create</button>`);
-      document.getElementById('soGo').onclick = () => {
-        const n = document.getElementById('soName').value.trim(), a = +document.getElementById('soAmt').value;
-        if (!n || !a) return toast('Fill in both fields');
-        addStandingOrder(n, a, +document.getElementById('soDay').value || 1);
-        closeSheet(); render(); toast('Created');
+    if (key === 'balance') {
+      const w = el('div');
+      w.style.padding = '0 16px';
+      const lbl = el('div', 'balance__lbl');
+      lbl.textContent = 'Personal · ' + (state.cards[0]?.last4 || '4821');
+      w.appendChild(lbl);
+      const b = el('div', 'balance', state.settings.hideBalance ? '••••••' : fmt(state.balance));
+      b.style.cursor = 'pointer';
+      b.onclick = () => {
+        state.settings.hideBalance = !state.settings.hideBalance;
+        save();
+        location.hash = '#/home';
+        document.dispatchEvent(new CustomEvent('render'));
       };
+      w.appendChild(b);
+      body.appendChild(w);
     }
-    if (e.target.closest('[data-tabs]')){
-      sheet(`<h2>Shared tab</h2><div class="field"><label>Name</label><input id="tbName"></div>
-        <div class="field"><label>Total</label><input id="tbTot" type="number" min="1"></div>
-        <div class="field"><label>People</label><input id="tbPpl" type="number" min="2" value="2"></div>
-        <button class="btn" id="tbGo">Create tab</button>`);
-      document.getElementById('tbGo').onclick = () => {
-        const n = document.getElementById('tbName').value.trim(), tot = +document.getElementById('tbTot').value;
-        const ppl = Math.max(2, +document.getElementById('tbPpl').value || 2);
-        if (!n || !tot) return toast('Fill in both fields');
-        addSharedTab(n, tot, ppl);
-        closeSheet(); render(); toast('Tab created');
-      };
+    if (key === 'ring') {
+      const w = el('div');
+      w.style.padding = '0 16px';
+      w.appendChild(leftToSpendCard());
+      body.appendChild(w);
     }
-    if (e.target.closest('[data-sorter]')) return sorterSheet();
-    if (e.target.closest('[data-gpe]')){
-      const claimed = gpeClaimed(), est = salaryIsEstimate();
-      sheet(`<h2>Get paid early</h2>
-        <div class="sub">${claimed
-          ? 'You have already claimed this month. It resets after payday.'
-          : `Bring ${fmt(salaryAmount())} forward to now.`}</div>
-        ${est ? `<p class="note">No salary in your history to read, so ${fmt(salaryAmount())} is an estimate.</p>` : ''}
-        ${kv('Salary', `<span class="rev">${fmt(salaryAmount())}</span>`)}
-        ${getState().sorter.on ? kv('Sorter', 'Runs on credit') : ''}
-        <button class="btn mt14" id="gpeGo" ${claimed ? 'disabled' : ''}>Claim early</button>`);
-      document.getElementById('gpeGo').onclick = () => {
-        const r = getPaidEarly();
-        if (!r.ok) return toast(r.msg);
-        closeSheet(); render();
-        toast(r.split.length
-          ? `Paid early · ${r.split.length} pot${r.split.length > 1 ? 's' : ''} funded`
-          : 'Paid early');
-      };
-    }
-  });
-  render();
-}
-
-export function mountTrends(root){
-  let view = 'balance';
-  const render = () => {
-    const s = getState();
-    let body = '';
-    if (view === 'balance'){
-      body = `<div class="card"><h2>Projected balance</h2><div class="sub">After bills before payday</div>
-        <div class="balance rev fs26">${fmt(leftToSpend())}</div>
-        <div id="tbChart"></div></div>`;
-    } else if (view === 'spending'){
-      body = `<div class="card"><h2>${fmt(spentThisMonth())}</h2>
-        <div class="sub">${MONTHS[new Date().getMonth()]} ${new Date().getFullYear()}</div>
-        <div id="tbDonut"></div></div>
-        <div class="card"><h2>Daily activity</h2><div class="heat" id="tbHeat"></div></div>
-        <div class="card"><h2>Categories</h2>
-          ${FLEX.map(c => `<button class="pot" data-drill="${c}"><span class="lg"><span class="lg__i">${c[0]}</span></span>
-            <span class="mid"><span class="nm">${c}</span><span class="sub">${fmt(spentCat(c))}</span></span>
-            <span class="amt">›</span></button>`).join('')}</div>`;
-    } else {
-      body = `<div class="card"><h2>Targets</h2><div class="sub">Flexible categories</div>
-        ${FLEX.map(c => `<div class="mt10">
-          <div class="fx fx-b fs13">
-            <span>${c}</span><span class="rev">${fmt(spentCat(c))} / ${fmt(s.targets[c] || 0)}</span></div>
-          ${meter(spentCat(c), s.targets[c] || 0)}
-          <input type="number" min="0" step="5" value="${s.targets[c] || 0}" data-target="${c}" class="tinput"></div>`).join('')}
-        <button class="btn mt12" data-save>Save targets</button></div>`;
-    }
-    root.innerHTML = `<div class="h-sec"><h2>Trends</h2></div>
-      ${chipRow([{ value: 'balance', label: 'Balance' }, { value: 'spending', label: 'Spending' },
-        { value: 'targets', label: 'Targets' }], view, 'tv')}${body}`;
-    if (view === 'balance') lineChart(root.querySelector('#tbChart'), balanceSeries(90));
-    if (view === 'spending'){
-      const parts = FLEX.map(c => ({ k: c, v: spentCat(c) })).filter(p => p.v > 0).sort((a, b) => b.v - a.v);
-      donut(root.querySelector('#tbDonut'), parts.length ? parts : [{ k: 'Nothing yet', v: 1 }]);
-      const counts = {};
-      s.tx.forEach(t => { if (t.amt < 0) counts[t.date] = (counts[t.date] || 0) + Math.abs(t.amt); });
-      heatmap(root.querySelector('#tbHeat'), counts);
-    }
-  };
-  root.addEventListener('click', e => {
-    const chip = e.target.closest('[data-tv]');
-    if (chip){ view = chip.dataset.tv; return render(); }
-    const drill = e.target.closest('[data-drill]');
-    if (drill){ go('search', { cat: drill.dataset.drill }); return; }
-    if (e.target.closest('[data-save]')){
-      root.querySelectorAll('[data-target]').forEach(i => setTarget(i.dataset.target, +i.value || 0));
-      render(); toast('Targets saved');
-    }
-  });
-  render();
-}
-
-export function mountAccount(root){
-  const s = getState();
-  const row = (code, label, sub, attrs) => `<button class="pot" ${attrs}><span class="lg"><span class="lg__i">${code}</span></span>
-    <span class="mid"><span class="nm">${label}</span><span class="sub">${sub}</span></span><span class="amt">›</span></button>`;
-  root.innerHTML = `<div class="h-sec"><h2>Account</h2></div>
-    <div class="card p6-8">
-      ${row('ACC', 'Your accounts', (1 + s.extraAccounts.length) + ' accounts', 'data-go="accounts"')}
-      ${row('PER', 'Personal details', esc(s.profile.name), 'data-go="personal"')}
-      ${row('SEC', 'Security &amp; privacy', s.credId ? 'Biometrics on' : 'Passcode only', 'data-go="security"')}
-      ${row('STM', 'Statements', 'PDF and CSV', 'data-go="statements"')}
-      ${row('BAK', 'Backup', s.lastBackup ? 'Last ' + esc(s.lastBackup) : 'Never exported', 'data-go="backup"')}
-      ${row('PAY', 'Payees', s.payees.length + ' saved', 'data-go="payees"')}
-      ${row('CRD', 'Cards', s.vcards.length + ' virtual', 'data-go="cards"')}
-      ${row('CRA', 'Credit insights', s.credit.eq + ' Equifax', 'data-go="credit"')}
-      ${row('CON', 'Connected accounts', s.connected.length + ' connected', 'data-go="connected"')}
-      ${row('BOR', 'Borrowing', 'Flex, loans, overdraft', 'data-go="borrow"')}
-      ${row('PLN', 'Plan', plan().name, 'data-go="plan"')}
-      ${row('LIM', 'Limits', 'ATM and card', 'data-go="limits"')}
-      ${row('INS', 'Insurance', plan().cover ? 'Active' : 'Not included', 'data-go="insurance"')}
-      ${row('BIL', 'Billsback', plan().billsback ? 'Eligible' : 'Needs Extra', 'data-go="billsback"')}
-      ${row('CHA', 'Saving Challenge', s.challenge.day + ' of 365 days', 'data-go="challenge"')}
-      ${row('DIS', 'Disputes', s.disputes.filter(d => d.status === 'Open').length + ' open', 'data-go="disputes"')}
-      ${row('SUP', 'Support', 'Chat to us', 'data-go="chat"')}
-      ${row('APP', 'Appearance', 'Theme, text size', 'data-go="appearance"')}
-    </div>
-    <button class="btn ghost mb20" data-logout>Log out of all devices</button>`;
-  root.addEventListener('click', e => {
-    if (!e.target.closest('[data-logout]')) return;
-    sessionStorage.removeItem('unlocked');
-    document.body.classList.add('locked');
-    toast('Logged out everywhere');
-  });
-}
-
-export function mountAcc(root){
-  let limit = 40, filter = 'All';
-  const render = () => {
-    const s = getState();
-    const list = filter === 'All' ? s.tx : s.tx.filter(t => t.cat === filter);
-    root.innerHTML = `<div class="h-sec"><h2>Current account</h2><button data-add>Add</button></div>
-      ${chipRow(['All', 'Groceries', 'Bills', 'Kids', 'Income'], filter, 'filter')}
-      <div class="card p4-14"><ul class="txlist">
-        ${list.slice(0, limit).map(txRow).join('') || '<li class="empty">Nothing here</li>'}</ul>
-        <button class="btn ghost sm w100 my12" data-more>Load more</button></div>`;
-  };
-  root.addEventListener('click', e => {
-    const f = e.target.closest('[data-filter]');
-    if (f){ filter = f.dataset.filter; limit = 40; return render(); }
-    if (e.target.closest('[data-more]')){ limit += 40; return render(); }
-    if (e.target.closest('[data-add]')) return addTxSheet();
-  });
-  render();
-}
-
-export function mountPots(root){
-  const render = () => {
-    const s = getState();
-    root.innerHTML = `<div class="h-sec"><h2>Pots</h2><button data-new>Create</button></div>
-      <div class="card">${s.pots.length ? s.pots.map(p => potRow(p, plan().ia)).join('') : empty('No pots yet')}</div>
-      <p class="note">Savings pots earn ${plan().ia}% AER. Locked pots can't be withdrawn from.</p>`;
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-new]')) newPotSheet();
-  });
-  render();
-}
-
-export function mountPotDetail(root, params){
-  const render = () => {
-    const p = getState().pots.find(x => x.id === params.id);
-    if (!p){ root.innerHTML = empty('Pot not found'); return; }
-    const history = getState().tx.filter(t => t.name === p.name).slice(0, 15);
-    const isRoundup = getState().roundupPotId === p.id;
-    root.innerHTML = `<div class="h-sec"><h2>${esc(p.name)}</h2><button data-edit>Edit</button></div>
-      <div class="card"><div class="balance rev fs30">${fmt(p.bal)}</div>
-        <div class="sub">${Math.round(p.bal / p.goal * 100)}% of ${fmt(p.goal)}</div>
-        ${meter(p.bal, p.goal)}
-        ${p.type === 'savings' ? kv('Interest', plan().ia + '% AER') : ''}
-        ${kv('Status', p.locked ? badge('Locked', 'warn') : badge('Unlocked', 'ok'))}
-        ${p.autoSave ? kv('Auto-save', fmt(p.autoSave) + ' / month') : ''}
-        ${kv('Round-ups', isRoundup
-          ? `${badge('This pot', 'ok')} <button class="btn ghost sm" data-roundup-off>Stop</button>`
-          : `<button class="btn ghost sm" data-roundup-on>Send here</button>`)}
-        <div class="row2 mt12"><button class="btn" data-in>Add money</button>
-          <button class="btn ghost" data-out ${p.locked ? 'disabled' : ''}>Withdraw</button></div>
-        <div class="row2 mt10">
-          <button class="btn ghost" data-lock>${p.locked ? 'Unlock' : 'Lock'} pot</button>
-          <button class="btn ghost" data-del>Close pot</button></div></div>
-      <div class="card"><h2>History</h2>
-        ${history.length ? history.map(t => kv(esc(t.note || 'Move'), `<span class="rev">${t.amt > 0 ? '+' : ''}${fmt(t.amt)}</span>`)).join('') : empty('No activity')}</div>`;
-  };
-  const amountSheet = dir => {
-    const p = getState().pots.find(x => x.id === params.id);
-    if (!p) return;
-    sheet(`<h2>${dir === 'in' ? 'Add to' : 'Withdraw from'} ${esc(p.name)}</h2>
-      <div class="sub">Balance ${fmt(balNow())} · Pot ${fmt(p.bal)}</div>
-      <div class="field"><label>Amount</label><input id="amAmt" type="number" min="1"></div>
-      ${chipRow([10, 25, 50, 100].map(v => ({ value: v, label: '£' + v })), null, 'quick')}
-      <button class="btn" id="amGo">Confirm</button>`);
-    document.querySelectorAll('[data-quick]').forEach(b => b.onclick = () => {
-      const i = document.getElementById('amAmt'); if (i) i.value = b.dataset.quick;
-    });
-    document.getElementById('amGo').onclick = () => {
-      const v = +document.getElementById('amAmt').value;
-      if (!v || v <= 0) return toast('Enter an amount');
-      const res = moveToPot(params.id, round2(v), dir);
-      if (!res.ok) return toast(res.msg);
-      closeSheet(); render(); toast('Done');
-    };
-  };
-  const editSheet = () => {
-    const p = getState().pots.find(x => x.id === params.id);
-    if (!p) return;
-    sheet(`<h2>Edit pot</h2><div class="field"><label>Name</label><input id="epName" value="${esc(p.name)}"></div>
-      <div class="field"><label>Goal</label><input id="epGoal" type="number" min="1" value="${p.goal}"></div>
-      <div class="field"><label>Monthly auto-save</label><input id="epAuto" type="number" min="0" value="${p.autoSave}"></div>
-      <button class="btn" id="epSave">Save</button>`);
-    document.getElementById('epSave').onclick = () => {
-      updatePot(params.id, { name: document.getElementById('epName').value.trim() || p.name,
-        goal: Math.max(1, +document.getElementById('epGoal').value || p.goal),
-        autoSave: Math.max(0, +document.getElementById('epAuto').value || 0) });
-      closeSheet(); render(); toast('Pot updated');
-    };
-  };
-  root.addEventListener('click', e => {
-    if (e.target.closest('[data-in]')) return amountSheet('in');
-    if (e.target.closest('[data-out]')) return amountSheet('out');
-    if (e.target.closest('[data-edit]')) return editSheet();
-    if (e.target.closest('[data-roundup-on]')){
-      const r = setRoundupPot(params.id);
-      if (!r.ok) return toast(r.msg);
-      render(); return toast('Round-ups go to ' + r.name);
-    }
-    if (e.target.closest('[data-roundup-off]')){ clearRoundupPot(); return render(); }
-    if (e.target.closest('[data-lock]')){
-      const res = togglePotLock(params.id);
-      if (res.ok){ render(); toast(res.locked ? 'Pot locked' : 'Pot unlocked'); }
-    }
-    if (e.target.closest('[data-del]')){
-      const res = deletePot(params.id);
-      if (!res.ok) return toast(res.msg);
-      go('pots'); toast('Pot closed');
-    }
-  });
-  render();
-}
-
-export function mountInvest(root){
-  const render = () => {
-    const s = getState();
-    const share = isaBal() / TARGET_ISA * 100;
-    root.innerHTML = `<div class="card mt12">
-        <div class="sub">Stocks &amp; shares ISA · transferred in October 1992</div>
-        <div class="balance rev fs30">${fmt(isaBal())}</div>
-        ${meter(isaBal(), TARGET_ISA)}
-        <div class="fs125 ink3 mb20">${share.toFixed(2)}% of target</div>
-        ${kv('Allowance used', `<span class="rev">${fmt(tyUsed())}</span>`)}
-        ${kv('Allowance remaining', `<span class="rev">${fmt(Math.max(0, 20000 - tyUsed()))}</span>`)}
-        ${kv('Platform fee', (platformFeeRate() * 100).toFixed(2) + '% · capped at ' + fmt(platformFeeCap()))}
-        ${kv('Fee this year', `<span class="rev">${fmt(platformFeeAnnual())}</span>`)}
-        ${kv('Fee this month', `<span class="rev">${fmt(platformFeeMonthly())}</span>`)}
-        <button class="btn mt12" data-contrib>Add to ISA</button></div>
-      <div class="card"><h2>Portfolio</h2>
-        ${[['iShares Core MSCI World', .38], ['iShares Core FTSE 100', .22],
-          ['iShares S&amp;P 500', .18], ['iShares Global Aggregate Bond', .14], ['Cash', .08]]
-          .map(([n, w]) => `<div class="mt8"><div class="fx fx-b fx-c gap10 fs13">${logo(n)}
-            <span class="grow">${n}</span><b class="rev">${fmt(isaBal() * w)}</b></div>
-            ${meter(w * 100, 100, 'var(--ink)')}</div>`).join('')}</div>
-      <div class="card"><h2>Value over time</h2><div id="isaChart"></div></div>
-      <div class="h-sec"><h2>Ledger</h2><button data-go="statements">Statements</button></div>
-      <div class="card p4-14"><ul class="txlist">
-        ${s.isa.slice(0, 40).map(r => `<li class="tx">${logo('Vanguard')}
-          <span class="mid"><span class="nm">${esc(r.note)}</span><span class="mt">${r.date} · ${r.type}</span></span>
-          <span class="amt rev">${fmt(r.value)}</span></li>`).join('')}</ul></div>`;
-    const asc = s.isa.slice().reverse(), step = Math.max(1, Math.floor(asc.length / 140));
-    lineChart(root.querySelector('#isaChart'), asc.filter((_, i) => i % step === 0).map(r => ({ d: r.date, v: r.value })), { h: 150 });
-  };
-  root.addEventListener('click', e => {
-    if (!e.target.closest('[data-contrib]')) return;
-    const left = Math.max(0, 20000 - tyUsed());
-    sheet(`<h2>Add to ISA</h2><div class="sub">Remaining allowance ${fmt(left)}</div>
-      <div class="field"><label>Amount</label><input id="isaAmt" type="number" min="1"></div>
-      <button class="btn" id="isaGo">Move to ISA</button>`);
-    document.getElementById('isaGo').onclick = () => {
-      const v = +document.getElementById('isaAmt').value;
-      if (!v || v <= 0) return toast('Enter an amount');
-      if (v > balNow()) return toast('Not enough in your balance');
-      if (v > left) return toast('Over your ISA allowance');
-      const s = getState();
-      s.isa.unshift({ id: 'c' + Date.now(), date: TODAY, type: 'ISA', contrib: v, growth: 0,
-        value: round2(isaBal() + v), note: 'ISA subscription' });
-      addTx('Vanguard', 'Investments', -v, 'ISA subscription');
-      closeSheet(); render(); toast('Added to ISA');
-    };
-  });
-  render();
-}
-
-export function mountStatements(root){
-  let kind = 'acc', all = false;
-  const render = () => {
-    const s = getState();
-    const src = kind === 'acc' ? s.tx : s.isa;
-    const months = [...new Set(src.map(r => r.date.slice(0, 7)))].sort().reverse();
-    const rows = all
-      ? kv(`All time · ${src.length} rows`,
-          `<button class="btn ghost sm" data-pdf="all">PDF</button>
-           <button class="btn ghost sm" data-csv="all">CSV</button>`)
-      : months.slice(0, 24).map(ym => {
-          const [y, m] = ym.split('-');
-          return kv(`${MONTHS[+m - 1]} ${y}`,
-            `<button class="btn ghost sm" data-pdf="${ym}">PDF</button>
-             <button class="btn ghost sm" data-csv="${ym}">CSV</button>`);
-        }).join('');
-    root.innerHTML = `<div class="h-sec"><h2>Statements</h2></div>
-      ${chipRow([{ value: 'acc', label: 'Current account' }, { value: 'isa', label: 'ISA' }], kind, 'stmt')}
-      ${chipRow([{ value: 'months', label: 'By month' }, { value: 'all', label: 'All time' }],
-        all ? 'all' : 'months', 'range')}
-      <div class="card">${rows || empty('No statements')}</div>
-      <p class="note">${all
-        ? `Everything on this ${kind === 'acc' ? 'account' : 'ISA'} up to ${TODAY}.`
-        : `Showing the last ${Math.min(24, months.length)} of ${months.length} months.`}</p>`;
-  };
-  root.addEventListener('click', e => {
-    const chip = e.target.closest('[data-stmt]');
-    if (chip){ kind = chip.dataset.stmt; return render(); }
-    const range = e.target.closest('[data-range]');
-    if (range){ all = range.dataset.range === 'all'; return render(); }
-    const pdf = e.target.closest('[data-pdf]');
-    if (pdf) return download(kind, pdf.dataset.pdf, true);
-    const csv = e.target.closest('[data-csv]');
-    if (csv) return download(kind, csv.dataset.csv, false);
-  });
-  render();
-}
-
-function download(kind, ym, asPdf){
-  const s = getState(), isa = kind === 'isa';
-  const scope = r => ym === 'all' || r.date.slice(0, 7) === ym;
-  const rows = isa
-    ? s.isa.filter(scope).reverse().map(r => [r.date, r.type, r.contrib.toFixed(2), r.growth.toFixed(2), r.value.toFixed(2), r.note])
-    : s.tx.filter(scope).reverse().map(t => [t.date, t.time, t.name, t.cat, t.amt.toFixed(2), t.bal.toFixed(2), t.note]);
-  if (!rows.length) return toast('Nothing in that range');
-  const head = isa ? ['Date','Type','Contribution','Growth','Value','Note'] : ['Date','Time','Description','Category','Amount','Balance','Note'];
-  const stamp = ym === 'all' ? 'all-time' : ym;
-  const name = `${isa ? 'isa' : 'statement'}-${stamp}`;
-  const [y, m] = ym === 'all' ? ['', ''] : ym.split('-');
-  const period = ym === 'all'
-    ? `All time · to ${TODAY}`
-    : `${MONTHS[+m - 1]} ${y}`;
-  if (!asPdf){
-    const csv = [head, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    const a = document.createElement('a'); a.href = url; a.download = name + '.csv'; a.click();
-    URL.revokeObjectURL(url); return toast('Downloaded ' + name + '.csv');
+    if (key === 'carousel') body.appendChild(carousel());
+    if (key === 'activity') body.appendChild(activity());
   }
-  const w = window.open('', '_blank');
-  if (!w) return toast('Allow pop-ups to print');
-  w.document.write(`<title>${name}</title><style>body{font-family:-apple-system,Arial,sans-serif;padding:32px;color:#0b1a26}
-    h1{font-size:20px;margin:0 0 2px}.sub{color:#6b7c8a;font-size:13px;margin-bottom:18px}
-    table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:6px 4px;border-bottom:1px solid #e6ebef}
-    th{font-size:11px;text-transform:uppercase;color:#6b7c8a}.amt{text-align:right}</style>
-    <h1>Monzo — ${isa ? 'ISA' : 'Current account'} statement</h1>
-    <div class="sub">${esc(s.profile.name)} · ${esc(s.profile.a1)}, ${esc(s.profile.city)}, ${esc(s.profile.post)} · ${period}</div>
-    <table><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead>
-    <tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td class="${i === 4 ? 'amt' : ''}">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`);
-  w.document.close(); w.focus(); setTimeout(() => w.print(), 350);
-  toast('Statement ready to print');
+
+  const edit = el('div');
+  edit.style.padding = '8px 16px 0';
+  const eb = el('button', 'btn btn--ghost btn--sm btn--block');
+  eb.textContent = 'Edit home';
+  eb.onclick = () => import('./screens-b.js').then(m => m.layoutSheet());
+  edit.appendChild(eb);
+  body.appendChild(edit);
+
+  s.appendChild(body);
+  return s;
+}
+
+function leftToSpendCard() {
+  const c = el('div', 'card');
+  const left = leftToSpend();
+  const total = Math.max(1, state.balance);
+  const pct = Math.min(1, left / total);
+  const w = el('div', 'ringwrap');
+  w.appendChild(ring(pct));
+  const m = el('div', 'ringwrap__main');
+  m.appendChild(el('div', 'ringwrap__l', 'Left to spend'));
+  m.appendChild(el('div', 'ringwrap__v', fmt(left)));
+  const sub = el('div', 'hint');
+  sub.textContent = 'After ' + fmt(upcoming()) + ' of bills in the next 7 days';
+  m.appendChild(sub);
+  w.appendChild(m);
+  c.appendChild(w);
+  return c;
+}
+
+function carousel() {
+  const items = (state.layout.carousel || []).slice();
+  const wrap = el('div');
+  const head = el('div', 'sect');
+  head.style.margin = '4px 16px 8px';
+  head.textContent = 'Save & invest';
+  wrap.appendChild(head);
+
+  const track = el('div', 'carousel');
+
+  for (const key of items) {
+    if (key === 'pots') {
+      for (const p of state.pots) {
+        const b = el('button', 'pcard');
+        b.type = 'button';
+        const ico = el('div', 'pcard__ico', p.emoji || '🏦');
+        ico.style.background = (p.colour || '#eee') + '22';
+        b.appendChild(ico);
+        b.appendChild(el('div', 'pcard__n', p.name));
+        const bar = el('div', 'pbar');
+        const f = el('div', 'pbar__f');
+        f.style.width = Math.min(100, Math.round((p.saved / Math.max(1, p.target)) * 100)) + '%';
+        bar.appendChild(f);
+        b.appendChild(bar);
+        b.appendChild(el('div', 'pcard__v', fmtShort(p.saved)));
+        b.onclick = () => { location.hash = '#/pot/' + p.id; };
+        track.appendChild(b);
+      }
+      const add = el('button', 'pcard pcard--new');
+      add.type = 'button';
+      add.innerHTML = '<div style="font-size:22px">＋</div><div>New pot</div>';
+      add.onclick = () => import('./screens-b.js').then(m => m.newPotSheet());
+      track.appendChild(add);
+    }
+    if (key === 'pension') {
+      const b = el('button', 'pcard');
+      b.type = 'button';
+      const ico = el('div', 'pcard__ico', '🏛️');
+      ico.style.background = '#e8f0fe';
+      b.appendChild(ico);
+      b.appendChild(el('div', 'pcard__n', 'Pension'));
+      b.appendChild(el('div', 'pcard__v', fmtShort(state.pension.balance)));
+      b.onclick = () => { location.hash = '#/pension'; };
+      track.appendChild(b);
+    }
+    if (key === 'isa') {
+      const b = el('button', 'pcard');
+      b.type = 'button';
+      const ico = el('div', 'pcard__ico', '📈');
+      ico.style.background = '#e6f7ee';
+      b.appendChild(ico);
+      b.appendChild(el('div', 'pcard__n', 'Stocks & Shares ISA'));
+      b.appendChild(el('div', 'pcard__v', fmtShort(state.isa.balance)));
+      b.onclick = () => { location.hash = '#/isa'; };
+      track.appendChild(b);
+    }
+  }
+
+  wrap.appendChild(track);
+  return wrap;
+}
+
+function activity() {
+  const wrap = el('div');
+  const head = el('div', 'sect');
+  head.style.margin = '8px 16px 4px';
+  head.textContent = 'Activity';
+  wrap.appendChild(head);
+
+  const l = el('div', 'list');
+  l.style.background = 'transparent';
+  let lastDay = '';
+  const sorted = state.tx.slice().sort((a, b) => b.ts - a.ts).slice(0, 40);
+  for (const t of sorted) {
+    const d = new Date(t.ts).toDateString();
+    if (d !== lastDay) {
+      lastDay = d;
+      const sep = el('div', 'daysep', dayText(t.ts));
+      l.appendChild(sep);
+    }
+    const b = el('button', 'act');
+    b.type = 'button';
+    b.appendChild(tile(t.name));
+    const m = el('div', 'act__main');
+    m.appendChild(el('div', 'act__t', t.name));
+    const sub = el('div', 'act__s');
+    sub.textContent = cat(t.category).name;
+    m.appendChild(sub);
+    b.appendChild(m);
+    const v = el('div', 'act__v' + (t.amount > 0 ? ' pos' : ''), (t.amount > 0 ? '+' : '') + fmt(t.amount));
+    b.appendChild(v);
+    b.onclick = () => { location.hash = '#/tx/' + t.id; };
+    l.appendChild(b);
+  }
+  if (!sorted.length) l.appendChild(empty('No transactions yet', 'Tap + to add one'));
+  wrap.appendChild(l);
+  return wrap;
+}
+
+function dayText(ts) {
+  const d = new Date(ts), t = new Date();
+  const diff = Math.round((new Date(t.getFullYear(), t.getMonth(), t.getDate()) -
+    new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  return d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+}
+
+/* ============ TRENDS ============ */
+
+export function trendsScreen() {
+  const spent = spentThisMonth();
+  const cats = byCategory();
+  const prev = lastMonthByCategory();
+  const total = Math.max(1, spent);
+  const body = el('div');
+
+  const top = el('div', 'card');
+  const rw = el('div', 'ringwrap');
+  const budget = 1200;
+  rw.appendChild(ring(Math.min(1, spent / budget), 78));
+  const m = el('div', 'ringwrap__main');
+  m.appendChild(el('div', 'ringwrap__l', 'Spent this month'));
+  m.appendChild(el('div', 'ringwrap__v', fmt(spent)));
+  m.appendChild(el('div', 'hint', 'of ' + fmt(budget) + ' budget'));
+  rw.appendChild(m);
+  top.appendChild(rw);
+  body.appendChild(top);
+
+  body.appendChild(section('Categories'));
+  const l = el('div', 'list list--boxed');
+  const rows = Object.entries(cats).sort((a, b) => b[1] - a[1]);
+  for (const [id, amt] of rows) {
+    const c = cat(id);
+    const p = prev[id] || 0;
+    const delta = p ? Math.round(((amt - p) / p) * 100) : null;
+    const r = el('button', 'row');
+    r.type = 'button';
+    const m2 = el('div', 'row__main');
+    const t = el('div', 'row__t', c.emoji + '  ' + c.name);
+    m2.appendChild(t);
+    const bar = el('div', 'pbar');
+    bar.style.marginTop = '6px';
+    const f = el('div', 'pbar__f');
+    f.style.width = Math.round((amt / total) * 100) + '%';
+    f.style.background = c.colour;
+    bar.appendChild(f);
+    m2.appendChild(bar);
+    r.appendChild(m2);
+    const v = el('div', 'row__v', fmt(amt));
+    r.appendChild(v);
+    if (delta !== null) {
+      const d = el('span', 'hint');
+      d.style.marginLeft = '6px';
+      d.textContent = (delta > 0 ? '▲' : '▼') + Math.abs(delta) + '%';
+      d.style.color = delta > 0 ? '#d92d20' : '#12a150';
+      v.appendChild(d);
+    }
+    r.onclick = () => { location.hash = '#/trends/' + id; };
+    l.appendChild(r);
+  }
+  if (!rows.length) l.appendChild(empty('Nothing spent yet', 'Your categories will appear here'));
+  body.appendChild(l);
+
+  body.appendChild(section('Daily'));
+  const strip = el('div', 'card');
+  const days = new Date().getDate();
+  const perDay = [];
+  for (let i = 1; i <= days; i++) perDay.push(0);
+  const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
+  for (const t of state.tx) {
+    if (t.amount >= 0 || t.ts < start.getTime()) continue;
+    const d = new Date(t.ts).getDate();
+    perDay[d - 1] = (perDay[d - 1] || 0) + Math.abs(t.amount);
+  }
+  const maxD = Math.max(1, ...perDay);
+  const bars = el('div');
+  bars.style.cssText = 'display:flex;align-items:flex-end;gap:3px;height:72px';
+  perDay.forEach(v => {
+    const b = el('div');
+    b.style.cssText = `flex:1;border-radius:2px;background:${v ? '#ff4f40' : '#ececf0'};height:${Math.max(4, (v / maxD) * 72)}px`;
+    bars.appendChild(b);
+  });
+  strip.appendChild(bars);
+  body.appendChild(strip);
+
+  return screen('trends', {title: 'Trends', body});
+}
+
+export function trendCatScreen(id) {
+  const c = cat(id);
+  const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
+  const txs = state.tx.filter(t => t.category === id && t.ts >= start.getTime())
+    .sort((a, b) => b.ts - a.ts);
+  const body = el('div');
+  const total = txs.reduce((s, t) => s + Math.abs(t.amount), 0);
+  const card = el('div', 'card');
+  card.appendChild(el('div', 'ringwrap__l', 'This month'));
+  card.appendChild(el('div', 'ringwrap__v', fmt(total)));
+  card.appendChild(el('div', 'hint', txs.length + ' transactions'));
+  body.appendChild(card);
+
+  const l = el('div', 'list list--boxed');
+  for (const t of txs) {
+    l.appendChild(row({
+      title: t.name, sub: new Date(t.ts).toLocaleDateString('en-GB'),
+      value: fmt(t.amount), tile: tile(t.name),
+      onClick: () => { location.hash = '#/tx/' + t.id; }
+    }));
+  }
+  if (!txs.length) l.appendChild(empty('Nothing here', 'No spending in this category'));
+  body.appendChild(l);
+
+  return screen('trend-' + id, {title: c.emoji + ' ' + c.name, back: '#/trends', body});
+}
+
+/* ============ PAYMENTS ============ */
+
+export function paymentsScreen() {
+  const body = el('div');
+  const grid = el('div');
+  grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px';
+  for (const [label, ic, hash] of [
+    ['Send', 'payments', '#/send'],
+    ['Request', 'trends', '#/request'],
+    ['Split bill', 'plus', '#/split'],
+    ['Bank transfer', 'chev', '#/bank'],
+    ['Scheduled', 'trends', '#/scheduled'],
+    ['Payees', 'account', '#/payees']
+  ]) {
+    const b = el('button', 'card');
+    b.type = 'button';
+    b.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px';
+    b.appendChild(icon(ic, 22));
+    b.appendChild(el('span', '', label));
+    b.style.fontWeight = '700';
+    b.style.fontSize = '12px';
+    b.onclick = () => { location.hash = hash; };
+    grid.appendChild(b);
+  }
+  body.appendChild(grid);
+
+  body.appendChild(section('Payees'));
+  const l = el('div', 'list list--boxed');
+  for (const p of state.payees) {
+    l.appendChild(row({
+      title: p.name, sub: p.sort + ' · ' + p.acct,
+      tile: (() => { const t = tile(p.name); return t; })(),
+      onClick: () => { location.hash = '#/payee/' + p.id; }
+    }));
+  }
+  if (!state.payees.length) l.appendChild(empty('No payees', 'Add someone to send money'));
+  body.appendChild(l);
+
+  return screen('payments', {title: 'Payments', body});
+}
+
+export function payeesScreen() {
+  const body = el('div');
+  const l = el('div', 'list list--boxed');
+  for (const p of state.payees) {
+    l.appendChild(row({title: p.name, sub: p.sort + ' · ' + p.acct, onClick: () => { location.hash = '#/payee/' + p.id; }}));
+  }
+  if (!state.payees.length) l.appendChild(empty('No payees yet'));
+  body.appendChild(l);
+  return screen('payees', {title: 'Payees', back: '#/payments', body});
+}
+
+export function payeeScreen(id) {
+  const p = state.payees.find(x => x.id === id);
+  if (!p) return screen('payee', {title: 'Payee', back: '#/payments', body: empty('Not found')});
+  const body = el('div');
+  const c = el('div', 'card');
+  const t = tile(p.name, 56);
+  t.style.margin = '0 auto 12px';
+  c.appendChild(t);
+  c.appendChild(el('div', 'row__t', p.name)).style.textAlign = 'center';
+  c.appendChild(el('div', 'hint', p.sort + ' · ' + p.acct)).style.textAlign = 'center';
+  body.appendChild(c);
+  const send = el('button', 'btn btn--primary btn--block', 'Send money');
+  send.onclick = () => { location.hash = '#/send/' + p.id; };
+  body.appendChild(send);
+  return screen('payee-' + id, {title: p.name, back: '#/payments', body});
+}
+
+export function sendScreen(payeeId) {
+  const p = state.payees.find(x => x.id === payeeId);
+  const body = el('div');
+  const amount = input({type: 'number', step: '0.01', placeholder: '0.00'});
+  const ref = input({placeholder: 'Reference'});
+  body.appendChild(field({label: 'Amount', input: amount}));
+  body.appendChild(field({label: 'Reference', input: ref}));
+  if (p) body.appendChild(el('p', 'hint', 'To ' + p.name));
+  const go = el('button', 'btn btn--primary btn--block', 'Send');
+  go.onclick = () => {
+    const a = round2(Number(amount.value));
+    if (!a || a <= 0) return toast('Enter an amount');
+    if (!takeFunds(a)) return toast('Not enough money');
+    addTx({name: p ? p.name : 'Bank transfer', amount: -a, category: 'transfers', note: ref.value});
+    toast('Sent ' + fmt(a));
+    location.hash = '#/payments';
+  };
+  body.appendChild(go);
+  return screen('send', {title: 'Send money', back: '#/payments', body});
+}
+
+export function requestScreen() {
+  const body = el('div');
+  const amount = input({type: 'number', step: '0.01', placeholder: '0.00'});
+  const from = input({placeholder: 'Who from'});
+  body.appendChild(field({label: 'Amount', input: amount}));
+  body.appendChild(field({label: 'From', input: from}));
+  const go = el('button', 'btn btn--primary btn--block', 'Request');
+  go.onclick = () => {
+    const a = round2(Number(amount.value));
+    if (!a) return toast('Enter an amount');
+    toast('Requested ' + fmt(a) + (from.value ? ' from ' + from.value : ''));
+    location.hash = '#/payments';
+  };
+  body.appendChild(go);
+  return screen('request', {title: 'Request money', back: '#/payments', body});
+}
+
+export function bankScreen() {
+  const body = el('div');
+  const name = input({placeholder: 'Account holder'});
+  const sort = input({placeholder: '00-00-00'});
+  const acct = input({placeholder: '12345678', type: 'number'});
+  const amount = input({type: 'number', step: '0.01', placeholder: '0.00'});
+  body.appendChild(field({label: 'Name', input: name}));
+  body.appendChild(field({label: 'Sort code', input: sort}));
+  body.appendChild(field({label: 'Account number', input: acct}));
+  body.appendChild(field({label: 'Amount', input: amount}));
+  const go = el('button', 'btn btn--primary btn--block', 'Send');
+  go.onclick = () => {
+    const a = round2(Number(amount.value));
+    if (!a) return toast('Enter an amount');
+    if (!takeFunds(a)) return toast('Not enough money');
+    addTx({name: name.value || 'Bank transfer', amount: -a, category: 'transfers'});
+    toast('Sent ' + fmt(a));
+    location.hash = '#/payments';
+  };
+  body.appendChild(go);
+  return screen('bank', {title: 'Bank transfer', back: '#/payments', body});
+}
+
+export function scheduledScreen() {
+  const body = el('div');
+  const l = el('div', 'list list--boxed');
+  for (const s of state.scheduled) {
+    l.appendChild(row({
+      title: s.name,
+      sub: s.freq === 'once' ? 'Once' : 'Day ' + s.day + ' monthly',
+      value: fmt(s.amount), tile: tile(s.name),
+      onClick: () => {
+        confirmSheet({
+          title: s.name, text: 'Cancel this scheduled payment?', confirm: 'Cancel payment', danger: true,
+          onConfirm: () => {
+            state.scheduled = state.scheduled.filter(x => x.id !== s.id);
+            save(); toast('Cancelled');
+            document.dispatchEvent(new CustomEvent('render'));
+          }
+        });
+      }
+    }));
+  }
+  if (!state.scheduled.length) l.appendChild(empty('Nothing scheduled'));
+  body.appendChild(l);
+  return screen('scheduled', {title: 'Scheduled', back: '#/payments', body});
+}
+
+/* ============ BORROWING ============ */
+
+export function borrowingScreen() {
+  const body = el('div');
+  const f = state.flex;
+  const avail = round2(Math.max(0, f.limit - f.used));
+
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'ringwrap__l', 'Flex available'));
+  c.appendChild(el('div', 'ringwrap__v', fmt(avail)));
+  const bar = el('div', 'pbar');
+  bar.style.marginTop = '10px';
+  const fill = el('div', 'pbar__f');
+  fill.style.width = Math.round((f.used / Math.max(1, f.limit)) * 100) + '%';
+  bar.appendChild(fill);
+  c.appendChild(bar);
+  c.appendChild(el('div', 'hint', fmt(f.used) + ' of ' + fmt(f.limit) + ' in use'));
+  body.appendChild(c);
+
+  body.appendChild(section('Flex'));
+  body.appendChild(list([
+    row({title: 'Split a purchase', sub: 'Minimum ' + fmt(FLEX_MIN) + ' · 0% on 3 months', onClick: () => flexSheet()}),
+    row({title: 'Manage limit', sub: 'Current limit ' + fmt(f.limit), onClick: () => flexLimitSheet()}),
+    row({title: 'Flex plan', value: f.active ? 'Active' : 'Off', chev: false})
+  ]));
+
+  body.appendChild(section('Loans'));
+  body.appendChild(list([
+    row({title: 'Personal loan', sub: 'Borrow ' + fmt(1000) + ' – ' + fmt(25000), onClick: () => toast('Loan applications open in Phase D')}),
+    row({title: 'Overdraft', sub: 'Up to ' + fmt(500) + ' · 39% EAR', onClick: () => toast('Overdraft settings')})
+  ]));
+
+  return screen('borrowing', {title: 'Borrowing', body});
+}
+
+export function flexSheet() {
+  const body = el('div');
+  const amount = input({type: 'number', step: '0.01', placeholder: '100.00'});
+  const name = input({placeholder: 'What was it for?'});
+  let months = 3;
+  body.appendChild(field({label: 'Amount', input: amount, hint: 'Minimum ' + fmt(FLEX_MIN)}));
+  body.appendChild(field({label: 'Merchant', input: name}));
+  const s = seg(FLEX_MONTHS.map(m => ({label: m + ' months', value: m})), 3, v => {
+    months = v;
+    summary.textContent = preview();
+  });
+  body.appendChild(field({label: 'Term', input: s}));
+  const summary = el('p', 'hint');
+  summary.style.margin = '0';
+  const preview = () => {
+    const a = round2(Number(amount.value) || 0);
+    if (a < FLEX_MIN) return 'Enter at least ' + fmt(FLEX_MIN);
+    const apr = flexApr(a, months);
+    const total = round2(a * (1 + apr * (months / 12)));
+    return fmt(round2(total / months)) + ' × ' + months + ' = ' + fmt(total) + ' · ' + (apr === 0 ? '0% APR' : (apr * 100).toFixed(0) + '% APR');
+  };
+  summary.textContent = preview();
+  amount.oninput = () => { summary.textContent = preview(); };
+  body.appendChild(summary);
+
+  const go = el('button', 'btn btn--primary btn--block', 'Create Flex plan');
+  const sh = sheet({title: 'Flex a purchase', body, foot: go});
+  go.onclick = () => {
+    const a = round2(Number(amount.value) || 0);
+    const r = flexPurchase(a, months, name.value || 'Flex purchase');
+    if (!r.ok) return toast(r.reason === 'minimum' ? 'Minimum is ' + fmt(FLEX_MIN) : 'Pick a term');
+    sh.close();
+    toast('Flex plan created');
+    document.dispatchEvent(new CustomEvent('render'));
+  };
+}
+
+export function flexLimitSheet() {
+  const body = el('div');
+  const i = input({type: 'number', value: state.flex.limit, min: 250, max: 3000});
+  body.appendChild(field({label: 'New limit', input: i, hint: 'Between £250 and £3,000'}));
+  const go = el('button', 'btn btn--primary btn--block', 'Save limit');
+  const sh = sheet({title: 'Flex limit', body, foot: go});
+  go.onclick = () => {
+    const v = Math.min(3000, Math.max(250, Number(i.value) || 250));
+    state.flex.limit = v;
+    save(); sh.close(); toast('Limit updated');
+    document.dispatchEvent(new CustomEvent('render'));
+  };
+}
+
+/* ============ ACCOUNT ============ */
+
+export function accountScreen() {
+  const body = el('div');
+  const c = el('div', 'card');
+  c.style.cssText = 'display:flex;align-items:center;gap:12px';
+  c.appendChild(avatar(52));
+  const m = el('div');
+  m.appendChild(el('div', 'row__t', state.user.name));
+  m.appendChild(el('div', 'row__s', state.user.email));
+  c.appendChild(m);
+  body.appendChild(c);
+
+  body.appendChild(section('Money'));
+  body.appendChild(list([
+    row({title: 'Pots', sub: state.pots.length + ' pots · ' + fmt(totalPots()) + ' saved', onClick: () => { location.hash = '#/pots'; }}),
+    row({title: 'Investments', sub: 'iShares portfolio', onClick: () => { location.hash = '#/invest'; }}),
+    row({title: 'Pension', sub: state.pension.provider, onClick: () => { location.hash = '#/pension'; }}),
+    row({title: 'Stocks & Shares ISA', sub: 'Allowance used ' + fmt(state.isa.used), onClick: () => { location.hash = '#/isa'; }}),
+    row({title: 'Monzo Plus', sub: 'Manage your plan', onClick: () => { location.hash = '#/plus'; }})
+  ]));
+
+  body.appendChild(section('Account'));
+  body.appendChild(list([
+    row({title: 'Personal details', onClick: () => { location.hash = '#/profile'; }}),
+    row({title: 'Cards', sub: state.cards.length + ' active', onClick: () => { location.hash = '#/cards'; }}),
+    row({title: 'Security', onClick: () => { location.hash = '#/security'; }}),
+    row({title: 'Notifications', onClick: () => { location.hash = '#/notifications'; }}),
+    row({title: 'Statements', onClick: () => { location.hash = '#/statements'; }}),
+    row({title: 'Appearance', onClick: () => { location.hash = '#/appearance'; }}),
+    row({title: 'About', onClick: () => { location.hash = '#/about'; }})
+  ]));
+
+  return screen('account', {title: 'Account', body});
+}
+
+export function potsScreen() {
+  const body = el('div');
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'ringwrap__l', 'Total saved'));
+  c.appendChild(el('div', 'ringwrap__v', fmt(totalPots())));
+  c.appendChild(el('div', 'hint', SAVINGS_INTEREST * 100 + '% AER on savings'));
+  body.appendChild(c);
+
+  const l = el('div', 'list list--boxed');
+  for (const p of state.pots) {
+    const t = el('span', 'pcard__ico', p.emoji || '🏦');
+    t.style.background = (p.colour || '#eee') + '22';
+    l.appendChild(row({
+      title: p.name, sub: fmt(p.saved) + ' of ' + fmt(p.target),
+      value: p.locked ? '🔒' : '', tile: t, chev: true,
+      onClick: () => { location.hash = '#/pot/' + p.id; }
+    }));
+  }
+  if (!state.pots.length) l.appendChild(empty('No pots yet', 'Pots help you put money aside', {label: 'Create a pot', onClick: () => import('./screens-b.js').then(m => m.newPotSheet())}));
+  body.appendChild(l);
+  return screen('pots', {title: 'Pots', back: '#/account', body});
+}
+
+export function potScreen(id) {
+  const p = state.pots.find(x => x.id === id);
+  if (!p) return screen('pot', {title: 'Pot', back: '#/pots', body: empty('Pot not found')});
+  const body = el('div');
+  const c = el('div', 'card');
+  c.style.textAlign = 'center';
+  c.appendChild(el('div', '', p.emoji || '🏦')).style.fontSize = '40px';
+  c.appendChild(el('div', 'ringwrap__v', fmt(p.saved)));
+  c.appendChild(el('div', 'hint', 'of ' + fmt(p.target) + ' target'));
+  const bar = el('div', 'pbar');
+  bar.style.marginTop = '12px';
+  const f = el('div', 'pbar__f');
+  f.style.width = Math.min(100, (p.saved / Math.max(1, p.target)) * 100) + '%';
+  bar.appendChild(f);
+  c.appendChild(bar);
+  body.appendChild(c);
+
+  const amt = input({type: 'number', step: '0.01', placeholder: '0.00'});
+  body.appendChild(field({label: 'Amount', input: amt}));
+
+  const add = el('button', 'btn btn--primary btn--block', 'Add money');
+  add.onclick = () => {
+    const a = round2(Number(amt.value) || 0);
+    if (!a) return toast('Enter an amount');
+    if (!potMove(p.id, a, 'in')) return toast('Not enough money');
+    toast('Added ' + fmt(a));
+    document.dispatchEvent(new CustomEvent('render'));
+  };
+  body.appendChild(add);
+
+  const wd = el('button', 'btn btn--ghost btn--block', 'Withdraw');
+  wd.onclick = () => {
+    const a = round2(Number(amt.value) || 0);
+    if (!a) return toast('Enter an amount');
+    if (!potMove(p.id, a, 'out')) return toast('Not enough in the pot');
+    toast('Withdrew ' + fmt(a));
+    document.dispatchEvent(new CustomEvent('render'));
+  };
+  body.appendChild(wd);
+
+  body.appendChild(list([
+    row({title: 'Edit pot', onClick: () => import('./screens-b.js').then(m => m.editPotSheet(p.id))}),
+    row({title: 'Round-ups', value: p.roundUp ? 'On' : 'Off', chev: false}),
+    row({title: 'Delete pot', onClick: () => {
+      confirmSheet({
+        title: 'Delete ' + p.name, text: 'Money will go back to your balance.', danger: true, confirm: 'Delete',
+        onConfirm: () => {
+          state.balance = round2(state.balance + p.saved);
+          state.pots = state.pots.filter(x => x.id !== p.id);
+          save(); toast('Pot deleted'); location.hash = '#/pots';
+        }
+      });
+    }})
+  ]));
+
+  return screen('pot-' + id, {title: p.name, back: '#/pots', body});
 }
