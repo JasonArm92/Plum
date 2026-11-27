@@ -1,253 +1,139 @@
-/* src/data.js — inert constants and history generation. Imports nothing. */
-
-export const TARGET_ISA = 934745.32;
-export const BB_CAP = 150;
-
-export const DIVIDEND_RATE = 0.0032;
-export const SAVINGS_RATE = 0.035;
-
-const OPENING_BALANCE = 250;
-const FIRST_YM = [1992, 9];
-const FULL_LEDGER_YEAR = 2019;
-
-export const PLANS = {
-  free:  { name:'Free',  price:0,  ia:2.75, atmUK:400,      atmRow:200, vcLive:0, vc30:0, billsback:false, cover:false, scores:1, min:0, age:'16+' },
-  extra: { name:'Extra', price:3,  ia:3.00, atmUK:Infinity, atmRow:200, vcLive:5, vc30:9, billsback:true,  cover:false, scores:2, min:0, age:'18+' },
-  perks: { name:'Perks', price:9,  ia:3.25, atmUK:Infinity, atmRow:600, vcLive:5, vc30:9, billsback:true,  cover:false, scores:2, min:0, age:'18+' },
-  max:   { name:'Max',   price:17, ia:3.50, atmUK:Infinity, atmRow:600, vcLive:5, vc30:9, billsback:true,  cover:true,  scores:2, min:3, age:'18–69' }
-};
-
-export const CATS = ['Groceries','Eating out','Transport','Shopping','Bills','Rent','Health','Education',
-  'Subscriptions','Entertainment','Fitness','Kids','Income','Transfers','Savings','Investments'];
-
-export const FLEX = ['Groceries','Eating out','Transport','Shopping','Health','Education','Entertainment','Fitness','Kids'];
-export const COMMITTED = ['Rent','Bills','Subscriptions'];
-
-export const DEFAULT_TARGETS = { Groceries:620, 'Eating out':120, Transport:140, Shopping:220,
-  Health:70, Education:120, Entertainment:90, Fitness:35, Kids:110 };
-
-export const BANKS = ['Barclays','HSBC','Lloyds','NatWest','Santander','Nationwide','Starling','Chase'];
-
-export const BB_PROVIDERS = ['British Gas','Northumbrian Water','Virgin Media','EE','Aviva',
-  'Stockton Council','OpenRent','Blue Skies Lets','Pointens'];
-
 export const DOMAINS = {
-  'Tesco':'tesco.com','Aldi':'aldi.co.uk','Asda':'asda.com','Morrisons':'morrisons.com','Lidl':'lidl.co.uk',
-  'Iceland':'iceland.co.uk','Farmfoods':'farmfoods.co.uk',"Sainsbury's":'sainsburys.co.uk',
-  'Costa':'costa.co.uk','Greggs':'greggs.co.uk','The Masham':'masham.co.uk','Hope & Union':'hopeandunion.co.uk',
-  'Cena':'cena.co.uk','Borge':'borgerestaurant.co.uk','The Twisted Peel':'thetwistedpeel.co.uk',
-  "McDonald's":'mcdonalds.com','KFC':'kfc.co.uk',"Domino's":'dominos.co.uk',"Nando's":'nandos.co.uk',
-  'Stagecoach':'stagecoachbus.com','Arriva':'arrivabus.co.uk','BP':'bp.com','Shell':'shell.co.uk',
-  'Amazon':'amazon.co.uk','Argos':'argos.co.uk','Matalan':'matalan.co.uk','Sports Direct':'sportsdirect.com',
-  'Smyths':'smythstoys.com','Next':'next.co.uk','B&M':'bmstores.co.uk','Home Bargains':'homebargains.co.uk',
-  'Screwfix':'screwfix.com','Boots':'boots.com','Specsavers':'specsavers.co.uk','PureGym':'puregym.com',
-  'Everyone Active':'everyoneactive.com','Odeon':'odeon.co.uk','Cineworld':'cineworld.co.uk',
-  'Steam':'steampowered.com','Netflix':'netflix.com','Spotify':'spotify.com','Monzo':'monzo.com',
-  'Twinkl':'twinkl.co.uk','The Works':'theworks.co.uk','Clarks':'clarks.co.uk','Preston Park Museum':'prestonparkmuseum.co.uk',
-  "St Aidan's School":'staidans.co.uk','British Gas':'britishgas.co.uk','Northumbrian Water':'nwl.co.uk',
-  'Virgin Media':'virginmedia.com','EE':'ee.co.uk','Aviva':'aviva.co.uk','Stockton Council':'stockton.gov.uk',
-  'Kingdom Services Group':'kingdom.co.uk','Vanguard':'vanguardinvestor.co.uk','Pointens':'pointens.co.uk',
-  'OpenRent':'openrent.co.uk','Blue Skies Lets':'blueskieslets.co.uk','Barclays':'barclays.co.uk',
-  'HSBC':'hsbc.co.uk','Lloyds':'lloydsbank.com','NatWest':'natwest.com','Santander':'santander.co.uk',
-  'Nationwide':'nationwide.co.uk','Starling':'starlingbank.com','Chase':'chase.co.uk',
-  'Monzo Flex':'monzo.com','Monzo Plus':'monzo.com','Monzo Loans':'monzo.com','Monzo Invest':'monzo.com',
-  'Monzo Billsback':'monzo.com','Saving Challenge':'monzo.com','Savings interest':'monzo.com',
-  'Child Benefit':'gov.uk','Universal Credit':'gov.uk','iShares':'ishares.com','Chloe Brown':''
+  tesco:'tesco.com', sainsburys:'sainsburys.co.uk', asda:'asda.com',
+  aldi:'aldi.co.uk', lidl:'lidl.co.uk', morrisons:'morrisons.com',
+  waitrose:'waitrose.com', coop:'coop.co.uk', iceland:'iceland.co.uk',
+  greggs:'greggs.co.uk', pret:'pret.co.uk', costa:'costa.co.uk',
+  starbucks:'starbucks.co.uk', caffe:'caffenero.com', nero:'caffenero.com',
+  mcdonalds:'mcdonalds.com', kfc:'kfc.co.uk', burgerking:'burgerking.co.uk',
+  subway:'subway.com', dominoes:'dominos.co.uk', pizzaexpress:'pizzaexpress.com',
+  wagamama:'wagamama.com', nandos:'nandos.co.uk', fiveguys:'fiveguys.co.uk',
+  deliveroo:'deliveroo.co.uk', justeat:'just-eat.co.uk', ubereats:'ubereats.com',
+  amazon:'amazon.co.uk', ebay:'ebay.co.uk', argos:'argos.co.uk',
+  currys:'currys.co.uk', johnlewis:'johnlewis.com', marksandspencer:'marksandspencer.com',
+  primark:'primark.com', next:'next.co.uk', asos:'asos.com', zara:'zara.com',
+  hnm:'hm.com', sportsdirect:'sportsdirect.com', decathlon:'decathlon.co.uk',
+  boots:'boots.com', superdrug:'superdrug.com', screwfix:'screwfix.com',
+  bq:'diy.com', ikea:'ikea.com', homebargains:'homebargains.co.uk',
+  poundland:'poundland.co.uk', wilko:'wilko.com', halfords:'halfords.com',
+  shell:'shell.co.uk', bp:'bp.com', esso:'esso.co.uk', tescofuel:'tesco.com',
+  uber:'uber.com', bolt:'bolt.eu', trainline:'trainline.com', lner:'lner.co.uk',
+  northern:'northernrailway.co.uk', tfl:'tfl.gov.uk', stagecoach:'stagecoachbus.com',
+  arriva:'arrivabus.co.uk', nationalexpress:'nationalexpress.com',
+  cineworld:'cineworld.co.uk', odeon:'odeon.co.uk', vue:'myvue.com',
+  spotify:'spotify.com', netflix:'netflix.com', disneyplus:'disneyplus.com',
+  nowtv:'nowtv.com', primevideo:'primevideo.com', audible:'audible.co.uk',
+  apple:'apple.com', google:'google.com', microsoft:'microsoft.com',
+  playstation:'playstation.com', xbox:'xbox.com', nintendo:'nintendo.co.uk',
+  steam:'steampowered.com', ee:'ee.co.uk', o2:'o2.co.uk', vodafone:'vodafone.co.uk',
+  three:'three.co.uk', giffgaff:'giffgaff.com', sky:'sky.com', virginmedia:'virginmedia.com',
+  bt:'bt.com', talktalk:'talktalk.co.uk', octopus:'octopus.energy',
+  britishgas:'britishgas.co.uk', eon:'eonenergy.com', edf:'edfenergy.com',
+  thameswater:'thameswater.co.uk', northumbrianwater:'nwl.co.uk',
+  council:'stockton.gov.uk', tvlicence:'tvlicensing.co.uk', hmrc:'gov.uk',
+  dvla:'gov.uk', royalmail:'royalmail.com', postoffice:'postoffice.co.uk',
+  pharmacy:'boots.com', dentist:'nhs.uk', gp:'nhs.uk', hospital:'nhs.uk',
+  gym:'puregym.com', puregym:'puregym.com', anytimefitness:'anytimefitness.co.uk',
+  nuffield:'nuffieldhealth.com', better:'better.org.uk',
+  bootsopt:'boots.com', specsavers:'specsavers.co.uk', visionexpress:'visionexpress.com',
+  amazonfresh:'amazon.co.uk', ocado:'ocado.com', cookfood:'cookfood.net',
+  hobbycraft:'hobbycraft.co.uk', therange:'therange.co.uk', dunelm:'dunelm.com',
+  bm:'bmstores.co.uk', tkmaxx:'tkmaxx.com', matalan:'matalan.co.uk',
+  riverisland:'riverisland.com', footasylum:'footasylum.com', jd:'jdsports.co.uk',
+  schuh:'schuh.co.uk', clintons:'clintonscards.co.uk', cardfactory:'cardfactory.co.uk',
+  waterstones:'waterstones.com', whsmith:'whsmith.co.uk',
+  betfred:'betfred.com', paddypower:'paddypower.com', williamhill:'williamhill.com',
+  monzo:'monzo.com', ishares:'ishares.com', blackrock:'blackrock.com',
+  vanguard:'vanguardinvestor.co.uk', aviva:'aviva.co.uk', nest:'nestpensions.org.uk',
+  lego:'lego.com', smyths:'smythstoys.com', entertainer:'theentertainer.com',
+  nationaltrust:'nationaltrust.org.uk', rspca:'rspca.org.uk', justgiving:'justgiving.com',
+  ebay2:'ebay.co.uk', depop:'depop.com', vinted:'vinted.co.uk', etsy:'etsy.com',
+  applepay:'apple.com', paypal:'paypal.com', klarna:'klarna.com', clearpay:'clearpay.co.uk',
+  octopusev:'octopus.energy', podpoint:'pod-point.com', instavolt:'instavolt.co.uk'
 };
 
-export const POTS0 = [
-  { name:'Rainy Day',      goal:50000, bal:46820.75, type:'regular' },
-  { name:'Rent buffer',    goal:2400,  bal:2400,     type:'bills'   },
-  { name:'Holiday',        goal:4500,  bal:3125.60,  type:'savings' },
-  { name:'Home education', goal:3000,  bal:2260,     type:'savings' },
-  { name:'Emergency',      goal:60000, bal:61240.30, type:'savings' },
-  { name:"Kids' savings",  goal:10000, bal:7815.25,  type:'savings' }
+export const BRANDS = {
+  tesco:'#00539f', sainsburys:'#f06c00', asda:'#6ec43b', aldi:'#003f87',
+  lidl:'#0050aa', morrisons:'#ffce00', waitrose:'#5aa22f', coop:'#00b1eb',
+  iceland:'#cc0000', greggs:'#f5a623', pret:'#8b1f41', costa:'#7b1e2b',
+  starbucks:'#00704a', nero:'#1c1c1c', mcdonalds:'#ffc72c', kfc:'#e4002b',
+  burgerking:'#d62300', subway:'#008c15', dominoes:'#0b6cb8', pizzaexpress:'#b3251f',
+  wagamama:'#6b1f2a', nandos:'#a31621', fiveguys:'#c8102e',
+  deliveroo:'#00ccbc', justeat:'#ff8000', ubereats:'#06c167',
+  amazon:'#ff9900', ebay:'#e53238', argos:'#d5202a', currys:'#5c2d91',
+  johnlewis:'#000000', marksandspencer:'#000000', primark:'#0057b8',
+  next:'#000000', asos:'#000000', zara:'#000000', hnm:'#e50010',
+  sportsdirect:'#0a1e3c', decathlon:'#0082c3', boots:'#0b4ea2',
+  superdrug:'#e4007c', screwfix:'#0d3b6b', bq:'#ff6600', ikea:'#0058a3',
+  homebargains:'#e2231a', poundland:'#00a0df', wilko:'#e30613',
+  halfords:'#1b3a6b', shell:'#fbce07', bp:'#009c3b', esso:'#0d47a1',
+  uber:'#000000', bolt:'#34d186', trainline:'#00a88f', lner:'#c8102e',
+  northern:'#1c3f94', tfl:'#0019a8', stagecoach:'#005ca9', arriva:'#00a2df',
+  nationalexpress:'#e40000', cineworld:'#000000', odeon:'#ff6600', vue:'#0b1d3a',
+  spotify:'#1db954', netflix:'#e50914', disneyplus:'#113ccf', nowtv:'#00b0b9',
+  primevideo:'#00a8e1', audible:'#f8991c', apple:'#333333', google:'#4285f4',
+  microsoft:'#0078d4', playstation:'#003791', xbox:'#107c10', nintendo:'#e60012',
+  steam:'#1b2838', ee:'#00a19a', o2:'#0019a8', vodafone:'#e60000',
+  three:'#000000', giffgaff:'#f5c400', sky:'#0072c9', virginmedia:'#e10a0a',
+  bt:'#6400aa', talktalk:'#00a8e1', octopus:'#5b2a86', britishgas:'#0a3d91',
+  eon:'#e2001a', edf:'#ff6600', thameswater:'#0b4ea2', northumbrianwater:'#00a4e4',
+  council:'#1d3f6e', tvlicence:'#0b1d3a', hmrc:'#00a499', dvla:'#00437b',
+  royalmail:'#e30613', postoffice:'#e4002b', gym:'#d6002f', puregym:'#ff0000',
+  anytimefitness:'#7b1fa2', nuffield:'#0b6ea8', better:'#e4002b',
+  specsavers:'#00a0df', visionexpress:'#0b3d91', ocado:'#6a2c91',
+  hobbycraft:'#e4002b', therange:'#00539f', dunelm:'#003a70', bm:'#00a0df',
+  tkmaxx:'#e4002b', matalan:'#1c3f94', riverisland:'#000000',
+  footasylum:'#000000', jd:'#000000', schuh:'#000000', clintons:'#e4002b',
+  cardfactory:'#e4002b', waterstones:'#1a3d6d', whsmith:'#0b3d91',
+  betfred:'#0b3d91', paddypower:'#0b6b3a', williamhill:'#0b3d91',
+  monzo:'#ff4f40', ishares:'#000000', blackrock:'#000000', vanguard:'#96151d',
+  aviva:'#007a33', nest:'#0b3d91', lego:'#d01012', smyths:'#e4002b',
+  entertainer:'#e30613', nationaltrust:'#0b5e3b', rspca:'#0b3d91',
+  justgiving:'#6a1b9a', depop:'#ff2300', vinted:'#007782', etsy:'#f1641e',
+  paypal:'#003087', klarna:'#ffb3c7', clearpay:'#b2fce4',
+  podpoint:'#00b0b9', instavolt:'#00a651'
+};
+
+export const CATEGORIES = [
+  {id:'groceries', name:'Groceries', emoji:'🛒', colour:'#12a150'},
+  {id:'eating', name:'Eating out', emoji:'🍔', colour:'#ff8000'},
+  {id:'transport', name:'Transport', emoji:'🚆', colour:'#1f6feb'},
+  {id:'shopping', name:'Shopping', emoji:'🛍️', colour:'#8b5cf6'},
+  {id:'bills', name:'Bills', emoji:'🧾', colour:'#0b4ea2'},
+  {id:'entertainment', name:'Entertainment', emoji:'🎬', colour:'#d92d20'},
+  {id:'health', name:'Health', emoji:'💊', colour:'#0891b2'},
+  {id:'fitness', name:'Fitness', emoji:'🏋️', colour:'#b25e00'},
+  {id:'home', name:'Home', emoji:'🏠', colour:'#6b7280'},
+  {id:'finance', name:'Finance', emoji:'💳', colour:'#334155'},
+  {id:'income', name:'Income', emoji:'💰', colour:'#12a150'},
+  {id:'transfers', name:'Transfers', emoji:'🔁', colour:'#6b6b76'},
+  {id:'cash', name:'Cash', emoji:'💵', colour:'#0f766e'},
+  {id:'general', name:'General', emoji:'📦', colour:'#6b6b76'}
 ];
 
-let seed = 0x9e3779b9;
-function rnd(){
-  seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-  let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-  return ((t ^ t >>> 14) >>> 0) / 4294967296;
-}
-const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
-const pick = a => a[Math.floor(rnd() * a.length)];
+export const CATEGORY_IDS = CATEGORIES.map(c => c.id);
 
-const p2 = n => String(n).padStart(2, '0');
-const isoS = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
-const asDate = s => new Date(s + 'T12:00:00');
-const monthLen = (y, m) => new Date(y, m + 1, 0).getDate();
-const domS = (y, m, day) => {
-  const d = new Date(y, m, 1);
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(Math.min(day, monthLen(d.getFullYear(), d.getMonth())))}`;
-};
-const round = n => Math.round(n * 100) / 100;
-const savingsAt = y => (y < 2000 ? 0 : Math.min(74400, (y - 1999) * 3900));
+export const MERCHANTS = Object.keys(DOMAINS);
 
-function buildISA(now){
-  const months = [];
-  let d = new Date(1992, 9, 1);
-  const end = new Date(now.getFullYear(), now.getMonth(), 1);
-  while (d <= end){ months.push(new Date(d)); d = new Date(d.getFullYear(), d.getMonth() + 1, 1); }
+export const FUNDS = [
+  {id:'swda', name:'iShares Core MSCI World', ticker:'SWDA', price:82.14, cls:'equity', region:'Global', risk:6},
+  {id:'cspx', name:'iShares Core S&P 500', ticker:'CSPX', price:498.60, cls:'equity', region:'US', risk:6},
+  {id:'cukx', name:'iShares Core FTSE 100', ticker:'CUKX', price:7.92, cls:'equity', region:'UK', risk:5},
+  {id:'aggg', name:'iShares Core Global Aggregate Bond', ticker:'AGGG', price:4.31, cls:'bond', region:'Global', risk:3},
+  {id:'cash', name:'Cash', ticker:'GBP', price:1, cls:'cash', region:'UK', risk:1}
+];
 
-  const contrib = y => y < 1999 ? 50 : y < 2005 ? 100 : y < 2010 ? 200 : y < 2015 ? 350 : y < 2020 ? 500 : 600;
-  const simulate = r => {
-    let v = 0; const rows = [];
-    months.forEach(m => { const c = contrib(m.getFullYear()); const g = v * r; v = v + g + c; rows.push({ c, g }); });
-    return { v, rows };
-  };
+export const PENSION_FUNDS = [
+  {id:'pen_world', name:'BlackRock World Equity', alloc:60},
+  {id:'pen_bond', name:'iShares Global Bond', alloc:25},
+  {id:'pen_cash', name:'Cash', alloc:15}
+];
 
-  let lo = -0.008, hi = 0.02;
-  for (let i = 0; i < 90; i++){ const mid = (lo + hi) / 2; if (simulate(mid).v < TARGET_ISA) lo = mid; else hi = mid; }
-  const rows = simulate((lo + hi) / 2).rows;
-  const total = rows.reduce((a, b) => a + b.c + b.g, 0);
-  rows[rows.length - 1].g = Math.round((rows[rows.length - 1].g + (TARGET_ISA - total)) * 100) / 100;
+export const POT_EMOJI = ['🏖️','🚗','🎄','🏠','💍','🎓','🎁','🐶','✈️','🎸','📷','🚲','💻','🛠️','🌱','🎂'];
 
-  let v = 0;
-  return rows.map((row, i) => {
-    v = Math.round((v + row.g + row.c) * 100) / 100;
-    const m = months[i], y = m.getFullYear(), mo = m.getMonth();
-    const type = y < 1999 ? 'PEP' : i === 78 ? 'Transfer' : y === 1999 ? 'TESSA' : 'ISA';
-    const quarterly = [2, 5, 8, 11].includes(mo);
-    return {
-      id: uid(), date: isoS(new Date(y, mo, 1)), type,
-      contrib: row.c, growth: row.g, value: v,
-      note: type === 'PEP' ? 'Personal Equity Plan contribution'
-          : type === 'Transfer' ? 'PEP transferred to ISA wrapper'
-          : type === 'TESSA' ? 'TESSA rollover'
-          : quarterly ? 'Quarterly distribution (reinvested)'
-          : 'ISA subscription'
-    };
-  }).reverse();
-}
+export const POT_COLOURS = ['#ff4f40','#ff8000','#f5a623','#12a150','#1f6feb','#8b5cf6','#d92d20','#0b4ea2','#0891b2','#6b7280'];
 
-function buildAccount(now, isaByMonth = {}){
-  const today = isoS(now);
-  const tx = [];
-  let bal = OPENING_BALANCE;
-  const add = (date, time, name, cat, amt, note) => {
-    bal = round(bal + amt);
-    tx.push({ id: uid(), date, time, name, cat, amt, bal, note: note || '' });
-  };
+export const SAVINGS_INTEREST = 0.04;
 
-  const projects = [];
-  for (let y = 2020; y <= now.getFullYear(); y++){
-    const n = ri(3, 4);
-    for (let k = 0; k < n; k++){
-      const m = ri(0, 11), day = ri(4, 26), date = domS(y, m, day);
-      if (asDate(date) > now) continue;
-      const client = pick(['Halcyon Digital','Bede & Co','Northgate Studio','Teesside Tyres',
-        'Cleveland Vets','Kirkby Web','Quayside Media']);
-      projects.push({ date, amt: ri(2000, 8000), client });
-      for (let r = 1; r <= 12; r++){
-        const rd = new Date(y, m + r, day);
-        if (rd > now) break;
-        projects.push({ date: isoS(rd), amt: ri(120, 350), client: client + ' retainer', retainer: true });
-      }
-    }
-  }
-  const byMonth = {};
-  projects.forEach(p => {
-    if (asDate(p.date) <= now){ const k = p.date.slice(0, 7); (byMonth[k] ||= []).push(p); }
-  });
+export const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-  const months = [];
-  let d = new Date(FIRST_YM[0], FIRST_YM[1], 1);
-  while (d <= now){ months.push(new Date(d.getFullYear(), d.getMonth(), 1)); d = new Date(d.getFullYear(), d.getMonth() + 1, 1); }
-
-  months.forEach(m0 => {
-    const y = m0.getFullYear(), m = m0.getMonth(), last = domS(y, m, 31);
-    const ym = `${y}-${p2(m + 1)}`;
-    const day = (n, time, name, cat, amt, note) => {
-      const date = domS(y, m, n);
-      if (asDate(date) > now) return;
-      add(date, time, name, cat, amt, note);
-    };
-
-    if (y >= FULL_LEDGER_YEAR){
-      day(1, '07:12', 'Monzo', 'Subscriptions', -19, 'Max plan');
-      if (y >= 2021) day(1, '08:40', 'Spotify', 'Subscriptions', -11.99, 'Premium Duo');
-      if (y >= 2022) day(1, '09:05', 'Netflix', 'Subscriptions', -10.99, 'Standard');
-      if (y >= 2023){
-        day(2, '06:30', 'British Gas', 'Bills', -ri(142, 214), 'Energy');
-        day(2, '06:31', 'Northumbrian Water', 'Bills', -52.40, 'Water');
-        day(4, '07:00', 'Virgin Media', 'Bills', -32.00, 'Broadband');
-        day(4, '07:02', 'EE', 'Bills', -22.00, 'Mobile');
-        day(5, '07:15', 'Aviva', 'Bills', -24.40, 'Contents insurance');
-      }
-      if (y >= 2024) day(2, '06:35', 'Stockton Council', 'Bills', -156.00, 'Council tax');
-
-      const first = domS(y, m, 1);
-      if (first >= '2024-03-01' && first < '2025-03-01') day(1, '09:00', 'Pointens', 'Rent', -1300, 'Rent');
-      else if (first >= '2025-03-01' && first < '2026-09-01') day(1, '09:00', 'OpenRent', 'Rent', -799, 'Rent');
-      else if (first >= '2026-09-01') day(12, '09:00', 'Blue Skies Lets', 'Rent', -850, 'Rent');
-
-      day(28, '06:00', 'Kingdom Services Group', 'Income', 2480, 'Net salary');
-      day(15, '07:30', 'Chloe Brown', 'Income', 640, 'Part-time wages');
-      day(4, '09:00', 'Child Benefit', 'Income', 194.05, 'Two children');
-      day(7, '09:00', 'Universal Credit', 'Income', 421.30, 'Assessment period');
-
-      [3, 9, 16, 22, 28].forEach(dd => day(dd, '17:40',
-        pick(['Aldi','Asda','Tesco','Morrisons','Lidl','Iceland','Farmfoods']), 'Groceries', -ri(58, 132)));
-      day(11, '12:10', pick(['Costa','Greggs']), 'Eating out', -ri(8, 19));
-      day(19, '18:30', pick(['McDonald\'s','KFC','Domino\'s','Nando\'s']), 'Eating out', -ri(24, 52));
-
-      day(5, '08:15', 'Stagecoach', 'Transport', -ri(12, 24));
-      day(13, '08:20', pick(['BP','Shell']), 'Transport', -ri(38, 62));
-      day(26, '08:15', 'Arriva', 'Transport', -ri(12, 24));
-
-      day(9, '12:30', pick(['Amazon','Argos','Matalan','B&M','Home Bargains']), 'Shopping', -ri(24, 88));
-      day(17, '11:00', pick(['Smyths','Next','Sports Direct','Screwfix']), 'Shopping', -ri(18, 76));
-
-      day(8, '16:00', 'Clarks', 'Kids', -ri(28, 54), 'Children’s shoes');
-      day(20, '15:30', 'Smyths', 'Kids', -ri(12, 38), 'Toys and craft');
-      day(24, '10:00', 'Everyone Active', 'Kids', -ri(14, 26), 'Swimming');
-
-      day(14, '07:45', 'PureGym', 'Fitness', -24.99, 'Membership');
-      day(16, '11:10', 'Boots', 'Health', -ri(9, 38));
-
-      if (last < '2026-07-01'){
-        day(3, '09:00', "St Aidan's School", 'Education', -45, 'School costs');
-        if (m === 7) day(20, '10:00', 'Clarks', 'Education', -ri(38, 62), 'School shoes');
-      }
-      day(7, '10:00', 'Twinkl', 'Education', -8.99, 'Home education resources');
-      day(18, '11:30', 'The Works', 'Education', -ri(12, 28), 'Workbooks and art supplies');
-      day(23, '13:00', 'Preston Park Museum', 'Education', -ri(6, 14), 'Home ed trip');
-
-      day(21, '19:30', pick(['Odeon','Cineworld','Steam']), 'Entertainment', -ri(12, 34));
-
-      (byMonth[ym] || []).forEach(p =>
-        add(p.date, '14:20', p.client, 'Income', p.amt, p.retainer ? 'Maintenance retainer' : 'Website build'));
-    }
-
-    if (last <= today){
-      const isaValue = isaByMonth[ym];
-      if (isaValue){
-        const div = round(isaValue * DIVIDEND_RATE);
-        if (div >= 0.01) add(last, '16:30', 'Vanguard', 'Investments', div, 'Dividend — FTSE Global All Cap');
-      }
-      const interest = round(savingsAt(y) * SAVINGS_RATE / 12);
-      if (interest >= 0.01) add(last, '16:40', 'Savings interest', 'Income', interest, 'Monthly interest');
-
-      if (y >= FULL_LEDGER_YEAR){
-        const move = round(Math.min(600, Math.max(0, bal)));
-        if (move > 0) add(last, '19:00', 'Rainy Day', 'Transfers', -move, 'Monthly pot transfer');
-        if (bal > 7500) add(last, '20:00', 'Emergency', 'Transfers', -round(bal - 6000), 'Monthly sweep');
-      }
-    }
-  });
-
-  return tx.reverse();
-}
-
-export function buildSeed(now){
-  const isa = buildISA(now);
-  const isaByMonth = {};
-  isa.forEach(r => { isaByMonth[r.date.slice(0, 7)] = r.value; });
-  return { tx: buildAccount(now, isaByMonth), isa };
-}
-
-export function uid(){
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
-}
+export const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
