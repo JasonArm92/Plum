@@ -2,11 +2,13 @@ export const DOMAINS = {
   tesco:'tesco.com', sainsburys:'sainsburys.co.uk', asda:'asda.com',
   aldi:'aldi.co.uk', lidl:'lidl.co.uk', morrisons:'morrisons.com',
   waitrose:'waitrose.com', coop:'coop.co.uk', iceland:'iceland.co.uk',
+  farmfoods:'farmfoods.co.uk',
   greggs:'greggs.co.uk', pret:'pret.co.uk', costa:'costa.co.uk',
   starbucks:'starbucks.co.uk', nero:'caffenero.com',
   mcdonalds:'mcdonalds.com', kfc:'kfc.co.uk', burgerking:'burgerking.co.uk',
   subway:'subway.com', dominoes:'dominos.co.uk', pizzaexpress:'pizzaexpress.com',
   wagamama:'wagamama.com', nandos:'nandos.co.uk', fiveguys:'fiveguys.co.uk',
+  tobycarvery:'tobycarvery.co.uk', hungryhorse:'hungryhorse.co.uk',
   deliveroo:'deliveroo.co.uk', justeat:'just-eat.co.uk', ubereats:'ubereats.com',
   amazon:'amazon.co.uk', ebay:'ebay.co.uk', argos:'argos.co.uk',
   currys:'currys.co.uk', johnlewis:'johnlewis.com', marksandspencer:'marksandspencer.com',
@@ -43,19 +45,22 @@ export const DOMAINS = {
   monzo:'monzo.com', ishares:'ishares.com', blackrock:'blackrock.com',
   vanguard:'vanguardinvestor.co.uk', aviva:'aviva.co.uk', nest:'nestpensions.org.uk',
   lego:'lego.com', smyths:'smythstoys.com', entertainer:'theentertainer.com',
+  petsathome:'petsathome.com',
   nationaltrust:'nationaltrust.org.uk', rspca:'rspca.org.uk', justgiving:'justgiving.com',
   depop:'depop.com', vinted:'vinted.co.uk', etsy:'etsy.com',
   paypal:'paypal.com', klarna:'klarna.com', clearpay:'clearpay.co.uk',
-  podpoint:'pod-point.com', instavolt:'instavolt.co.uk'
+  podpoint:'pod-point.com', instavolt:'instavolt.co.uk',
+  admiral:'admiral.com', aa:'theaa.com', rac:'rac.co.uk'
 };
 
 export const BRANDS = {
   tesco:'#00539f', sainsburys:'#f06c00', asda:'#6ec43b', aldi:'#003f87',
   lidl:'#0050aa', morrisons:'#ffce00', waitrose:'#5aa22f', coop:'#00b1eb',
-  iceland:'#cc0000', greggs:'#f5a623', pret:'#8b1f41', costa:'#7b1e2b',
-  starbucks:'#00704a', nero:'#1c1c1c', mcdonalds:'#ffc72c', kfc:'#e4002b',
-  burgerking:'#d62300', subway:'#008c15', dominoes:'#0b6cb8', pizzaexpress:'#b3251f',
-  wagamama:'#6b1f2a', nandos:'#a31621', fiveguys:'#c8102e',
+  iceland:'#cc0000', farmfoods:'#00539f', greggs:'#f5a623', pret:'#8b1f41',
+  costa:'#7b1e2b', starbucks:'#00704a', nero:'#1c1c1c', mcdonalds:'#ffc72c',
+  kfc:'#e4002b', burgerking:'#d62300', subway:'#008c15', dominoes:'#0b6cb8',
+  pizzaexpress:'#b3251f', wagamama:'#6b1f2a', nandos:'#a31621', fiveguys:'#c8102e',
+  tobycarvery:'#7b2d26', hungryhorse:'#0b3d91',
   deliveroo:'#00ccbc', justeat:'#ff8000', ubereats:'#06c167',
   amazon:'#ff9900', ebay:'#e53238', argos:'#d5202a', currys:'#5c2d91',
   johnlewis:'#000000', marksandspencer:'#000000', primark:'#0057b8',
@@ -85,10 +90,12 @@ export const BRANDS = {
   betfred:'#0b3d91', paddypower:'#0b6b3a', williamhill:'#0b3d91',
   monzo:'#ff4f40', ishares:'#000000', blackrock:'#000000', vanguard:'#96151d',
   aviva:'#007a33', nest:'#0b3d91', lego:'#d01012', smyths:'#e4002b',
-  entertainer:'#e30613', nationaltrust:'#0b5e3b', rspca:'#0b3d91',
+  entertainer:'#e30613', petsathome:'#00a651',
+  nationaltrust:'#0b5e3b', rspca:'#0b3d91',
   justgiving:'#6a1b9a', depop:'#ff2300', vinted:'#007782', etsy:'#f1641e',
   paypal:'#003087', klarna:'#ffb3c7', clearpay:'#b2fce4',
-  podpoint:'#00b0b9', instavolt:'#00a651'
+  podpoint:'#00b0b9', instavolt:'#00a651',
+  admiral:'#e30613', aa:'#ffd400', rac:'#0b3d91'
 };
 
 export const CATEGORIES = [
@@ -101,6 +108,8 @@ export const CATEGORIES = [
   {id:'health', name:'Health', emoji:'💊', colour:'#0891b2'},
   {id:'fitness', name:'Fitness', emoji:'🏋️', colour:'#b25e00'},
   {id:'home', name:'Home', emoji:'🏠', colour:'#6b7280'},
+  {id:'family', name:'Family', emoji:'👨‍👩‍👧', colour:'#c2410c'},
+  {id:'pets', name:'Pets', emoji:'🐶', colour:'#0f766e'},
   {id:'finance', name:'Finance', emoji:'💳', colour:'#334155'},
   {id:'income', name:'Income', emoji:'💰', colour:'#12a150'},
   {id:'transfers', name:'Transfers', emoji:'🔁', colour:'#6b6b76'},
