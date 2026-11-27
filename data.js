@@ -3,20 +3,18 @@
 export const TARGET_ISA = 934745.32;
 export const BB_CAP = 150;
 
-/* Monthly yield on the ISA, and the savings rate the seed uses. Both are paid
-   into the current account on the last day of the month. */
 export const DIVIDEND_RATE = 0.0032;
 export const SAVINGS_RATE = 0.035;
 
 const OPENING_BALANCE = 250;
-const FIRST_YM = [1992, 9];      /* October 1992 */
-const FULL_LEDGER_YEAR = 2019;   /* household spending starts here */
+const FIRST_YM = [1992, 9];
+const FULL_LEDGER_YEAR = 2019;
 
 export const PLANS = {
   free:  { name:'Free',  price:0,  ia:2.75, atmUK:400,      atmRow:200, vcLive:0, vc30:0, billsback:false, cover:false, scores:1, min:0, age:'16+' },
   extra: { name:'Extra', price:3,  ia:3.00, atmUK:Infinity, atmRow:200, vcLive:5, vc30:9, billsback:true,  cover:false, scores:2, min:0, age:'18+' },
   perks: { name:'Perks', price:9,  ia:3.25, atmUK:Infinity, atmRow:600, vcLive:5, vc30:9, billsback:true,  cover:false, scores:2, min:0, age:'18+' },
-  max:   { name:'Max',   price:19, ia:3.50, atmUK:Infinity, atmRow:600, vcLive:5, vc30:9, billsback:true,  cover:true,  scores:2, min:3, age:'18–69' }
+  max:   { name:'Max',   price:17, ia:3.50, atmUK:Infinity, atmRow:600, vcLive:5, vc30:9, billsback:true,  cover:true,  scores:2, min:3, age:'18–69' }
 };
 
 export const CATS = ['Groceries','Eating out','Transport','Shopping','Bills','Rent','Health','Education',
@@ -52,12 +50,11 @@ export const DOMAINS = {
   'OpenRent':'openrent.co.uk','Blue Skies Lets':'blueskieslets.co.uk','Barclays':'barclays.co.uk',
   'HSBC':'hsbc.co.uk','Lloyds':'lloydsbank.com','NatWest':'natwest.com','Santander':'santander.co.uk',
   'Nationwide':'nationwide.co.uk','Starling':'starlingbank.com','Chase':'chase.co.uk',
-  'Monzo Flex':'monzo.com','Monzo Aura':'monzo.com','Monzo Loans':'monzo.com','Monzo Billsback':'monzo.com',
-  'Saving Challenge':'monzo.com','Savings interest':'monzo.com','Child Benefit':'gov.uk','Universal Credit':'gov.uk',
-  'Chloe Brown':''
+  'Monzo Flex':'monzo.com','Monzo Plus':'monzo.com','Monzo Loans':'monzo.com','Monzo Invest':'monzo.com',
+  'Monzo Billsback':'monzo.com','Saving Challenge':'monzo.com','Savings interest':'monzo.com',
+  'Child Benefit':'gov.uk','Universal Credit':'gov.uk','iShares':'ishares.com','Chloe Brown':''
 };
 
-/* Long-run savings, used only to price the monthly interest in the seed. */
 export const POTS0 = [
   { name:'Rainy Day',      goal:50000, bal:46820.75, type:'regular' },
   { name:'Rent buffer',    goal:2400,  bal:2400,     type:'bills'   },
@@ -86,9 +83,6 @@ const domS = (y, m, day) => {
   return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(Math.min(day, monthLen(d.getFullYear(), d.getMonth())))}`;
 };
 const round = n => Math.round(n * 100) / 100;
-
-/* Savings rise steadily from 2000 to a level matching the pots, so the seeded
-   interest stays believable across three decades. */
 const savingsAt = y => (y < 2000 ? 0 : Math.min(74400, (y - 1999) * 3900));
 
 function buildISA(now){
@@ -128,9 +122,6 @@ function buildISA(now){
   }).reverse();
 }
 
-/* Household of four: two adults, two home-schooled children.
-   October 1992 to 2018 carries only the investment income and the pot
-   movements; the household spending starts in 2019. */
 function buildAccount(now, isaByMonth = {}){
   const today = isoS(now);
   const tx = [];
@@ -149,7 +140,6 @@ function buildAccount(now, isaByMonth = {}){
       const client = pick(['Halcyon Digital','Bede & Co','Northgate Studio','Teesside Tyres',
         'Cleveland Vets','Kirkby Web','Quayside Media']);
       projects.push({ date, amt: ri(2000, 8000), client });
-      /* retainers stop when the year's work stops */
       for (let r = 1; r <= 12; r++){
         const rd = new Date(y, m + r, day);
         if (rd > now) break;
@@ -193,37 +183,30 @@ function buildAccount(now, isaByMonth = {}){
       else if (first >= '2025-03-01' && first < '2026-09-01') day(1, '09:00', 'OpenRent', 'Rent', -799, 'Rent');
       else if (first >= '2026-09-01') day(12, '09:00', 'Blue Skies Lets', 'Rent', -850, 'Rent');
 
-      /* income */
       day(28, '06:00', 'Kingdom Services Group', 'Income', 2480, 'Net salary');
       day(15, '07:30', 'Chloe Brown', 'Income', 640, 'Part-time wages');
       day(4, '09:00', 'Child Benefit', 'Income', 194.05, 'Two children');
       day(7, '09:00', 'Universal Credit', 'Income', 421.30, 'Assessment period');
 
-      /* food and household */
       [3, 9, 16, 22, 28].forEach(dd => day(dd, '17:40',
         pick(['Aldi','Asda','Tesco','Morrisons','Lidl','Iceland','Farmfoods']), 'Groceries', -ri(58, 132)));
       day(11, '12:10', pick(['Costa','Greggs']), 'Eating out', -ri(8, 19));
       day(19, '18:30', pick(['McDonald\'s','KFC','Domino\'s','Nando\'s']), 'Eating out', -ri(24, 52));
 
-      /* transport */
       day(5, '08:15', 'Stagecoach', 'Transport', -ri(12, 24));
       day(13, '08:20', pick(['BP','Shell']), 'Transport', -ri(38, 62));
       day(26, '08:15', 'Arriva', 'Transport', -ri(12, 24));
 
-      /* shopping */
       day(9, '12:30', pick(['Amazon','Argos','Matalan','B&M','Home Bargains']), 'Shopping', -ri(24, 88));
       day(17, '11:00', pick(['Smyths','Next','Sports Direct','Screwfix']), 'Shopping', -ri(18, 76));
 
-      /* kids */
       day(8, '16:00', 'Clarks', 'Kids', -ri(28, 54), 'Children’s shoes');
       day(20, '15:30', 'Smyths', 'Kids', -ri(12, 38), 'Toys and craft');
       day(24, '10:00', 'Everyone Active', 'Kids', -ri(14, 26), 'Swimming');
 
-      /* health and fitness */
       day(14, '07:45', 'PureGym', 'Fitness', -24.99, 'Membership');
       day(16, '11:10', 'Boots', 'Health', -ri(9, 38));
 
-      /* home education */
       if (last < '2026-07-01'){
         day(3, '09:00', "St Aidan's School", 'Education', -45, 'School costs');
         if (m === 7) day(20, '10:00', 'Clarks', 'Education', -ri(38, 62), 'School shoes');
@@ -232,15 +215,12 @@ function buildAccount(now, isaByMonth = {}){
       day(18, '11:30', 'The Works', 'Education', -ri(12, 28), 'Workbooks and art supplies');
       day(23, '13:00', 'Preston Park Museum', 'Education', -ri(6, 14), 'Home ed trip');
 
-      /* entertainment */
       day(21, '19:30', pick(['Odeon','Cineworld','Steam']), 'Entertainment', -ri(12, 34));
 
       (byMonth[ym] || []).forEach(p =>
         add(p.date, '14:20', p.client, 'Income', p.amt, p.retainer ? 'Maintenance retainer' : 'Website build'));
     }
 
-    /* Investment income and savings interest land on the last day of every
-       month, credited to the current account, since October 1992. */
     if (last <= today){
       const isaValue = isaByMonth[ym];
       if (isaValue){
