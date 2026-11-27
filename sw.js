@@ -1,4 +1,4 @@
-const CACHE = 'monzo-v37';
+const CACHE = 'monzo-v38';
 const ASSETS = [
   './', './index.html', './styles.css', './boot.js', './main.js', './core.js',
   './data.js', './ui.js', './screens-a.js', './screens-b.js'
