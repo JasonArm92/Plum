@@ -267,3 +267,13 @@ textarea.input{padding:var(--s3) var(--s4);min-height:88px;resize:vertical}
   .tabbar{max-width:520px;margin:0 auto}
   .sheets .sheet__panel{max-width:520px;margin:0 auto;width:100%}
 }
+.acctsw{display:flex;gap:var(--s2);padding:0 var(--s4);overflow-x:auto;scrollbar-width:none}
+.acctsw::-webkit-scrollbar{display:none}
+.acctsw__b{flex:none;display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+  padding:var(--s2) var(--s3);border-radius:var(--d2);background:var(--bg-2);
+  border:1.5px solid transparent;text-align:left}
+.acctsw__b[aria-pressed="true"]{border-color:var(--coral);background:var(--bg)}
+.acctsw__n{font-size:var(--t1);font-weight:800;letter-spacing:.3px;
+  text-transform:uppercase;color:var(--ink-3)}
+.acctsw__b[aria-pressed="true"] .acctsw__n{color:var(--coral)}
+.acctsw__v{font-size:var(--t3);font-weight:800;font-variant-numeric:tabular-nums}
