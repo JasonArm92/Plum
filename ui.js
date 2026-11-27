@@ -1,4 +1,4 @@
-import { fmt, fmtShort, state, save } from './core.js';
+import { fmt, state } from './core.js';
 import { DOMAINS, BRANDS } from './data.js';
 
 export const el = (tag, cls, html) => {
@@ -23,16 +23,15 @@ export function initials(name = '') {
 
 export function colourFor(name = '') {
   const key = String(name).toLowerCase().split(/\s+/)[0];
+  if (!key) return '#6b6b76';
   const hit = Object.keys(BRANDS).find(k => key.includes(k) || k.includes(key));
   return hit ? BRANDS[hit] : '#6b6b76';
 }
 
 export function domainFor(name = '') {
   const low = String(name).toLowerCase();
-  const hit = Object.keys(DOMAINS).find(k => {
-    const re = new RegExp('\\b' + k + '\\b');
-    return re.test(low);
-  });
+  if (!low) return null;
+  const hit = Object.keys(DOMAINS).find(k => new RegExp('\\b' + k + '\\b').test(low));
   return hit ? DOMAINS[hit] : null;
 }
 
@@ -121,7 +120,7 @@ export function header({title = '', back = null, actions = []} = {}) {
   for (const a of actions) {
     const b = el('button', 'hdr__btn');
     b.type = 'button';
-    b.id = a.id || '';
+    if (a.id) b.id = a.id;
     b.setAttribute('aria-label', a.label || '');
     if (a.icon) b.appendChild(icon(a.icon, 18));
     if (a.text) b.textContent = a.text;
@@ -134,7 +133,9 @@ export function header({title = '', back = null, actions = []} = {}) {
 export function screen(id, {title = '', back = null, actions = [], body = null, flush = false} = {}) {
   const s = el('section', 'screen');
   s.id = 'screen-' + id;
-  if (title || back !== null || actions.length) s.appendChild(header({title, back, actions}));
+  if (title || back !== null || actions.length) {
+    s.appendChild(header({title, back, actions}));
+  }
   const b = el('div', 'screen__body' + (flush ? ' screen__body--flush' : ''));
   if (typeof body === 'string') b.innerHTML = body;
   else if (body) b.appendChild(body);
@@ -142,7 +143,7 @@ export function screen(id, {title = '', back = null, actions = [], body = null, 
   return s;
 }
 
-export function row({title, sub = '', value = '', chev = true, tile: t = null, onClick = null, cls = ''}) {
+export function row({title = '', sub = '', value = '', chev = true, tile: t = null, onClick = null, cls = ''}) {
   const r = el(onClick ? 'button' : 'div', 'row ' + cls);
   if (onClick) r.type = 'button';
   if (t) r.appendChild(t);
@@ -151,7 +152,11 @@ export function row({title, sub = '', value = '', chev = true, tile: t = null, o
   if (sub) m.appendChild(el('div', 'row__s', sub));
   r.appendChild(m);
   if (value !== '') r.appendChild(el('div', 'row__v', value));
-  if (chev) r.appendChild(icon('chev', 16)).classList.add('row__chev');
+  if (chev) {
+    const c = icon('chev', 16);
+    c.classList.add('row__chev');
+    r.appendChild(c);
+  }
   if (onClick) r.onclick = onClick;
   return r;
 }
@@ -187,7 +192,7 @@ export function ring(pct, size = 78, stroke = 8) {
   fg.setAttribute('cx', size / 2); fg.setAttribute('cy', size / 2);
   fg.setAttribute('r', r); fg.setAttribute('fill', 'none'); fg.setAttribute('stroke-width', stroke);
   fg.setAttribute('stroke-dasharray', c);
-  fg.setAttribute('stroke-dashoffset', c * (1 - Math.min(1, Math.max(0, pct))));
+  fg.setAttribute('stroke-dashoffset', c * (1 - Math.min(1, Math.max(0, Number(pct) || 0))));
   svg.appendChild(bg); svg.appendChild(fg);
   return svg;
 }
@@ -199,9 +204,9 @@ export function cardArt(card, onClick = null) {
   top.appendChild(el('div', 'cardart__chip'));
   top.appendChild(el('div', 'cardart__brand', 'monzo'));
   a.appendChild(top);
-  a.appendChild(el('div', 'cardart__num', '•••• •••• •••• ' + (card?.last4 || '4821')));
+  a.appendChild(el('div', 'cardart__num', '•••• •••• •••• ' + ((card && card.last4) || '4821')));
   const bottom = el('div', 'cardart__row');
-  bottom.appendChild(el('span', '', (state.user.name || '').toUpperCase()));
+  bottom.appendChild(el('span', '', String(state.user.name || '').toUpperCase()));
   const dots = el('div', 'cardart__dots');
   dots.appendChild(el('i')); dots.appendChild(el('i'));
   bottom.appendChild(dots);
@@ -233,8 +238,9 @@ export function toast(msg, action = null, ms = 3200) {
 let openSheets = 0;
 let lastFocus = null;
 
-export function sheet({title, body, foot = null, onClose = null}) {
+export function sheet({title = '', body = null, foot = null, onClose = null}) {
   const host = document.getElementById('sheets');
+  if (!host) return {close(){}, panel: document.body};
   const wrap = el('div', 'sheet');
   wrap.setAttribute('role', 'dialog');
   wrap.setAttribute('aria-modal', 'true');
@@ -252,7 +258,7 @@ export function sheet({title, body, foot = null, onClose = null}) {
   };
 
   const keydown = e => {
-    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
     if (e.key === 'Tab') {
       const f = panel.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])');
       if (!f.length) return;
@@ -264,7 +270,7 @@ export function sheet({title, body, foot = null, onClose = null}) {
 
   scrim.onclick = close;
   const hdr = el('div', 'sheet__hdr');
-  hdr.appendChild(el('div', 'sheet__title', title || ''));
+  hdr.appendChild(el('div', 'sheet__title', title));
   const x = el('button', 'sheet__x');
   x.type = 'button';
   x.setAttribute('aria-label', 'Close');
@@ -317,7 +323,7 @@ export function field({label, input, hint = ''}) {
 export function input({id = '', type = 'text', value = '', placeholder = '', step = null, min = null, max = null}) {
   const i = el('input', 'input');
   i.type = type;
-  i.id = id;
+  if (id) i.id = id;
   i.value = value;
   if (placeholder) i.placeholder = placeholder;
   if (step) i.step = step;
