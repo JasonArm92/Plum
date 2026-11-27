@@ -68,14 +68,14 @@ export const POTS0 = [
 ];
 
 let seed = 0x9e3779b9;
-export function rnd(){
+function rnd(){
   seed |= 0; seed = seed + 0x6D2B79F5 | 0;
   let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
   t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
   return ((t ^ t >>> 14) >>> 0) / 4294967296;
 }
-export const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
-export const pick = a => a[Math.floor(rnd() * a.length)];
+const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+const pick = a => a[Math.floor(rnd() * a.length)];
 
 const p2 = n => String(n).padStart(2, '0');
 const isoS = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
