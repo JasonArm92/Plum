@@ -1,16 +1,16 @@
-/* sw.js — v20
+/* sw.js — v21
    Self-contained shell. Navigation is network-first with a cached shell fallback;
    same-origin assets are cache-first with a background refresh; fonts and logos are
    stale-while-revalidate. */
 
-const VERSION = 'v20';
+const VERSION = 'v21';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css?v=20',
-  './main.js?v=20',
+  './styles.css?v=21',
+  './main.js?v=21',
   './core.js',
   './data.js',
   './ui.js',
