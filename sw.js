@@ -1,15 +1,15 @@
-/* sw.js — v29
+/* sw.js — v30
    Navigation and same-origin assets are network-first, falling back to cache for
    offline. Logo icons pass straight through to the network untouched. */
 
-const VERSION = 'v29';
+const VERSION = 'v30';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
   './',
   './index.html',
-  './styles.css?v=22',
-  './main.js?v=22',
+  './styles.css?v=30',
+  './main.js?v=30',
   './core.js',
   './data.js',
   './ui.js',
