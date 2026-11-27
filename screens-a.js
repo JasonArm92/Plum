@@ -1,12 +1,12 @@
 import {
-  state, fmt, fmtShort, round2, leftToSpent_placeholder, leftToSpend, spentThisMonth, byCategory,
+  state, fmt, fmtShort, round2, leftToSpend, spentThisMonth, byCategory,
   lastMonthByCategory, upcoming, totalPots, flexApr, flexPurchase, FLEX_MIN,
   FLEX_MONTHS, addTx, takeFunds, potMove, save, acc, bal, setActive, isJoint,
   portfolioValue, budgetFor, setBudget, totalBudget, hasBudget, budgetLeft,
   payeesSorted, addPayee, updatePayee, removePayee, toggleFav, recentPayments,
   splitsOutstandingTotal, flexUsed, flexAvailable, totalLoanRemaining, totalBorrowed,
   loanQuote, loanApr, takeLoan, flexSettle, LOAN_MIN, LOAN_MAX, LOAN_TERMS,
-  OVERDRAFT_LIMITS, OVERDRAFT_EAR, overdraftDaily
+  OVERDRAFT_LIMITS, OVERDRAFT_EAR, overdraftDaily, reset
 } from './core.js?v=39';
 import { CATEGORIES, SAVINGS_INTEREST } from './data.js?v=39';
 import {
@@ -157,7 +157,7 @@ function carousel() {
       }
       const add = el('button', 'pcard pcard--new');
       add.type = 'button';
-      add.innerHTML = '<div style="font-size:22px">＋</div><div>New pot</div>';
+      add.innerHTML = '<div style="font-size:22px;line-height:1">＋</div><div style="margin-top:6px">New pot</div>';
       add.onclick = () => import('./screens-b.js?v=39').then(m => m.newPotSheet());
       track.appendChild(add);
     } else if (key === 'invest') {
@@ -1133,4 +1133,4 @@ export function potScreen(id) {
   ]));
 
   return screen('pot-' + id, {title: p.name, back: '#/pots', body});
-}
+    }
