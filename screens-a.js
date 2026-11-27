@@ -2,12 +2,12 @@ import {
   state, fmt, fmtShort, round2, leftToSpend, spentThisMonth, byCategory,
   lastMonthByCategory, upcoming, totalPots, flexApr, flexPurchase, FLEX_MIN,
   FLEX_MONTHS, addTx, takeFunds, potMove, save
-} from './core.js?v=33';
-import { CATEGORIES, SAVINGS_INTEREST } from './data.js?v=33';
+} from './core.js?v=34';
+import { CATEGORIES, SAVINGS_INTEREST } from './data.js?v=34';
 import {
   el, screen, row, list, section, tile, avatar, icon, cardArt, ring, empty,
   toast, sheet, confirmSheet, field, input, seg, switchEl
-} from './ui.js?v=33';
+} from './ui.js?v=34';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -33,7 +33,7 @@ export function homeScreen() {
   add.type = 'button';
   add.setAttribute('aria-label', 'Add transaction');
   add.appendChild(icon('plus', 18));
-  add.onclick = () => import('./screens-b.js?v=33').then(m => m.addTxSheet());
+  add.onclick = () => import('./screens-b.js?v=34').then(m => m.addTxSheet());
   h.appendChild(add);
   s.appendChild(h);
 
@@ -46,7 +46,7 @@ export function homeScreen() {
     if (key === 'card') {
       const w = el('div');
       w.style.padding = '0 16px';
-      w.appendChild(cardArt(state.cards[0], () => import('./screens-b.js?v=33').then(m => m.cardSheet())));
+      w.appendChild(cardArt(state.cards[0], () => import('./screens-b.js?v=34').then(m => m.cardSheet())));
       body.appendChild(w);
     } else if (key === 'balance') {
       const w = el('div');
@@ -78,7 +78,7 @@ export function homeScreen() {
   edit.style.padding = '8px 16px 0';
   const eb = el('button', 'btn btn--ghost btn--sm btn--block');
   eb.textContent = 'Edit home';
-  eb.onclick = () => import('./screens-b.js?v=33').then(m => m.layoutSheet());
+  eb.onclick = () => import('./screens-b.js?v=34').then(m => m.layoutSheet());
   edit.appendChild(eb);
   body.appendChild(edit);
 
@@ -131,7 +131,7 @@ function carousel() {
       const add = el('button', 'pcard pcard--new');
       add.type = 'button';
       add.innerHTML = '<div style="font-size:22px">＋</div><div>New pot</div>';
-      add.onclick = () => import('./screens-b.js?v=33').then(m => m.newPotSheet());
+      add.onclick = () => import('./screens-b.js?v=34').then(m => m.newPotSheet());
       track.appendChild(add);
     } else if (key === 'pension') {
       const b = el('button', 'pcard');
@@ -572,6 +572,7 @@ export function accountScreen() {
     row({title: 'Notifications', onClick: () => { location.hash = '#/notifications'; }}),
     row({title: 'Statements', onClick: () => { location.hash = '#/statements'; }}),
     row({title: 'Appearance', onClick: () => { location.hash = '#/appearance'; }}),
+    row({title: 'Stored data', onClick: () => { location.hash = '#/data'; }}),
     row({title: 'About', onClick: () => { location.hash = '#/about'; }})
   ]));
 
@@ -598,7 +599,7 @@ export function potsScreen() {
   }
   if (!state.pots.length) {
     l.appendChild(empty('No pots yet', 'Pots help you put money aside', {
-      label: 'Create a pot', onClick: () => import('./screens-b.js?v=33').then(m => m.newPotSheet())
+      label: 'Create a pot', onClick: () => import('./screens-b.js?v=34').then(m => m.newPotSheet())
     }));
   }
   body.appendChild(l);
@@ -648,7 +649,7 @@ export function potScreen(id) {
   body.appendChild(wd);
 
   body.appendChild(list([
-    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=33').then(m => m.editPotSheet(p.id))}),
+    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=34').then(m => m.editPotSheet(p.id))}),
     row({title: 'Round-ups', value: p.roundUp ? 'On' : 'Off', chev: false}),
     row({title: 'Delete pot', onClick: () => confirmSheet({
       title: 'Delete ' + p.name, text: 'Money will go back to your balance.', danger: true, confirm: 'Delete',
