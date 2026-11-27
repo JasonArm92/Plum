@@ -1,8 +1,8 @@
-import { FUNDS, CATEGORY_IDS } from './data.js?v=36';
+import { FUNDS, CATEGORY_IDS, RISK_FUNDS } from './data.js?v=37';
 
-export const VERSION = 25;
-export const KEY = 'monzo_v25';
-export const LEGACY_KEYS = ['monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 26;
+export const KEY = 'monzo_v26';
+export const LEGACY_KEYS = ['monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -53,29 +53,6 @@ export function dayLabel(ts) {
   return d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
 }
 
-/* ---------- holdings ---------- */
-
-const HOLDING_SEED = [
-  ['f01', 18000], ['f02', 21500], ['f03', 16200], ['f04', 24800],
-  ['f05', 13400], ['f06', 19700], ['f07', 22800], ['f08', 15100],
-  ['f09', 26300], ['f10', 17600], ['f11', 20300], ['f12', 14400],
-  ['f13', 23500], ['f14', 18900], ['f15', 27200], ['f16', 12500],
-  ['f17', 21800], ['f18', 16600], ['f19', 25100], ['f20', 19300],
-  ['f21', 15900], ['f22', 22600], ['f23', 18100], ['f24', 24400],
-  ['f25', 13700], ['f26', 20900], ['f27', 17200], ['f28', 25800],
-  ['f29', 14800], ['f30', 22100], ['f31', 19400], ['f32', 16500],
-  ['f33', 23700], ['f34', 12900], ['f35', 20600], ['f36', 18300],
-  ['f37', 25400], ['f38', 15600], ['f39', 21900], ['f40', 17800],
-  ['f41', 23100], ['f42', 14200], ['f43', 24700], ['f44', 16900],
-  ['f45', 21200], ['f46', 19100], ['f47', 15400], ['f48', 17545.44]
-];
-
-function seedHoldings() {
-  return HOLDING_SEED.map(([f, v]) => ({f, v}));
-}
-
-/* ---------- investment ledger ---------- */
-
 function makeRng(seed) {
   let s = seed;
   return () => {
@@ -93,13 +70,13 @@ function buildLedger() {
     out.push({id: uid('led'), ts: d.getTime(), type, fund, amount: round2(amount)});
   };
 
-  push(new Date(1992, 9, 7), 'gift', 'f01', 500);
+  push(new Date(1992, 9, 7), 'gift', 'balanced', 500);
 
   let d = new Date(1993, 0, 5);
   while (d <= end) {
     const y = d.getFullYear();
     const monthly = y >= 2020 ? 750 : y >= 2015 ? 400 : y >= 2010 ? 250 : y >= 2005 ? 150 : y >= 2000 ? 100 : 50;
-    const fund = FUNDS[Math.floor(rng() * 12)].id;
+    const fund = RISK_FUNDS[Math.floor(rng() * 3)].id;
     push(new Date(d.getTime()), 'buy', fund, monthly);
     if (d.getMonth() % 3 === 0) {
       const base = y >= 2020 ? 320 : y >= 2010 ? 120 : 30;
@@ -108,19 +85,17 @@ function buildLedger() {
     d = new Date(d.getFullYear(), d.getMonth() + 1, 5);
   }
 
-  push(new Date(2010, 9, 7), 'buy', 'f02', 1000);
-  push(new Date(2013, 9, 7), 'buy', 'f01', 5000);
-  push(new Date(2017, 5, 12), 'buy', 'f37', 10000);
-  push(new Date(2019, 6, 18), 'sell', 'f03', -18000);
-  push(new Date(2021, 3, 20), 'buy', 'f25', 25000);
-  push(new Date(2021, 10, 9), 'sell', 'f02', -9500);
-  push(new Date(2023, 8, 2), 'buy', 'f29', 40000);
+  push(new Date(2010, 9, 7), 'buy', 'balanced', 1000);
+  push(new Date(2013, 9, 7), 'buy', 'balanced', 5000);
+  push(new Date(2017, 5, 12), 'buy', 'adventurous', 10000);
+  push(new Date(2019, 6, 18), 'sell', 'balanced', -18000);
+  push(new Date(2021, 3, 20), 'buy', 'adventurous', 25000);
+  push(new Date(2021, 10, 9), 'sell', 'balanced', -9500);
+  push(new Date(2023, 8, 2), 'buy', 'balanced', 40000);
 
   out.sort((a, b) => a.ts - b.ts);
   return out;
 }
-
-/* ---------- transaction history ---------- */
 
 const PREV_MONTH = [
   ['Salary', 2450.00, 'income', 1, 'personal'],
@@ -223,8 +198,6 @@ function seedHistory() {
   return [...monthSeed(2), ...monthSeed(1)];
 }
 
-/* ---------- default state ---------- */
-
 function defaultState() {
   const base = now();
   const mk = (name, amount, cat, daysAgo, acct) => ({
@@ -291,7 +264,14 @@ function defaultState() {
     flex: {limit: 1000, used: 214.40, plan: 'flex', active: true},
     plan: 'plus',
     plus: {since: base - 200*86400000, renews: base + 15*86400000},
-    invest: {cash: 4120.60, holdings: seedHoldings(), ledger: buildLedger(), contrib: 750, contribDay: 5},
+    invest: {
+      cash: 4120.60,
+      funds: {careful: 64000, balanced: 712000, adventurous: 158745.44},
+      chosen: 'balanced',
+      ledger: buildLedger(),
+      contrib: 750,
+      contribDay: 5
+    },
     pension: {provider:'Nest', balance: 41280.55, monthly: 240, employer: 120, growth: 0.055, joined: base - 1200*86400000},
     isa: {balance: 18620.00, allowance: 20000, used: 3400, contrib: 200, contribDay: 5},
     goals: [],
@@ -336,6 +316,23 @@ const migrations = [
     if (!s.invest) s.invest = {};
     if (!Array.isArray(s.invest.ledger) || !s.invest.ledger.length) {
       s.invest.ledger = buildLedger();
+    }
+    return s;
+  }},
+  {v: 26, fn: s => {
+    if (!s.invest) s.invest = {};
+    const old = Array.isArray(s.invest.holdings) ? s.invest.holdings : [];
+    const total = round2(old.reduce((n, h) => n + (Number(h.v) || 0), 0));
+    if (!s.invest.funds) {
+      s.invest.funds = {careful: 0, balanced: total || 934745.44, adventurous: 0};
+    }
+    s.invest.chosen = s.invest.chosen || 'balanced';
+    delete s.invest.holdings;
+    const ids = new Set(RISK_FUNDS.map(f => f.id));
+    if (Array.isArray(s.invest.ledger)) {
+      s.invest.ledger = s.invest.ledger
+        .filter(e => e && typeof e.fund === 'string')
+        .map(e => ids.has(e.fund) ? e : Object.assign({}, e, {fund: 'balanced'}));
     }
     return s;
   }}
@@ -416,14 +413,16 @@ export function normalise(input) {
   s.isa = Object.assign({balance:0, allowance:20000, used:0, contrib:0, contribDay:5}, s.isa);
 
   if (!s.invest) s.invest = {};
-  s.invest = Object.assign({cash:0, holdings:[], ledger:[], contrib:0, contribDay:1}, s.invest);
-  if (!Array.isArray(s.invest.holdings) || !s.invest.holdings.length) {
-    s.invest.holdings = seedHoldings();
+  s.invest = Object.assign({cash:0, funds:{careful:0, balanced:0, adventurous:0}, chosen:'balanced', ledger:[], contrib:0, contribDay:1}, s.invest);
+  if (!s.invest.funds || typeof s.invest.funds !== 'object') {
+    s.invest.funds = {careful:0, balanced:0, adventurous:0};
   }
-  s.invest.holdings = s.invest.holdings
-    .filter(h => h && typeof h.f === 'string' && FUNDS.some(f => f.id === h.f))
-    .map(h => ({f: h.f, v: round2(h.v)}));
-  if (!s.invest.holdings.length) s.invest.holdings = seedHoldings();
+  for (const f of RISK_FUNDS) {
+    if (typeof s.invest.funds[f.id] !== 'number' || !isFinite(s.invest.funds[f.id])) {
+      s.invest.funds[f.id] = 0;
+    }
+  }
+  if (!RISK_FUNDS.some(f => f.id === s.invest.chosen)) s.invest.chosen = 'balanced';
   if (typeof s.invest.cash !== 'number') s.invest.cash = 0;
   if (!Array.isArray(s.invest.ledger) || !s.invest.ledger.length) {
     s.invest.ledger = buildLedger();
@@ -481,8 +480,6 @@ export function reset() {
   save();
 }
 
-/* ---------- accounts ---------- */
-
 export function acc() {
   return state.accounts[state.active] || state.accounts.personal;
 }
@@ -495,8 +492,6 @@ export function setActive(id) {
 export function isJoint() {
   return state.active === 'joint';
 }
-
-/* ---------- budgets ---------- */
 
 export function budgets() {
   if (!state.budgets[state.active]) state.budgets[state.active] = {};
@@ -522,8 +517,6 @@ export function budgetLeft() {
   if (!hasBudget()) return null;
   return round2(totalBudget() - spentThisMonth());
 }
-
-/* ---------- money movement ---------- */
 
 export function addTx({name, amount, category = 'general', ts = now(), note = '', receipt = null, potId = null, acct = null}) {
   const a = acct || state.active;
@@ -574,19 +567,20 @@ export function totalPots() {
   return round2(state.pots.reduce((s, p) => s + (p.saved || 0), 0));
 }
 
-/* ---------- portfolio ---------- */
-
 export function planInfo(id = state.plan) {
   return PLANS[id] || PLANS.free;
 }
 
-export function portfolioValue() {
-  return round2(state.invest.holdings.reduce((s, h) => s + (h.v || 0), 0));
+export function riskInfo(id) {
+  return RISK_FUNDS.find(f => f.id === id) || RISK_FUNDS[1];
 }
 
-export function unitsOf(h) {
-  const f = FUNDS.find(x => x.id === h.f);
-  return f && f.price ? h.v / f.price : 0;
+export function portfolioValue() {
+  return round2(RISK_FUNDS.reduce((s, f) => s + (state.invest.funds[f.id] || 0), 0));
+}
+
+export function fundValue(id) {
+  return round2(state.invest.funds[id] || 0);
 }
 
 export function platformFeeAnnual() {
@@ -613,8 +607,6 @@ export function ledgerIncome() {
     .filter(e => e.type === 'div')
     .reduce((s, e) => s + e.amount, 0));
 }
-
-/* ---------- flex ---------- */
 
 export const FLEX_MIN = 100;
 export const FLEX_MONTHS = [3, 6, 12];
@@ -644,29 +636,24 @@ export function flexPurchase(amount, months, name = 'Flex purchase') {
   return {ok:true, per, total, apr};
 }
 
-/* ---------- investments ---------- */
-
 export function investBuy(fundId, amount) {
-  const f = FUNDS.find(x => x.id === fundId);
+  const f = RISK_FUNDS.find(x => x.id === fundId);
   if (!f) return false;
   const a = round2(amount);
   if (state.invest.cash < a) return false;
   state.invest.cash = round2(state.invest.cash - a);
-  const h = state.invest.holdings.find(x => x.f === fundId);
-  if (h) h.v = round2(h.v + a);
-  else state.invest.holdings.push({f: fundId, v: a});
+  state.invest.funds[fundId] = round2((state.invest.funds[fundId] || 0) + a);
   ledgerAdd('buy', fundId, a);
   save();
   return true;
 }
 
 export function investSell(fundId, amount) {
-  const h = state.invest.holdings.find(x => x.f === fundId);
-  if (!h) return false;
-  const a = Math.min(round2(amount), round2(h.v));
+  const held = round2(state.invest.funds[fundId] || 0);
+  if (held <= 0) return false;
+  const a = Math.min(round2(amount), held);
   if (a <= 0) return false;
-  h.v = round2(h.v - a);
-  if (h.v <= 0.01) state.invest.holdings = state.invest.holdings.filter(x => x !== h);
+  state.invest.funds[fundId] = round2(held - a);
   state.invest.cash = round2(state.invest.cash + a);
   ledgerAdd('sell', fundId, -a);
   save();
@@ -677,9 +664,15 @@ export function investDeposit(amount) {
   const a = round2(amount);
   if (!takeFunds(a)) return false;
   state.invest.cash = round2(state.invest.cash + a);
-  ledgerAdd('deposit', 'cash', a);
+  ledgerAdd('deposit', state.invest.chosen, a);
   save();
   return true;
+}
+
+export function setChosenFund(id) {
+  if (!RISK_FUNDS.some(f => f.id === id)) return;
+  state.invest.chosen = id;
+  save();
 }
 
 export function pensionProjection() {
@@ -690,8 +683,6 @@ export function pensionProjection() {
   for (let i = 0; i < years; i++) b2 = b2 * (1 + p.growth) + annual;
   return {pot: round2(b2), years, annual};
 }
-
-/* ---------- scheduler ---------- */
 
 export function runScheduled() {
   const today = new Date();
@@ -725,8 +716,6 @@ export function runScheduled() {
   }
   return count;
 }
-
-/* ---------- derived ---------- */
 
 export function upcoming() {
   const cutoff = now() + 7 * 86400000;
