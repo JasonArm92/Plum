@@ -1,16 +1,16 @@
-import { FUNDS, CATEGORY_IDS, RISK_FUNDS } from './data.js?v=39';
+import { FUNDS, CATEGORY_IDS, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS } from './data.js?v=40';
 
-export const VERSION = 28;
-export const KEY = 'monzo_v28';
-export const LEGACY_KEYS = ['monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 29;
+export const KEY = 'monzo_v29';
+export const LEGACY_KEYS = ['monzo_v28','monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
 export const PLANS = {
-  free:  {id:'free',  name:'Basic', price:0,  feeRate:0.0045, feeCap:250},
-  plus:  {id:'plus',  name:'Plus',  price:5,  feeRate:0.0035, feeCap:250},
+  free: {id:'free', name:'Basic', price:0, feeRate:0.0045, feeCap:250},
+  plus: {id:'plus', name:'Plus', price:5, feeRate:0.0035, feeCap:250},
   perks: {id:'perks', name:'Perks', price:13, feeRate:0.0025, feeCap:200},
-  max:   {id:'max',   name:'Max',   price:17, feeRate:0.0015, feeCap:200}
+  max: {id:'max', name:'Max', price:17, feeRate:0.0015, feeCap:200}
 };
 
 export const uid = (p = 'id') => p + '_' + Math.random().toString(36).slice(2, 9);
@@ -222,6 +222,177 @@ export function overdraftDaily(limit) {
   return round2((limit * OVERDRAFT_EAR) / 365);
 }
 
+/* ---------- credit ---------- */
+
+const CREDIT_WALK = [0, 6, 11, 9, 17, 15, 24, 21, 30, 36, 33, 42];
+
+function seedCredit() {
+  const base = now();
+  const history = CREDIT_WALK.map((step, i) => ({
+    ts: base - (11 - i) * 30 * 86400000,
+    score: 668 + step
+  }));
+  return {
+    provider: 'TransUnion',
+    score: history[history.length - 1].score,
+    updated: base - 14 * 86400000,
+    history,
+    report: {
+      electoral: {status: 'registered', since: '2019-04-12'},
+      accounts: [
+        {name: 'Barclays', type: 'Current account', opened: '2014-06-19', limit: 1500, status: 'Up to date'},
+        {name: 'Halifax', type: 'Credit card', opened: '2018-11-02', limit: 3200, status: 'Up to date'},
+        {name: 'Monzo', type: 'Current account', opened: '2021-02-08', limit: 0, status: 'Up to date'}
+      ],
+      searches: [
+        {name: 'Admiral', type: 'Car insurance', ts: base - 40 * 86400000},
+        {name: 'Barclays', type: 'Credit card', ts: base - 96 * 86400000}
+      ],
+      public: [
+        {name: 'Electoral roll', status: 'Registered'},
+        {name: 'County court judgments', status: 'None'},
+        {name: 'Bankruptcy', status: 'None'},
+        {name: 'Insolvency', status: 'None'}
+      ]
+    }
+  };
+}
+
+export function creditBand(score) {
+  const s = clamp(Math.round(Number(score) || 0), 0, 999);
+  return CREDIT_BANDS.find(b => s >= b.from && s <= b.to) || CREDIT_BANDS[0];
+}
+
+export function creditScore() {
+  return state.credit.score;
+}
+
+export function creditHistory() {
+  return state.credit.history.slice().sort((a, b) => a.ts - b.ts);
+}
+
+export function creditUpdatedDays() {
+  return Math.max(0, Math.round((now() - state.credit.updated) / 86400000));
+}
+
+export function creditRefresh() {
+  const last = state.credit.score;
+  const drift = Math.round((Math.random() - 0.45) * 14);
+  state.credit.score = clamp(last + drift, 0, 999);
+  state.credit.updated = now();
+  state.credit.history.push({ts: now(), score: state.credit.score});
+  if (state.credit.history.length > 36) state.credit.history.shift();
+  save();
+  return state.credit.score - last;
+}
+
+/* ---------- mortgage in principle ---------- */
+
+export const MIP_MIN_DEPOSIT_PCT = 10;
+export const MIP_INCOME_MULTIPLE = 4.5;
+
+export function mipRate(ltvPct) {
+  if (ltvPct <= 60) return 0.0419;
+  if (ltvPct <= 75) return 0.0444;
+  if (ltvPct <= 85) return 0.0479;
+  return 0.0524;
+}
+
+export function mipQuote({value, deposit, income, term}) {
+  const v = Math.max(0, round2(value));
+  const d = Math.max(0, round2(deposit));
+  const inc = Math.max(0, round2(income));
+  const yrs = clamp(Number(term) || 25, 5, 40);
+  const loanNeeded = Math.max(0, round2(v - d));
+  const maxByIncome = round2(inc * MIP_INCOME_MULTIPLE);
+  const maxLoan = round2(Math.min(loanNeeded, maxByIncome));
+  const ltvPct = v > 0 ? (loanNeeded / v) * 100 : 0;
+  const rate = mipRate(ltvPct);
+  const monthlyRate = rate / 12;
+  const n = yrs * 12;
+  const monthly = maxLoan > 0
+    ? round2(maxLoan * (monthlyRate / (1 - Math.pow(1 + monthlyRate, -n))))
+    : 0;
+  const depositPct = v > 0 ? (d / v) * 100 : 0;
+  const enough = depositPct >= MIP_MIN_DEPOSIT_PCT && inc > 0 && maxLoan >= 25000;
+  return {
+    maxLoan, ltvPct, rate, monthly, depositPct, enough,
+    capped: loanNeeded > maxByIncome,
+    maxByIncome, loanNeeded, term: yrs
+  };
+}
+
+export function takeDip(quote) {
+  const dip = {
+    id: uid('dip'),
+    ref: 'MIP-' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+    amount: quote.maxLoan,
+    monthly: quote.monthly,
+    term: quote.term,
+    ltv: Math.round(quote.ltvPct),
+    ts: now(),
+    expires: now() + 90 * 86400000
+  };
+  state.mip.dips.unshift(dip);
+  save();
+  return dip;
+}
+
+/* ---------- connected accounts ---------- */
+
+export function connectedExpired(a) {
+  return a.consentExpires < now();
+}
+
+export function connectedAdd(bankId, bankName, balance) {
+  const a = {
+    id: uid('conn'),
+    bank: bankId,
+    bankName,
+    name: bankName + ' current',
+    sort: '00-00-00',
+    acct: String(Math.floor(10000000 + Math.random() * 89999999)),
+    balance: round2(balance),
+    lastSync: now(),
+    consentExpires: now() + CONNECT_CONSENT_DAYS * 86400000
+  };
+  state.connected.push(a);
+  save();
+  return a;
+}
+
+export function connectedRefresh(id) {
+  const a = state.connected.find(x => x.id === id);
+  if (!a) return false;
+  if (connectedExpired(a)) return false;
+  a.balance = round2(Math.max(0, a.balance + (Math.random() - 0.5) * 120));
+  a.lastSync = now();
+  save();
+  return true;
+}
+
+export function connectedReauth(id) {
+  const a = state.connected.find(x => x.id === id);
+  if (!a) return false;
+  a.consentExpires = now() + CONNECT_CONSENT_DAYS * 86400000;
+  a.lastSync = now();
+  save();
+  return true;
+}
+
+export function connectedRemove(id) {
+  state.connected = state.connected.filter(x => x.id !== id);
+  save();
+}
+
+export function connectedTotal() {
+  return round2(state.connected.reduce((s, a) => s + (a.balance || 0), 0));
+}
+
+export function connectedConsentDays(a) {
+  return Math.round((a.consentExpires - now()) / 86400000);
+}
+
 function defaultState() {
   const base = now();
   const mk = (name, amount, cat, daysAgo, acct) => ({
@@ -290,6 +461,16 @@ function defaultState() {
     flex: {limit: 1000, plans: [], active: true},
     loans: [],
     overdraft: {enabled: false, limit: 0},
+    credit: seedCredit(),
+    connected: [
+      {id:uid('conn'), bank:'barclays', bankName:'Barclays', name:'Barclays current',
+        sort:'20-45-11', acct:'41928375', balance: 1842.16,
+        lastSync: base - 2*3600000, consentExpires: base + 71*86400000},
+      {id:uid('conn'), bank:'halifax', bankName:'Halifax', name:'Halifax current',
+        sort:'11-02-33', acct:'77340021', balance: 612.40,
+        lastSync: base - 9*86400000, consentExpires: base - 6*86400000}
+    ],
+    mip: {dips: [], last: null},
     plan: 'plus',
     plus: {since: base - 200*86400000, renews: base + 15*86400000},
     invest: {
@@ -311,7 +492,7 @@ function defaultState() {
     settings: {
       notifications: true, marketing: false, biometrics: true,
       theme: 'system', reducedMotion: false, haptics: true,
-      roundUpDefault: true, hideBalance: false,
+      appLock: true, roundUpDefault: true, hideBalance: false,
       payOrder: ['send','request','split','bank','scheduled','payees'],
       payHidden: []
     },
@@ -390,6 +571,24 @@ const migrations = [
     if (!Array.isArray(s.loans)) s.loans = [];
     if (!s.overdraft) s.overdraft = {enabled: false, limit: 0};
     return s;
+  }},
+  {v: 29, fn: s => {
+    if (!s.credit || typeof s.credit !== 'object') s.credit = seedCredit();
+    if (!Array.isArray(s.connected)) {
+      const b = now();
+      s.connected = [
+        {id: uid('conn'), bank:'barclays', bankName:'Barclays', name:'Barclays current',
+          sort:'20-45-11', acct:'41928375', balance: 1842.16,
+          lastSync: b - 2*3600000, consentExpires: b + 71*86400000},
+        {id: uid('conn'), bank:'halifax', bankName:'Halifax', name:'Halifax current',
+          sort:'11-02-33', acct:'77340021', balance: 612.40,
+          lastSync: b - 9*86400000, consentExpires: b - 6*86400000}
+      ];
+    }
+    if (!s.mip || typeof s.mip !== 'object') s.mip = {dips: [], last: null};
+    if (!Array.isArray(s.mip.dips)) s.mip.dips = [];
+    if (typeof s.settings.appLock !== 'boolean') s.settings.appLock = true;
+    return s;
   }}
 ];
 
@@ -403,7 +602,8 @@ export function normalise(input) {
 
   s.settings = Object.assign({
     notifications: true, marketing: false, biometrics: true, theme: 'system',
-    reducedMotion: false, haptics: true, roundUpDefault: true, hideBalance: false,
+    reducedMotion: false, haptics: true, appLock: true, roundUpDefault: true,
+    hideBalance: false,
     payOrder: ['send','request','split','bank','scheduled','payees'], payHidden: []
   }, s.settings || {});
   if (!Array.isArray(s.settings.payOrder) || !s.settings.payOrder.length) {
@@ -473,6 +673,36 @@ export function normalise(input) {
   if (!s.overdraft) s.overdraft = {enabled: false, limit: 0};
   if (typeof s.overdraft.limit !== 'number') s.overdraft.limit = 0;
   if (typeof s.overdraft.enabled !== 'boolean') s.overdraft.enabled = false;
+
+  if (!s.credit || typeof s.credit !== 'object') s.credit = seedCredit();
+  if (typeof s.credit.score !== 'number' || !isFinite(s.credit.score)) {
+    s.credit.score = 668;
+  }
+  s.credit.score = clamp(Math.round(s.credit.score), 0, 999);
+  if (!Array.isArray(s.credit.history) || !s.credit.history.length) {
+    s.credit.history = [{ts: now(), score: s.credit.score}];
+  }
+  if (typeof s.credit.updated !== 'number') s.credit.updated = now() - 14 * 86400000;
+  if (!s.credit.report || typeof s.credit.report !== 'object') {
+    s.credit.report = seedCredit().report;
+  }
+  if (!Array.isArray(s.credit.report.accounts)) s.credit.report.accounts = [];
+  if (!Array.isArray(s.credit.report.searches)) s.credit.report.searches = [];
+  if (!Array.isArray(s.credit.report.public)) s.credit.report.public = [];
+  if (!s.credit.report.electoral) s.credit.report.electoral = {status: 'registered', since: '2019-04-12'};
+
+  if (!Array.isArray(s.connected)) s.connected = [];
+  for (const a of s.connected) {
+    if (typeof a.balance !== 'number' || !isFinite(a.balance)) a.balance = 0;
+    if (typeof a.lastSync !== 'number') a.lastSync = now();
+    if (typeof a.consentExpires !== 'number') {
+      a.consentExpires = now() + CONNECT_CONSENT_DAYS * 86400000;
+    }
+    if (!a.name) a.name = (a.bankName || 'Connected') + ' account';
+  }
+
+  if (!s.mip || typeof s.mip !== 'object') s.mip = {dips: [], last: null};
+  if (!Array.isArray(s.mip.dips)) s.mip.dips = [];
 
   if (!s.pension) s.pension = {};
   s.pension = Object.assign({provider:'Nest', balance:0, monthly:0, employer:0, growth:0.055, joined: now()}, s.pension);
@@ -942,4 +1172,4 @@ export function lastMonthByCategory() {
 
 export function ensureCategory(id) {
   return CATEGORY_IDS.includes(id) ? id : 'general';
-    }
+      }
