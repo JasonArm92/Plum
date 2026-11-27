@@ -2,13 +2,13 @@ import {
   state, fmt, fmtShort, round2, leftToSpend, spentThisMonth, byCategory,
   lastMonthByCategory, upcoming, totalPots, flexApr, flexPurchase, FLEX_MIN,
   FLEX_MONTHS, addTx, takeFunds, potMove, save, acc, bal, setActive, isJoint,
-  portfolioValue
-} from './core.js?v=34';
-import { CATEGORIES, SAVINGS_INTEREST } from './data.js?v=34';
+  portfolioValue, budgetFor, setBudget, totalBudget, hasBudget, budgetLeft
+} from './core.js?v=35';
+import { CATEGORIES, SAVINGS_INTEREST } from './data.js?v=35';
 import {
   el, screen, row, list, section, tile, avatar, icon, cardArt, ring, empty,
   toast, sheet, confirmSheet, field, input, seg, switchEl, pill
-} from './ui.js?v=34';
+} from './ui.js?v=35';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -34,7 +34,7 @@ export function homeScreen() {
   add.type = 'button';
   add.setAttribute('aria-label', 'Add transaction');
   add.appendChild(icon('plus', 18));
-  add.onclick = () => import('./screens-b.js?v=34').then(m => m.addTxSheet());
+  add.onclick = () => import('./screens-b.js?v=35').then(m => m.addTxSheet());
   h.appendChild(add);
   s.appendChild(h);
 
@@ -49,7 +49,7 @@ export function homeScreen() {
     if (key === 'card') {
       const w = el('div');
       w.style.padding = '0 16px';
-      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=34').then(m => m.cardSheet())));
+      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=35').then(m => m.cardSheet())));
       body.appendChild(w);
     } else if (key === 'balance') {
       const w = el('div');
@@ -81,7 +81,7 @@ export function homeScreen() {
   edit.style.padding = '8px 16px 0';
   const eb = el('button', 'btn btn--ghost btn--sm btn--block');
   eb.textContent = 'Edit home';
-  eb.onclick = () => import('./screens-b.js?v=34').then(m => m.layoutSheet());
+  eb.onclick = () => import('./screens-b.js?v=35').then(m => m.layoutSheet());
   edit.appendChild(eb);
   body.appendChild(edit);
 
@@ -109,15 +109,24 @@ function switcher() {
 function leftToSpendCard() {
   const c = el('div', 'card');
   const left = leftToSpend();
-  const total = Math.max(1, bal());
+  const usingBudget = hasBudget();
+  const denom = usingBudget ? Math.max(1, totalBudget()) : Math.max(1, bal());
   const w = el('div', 'ringwrap');
-  w.appendChild(ring(Math.min(1, left / total)));
+  w.appendChild(ring(Math.min(1, left / denom)));
   const m = el('div', 'ringwrap__main');
   m.appendChild(el('div', 'ringwrap__l', 'Left to spend'));
   m.appendChild(el('div', 'ringwrap__v', fmt(left)));
-  m.appendChild(el('div', 'hint', 'After ' + fmt(upcoming()) + ' of bills in the next 7 days'));
+  m.appendChild(el('div', 'hint', usingBudget
+    ? 'of ' + fmt(totalBudget()) + ' budget'
+    : 'After ' + fmt(upcoming()) + ' of bills in the next 7 days'));
   w.appendChild(m);
   c.appendChild(w);
+  if (!usingBudget) {
+    const b = el('button', 'btn btn--ghost btn--sm btn--block', 'Set a budget');
+    b.style.marginTop = '12px';
+    b.onclick = () => { location.hash = '#/trends'; };
+    c.appendChild(b);
+  }
   return c;
 }
 
@@ -151,7 +160,7 @@ function carousel() {
       const add = el('button', 'pcard pcard--new');
       add.type = 'button';
       add.innerHTML = '<div style="font-size:22px">＋</div><div>New pot</div>';
-      add.onclick = () => import('./screens-b.js?v=34').then(m => m.newPotSheet());
+      add.onclick = () => import('./screens-b.js?v=35').then(m => m.newPotSheet());
       track.appendChild(add);
     } else if (key === 'invest') {
       const b = el('button', 'pcard');
@@ -240,18 +249,34 @@ export function trendsScreen() {
   const cats = byCategory();
   const prev = lastMonthByCategory();
   const total = Math.max(1, spent);
+  const budget = totalBudget();
+  const usingBudget = hasBudget();
   const body = el('div');
 
   const top = el('div', 'card');
   const rw = el('div', 'ringwrap');
-  const budget = 1200;
-  rw.appendChild(ring(Math.min(1, spent / budget)));
+  rw.appendChild(ring(usingBudget ? Math.min(1, spent / Math.max(1, budget)) : 0));
   const m = el('div', 'ringwrap__main');
   m.appendChild(el('div', 'ringwrap__l', 'Spent this month'));
   m.appendChild(el('div', 'ringwrap__v', fmt(spent)));
-  m.appendChild(el('div', 'hint', 'of ' + fmt(budget) + ' budget'));
+  if (usingBudget) {
+    const left = budgetLeft();
+    const sub = el('div', 'hint ' + (left < 0 ? 'budgetover' : 'budgetleft'));
+    sub.textContent = left < 0
+      ? fmt(Math.abs(left)) + ' over ' + fmt(budget) + ' budget'
+      : fmt(left) + ' left of ' + fmt(budget) + ' budget';
+    m.appendChild(sub);
+  } else {
+    m.appendChild(el('div', 'hint', 'No budget set'));
+  }
   rw.appendChild(m);
   top.appendChild(rw);
+  if (!usingBudget) {
+    const b = el('button', 'btn btn--ghost btn--sm btn--block', 'Set a budget');
+    b.style.marginTop = '12px';
+    b.onclick = () => import('./screens-b.js?v=35').then(x => x.budgetSheet());
+    top.appendChild(b);
+  }
   body.appendChild(top);
 
   body.appendChild(section('Categories'));
@@ -261,28 +286,47 @@ export function trendsScreen() {
     const c = cat(id);
     const p = prev[id] || 0;
     const delta = p ? Math.round(((amt - p) / p) * 100) : null;
-    const r = el('button', 'row');
-    r.type = 'button';
-    const m2 = el('div', 'row__main');
-    m2.appendChild(el('div', 'row__t', c.emoji + '  ' + c.name));
+    const tgt = budgetFor(id);
+
+    const r = el('div', 'catrow');
+    const main = el('button', 'catrow__main');
+    main.type = 'button';
+    main.appendChild(el('div', 'row__t', c.emoji + '  ' + c.name));
     const bar = el('div', 'pbar');
     bar.style.marginTop = '6px';
     const f = el('div', 'pbar__f');
-    f.style.width = Math.round((amt / total) * 100) + '%';
-    f.style.background = c.colour;
+    f.style.width = Math.min(100, Math.round((amt / Math.max(1, tgt || total)) * 100)) + '%';
+    f.style.background = tgt && amt > tgt ? 'var(--red)' : c.colour;
     bar.appendChild(f);
-    m2.appendChild(bar);
-    r.appendChild(m2);
-    const v = el('div', 'row__v', fmt(amt));
+    main.appendChild(bar);
+    main.onclick = () => { location.hash = '#/trend/' + id; };
+    r.appendChild(main);
+
+    const amtWrap = el('div', 'catrow__amt');
+    const amtBtn = el('button', 'catrow__v');
+    amtBtn.type = 'button';
+    amtBtn.textContent = fmt(amt);
+    amtBtn.onclick = () => import('./screens-b.js?v=35').then(x => x.targetSheet(id));
+    amtWrap.appendChild(amtBtn);
     if (delta !== null) {
       const d = el('span', 'hint');
-      d.style.marginLeft = '6px';
       d.textContent = (delta > 0 ? '▲' : '▼') + Math.abs(delta) + '%';
-      d.style.color = delta > 0 ? '#d92d20' : '#12a150';
-      v.appendChild(d);
+      d.style.color = delta > 0 ? 'var(--red)' : 'var(--green)';
+      amtWrap.appendChild(d);
     }
-    r.appendChild(v);
-    r.onclick = () => { location.hash = '#/trend/' + id; };
+    const chip = el('button', 'tgt' + (tgt ? ' tgt--on' : ''));
+    chip.type = 'button';
+    chip.textContent = tgt ? fmt(tgt, {dp: 0}) : 'Set';
+    chip.onclick = () => import('./screens-b.js?v=35').then(x => x.targetSheet(id));
+    amtWrap.appendChild(chip);
+    r.appendChild(amtWrap);
+
+    const chev = el('button', 'catrow__chev');
+    chev.type = 'button';
+    chev.appendChild(icon('chev', 16));
+    chev.onclick = () => { location.hash = '#/trend/' + id; };
+    r.appendChild(chev);
+
     l.appendChild(r);
   }
   if (!rows.length) l.appendChild(empty('Nothing spent yet', 'Your categories will appear here'));
@@ -304,7 +348,7 @@ export function trendsScreen() {
   bars.style.cssText = 'display:flex;align-items:flex-end;gap:3px;height:72px';
   perDay.forEach(v => {
     const b = el('div');
-    b.style.cssText = 'flex:1;border-radius:2px;height:' + Math.max(4, (v / maxD) * 72) + 'px;background:' + (v ? '#ff4f40' : '#ececf0');
+    b.style.cssText = 'flex:1;border-radius:2px;height:' + Math.max(4, (v / maxD) * 72) + 'px;background:' + (v ? 'var(--coral)' : 'var(--bg-3)');
     bars.appendChild(b);
   });
   strip.appendChild(bars);
@@ -321,11 +365,34 @@ export function trendCatScreen(id) {
     .sort((a, b) => b.ts - a.ts);
   const body = el('div');
   const total = txs.reduce((s, t) => s + Math.abs(t.amount), 0);
+  const tgt = budgetFor(id);
   const card = el('div', 'card');
   card.appendChild(el('div', 'ringwrap__l', 'This month'));
   card.appendChild(el('div', 'ringwrap__v', fmt(total)));
   card.appendChild(el('div', 'hint', txs.length + ' transactions'));
+  if (tgt) {
+    const bar = el('div', 'pbar');
+    bar.style.marginTop = '10px';
+    const f = el('div', 'pbar__f');
+    f.style.width = Math.min(100, (total / tgt) * 100) + '%';
+    f.style.background = total > tgt ? 'var(--red)' : c.colour;
+    bar.appendChild(f);
+    card.appendChild(bar);
+    card.appendChild(el('div', 'hint', fmt(Math.max(0, tgt - total)) + ' left of ' + fmt(tgt) + ' target'));
+  }
   body.appendChild(card);
+
+  const tgtRow = el('div', 'card card--flat');
+  tgtRow.style.cssText = 'display:flex;align-items:center;gap:12px';
+  const tm = el('div', 'row__main');
+  tm.appendChild(el('div', 'row__t', 'Monthly target'));
+  tm.appendChild(el('div', 'row__s', tgt ? fmt(tgt) : 'Not set'));
+  tgtRow.appendChild(tm);
+  const tb = el('button', 'btn btn--primary btn--sm');
+  tb.textContent = tgt ? 'Edit' : 'Set';
+  tb.onclick = () => import('./screens-b.js?v=35').then(x => x.targetSheet(id));
+  tgtRow.appendChild(tb);
+  body.appendChild(tgtRow);
 
   const l = el('div', 'list list--boxed');
   for (const t of txs) {
@@ -606,7 +673,7 @@ export function accountScreen() {
   body.appendChild(section('Money'));
   body.appendChild(list([
     row({title: 'Pots', sub: state.pots.length + ' pots · ' + fmt(totalPots()) + ' saved', onClick: () => { location.hash = '#/pots'; }}),
-    row({title: 'Investments', sub: '48 holdings · ' + fmt(portfolioValue()), onClick: () => { location.hash = '#/invest'; }}),
+    row({title: 'Investments', sub: state.invest.holdings.length + ' holdings · ' + fmt(portfolioValue()), onClick: () => { location.hash = '#/invest'; }}),
     row({title: 'Pension', sub: state.pension.provider, onClick: () => { location.hash = '#/pension'; }}),
     row({title: 'Stocks & Shares ISA', sub: 'Allowance used ' + fmt(state.isa.used), onClick: () => { location.hash = '#/isa'; }}),
     row({title: 'Monzo Plus', sub: 'Manage your plan', onClick: () => { location.hash = '#/plus'; }})
@@ -646,7 +713,7 @@ export function potsScreen() {
   }
   if (!state.pots.length) {
     l.appendChild(empty('No pots yet', 'Pots help you put money aside', {
-      label: 'Create a pot', onClick: () => import('./screens-b.js?v=34').then(m => m.newPotSheet())
+      label: 'Create a pot', onClick: () => import('./screens-b.js?v=35').then(m => m.newPotSheet())
     }));
   }
   body.appendChild(l);
@@ -696,7 +763,7 @@ export function potScreen(id) {
   body.appendChild(wd);
 
   body.appendChild(list([
-    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=34').then(m => m.editPotSheet(p.id))}),
+    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=35').then(m => m.editPotSheet(p.id))}),
     row({title: 'Round-ups', value: p.roundUp ? 'On' : 'Off', chev: false}),
     row({title: 'Delete pot', onClick: () => confirmSheet({
       title: 'Delete ' + p.name, text: 'Money will go back to your balance.', danger: true, confirm: 'Delete',
