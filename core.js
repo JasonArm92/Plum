@@ -2,12 +2,12 @@
 
 import {
   PLANS, CATS, FLEX, COMMITTED, DEFAULT_TARGETS, BANKS, BB_PROVIDERS, BB_CAP,
-  DOMAINS, POTS0, TARGET_ISA, buildSeed, uid
+  DOMAINS, POTS0, TARGET_ISA, DIVIDEND_RATE, buildSeed, uid
 } from './data.js';
 
-export const VERSION = 18;
-export const KEY = 'monzo_v18';
-const LEGACY_KEYS = ['monzo_v17', 'monzo_v16', 'monzo_v15', 'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
+export const VERSION = 19;
+export const KEY = 'monzo_v19';
+const LEGACY_KEYS = ['monzo_v18', 'monzo_v17', 'monzo_v16', 'monzo_v15', 'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
 
 export const NOW = new Date();
 export const TODAY = iso(NOW);
