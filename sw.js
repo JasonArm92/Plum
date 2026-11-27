@@ -1,4 +1,4 @@
-const CACHE = 'monzo-v38';
+const CACHE = 'monzo-v39';
 const ASSETS = [
   './', './index.html', './styles.css', './boot.js', './main.js', './core.js',
   './data.js', './ui.js', './screens-a.js', './screens-b.js'
@@ -40,7 +40,7 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  if (/logo\.clearbit|gstatic|google|icon\.horse|favicone|duckduckgo/.test(url.hostname)) {
+  if (/fonts\.gstatic|logo\.clearbit|gstatic|google|icon\.horse|favicone|duckduckgo/.test(url.hostname)) {
     e.respondWith(
       caches.match(req).then(hit => hit || fetch(req).then(res => {
         const copy = res.clone();
