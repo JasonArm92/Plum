@@ -1,5 +1,5 @@
-import { fmt, state } from './core.js?v=36';
-import { DOMAINS, BRANDS } from './data.js?v=36';
+import { fmt, state } from './core.js?v=37';
+import { DOMAINS, BRANDS } from './data.js?v=37';
 
 export const el = (tag, cls, html) => {
   const n = document.createElement(tag);
@@ -72,6 +72,55 @@ export function tile(name, size = 42) {
     wrap.appendChild(img);
   }
   return wrap;
+}
+
+const CAT_ICONS = {
+  basket: '<path d="M4 9h16l-1.6 9.2a1.5 1.5 0 0 1-1.5 1.3H7.1a1.5 1.5 0 0 1-1.5-1.3L4 9z"/><path d="M8.5 9L11 3.5M15.5 9L13 3.5"/>',
+  cutlery: '<path d="M7 3v7a2 2 0 0 0 4 0V3"/><path d="M9 12v9"/><path d="M16.5 3c-1.4 1.6-2 3.6-2 5.6 0 1.6.8 2.6 2 2.9V21"/>',
+  train: '<rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 10h14"/><path d="M9 16l-2 4M15 16l2 4"/><circle cx="9" cy="13" r=".8"/><circle cx="15" cy="13" r=".8"/>',
+  bag: '<path d="M5 8h14l-1.2 12.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z"/><path d="M9 8h6M9 12h6"/>',
+  film: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M8 5v14M16 5v14M3 12h18"/>',
+  pill: '<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-30 12 12)"/><path d="M9 9.5l6 5"/>',
+  dumbbell: '<path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/>',
+  house: '<path d="M4 11l8-6.5 8 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z"/>',
+  family: '<circle cx="9" cy="8" r="2.6"/><circle cx="16" cy="9" r="2"/><path d="M4 19c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/><path d="M14.5 19c0-2.2 1.1-3.6 2.8-3.6 1.8 0 3.2 1.4 3.2 3.6"/>',
+  paw: '<ellipse cx="7" cy="9" rx="1.9" ry="2.4"/><ellipse cx="12" cy="7" rx="1.9" ry="2.6"/><ellipse cx="17" cy="9" rx="1.9" ry="2.4"/><path d="M12 12c-2.6 0-4.6 1.9-4.6 4 0 1.7 1.4 2.6 3 2.2 1-.3 2.1-.3 3.1 0 1.6.4 3-.5 3-2.2 0-2.1-2-4-4.5-4z"/>',
+  card: '<rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M3 10h18"/>',
+  arrowdown: '<path d="M12 4v13M6 12l6 6 6-6"/>',
+  swap: '<path d="M4 8h13M14 5l3 3-3 3"/><path d="M20 16H7M10 13l-3 3 3 3"/>',
+  note: '<rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="12" cy="12" r="2.4"/>',
+  box: '<path d="M4 8l8-4 8 4v9l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v9"/>'
+};
+
+export function catIcon(name, size = 30, colour = '#6b6b76') {
+  const wrap = el('span', 'cico');
+  wrap.style.width = size + 'px';
+  wrap.style.height = size + 'px';
+  wrap.style.background = colour + '1f';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', colour);
+  svg.setAttribute('stroke-width', '1.7');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = CAT_ICONS[name] || CAT_ICONS.box;
+  wrap.appendChild(svg);
+  return wrap;
+}
+
+export function spendBar(pct, over = false) {
+  const b = el('div', 'bar');
+  b.setAttribute('role', 'progressbar');
+  b.setAttribute('aria-valuemin', '0');
+  b.setAttribute('aria-valuemax', '100');
+  b.setAttribute('aria-valuenow', String(Math.round(Math.min(1, Math.max(0, pct)) * 100)));
+  const f = el('div', 'bar__f' + (over ? ' bar__f--over' : ''));
+  f.style.width = Math.min(100, Math.max(0, pct * 100)) + '%';
+  b.appendChild(f);
+  return b;
 }
 
 export function avatar(size = 36) {
@@ -173,28 +222,6 @@ export function empty(title, sub = '', action = null) {
     e.appendChild(b);
   }
   return e;
-}
-
-export function ring(pct, size = 78, stroke = 8) {
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('class', 'ring');
-  svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
-  svg.setAttribute('width', size);
-  svg.setAttribute('height', size);
-  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  bg.setAttribute('class', 'ring__bg');
-  bg.setAttribute('cx', size / 2); bg.setAttribute('cy', size / 2);
-  bg.setAttribute('r', r); bg.setAttribute('fill', 'none'); bg.setAttribute('stroke-width', stroke);
-  const fg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  fg.setAttribute('class', 'ring__fg');
-  fg.setAttribute('cx', size / 2); fg.setAttribute('cy', size / 2);
-  fg.setAttribute('r', r); fg.setAttribute('fill', 'none'); fg.setAttribute('stroke-width', stroke);
-  fg.setAttribute('stroke-dasharray', c);
-  fg.setAttribute('stroke-dashoffset', c * (1 - Math.min(1, Math.max(0, Number(pct) || 0))));
-  svg.appendChild(bg); svg.appendChild(fg);
-  return svg;
 }
 
 export function cardArt(card, onClick = null) {
