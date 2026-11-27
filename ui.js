@@ -1,7 +1,124 @@
 /* src/ui.js — router, sheet, toast, charts, logo, shared components. */
 
 import { esc, fmt, pct } from './core.js';
-import { logoHTML } from './logos.js';
+import { DOMAINS } from './data.js';
+
+/* --- logo resolution -------------------------------------------------------
+   Self-contained so no second module has to load. DOMAINS in data.js is the
+   source of truth; FUNDS and TICKERS extend it. Chain per name: Clearbit logo
+   → Google favicon → the initials badge, so a dead logo never leaves a hole. */
+
+const FUNDS = {
+  iShares: 'ishares.com',
+  Invesco: 'invesco.co.uk',
+  'Legal & General': 'legalandgeneral.com',
+  Fidelity: 'fidelity.co.uk',
+  BlackRock: 'blackrock.com',
+  abrdn: 'abrdn.com',
+  'Scottish Widows': 'scottishwidows.co.uk'
+};
+
+export const TICKERS = {
+  VUSA: 'vanguardinvestor.co.uk',
+  VWRL: 'vanguardinvestor.co.uk',
+  VUKE: 'vanguardinvestor.co.uk',
+  VFEM: 'vanguardinvestor.co.uk',
+  VHYL: 'vanguardinvestor.co.uk',
+  VAGP: 'vanguardinvestor.co.uk',
+  VWRP: 'vanguardinvestor.co.uk'
+};
+
+const CDN = 'https://logo.clearbit.com/';
+const FAV = 'https://www.google.com/s2/favicons?sz=128&domain=';
+
+const norm = s => String(s || '')
+  .toLowerCase()
+  .replace(/[’‘]/g, "'")
+  .replace(/\s+(retainer|dividend.*|subscription)$/, '')
+  .replace(/[^a-z0-9'& ]/g, '')
+  .trim();
+
+const LOOKUP = new Map();
+const addDomain = (k, v) => { if (v) LOOKUP.set(norm(k), v); };
+Object.entries(DOMAINS).forEach(([k, v]) => addDomain(k, v));
+Object.entries(FUNDS).forEach(([k, v]) => addDomain(k, v));
+Object.entries(TICKERS).forEach(([k, v]) => addDomain(k, v));
+
+const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const MATCHERS = [...LOOKUP.keys()]
+  .sort((a, b) => b.length - a.length)
+  .map(k => [new RegExp(`(^|[^a-z0-9])${escapeRe(k)}([^a-z0-9]|$)`), LOOKUP.get(k)]);
+
+export function domainFor(name){
+  const n = norm(name);
+  if (!n) return '';
+  const exact = LOOKUP.get(n);
+  if (exact) return exact;
+  for (const [re, domain] of MATCHERS) if (re.test(n)) return domain;
+  return '';
+}
+
+export function hasLogo(name){ return !!domainFor(name); }
+
+export function initials(name){
+  const words = String(name || '').replace(/[^A-Za-z ]/g, ' ').split(/\s+/).filter(Boolean);
+  return (((words[0] || '?')[0] + (words[1] || '')[0]) || '?').toUpperCase();
+}
+
+export function logoHTML(name, big){
+  const d = domainFor(name);
+  const ini = esc(initials(name));
+  const cls = big ? 'lg lg--lg' : 'lg';
+  if (!d) return `<span class="${cls}"><span class="lg__i">${ini}</span></span>`;
+  return `<span class="${cls}"><span class="lg__i">${ini}</span>`
+    + `<img src="${CDN}${d}" alt="" loading="lazy" decoding="async"`
+    + ` referrerpolicy="no-referrer" data-fb="${FAV}${d}"></span>`;
+}
+
+export function logoEl(name, big){
+  const wrap = document.createElement('span');
+  wrap.innerHTML = logoHTML(name, big);
+  return wrap.firstElementChild;
+}
+
+export function paintLogos(root){
+  if (!root || !root.querySelectorAll) return;
+  root.querySelectorAll('[data-logo]').forEach(el => {
+    el.replaceWith(logoEl(el.dataset.logo, el.dataset.logoBig === '1'));
+  });
+}
+
+/* `error` does not bubble, so it is captured. Steps down the chain, then
+   settles on the initials badge. */
+document.addEventListener('error', e => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
+  const next = img.dataset.fb;
+  if (next){ img.removeAttribute('data-fb'); img.src = next; }
+  else img.remove();
+}, true);
+
+document.addEventListener('load', e => {
+  const img = e.target;
+  if (img instanceof HTMLImageElement && img.parentElement
+      && img.parentElement.classList.contains('lg')) img.classList.add('is-loaded');
+}, true);
+
+try {
+  if (document.head && !document.getElementById('logo-css')){
+    const style = document.createElement('style');
+    style.id = 'logo-css';
+    style.textContent = `
+.lg{position:relative;overflow:hidden}
+.lg>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  background:#fff;padding:12%;box-sizing:border-box;opacity:0;transition:opacity .18s ease}
+.lg>img.is-loaded{opacity:1}
+@media (prefers-reduced-motion:reduce){.lg>img{transition:none}}`;
+    document.head.append(style);
+  }
+} catch { /* never let styling stop the app booting */ }
+
+/* -------------------------------------------------------------------------- */
 
 const registry = new Map();
 const TABS = new Set(['home', 'save', 'grow', 'pay', 'account']);
@@ -43,7 +160,6 @@ export function sheet(html){
   s.setAttribute('role', 'dialog');
   s.setAttribute('aria-modal', 'true');
   if (!panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
-  /* land inside the sheet so a keyboard user is not left behind the scrim */
   const first = panel.querySelector(FOCUSABLE);
   (first || panel).focus({ preventScroll: true });
 }
@@ -55,7 +171,6 @@ export function closeSheet(){
   s.classList.remove('on');
   s.removeAttribute('role');
   s.removeAttribute('aria-modal');
-  /* put the caret back where the sheet was opened from */
   if (wasOpen && sheetOpener && sheetOpener.isConnected){
     try { sheetOpener.focus({ preventScroll: true }); } catch {}
   }
@@ -79,7 +194,6 @@ export function go(name, params = {}, back = false){
     else if (current) stack.push(current);
   }
 
-  /* a sheet opened from the previous screen must not survive navigation */
   closeSheet();
   if (cleanup){ try { cleanup(); } catch {} cleanup = null; }
 
@@ -97,8 +211,6 @@ export function go(name, params = {}, back = false){
 
   paintHeader(name);
 
-  /* fresh view node per navigation: every listener attached by the mount
-     is garbage-collected with it, so nothing accumulates on the section */
   const view = document.createElement('div');
   view.className = 'view';
   view.tabIndex = -1;
@@ -107,13 +219,10 @@ export function go(name, params = {}, back = false){
   current = name;
   currentParams = params;
   cleanup = mount(view, params) || null;
-  /* move focus into the new screen rather than stranding it on a dead node */
   view.focus({ preventScroll: true });
   window.scrollTo(0, 0);
 }
 
-/* Re-renders wherever the user was, params included. Used by the lock screen so
-   unlocking puts you back rather than sending you home. */
 export function reload(){
   if (!current) return go('home');
   go(current, currentParams, true);
