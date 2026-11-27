@@ -1,12 +1,23 @@
 /* src/logos.js — merchant, company and holding logo resolution.
 
-   DOMAINS in data.js is the single source of truth for merchant → domain, so
-   this module reads it rather than keeping a second copy. Resolution chain per
-   name: Clearbit logo → Google favicon → the initials badge. A missing, dead
-   or blocked logo therefore never leaves a hole in the list. */
+   DOMAINS in data.js is the single source of truth for merchant → domain. FUNDS
+   below covers fund houses, TICKERS the holdings. Lookup is exact first, then a
+   whole-word match, so "Vanguard FTSE Global All Cap" resolves through the
+   "Vanguard" key. Chain per name: Clearbit logo → Google favicon → initials. */
 
 import { esc } from './core.js';
 import { DOMAINS } from './data.js';
+
+/* Fund houses, for the holdings list. */
+const FUNDS = {
+  iShares: 'ishares.com',
+  Invesco: 'invesco.co.uk',
+  'Legal & General': 'legalandgeneral.com',
+  Fidelity: 'fidelity.co.uk',
+  BlackRock: 'blackrock.com',
+  abrdn: 'abrdn.com',
+  'Scottish Widows': 'scottishwidows.co.uk'
+};
 
 /* Funds and tickers. Extend when a holding is added. */
 export const TICKERS = {
@@ -31,11 +42,24 @@ const norm = s => String(s || '')
   .trim();
 
 const LOOKUP = new Map();
-Object.entries(DOMAINS).forEach(([k, v]) => { if (v) LOOKUP.set(norm(k), v); });
-Object.entries(TICKERS).forEach(([k, v]) => { if (v) LOOKUP.set(norm(k), v); });
+const add = (k, v) => { if (v) LOOKUP.set(norm(k), v); };
+Object.entries(DOMAINS).forEach(([k, v]) => add(k, v));
+Object.entries(FUNDS).forEach(([k, v]) => add(k, v));
+Object.entries(TICKERS).forEach(([k, v]) => add(k, v));
+
+/* Whole-word matchers, longest key first so the most specific one wins. */
+const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const MATCHERS = [...LOOKUP.keys()]
+  .sort((a, b) => b.length - a.length)
+  .map(k => [new RegExp(`(^|[^a-z0-9])${escapeRe(k)}([^a-z0-9]|$)`), LOOKUP.get(k)]);
 
 export function domainFor(name){
-  return LOOKUP.get(norm(name)) || '';
+  const n = norm(name);
+  if (!n) return '';
+  const exact = LOOKUP.get(n);
+  if (exact) return exact;
+  for (const [re, domain] of MATCHERS) if (re.test(n)) return domain;
+  return '';
 }
 
 export function hasLogo(name){
