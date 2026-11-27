@@ -1,7 +1,7 @@
 /* src/ui.js — router, sheet, toast, charts, logo, shared components. */
 
 import { esc, fmt, pct } from './core.js';
-import { DOMAINS } from './data.js';
+import { logoHTML } from './logos.js';
 
 const registry = new Map();
 const TABS = new Set(['home', 'save', 'grow', 'pay', 'account']);
@@ -140,12 +140,7 @@ export function toast(msg){
 }
 
 export function logo(name, big){
-  const domain = DOMAINS[name];
-  const initials = String(name).split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-  const cls = big ? 'lg lg--lg' : 'lg';
-  if (!domain) return `<span class="${cls}"><span class="lg__i">${esc(initials)}</span></span>`;
-  return `<span class="${cls}"><span class="lg__i">${esc(initials)}</span>
-    <img src="https://logo.clearbit.com/${domain}" alt="" loading="lazy" onerror="this.remove()"></span>`;
+  return logoHTML(name, big);
 }
 
 export function lineChart(host, series, opts = {}){
