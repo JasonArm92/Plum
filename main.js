@@ -1,5 +1,5 @@
-import { load, state, runScheduled } from './core.js?v=39';
-import { el, icon, toast } from './ui.js?v=39';
+import { load, state, runScheduled } from './core.js?v=40';
+import { el, icon, toast } from './ui.js?v=40';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
   payeeScreen, payeeFormScreen, sendScreen, requestScreen, bankScreen,
@@ -7,15 +7,19 @@ import {
   flexScreen, flexPlanScreen, loanScreen, overdraftScreen,
   settingsScreen, settingsPersonalScreen, settingsSecurityScreen,
   settingsPreferencesScreen, settingsDocumentsScreen, settingsAboutScreen
-} from './screens-a.js?v=39';
+} from './screens-a.js?v=40';
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
   appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, ledgerScreen,
   splitScreen, splitsScreen, splitDetailScreen, receiptScreen
-} from './screens-b.js?v=39';
+} from './screens-b.js?v=40';
+import {
+  creditScreen, creditReportScreen, mortgageScreen, dipScreen,
+  connectedScreen, connectedAccountScreen
+} from './screens-c.js?v=40';
 
-const BUILD = 39;
+const BUILD = 40;
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -83,6 +87,12 @@ const SCREENS = {
   'flex-plan': a => flexPlanScreen(a),
   loan: () => loanScreen(),
   overdraft: () => overdraftScreen(),
+  credit: () => creditScreen(),
+  'credit-report': () => creditReportScreen(),
+  mortgage: () => mortgageScreen(),
+  dip: a => dipScreen(a),
+  connected: () => connectedScreen(),
+  'connected-account': a => connectedAccountScreen(a),
   settings: () => settingsScreen(),
   'settings-personal': () => settingsPersonalScreen(),
   'settings-security': () => settingsSecurityScreen(),
