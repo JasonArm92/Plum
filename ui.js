@@ -1,514 +1,372 @@
-/* src/ui.js — router, sheet, toast, charts, logo, shared components. */
+import { fmt, fmtShort, state, save } from './core.js';
+import { DOMAINS, BRANDS } from './data.js';
 
-import { esc, fmt, pct } from './core.js';
-import { DOMAINS } from './data.js';
-
-/* --- logo marks ------------------------------------------------------------
-   Branded inline-SVG tile first, real logo layered over it inline-styled.
-   Chain: icon.horse → favicone → Google favicon. */
-
-const ICON = 'https://icon.horse/icon/';
-const FAV  = 'https://favicone.com/';
-const GOOG = 'https://www.google.com/s2/favicons?sz=128&domain=';
-
-const FUNDS = {
-  iShares: 'ishares.com',
-  Invesco: 'invesco.co.uk',
-  'Legal & General': 'legalandgeneral.com',
-  Fidelity: 'fidelity.co.uk',
-  BlackRock: 'blackrock.com',
-  abrdn: 'abrdn.com',
-  'Scottish Widows': 'scottishwidows.co.uk'
+export const el = (tag, cls, html) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (html !== undefined) n.innerHTML = html;
+  return n;
 };
 
-const TICKERS = {
-  VUSA: 'vanguardinvestor.co.uk',
-  VWRL: 'vanguardinvestor.co.uk',
-  VUKE: 'vanguardinvestor.co.uk',
-  VFEM: 'vanguardinvestor.co.uk',
-  VHYL: 'vanguardinvestor.co.uk',
-  VAGP: 'vanguardinvestor.co.uk',
-  VWRP: 'vanguardinvestor.co.uk'
+export const on = (id, fn) => {
+  const n = typeof id === 'string' ? document.getElementById(id) : id;
+  if (n) n.addEventListener('click', fn);
+  return n;
 };
 
-const norm = s => String(s || '')
-  .toLowerCase()
-  .replace(/[’‘]/g, "'")
-  .replace(/\s+(retainer|dividend.*|subscription)$/, '')
-  .replace(/[^a-z0-9'& ]/g, '')
-  .trim();
-
-const DOMAIN_MAP = new Map();
-const addDomain = (k, v) => { if (v) DOMAIN_MAP.set(norm(k), v); };
-Object.entries(DOMAINS).forEach(([k, v]) => addDomain(k, v));
-Object.entries(FUNDS).forEach(([k, v]) => addDomain(k, v));
-Object.entries(TICKERS).forEach(([k, v]) => addDomain(k, v));
-
-const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const DOMAIN_MATCHERS = [...DOMAIN_MAP.keys()]
-  .sort((a, b) => b.length - a.length)
-  .map(k => [new RegExp(`(^|[^a-z0-9])${escapeRe(k)}([^a-z0-9]|$)`), DOMAIN_MAP.get(k)]);
-
-function domainFor(name){
-  const n = norm(name);
-  if (!n) return '';
-  const exact = DOMAIN_MAP.get(n);
-  if (exact) return exact;
-  for (const [re, domain] of DOMAIN_MATCHERS) if (re.test(n)) return domain;
-  return '';
+export function initials(name = '') {
+  const words = String(name).trim().split(/\s+/).filter(Boolean);
+  const a = words[0] ? words[0].charAt(0) : '';
+  const b = words[1] ? words[1].charAt(0) : (words[0] ? words[0].charAt(1) : '');
+  return (a + b).toUpperCase() || '?';
 }
 
-/* --- brand colours, for the base tile -------------------------------------- */
-
-const BRANDS = new Map();
-const addBrand = (k, bg, fg) => BRANDS.set(norm(k), { bg, fg });
-
-addBrand('Tesco', '#00539F', '#fff');
-addBrand('Aldi', '#00005A', '#fff');
-addBrand('Asda', '#6DBE45', '#053B2C');
-addBrand('Morrisons', '#00703C', '#fff');
-addBrand('Lidl', '#0050AA', '#FFDD00');
-addBrand('Iceland', '#CC0000', '#fff');
-addBrand('Farmfoods', '#003C71', '#fff');
-addBrand("Sainsbury's", '#F06C00', '#fff');
-addBrand('Costa', '#6C1D45', '#fff');
-addBrand('Greggs', '#004B8D', '#fff');
-addBrand('The Masham', '#5A3E2B', '#fff');
-addBrand('Hope & Union', '#1F3A5F', '#fff');
-addBrand('Cena', '#7A2E2E', '#fff');
-addBrand('Borge', '#3B3B3B', '#fff');
-addBrand('The Twisted Peel', '#4A2C6B', '#fff');
-addBrand("McDonald's", '#FFC72C', '#DA291C');
-addBrand('KFC', '#E4002B', '#fff');
-addBrand("Domino's", '#006491', '#fff');
-addBrand("Nando's", '#1A1A1A', '#E4002B');
-addBrand('Stagecoach', '#00539F', '#fff');
-addBrand('Arriva', '#005EB8', '#fff');
-addBrand('BP', '#009B3A', '#fff');
-addBrand('Shell', '#FBCE07', '#DD1D21');
-addBrand('Amazon', '#FF9900', '#131A22');
-addBrand('Argos', '#DA291C', '#fff');
-addBrand('Matalan', '#E30613', '#fff');
-addBrand('Sports Direct', '#00205B', '#fff');
-addBrand('Smyths', '#003DA5', '#fff');
-addBrand('Next', '#111111', '#fff');
-addBrand('B&M', '#00447C', '#fff');
-addBrand('Home Bargains', '#DA291C', '#fff');
-addBrand('Screwfix', '#003A70', '#fff');
-addBrand('Boots', '#00539B', '#fff');
-addBrand('Specsavers', '#007A33', '#fff');
-addBrand('PureGym', '#1A1A1A', '#fff');
-addBrand('Everyone Active', '#005EB8', '#fff');
-addBrand('Odeon', '#00205B', '#fff');
-addBrand('Cineworld', '#00205B', '#fff');
-addBrand('Steam', '#1B2838', '#66C0F4');
-addBrand('Netflix', '#0B0B0B', '#E50914');
-addBrand('Spotify', '#1DB954', '#0B0B0B');
-addBrand('Monzo', '#FF4F40', '#fff');
-addBrand('Monzo Flex', '#FF4F40', '#fff');
-addBrand('Monzo Plus', '#FF4F40', '#fff');
-addBrand('Monzo Loans', '#FF4F40', '#fff');
-addBrand('Monzo Invest', '#FF4F40', '#fff');
-addBrand('Monzo Billsback', '#FF4F40', '#fff');
-addBrand('Saving Challenge', '#FF4F40', '#fff');
-addBrand('Twinkl', '#1F9BD1', '#fff');
-addBrand('The Works', '#C8102E', '#fff');
-addBrand('Clarks', '#4A3B2A', '#fff');
-addBrand('Preston Park Museum', '#4F6B3A', '#fff');
-addBrand("St Aidan's School", '#1F3A5F', '#fff');
-addBrand('British Gas', '#003C71', '#fff');
-addBrand('Northumbrian Water', '#005EB8', '#fff');
-addBrand('Virgin Media', '#E10A0A', '#fff');
-addBrand('EE', '#00A5A8', '#fff');
-addBrand('Aviva', '#FFD100', '#00205B');
-addBrand('Stockton Council', '#003C71', '#fff');
-addBrand('Kingdom Services Group', '#00205B', '#fff');
-addBrand('Vanguard', '#96151D', '#fff');
-addBrand('iShares', '#111111', '#fff');
-addBrand('Invesco', '#00205B', '#fff');
-addBrand('Legal & General', '#00205B', '#fff');
-addBrand('Fidelity', '#0B5C33', '#fff');
-addBrand('BlackRock', '#111111', '#fff');
-addBrand('abrdn', '#003D7C', '#fff');
-addBrand('Scottish Widows', '#0B3B6F', '#fff');
-addBrand('Pointens', '#00539F', '#fff');
-addBrand('OpenRent', '#005EB8', '#fff');
-addBrand('Blue Skies Lets', '#38A3DC', '#fff');
-addBrand('Barclays', '#00AEEF', '#002D62');
-addBrand('HSBC', '#DB0011', '#fff');
-addBrand('Lloyds', '#006A4D', '#fff');
-addBrand('NatWest', '#42145F', '#fff');
-addBrand('Santander', '#EC0000', '#fff');
-addBrand('Nationwide', '#00205B', '#fff');
-addBrand('Starling', '#00555A', '#fff');
-addBrand('Chase', '#117ACA', '#fff');
-addBrand('Child Benefit', '#1D70B8', '#fff');
-addBrand('Universal Credit', '#1D70B8', '#fff');
-addBrand('Savings interest', '#005EA5', '#fff');
-addBrand('Cash', '#6B7C8A', '#fff');
-addBrand('Rainy Day', '#2F6F8F', '#fff');
-addBrand('Emergency', '#8F3B2F', '#fff');
-addBrand('Holiday', '#2F8F6A', '#fff');
-addBrand('Rent buffer', '#6B5B2F', '#fff');
-addBrand('Home education', '#4B5B8F', '#fff');
-addBrand("Kids' savings", '#8F2F6A', '#fff');
-
-const BRAND_MATCHERS = [...BRANDS.keys()]
-  .sort((a, b) => b.length - a.length)
-  .map(k => [new RegExp(`(^|[^a-z0-9])${escapeRe(k)}([^a-z0-9]|$)`), BRANDS.get(k)]);
-
-const hueOf = s => {
-  let h = 0;
-  const t = String(s || '');
-  for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 360;
-  return h;
-};
-
-function brandOf(name){
-  const n = norm(name);
-  if (!n) return { bg: '#6B7C8A', fg: '#fff' };
-  const exact = BRANDS.get(n);
-  if (exact) return exact;
-  for (const [re, brand] of BRAND_MATCHERS) if (re.test(n)) return brand;
-  return { bg: `hsl(${hueOf(n)} 38% 32%)`, fg: '#fff' };
+export function colourFor(name = '') {
+  const key = String(name).toLowerCase().split(/\s+/)[0];
+  const hit = Object.keys(BRANDS).find(k => key.includes(k) || k.includes(key));
+  return hit ? BRANDS[hit] : '#6b6b76';
 }
 
-function initials(name){
-  const words = String(name || '').replace(/[^A-Za-z ]/g, ' ').split(/\s+/).filter(Boolean);
-  const a = (words[0] || '?').charAt(0) || '?';
-  const b = words[1] ? words[1].charAt(0) : '';
-  return (a + b).toUpperCase();
+export function domainFor(name = '') {
+  const low = String(name).toLowerCase();
+  const hit = Object.keys(DOMAINS).find(k => {
+    const re = new RegExp('\\b' + k + '\\b');
+    return re.test(low);
+  });
+  return hit ? DOMAINS[hit] : null;
 }
 
-const IMG_STYLE = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;'
-  + 'background:#fff;padding:14%;box-sizing:border-box';
-
-function logoHTML(name, big){
-  const size = big ? 48 : 40;
-  const { bg, fg } = brandOf(name);
-  const mono = esc(initials(name));
-  const fs = Math.round(size * (mono.length > 1 ? 0.32 : 0.42));
-  const wrap = `position:relative;display:inline-flex;align-items:center;justify-content:center;`
-    + `width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex:0 0 auto;background:${bg}`;
-  const tile = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true"`
-    + ` focusable="false" style="display:block"><rect width="${size}" height="${size}" fill="${bg}"/>`
-    + `<text x="50%" y="50%" dy=".36em" text-anchor="middle" fill="${fg}"`
-    + ` font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-weight="700"`
-    + ` font-size="${fs}" letter-spacing=".4">${mono}</text></svg>`;
-
+export function logoSources(name = '') {
   const d = domainFor(name);
-  if (!d) return `<span class="lg" style="${wrap}">${tile}</span>`;
-  return `<span class="lg" style="${wrap}">${tile}`
-    + `<img src="${ICON}${d}" alt="" decoding="async" referrerpolicy="no-referrer"`
-    + ` style="${IMG_STYLE}" data-fb="${FAV}${d}?s=128|${GOOG}${d}"></span>`;
+  if (!d) return [];
+  return [
+    'https://logo.clearbit.com/' + d,
+    'https://www.google.com/s2/favicons?sz=128&domain=' + d,
+    'https://icon.horse/icon/' + d,
+    'https://icons.duckduckgo.com/ip3/' + d + '.ico'
+  ];
 }
 
-function stepDown(img){
-  const chain = (img.dataset.fb || '').split('|').filter(Boolean);
-  if (chain.length){
-    img.dataset.fb = chain.slice(1).join('|');
-    img.src = chain[0];
-  } else {
-    img.remove();
+export function tile(name, size = 42) {
+  const wrap = el('span', 'tile');
+  wrap.style.width = size + 'px';
+  wrap.style.height = size + 'px';
+  wrap.style.background = colourFor(name);
+  const ini = el('span', 'tile__ini', initials(name));
+  ini.style.fontSize = Math.round(size / 3.4) + 'px';
+  wrap.appendChild(ini);
+  const srcs = logoSources(name);
+  if (srcs.length) {
+    let i = 0;
+    const img = new Image();
+    img.className = 'tile__img';
+    img.alt = '';
+    img.loading = 'lazy';
+    img.referrerPolicy = 'no-referrer';
+    img.onerror = () => {
+      i++;
+      if (i < srcs.length) img.src = srcs[i];
+      else img.remove();
+    };
+    img.onload = () => { ini.style.display = 'none'; };
+    img.src = srcs[0];
+    wrap.appendChild(img);
   }
+  return wrap;
 }
 
-document.addEventListener('error', e => {
-  const img = e.target;
-  if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
-  stepDown(img);
-}, true);
+export function avatar(size = 36) {
+  const a = el('span', 'avatar');
+  a.style.width = a.style.height = size + 'px';
+  a.textContent = initials(state.user.name);
+  return a;
+}
 
-/* -------------------------------------------------------------------------- */
-
-const registry = new Map();
-const TABS = new Set(['home', 'save', 'grow', 'pay', 'account']);
-const TITLES = {
-  grow:'Grow', save:'Save', pay:'Pay', trends:'Trends', acc:'Current account', pots:'Pots',
-  invest:'Investments', statements:'Statements', accounts:'Your accounts', borrow:'Borrowing',
-  flex:'Monzo Flex', plus:'Monzo Plus', overdraft:'Overdraft', loans:'Loans',
-  connected:'Connected accounts', credit:'Credit insights', challenge:'Saving Challenge',
-  billsback:'Billsback', insurance:'Insurance', personal:'Personal details', security:'Security',
-  appearance:'Appearance', cards:'Cards', plan:'Plans', limits:'Limits', payees:'Payees',
-  search:'Search', notifs:'Notifications', chat:'Support', disputes:'Disputes',
-  joint:'Joint account', potdetail:'Pot', txdetail:'Transaction', request:'Request money',
-  backup:'Backup'
+const ICONS = {
+  back: '<path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  plus: '<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  chev: '<path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  search: '<circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="2" fill="none"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  home: '<path d="M4 11l8-6.5 8 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19z" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linejoin="round"/>',
+  trends: '<path d="M4 18l5-6 4 3 7-9" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 6h-4M20 6v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+  payments: '<path d="M4 8h16M4 8l3-3M20 16H4m16 0l-3 3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+  borrowing: '<rect x="3.5" y="6" width="17" height="12" rx="2.5" stroke="currentColor" stroke-width="1.9" fill="none"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.9"/>',
+  account: '<circle cx="12" cy="8.5" r="3.5" stroke="currentColor" stroke-width="1.9" fill="none"/><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5" stroke="currentColor" stroke-width="1.9" fill="none" stroke-linecap="round"/>'
 };
 
-let cleanup = null;
-let current = null;
-let currentParams = {};
-let mountRoot = null;
-let stack = [];
-let sheetOpener = null;
-
-export function initRouter(root){ mountRoot = root; }
-export function register(name, mount){ registry.set(name, mount); }
-export function currentScreen(){ return current; }
-
-const sheetEl = () => document.getElementById('sheet');
-
-const FOCUSABLE = 'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[href],[tabindex]:not([tabindex="-1"])';
-
-export function sheet(html){
-  const s = sheetEl();
-  if (!s) return;
-  const panel = s.querySelector('.panel');
-  if (!panel) return;
-  if (!s.classList.contains('on')) sheetOpener = document.activeElement;
-  panel.innerHTML = `<div class="grab"></div>` + html;
-  s.classList.add('on');
-  s.setAttribute('role', 'dialog');
-  s.setAttribute('aria-modal', 'true');
-  if (!panel.hasAttribute('tabindex')) panel.setAttribute('tabindex', '-1');
-  const first = panel.querySelector(FOCUSABLE);
-  (first || panel).focus({ preventScroll: true });
+export function icon(name, size = 22) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = ICONS[name] || '';
+  return svg;
 }
 
-export function closeSheet(){
-  const s = sheetEl();
-  if (!s) return;
-  const wasOpen = s.classList.contains('on');
-  s.classList.remove('on');
-  s.removeAttribute('role');
-  s.removeAttribute('aria-modal');
-  if (wasOpen && sheetOpener && sheetOpener.isConnected){
-    try { sheetOpener.focus({ preventScroll: true }); } catch {}
+export function header({title = '', back = null, actions = []} = {}) {
+  const h = el('header', 'hdr');
+  if (back !== null) {
+    const b = el('button', 'hdr__btn');
+    b.type = 'button';
+    b.setAttribute('aria-label', 'Back');
+    b.appendChild(icon('back', 18));
+    b.onclick = () => { location.hash = back; };
+    h.appendChild(b);
   }
-  sheetOpener = null;
-}
-
-function paintHeader(name){
-  const sub = !TABS.has(name);
-  const hdr = document.getElementById('hdr');
-  if (hdr) hdr.classList.toggle('hdr--sub', sub);
-  const title = document.getElementById('hdrTitle');
-  if (title) title.textContent = sub ? (TITLES[name] || '') : '';
-}
-
-export function go(name, params = {}, back = false){
-  const mount = registry.get(name);
-  if (!mount || !mountRoot) return;
-
-  if (!back && name !== current){
-    if (TABS.has(name)) stack = [];
-    else if (current) stack.push(current);
+  const t = el('div', 'hdr__title');
+  t.textContent = title;
+  h.appendChild(t);
+  for (const a of actions) {
+    const b = el('button', 'hdr__btn');
+    b.type = 'button';
+    b.id = a.id || '';
+    b.setAttribute('aria-label', a.label || '');
+    if (a.icon) b.appendChild(icon(a.icon, 18));
+    if (a.text) b.textContent = a.text;
+    if (a.onClick) b.onclick = a.onClick;
+    h.appendChild(b);
   }
-
-  closeSheet();
-  if (cleanup){ try { cleanup(); } catch {} cleanup = null; }
-
-  const host = document.querySelector(`section[data-screen="${name}"]`);
-  if (!host) return;
-
-  document.querySelectorAll('section[data-screen]').forEach(s => {
-    const on = s === host;
-    s.classList.toggle('on', on);
-    if (on) s.removeAttribute('aria-hidden');
-    else s.setAttribute('aria-hidden', 'true');
-  });
-  document.querySelectorAll('.tabbar button')
-    .forEach(b => b.classList.toggle('on', b.dataset.go === name));
-
-  paintHeader(name);
-
-  const view = document.createElement('div');
-  view.className = 'view';
-  view.tabIndex = -1;
-  host.replaceChildren(view);
-
-  current = name;
-  currentParams = params;
-  cleanup = mount(view, params) || null;
-  view.focus({ preventScroll: true });
-  window.scrollTo(0, 0);
+  return h;
 }
 
-export function reload(){
-  if (!current) return go('home');
-  go(current, currentParams, true);
+export function screen(id, {title = '', back = null, actions = [], body = null, flush = false} = {}) {
+  const s = el('section', 'screen');
+  s.id = 'screen-' + id;
+  if (title || back !== null || actions.length) s.appendChild(header({title, back, actions}));
+  const b = el('div', 'screen__body' + (flush ? ' screen__body--flush' : ''));
+  if (typeof body === 'string') b.innerHTML = body;
+  else if (body) b.appendChild(body);
+  s.appendChild(b);
+  return s;
 }
 
-export function goBack(){
-  const prev = stack.pop();
-  go(prev || 'home', {}, true);
+export function row({title, sub = '', value = '', chev = true, tile: t = null, onClick = null, cls = ''}) {
+  const r = el(onClick ? 'button' : 'div', 'row ' + cls);
+  if (onClick) r.type = 'button';
+  if (t) r.appendChild(t);
+  const m = el('div', 'row__main');
+  m.appendChild(el('div', 'row__t', title));
+  if (sub) m.appendChild(el('div', 'row__s', sub));
+  r.appendChild(m);
+  if (value !== '') r.appendChild(el('div', 'row__v', value));
+  if (chev) r.appendChild(icon('chev', 16)).classList.add('row__chev');
+  if (onClick) r.onclick = onClick;
+  return r;
 }
 
-let toastTimer = null;
-export function toast(msg){
-  const t = document.getElementById('toast');
-  if (!t) return;
-  if (!t.hasAttribute('role')){
-    t.setAttribute('role', 'status');
-    t.setAttribute('aria-live', 'polite');
-    t.setAttribute('aria-atomic', 'true');
+export function empty(title, sub = '', action = null) {
+  const e = el('div', 'empty');
+  e.appendChild(el('div', 'empty__t', title));
+  if (sub) e.appendChild(el('div', '', sub));
+  if (action) {
+    const b = el('button', 'btn btn--primary btn--sm');
+    b.textContent = action.label;
+    b.style.marginTop = '16px';
+    b.onclick = action.onClick;
+    e.appendChild(b);
   }
-  t.textContent = msg;
-  t.classList.add('on');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('on'), 2200);
+  return e;
 }
 
-export function logo(name, big){
-  return logoHTML(name, big);
+export function ring(pct, size = 78, stroke = 8) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'ring');
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  bg.setAttribute('class', 'ring__bg');
+  bg.setAttribute('cx', size / 2); bg.setAttribute('cy', size / 2);
+  bg.setAttribute('r', r); bg.setAttribute('fill', 'none'); bg.setAttribute('stroke-width', stroke);
+  const fg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  fg.setAttribute('class', 'ring__fg');
+  fg.setAttribute('cx', size / 2); fg.setAttribute('cy', size / 2);
+  fg.setAttribute('r', r); fg.setAttribute('fill', 'none'); fg.setAttribute('stroke-width', stroke);
+  fg.setAttribute('stroke-dasharray', c);
+  fg.setAttribute('stroke-dashoffset', c * (1 - Math.min(1, Math.max(0, pct))));
+  svg.appendChild(bg); svg.appendChild(fg);
+  return svg;
 }
 
-export function lineChart(host, series, opts = {}){
-  if (!host || !series.length) return;
-  const W = 640, H = opts.h || 160, padB = 22, padT = 10;
-  const values = series.map(p => p.v);
-  let min = Math.min(...values), max = Math.max(...values);
-  if (max - min < 20){ const mid = (max + min) / 2; min = mid - 40; max = mid + 40; }
-  const span = max - min || 1;
-  const x = i => (i / (series.length - 1 || 1)) * (W - 8) + 4;
-  const y = v => padT + (1 - (v - min) / span) * (H - padB - padT);
-  const pts = series.map((p, i) => [x(i), y(p.v)]);
-  const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
-  const area = `${line} L ${pts[pts.length - 1][0].toFixed(1)} ${H - padB} L ${pts[0][0].toFixed(1)} ${H - padB} Z`;
-  const ticks = [0, 1, 2, 3].map(k => {
-    const v = min + span * (k / 3);
-    return `<line class="grid" x1="0" x2="${W}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/>
-      <text class="axis" x="2" y="${(y(v) - 4).toFixed(1)}">${fmt(v).replace('.00', '')}</text>`;
-  }).join('');
-  host.innerHTML = `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Balance over time">
-    <defs><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#FF4F40" stop-opacity=".26"/>
-      <stop offset="100%" stop-color="#FF4F40" stop-opacity="0"/>
-    </linearGradient></defs>${ticks}<path class="sparkfill" d="${area}"/><path class="spark" d="${line}"/></svg>`;
+export function cardArt(card, onClick = null) {
+  const a = el(onClick ? 'button' : 'div', 'cardart');
+  if (onClick) { a.type = 'button'; a.onclick = onClick; }
+  const top = el('div', 'cardart__top');
+  top.appendChild(el('div', 'cardart__chip'));
+  top.appendChild(el('div', 'cardart__brand', 'monzo'));
+  a.appendChild(top);
+  a.appendChild(el('div', 'cardart__num', '•••• •••• •••• ' + (card?.last4 || '4821')));
+  const bottom = el('div', 'cardart__row');
+  bottom.appendChild(el('span', '', (state.user.name || '').toUpperCase()));
+  const dots = el('div', 'cardart__dots');
+  dots.appendChild(el('i')); dots.appendChild(el('i'));
+  bottom.appendChild(dots);
+  a.appendChild(bottom);
+  return a;
 }
 
-const DONUT_COLOURS = ['#FF4F40','#091723','#f5a623','#2f9e6b','#7b5cff','#00a3b4','#d9342b','#8a99a5'];
-export function donut(host, parts){
-  if (!host) return;
-  const total = parts.reduce((a, p) => a + p.v, 0) || 1;
-  const R = 54, C = 2 * Math.PI * R;
-  let acc = 0;
-  const segs = parts.map((p, i) => {
-    const len = (p.v / total) * C;
-    const seg = `<circle cx="70" cy="70" r="${R}" fill="none" stroke="${DONUT_COLOURS[i % 8]}"
-      stroke-width="20" stroke-dasharray="${len.toFixed(1)} ${(C - len).toFixed(1)}"
-      stroke-dashoffset="${(-acc).toFixed(1)}" transform="rotate(-90 70 70)"/>`;
-    acc += len;
-    return seg;
-  }).join('');
-  host.innerHTML = `<div class="donutwrap">
-    <svg viewBox="0 0 140 140" class="donutsvg" role="img" aria-label="Spending by category">${segs}</svg>
-    <div class="donutlegend">${parts.map((p, i) =>
-      `<div class="donutrow"><span><i style="background:${DONUT_COLOURS[i % 8]}"></i>${esc(p.k)}</span>
-        <b class="rev">${fmt(p.v)}</b></div>`).join('')}</div></div>`;
+export function pill(text, kind = '') {
+  return el('span', 'pill ' + (kind ? 'pill--' + kind : ''), text);
 }
 
-export function heatmap(host, counts, days = 56){
-  if (!host) return;
-  let html = '';
-  const now = new Date();
-  for (let i = days - 1; i >= 0; i--){
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const v = counts[key] || 0;
-    const a = v === 0 ? 0 : Math.min(1, v / 90);
-    html += `<i style="background:${v ? `rgba(255,79,64,${(0.15 + a * 0.85).toFixed(2)})` : ''}"></i>`;
+export function toast(msg, action = null, ms = 3200) {
+  const wrap = document.getElementById('toasts');
+  if (!wrap) return;
+  const t = el('div', 'toast');
+  t.appendChild(el('span', '', msg));
+  if (action) {
+    const b = el('button', 'toast__act');
+    b.textContent = action.label;
+    b.onclick = () => { action.onClick(); t.remove(); };
+    t.appendChild(b);
   }
-  host.innerHTML = html;
+  wrap.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 220); }, ms);
 }
 
-export function meter(value, total, tone){
-  const width = pct(value, total);
-  const colour = tone || (width > 95 ? 'var(--bad)' : width > 75 ? 'var(--warn)' : 'var(--ok)');
-  return `<div class="meter" role="progressbar" aria-valuenow="${Math.round(width)}"
-    aria-valuemin="0" aria-valuemax="100"><i style="width:${width}%;background:${colour}"></i></div>`;
-}
+/* ---------- sheets ---------- */
 
-export function chipRow(items, active, attr){
-  const activeKey = active == null ? null : String(active);
-  return `<div class="pill-row">${items.map(item => {
-    const value = String(typeof item === 'string' ? item : item.value);
-    const label = typeof item === 'string' ? item : item.label;
-    const on = value === activeKey;
-    return `<button class="chip ${on ? 'on' : ''}" data-${attr}="${esc(value)}"
-      aria-pressed="${on}">${esc(label)}</button>`;
-  }).join('')}</div>`;
-}
+let openSheets = 0;
+let lastFocus = null;
 
-export function kv(k, v){
-  return `<div class="kv"><span class="k">${k}</span><span class="v">${v}</span></div>`;
-}
-export function badge(text, tone){
-  return `<span class="badge ${tone || ''}">${esc(text)}</span>`;
-}
-export function empty(msg){
-  return `<div class="empty">${esc(msg)}</div>`;
-}
+export function sheet({title, body, foot = null, onClose = null}) {
+  const host = document.getElementById('sheets');
+  const wrap = el('div', 'sheet');
+  wrap.setAttribute('role', 'dialog');
+  wrap.setAttribute('aria-modal', 'true');
+  wrap.setAttribute('aria-label', title || 'Sheet');
+  const scrim = el('div', 'sheet__scrim');
+  const panel = el('div', 'sheet__panel');
+  panel.appendChild(el('div', 'sheet__grab'));
 
-export function txRow(t){
-  const signed = t.amt > 0 ? '+' : '';
-  return `<button class="tx" data-tx="${t.id}">
-    ${logo(t.name)}
-    <span class="mid"><span class="nm">${esc(t.name)}${t.receipt ? '<span class="txattach">📎</span>' : ''}</span>
-      <span class="mt">${esc(t.cat)} · ${esc(t.time)}</span></span>
-    <span class="amt ${t.amt > 0 ? 'in' : ''} rev">${signed}${fmt(t.amt)}</span>
-  </button>`;
-}
+  const close = () => {
+    wrap.remove();
+    openSheets--;
+    document.removeEventListener('keydown', keydown);
+    if (!openSheets && lastFocus && lastFocus.focus) lastFocus.focus();
+    if (onClose) onClose();
+  };
 
-export function potRow(p, rate){
-  const progress = pct(p.bal, p.goal);
-  const rateNote = p.type === 'savings' && rate ? `${rate}% AER · ` : '';
-  return `<button class="pot ${p.locked ? 'pot--locked' : ''}" data-pot="${p.id}">
-    ${logo(p.name)}
-    <span class="mid"><span class="nm">${esc(p.name)}</span>
-      <span class="sub">${rateNote}${Math.round(progress)}% of ${fmt(p.goal)}</span>
-      <span class="bar"><i style="width:${progress}%"></i></span></span>
-    <span class="amt rev">${fmt(p.bal)}</span>
-  </button>`;
-}
-
-export function accCard({ cls = '', label, meta, balance, tag, go: target }){
-  return `<button class="accard ${cls}" ${target ? `data-go="${target}"` : ''}>
-    <div class="accrow">
-      <div><div class="accname">${label}</div><div class="accmeta">${meta}</div></div>
-      ${tag || ''}
-    </div>
-    ${balance != null ? `<div class="balance rev">${balance}</div>` : ''}
-  </button>`;
-}
-
-export function spotCard({ label, value, note, tone, go: target }){
-  return `<button class="spotcard ${tone || ''}" ${target ? `data-go="${target}"` : ''}>
-    <div class="st">${label}</div><div class="sv rev">${value}</div><div class="sd">${note}</div>
-  </button>`;
-}
-
-export function sectionHead(title, actionLabel, actionAttrs = ''){
-  return `<div class="h-sec"><h2>${esc(title)}</h2>
-    ${actionLabel ? `<button ${actionAttrs}>${esc(actionLabel)}</button>` : ''}</div>`;
-}
-
-export function bindGlobalChrome(){
-  document.addEventListener('click', e => {
-    const nav = e.target.closest('[data-go]');
-    if (nav){ go(nav.dataset.go); return; }
-    if (e.target.matches('[data-close]') || e.target.id === 'sheet' ||
-        e.target.classList.contains('scrim')){
-      closeSheet();
+  const keydown = e => {
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    if (e.key === 'Tab') {
+      const f = panel.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])');
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
-  });
+  };
 
-  document.addEventListener('keydown', e => {
-    const s = sheetEl();
-    if (!s || !s.classList.contains('on')) return;
-    if (e.key === 'Escape'){ e.preventDefault(); closeSheet(); return; }
-    if (e.key !== 'Tab') return;
-    const panel = s.querySelector('.panel');
-    if (!panel) return;
-    const items = [...panel.querySelectorAll(FOCUSABLE)].filter(el => el.offsetParent !== null);
-    if (!items.length) return;
-    const first = items[0], last = items[items.length - 1];
-    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
-  });
+  scrim.onclick = close;
+  const hdr = el('div', 'sheet__hdr');
+  hdr.appendChild(el('div', 'sheet__title', title || ''));
+  const x = el('button', 'sheet__x');
+  x.type = 'button';
+  x.setAttribute('aria-label', 'Close');
+  x.appendChild(icon('close', 16));
+  x.onclick = close;
+  hdr.appendChild(x);
+  panel.appendChild(hdr);
 
-  window.addEventListener('scroll', () => {
-    const h = document.getElementById('hdr');
-    if (h) h.classList.toggle('hdr--scrolled', window.scrollY > 4);
-  }, { passive: true });
+  const b = el('div', 'sheet__body');
+  if (typeof body === 'string') b.innerHTML = body;
+  else if (body) b.appendChild(body);
+  panel.appendChild(b);
+
+  if (foot) {
+    const f = el('div', 'sheet__foot');
+    if (typeof foot === 'string') f.innerHTML = foot;
+    else f.appendChild(foot);
+    panel.appendChild(f);
+  }
+
+  wrap.appendChild(scrim);
+  wrap.appendChild(panel);
+  host.appendChild(wrap);
+  openSheets++;
+  lastFocus = document.activeElement;
+  document.addEventListener('keydown', keydown);
+  setTimeout(() => {
+    const first = panel.querySelector('input,select,textarea,button:not(.sheet__x)');
+    if (first) first.focus();
+  }, 60);
+  return {close, panel};
+}
+
+export function confirmSheet({title, text, confirm = 'Confirm', danger = false, onConfirm}) {
+  const body = el('div', '', `<p class="hint" style="margin:0">${text}</p>`);
+  const btn = el('button', 'btn btn--block ' + (danger ? 'btn--danger' : 'btn--primary'));
+  btn.textContent = confirm;
+  const s = sheet({title, body, foot: btn});
+  btn.onclick = () => { s.close(); onConfirm(); };
+}
+
+export function field({label, input, hint = ''}) {
+  const f = el('label', 'field');
+  f.appendChild(el('span', 'field__l', label));
+  f.appendChild(input);
+  if (hint) f.appendChild(el('span', 'hint', hint));
+  return f;
+}
+
+export function input({id = '', type = 'text', value = '', placeholder = '', step = null, min = null, max = null}) {
+  const i = el('input', 'input');
+  i.type = type;
+  i.id = id;
+  i.value = value;
+  if (placeholder) i.placeholder = placeholder;
+  if (step) i.step = step;
+  if (min !== null) i.min = min;
+  if (max !== null) i.max = max;
+  return i;
+}
+
+export function seg(options, current, onPick) {
+  const s = el('div', 'seg');
+  s.setAttribute('role', 'group');
+  for (const o of options) {
+    const b = el('button', 'seg__b');
+    b.type = 'button';
+    b.textContent = o.label;
+    b.setAttribute('aria-pressed', String(o.value === current));
+    b.onclick = () => {
+      s.querySelectorAll('.seg__b').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      onPick(o.value);
+    };
+    s.appendChild(b);
+  }
+  return s;
+}
+
+export function switchEl(checked, onToggle) {
+  const b = el('button', 'switch');
+  b.type = 'button';
+  b.setAttribute('role', 'switch');
+  b.setAttribute('aria-checked', String(!!checked));
+  b.onclick = () => {
+    const next = b.getAttribute('aria-checked') !== 'true';
+    b.setAttribute('aria-checked', String(next));
+    onToggle(next);
+  };
+  return b;
+}
+
+export function section(title) {
+  return el('div', 'sect', title);
+}
+
+export function list(children, boxed = true) {
+  const l = el('div', 'list' + (boxed ? ' list--boxed' : ''));
+  for (const c of children) l.appendChild(c);
+  return l;
+}
+
+export function money(n, dp = 2) {
+  return el('span', 'money', fmt(n, {dp}));
 }
