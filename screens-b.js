@@ -2,17 +2,15 @@ import {
   state, fmt, fmtShort, round2, addTx, save, uid, investBuy, investSell,
   investDeposit, portfolioValue, platformFeeMonthly, planInfo, PLANS,
   pensionProjection, reset, dateStr, timeStr
-} from './core.js';
-import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js';
+} from './core.js?v=33';
+import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js?v=33';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, cardArt, avatar
-} from './ui.js';
+} from './ui.js?v=33';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
-
-/* ---------- card ---------- */
 
 export function cardSheet() {
   const body = el('div');
@@ -32,8 +30,6 @@ export function cardSheet() {
   };
   sheet({title: 'Your card', body, foot: freeze});
 }
-
-/* ---------- add transaction ---------- */
 
 export function addTxSheet() {
   const body = el('div');
@@ -68,8 +64,6 @@ export function addTxSheet() {
   };
 }
 
-/* ---------- transaction detail ---------- */
-
 export function txScreen(id) {
   const t = state.tx.find(x => x.id === id);
   if (!t) return screen('tx', {title: 'Transaction', back: '#/home', body: empty('Not found')});
@@ -100,6 +94,7 @@ export function categorySheet(id) {
   if (!t) return;
   const body = el('div');
   const l = el('div', 'list list--boxed');
+  body.appendChild(l);
   const s = sheet({title: 'Category', body});
   for (const c of CATEGORIES) {
     l.appendChild(row({
@@ -111,7 +106,6 @@ export function categorySheet(id) {
       }
     }));
   }
-  body.appendChild(l);
 }
 
 export function noteSheet(id) {
@@ -160,8 +154,6 @@ export function splitSheet(id) {
   const s = sheet({title: 'Split bill', body, foot: go});
   go.onclick = () => { s.close(); toast('Requests sent'); };
 }
-
-/* ---------- pots ---------- */
 
 export function newPotSheet() {
   const body = el('div');
@@ -238,8 +230,6 @@ export function editPotSheet(id) {
     save(); s.close(); toast('Pot updated'); rerender();
   };
 }
-
-/* ---------- investments ---------- */
 
 export function investScreen() {
   const value = portfolioValue();
@@ -340,8 +330,6 @@ export function fundScreen(id) {
   return screen('fund-' + id, {title: f.ticker, back: '#/invest', body});
 }
 
-/* ---------- pension & ISA ---------- */
-
 export function pensionScreen() {
   const p = pensionProjection();
   const body = el('div');
@@ -401,8 +389,6 @@ export function isaScreen() {
   return screen('isa', {title: 'Stocks & Shares ISA', back: '#/home', body});
 }
 
-/* ---------- plus ---------- */
-
 export function plusScreen() {
   const body = el('div');
   const cur = planInfo();
@@ -433,8 +419,6 @@ export function plusScreen() {
 
   return screen('plus', {title: 'Monzo Plus', back: '#/account', body});
 }
-
-/* ---------- settings ---------- */
 
 export function profileScreen() {
   const body = el('div');
@@ -535,7 +519,7 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v22', chev: false}),
+    row({title: 'Build', value: 'v33', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   return screen('about', {title: 'About', back: '#/account', body});
@@ -563,8 +547,6 @@ export function cardsScreen() {
   body.appendChild(add);
   return screen('cards', {title: 'Cards', back: '#/account', body});
 }
-
-/* ---------- layout editor ---------- */
 
 const LAYOUT_LABELS = {
   card: 'Card', balance: 'Balance', ring: 'Left to spend',
