@@ -7,11 +7,14 @@
 <meta name="theme-color" content="#ff4f40">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https://logo.clearbit.com https://icon.horse https://favicone.com https://www.google.com https://*.gstatic.com https://icons.duckduckgo.com; connect-src 'self' https://logo.clearbit.com https://icon.horse https://favicone.com https://www.google.com https://*.gstatic.com https://icons.duckduckgo.com; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; manifest-src 'self'; worker-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob: https://logo.clearbit.com https://icon.horse https://favicone.com https://www.google.com https://*.gstatic.com https://icons.duckduckgo.com; connect-src 'self' https://logo.clearbit.com https://icon.horse https://favicone.com https://www.google.com https://*.gstatic.com https://icons.duckduckgo.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self'; font-src 'self' data: https://fonts.gstatic.com; manifest-src 'self'; worker-src 'self'">
 <title>Monzo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
-<link rel="stylesheet" href="styles.css?v=36">
+<link rel="stylesheet" href="styles.css?v=37">
 </head>
 <body>
 <div id="app">
@@ -20,6 +23,6 @@
   <div id="sheets" class="sheets"></div>
   <div id="toasts" class="toasts" aria-live="assertive"></div>
 </div>
-<script type="module" src="boot.js?v=36"></script>
+<script type="module" src="boot.js?v=37"></script>
 </body>
 </html>
