@@ -178,7 +178,9 @@ export function mountGrow(root){
         <div class="accmeta">${s.pots.filter(p => p.type === 'savings').length} pots · ${plan().ia}% AER</div></div>
         <span class="badge coral">${fmt(savingsTotal())}</span></div></button>
       ${accCard({ label: 'Investments', meta: 'Stocks &amp; shares ISA', balance: fmt(isaBal()), tag: badge('ISA', 'coral'), go: 'invest' })}
-      <div class="card"><h2>Pension</h2><div class="sub">SIPP · ${fmt(s.pensionMonthly)}/month</div>
+      <div class="card"><div style="display:flex;gap:10px;align-items:center">
+          <h2 style="margin:0">Pension</h2>${logo('Vanguard')}</div>
+        <div class="sub">SIPP · ${fmt(s.pensionMonthly)}/month</div>
         <div class="balance rev" style="font-size:24px;margin:4px 0">${fmt(s.pension)}</div>
         <div class="field"><label>Monthly contribution</label><input id="pm" type="number" min="0" value="${s.pensionMonthly}"></div>
         <button class="btn" data-pen>Update contribution</button></div>
@@ -216,7 +218,7 @@ export function mountPay(root){
           <span class="nm">Standing orders</span><span class="sub">${s.sos.filter(x => x.active).length} active</span></span><span class="amt">›</span></button>
         <button class="pot" data-tabs><span class="lg"><span class="lg__i">TAB</span></span><span class="mid">
           <span class="nm">Shared tabs</span><span class="sub">${s.tabs.length} open</span></span><span class="amt">›</span></button>
-        <button class="pot" data-go="joint"><span class="lg"><span class="lg__i">JNT</span></span><span class="mid">
+        <button class="pot" data-go="joint">${logo('Monzo')}<span class="mid">
           <span class="nm">Joint account</span><span class="sub">With ${esc(s.partner)}</span></span><span class="amt">›</span></button>
         <button class="pot" data-sorter><span class="lg"><span class="lg__i">SRT</span></span><span class="mid">
           <span class="nm">Salary sorter</span><span class="sub">${s.sorter.on ? fmt(sorterTotal()) + ' split' : 'Split your pay'}</span></span><span class="amt">›</span></button>
@@ -224,12 +226,12 @@ export function mountPay(root){
           <span class="nm">Get paid early</span><span class="sub">${gpeClaimed() ? 'Claimed this month' : '4pm the day before'}</span></span><span class="amt">›</span></button>
       </div>
       <div class="card"><h2>Standing orders</h2>
-        ${s.sos.length ? s.sos.map(x => `<div class="pot"><span class="lg"><span class="lg__i">${esc(x.name[0])}</span></span>
+        ${s.sos.length ? s.sos.map(x => `<div class="pot">${logo(x.name)}
           <span class="mid"><span class="nm">${esc(x.name)}</span><span class="sub">Day ${x.day} · ${fmt(x.amt)}</span></span>
           <button class="sw ${x.active ? 'on' : ''}" data-toggle-so="${x.id}" aria-label="Toggle ${esc(x.name)}"></button></div>`).join('')
           : empty('None set up')}</div>
       <div class="card"><h2>Shared tabs</h2>
-        ${s.tabs.length ? s.tabs.map(t => `<div class="pot"><span class="lg"><span class="lg__i">${esc(t.name[0])}</span></span>
+        ${s.tabs.length ? s.tabs.map(t => `<div class="pot">${logo(t.name)}
           <span class="mid"><span class="nm">${esc(t.name)}</span><span class="sub">${t.people} people · your share ${fmt(t.mine)}</span></span>
           <button class="btn ghost sm" data-settle="${t.id}">Settle</button></div>`).join('')
           : empty('No open tabs')}</div>`;
@@ -552,12 +554,13 @@ export function mountInvest(root){
       <div class="card"><h2>Portfolio</h2>
         ${[['Vanguard FTSE Global All Cap', .46], ['Vanguard US Equity Index', .22],
           ['iShares Core MSCI World', .16], ['Vanguard Emerging Markets', .09], ['Cash', .07]]
-          .map(([n, w]) => `<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px">
-            <span>${n}</span><b class="rev">${fmt(isaBal() * w)}</b></div>${meter(w * 100, 100, 'var(--ink)')}</div>`).join('')}</div>
+          .map(([n, w]) => `<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;
+            gap:10px;align-items:center;font-size:13px">${logo(n)}<span style="flex:1">${n}</span>
+            <b class="rev">${fmt(isaBal() * w)}</b></div>${meter(w * 100, 100, 'var(--ink)')}</div>`).join('')}</div>
       <div class="card"><h2>Value over time</h2><div id="isaChart"></div></div>
       <div class="h-sec"><h2>Ledger</h2><button data-go="statements">Statements</button></div>
       <div class="card" style="padding:4px 14px"><ul class="txlist">
-        ${s.isa.slice(0, 40).map(r => `<li class="tx"><span class="lg"><span class="lg__i">${r.type[0]}</span></span>
+        ${s.isa.slice(0, 40).map(r => `<li class="tx">${logo('Vanguard')}
           <span class="mid"><span class="nm">${esc(r.note)}</span><span class="mt">${r.date} · ${r.type}</span></span>
           <span class="amt rev">${fmt(r.value)}</span></li>`).join('')}</ul></div>`;
     const asc = s.isa.slice().reverse(), step = Math.max(1, Math.floor(asc.length / 140));
