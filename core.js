@@ -1,4 +1,4 @@
-import { FUNDS, CATEGORY_IDS } from './data.js';
+import { FUNDS, CATEGORY_IDS } from './data.js?v=33';
 
 export const VERSION = 22;
 export const KEY = 'monzo_v22';
@@ -54,9 +54,9 @@ export function dayLabel(ts) {
 
 function defaultState() {
   const base = now();
-  const mk = (name, amount, cat, daysAgo, extra = {}) => ({
+  const mk = (name, amount, cat, daysAgo) => ({
     id: uid('tx'), name, amount, category: cat, ts: base - daysAgo * 86400000,
-    type: amount > 0 ? 'in' : 'out', ...extra
+    type: amount > 0 ? 'in' : 'out'
   });
   return {
     v: VERSION,
@@ -228,8 +228,6 @@ export function reset() {
   save();
 }
 
-/* ---------- money movement ---------- */
-
 export function addTx({name, amount, category = 'general', ts = now(), note = '', receipt = null, potId = null}) {
   const tx = {
     id: uid('tx'), name, amount: round2(amount), category,
@@ -276,8 +274,6 @@ export function totalPots() {
   return round2(state.pots.reduce((s, p) => s + (p.saved || 0), 0));
 }
 
-/* ---------- platform fee ---------- */
-
 export function planInfo(id = state.plan) {
   return PLANS[id] || PLANS.free;
 }
@@ -293,8 +289,6 @@ export function platformFeeAnnual() {
 export function platformFeeMonthly() {
   return round2(platformFeeAnnual() / 12);
 }
-
-/* ---------- flex ---------- */
 
 export const FLEX_MIN = 100;
 export const FLEX_MONTHS = [3, 6, 12];
@@ -323,8 +317,6 @@ export function flexPurchase(amount, months, name = 'Flex purchase') {
   save();
   return {ok:true, per, total, apr};
 }
-
-/* ---------- investments ---------- */
 
 export function investBuy(fundId, amount) {
   const f = FUNDS.find(x => x.id === fundId);
@@ -367,8 +359,6 @@ export function pensionProjection() {
   return {pot: round2(bal), years, annual};
 }
 
-/* ---------- scheduler ---------- */
-
 export function runScheduled() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -401,8 +391,6 @@ export function runScheduled() {
   }
   return count;
 }
-
-/* ---------- derived ---------- */
 
 export function upcoming() {
   const cutoff = now() + 7 * 86400000;
