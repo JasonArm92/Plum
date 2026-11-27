@@ -1,4 +1,4 @@
-const BUILD = 36;
+const BUILD = 37;
 const shown = { v: false };
 
 function panel(msg) {
