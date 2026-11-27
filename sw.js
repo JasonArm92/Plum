@@ -1,8 +1,8 @@
-/* sw.js — v28
+/* sw.js — v29
    Navigation and same-origin assets are network-first, falling back to cache for
-   offline. Logo marks are inline SVG now, so only fonts remain remote. */
+   offline. Logo icons pass straight through to the network untouched. */
 
-const VERSION = 'v28';
+const VERSION = 'v29';
 const CACHE = 'monzo-' + VERSION;
 
 const PRECACHE = [
@@ -48,6 +48,17 @@ self.addEventListener('activate', event => {
 self.addEventListener('message', event => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
+
+const isIcon = url => {
+  try {
+    const host = new URL(url).hostname;
+    return host === 'icon.horse'
+        || host === 'favicone.com'
+        || host === 'icons.duckduckgo.com'
+        || ((host === 'www.google.com' || host === 'google.com')
+            && new URL(url).pathname.startsWith('/s2/favicons'));
+  } catch { return false; }
+};
 
 const isFont = url => {
   try {
@@ -100,5 +111,6 @@ self.addEventListener('fetch', event => {
     event.respondWith(networkFirst(request));
     return;
   }
+  if (isIcon(request.url)) return;
   if (isFont(request.url)) event.respondWith(staleWhileRevalidate(request));
 });
