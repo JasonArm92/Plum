@@ -113,20 +113,67 @@ export const CATEGORY_IDS = CATEGORIES.map(c => c.id);
 export const MERCHANTS = Object.keys(DOMAINS);
 
 export const FUNDS = [
-  {id:'swda', name:'iShares Core MSCI World', ticker:'SWDA', price:82.14, cls:'equity', region:'Global', risk:6},
-  {id:'cspx', name:'iShares Core S&P 500', ticker:'CSPX', price:498.60, cls:'equity', region:'US', risk:6},
-  {id:'cukx', name:'iShares Core FTSE 100', ticker:'CUKX', price:7.92, cls:'equity', region:'UK', risk:5},
-  {id:'aggg', name:'iShares Core Global Aggregate Bond', ticker:'AGGG', price:4.31, cls:'bond', region:'Global', risk:3},
-  {id:'cash', name:'Cash', ticker:'GBP', price:1, cls:'cash', region:'UK', risk:1}
+  {id:'f01', name:'iShares Core MSCI World', ticker:'SWDA', price:82.14, cls:'equity', region:'Global', risk:6},
+  {id:'f02', name:'iShares Core S&P 500', ticker:'CSPX', price:498.60, cls:'equity', region:'US', risk:6},
+  {id:'f03', name:'iShares Core FTSE 100', ticker:'CUKX', price:7.92, cls:'equity', region:'UK', risk:5},
+  {id:'f04', name:'iShares Core Global Aggregate Bond', ticker:'AGGG', price:4.31, cls:'bond', region:'Global', risk:3},
+  {id:'f05', name:'iShares Core MSCI EM IMI', ticker:'EIMI', price:3.42, cls:'equity', region:'Emerging', risk:7},
+  {id:'f06', name:'iShares Core MSCI Europe', ticker:'CEU', price:62.10, cls:'equity', region:'Europe', risk:5},
+  {id:'f07', name:'iShares Core MSCI Japan IMI', ticker:'SJPA', price:41.85, cls:'equity', region:'Japan', risk:5},
+  {id:'f08', name:'iShares Core MSCI Pacific ex-Japan', ticker:'IPXJ', price:55.20, cls:'equity', region:'Pacific', risk:5},
+  {id:'f09', name:'iShares Core S&P Small-Cap', ticker:'IJR', price:92.40, cls:'equity', region:'US', risk:6},
+  {id:'f10', name:'iShares MSCI USA Quality Factor', ticker:'IWQU', price:33.15, cls:'equity', region:'US', risk:6},
+  {id:'f11', name:'iShares MSCI World Value Factor', ticker:'IWVL', price:28.70, cls:'equity', region:'Global', risk:5},
+  {id:'f12', name:'iShares MSCI World Momentum Factor', ticker:'IWMO', price:61.35, cls:'equity', region:'Global', risk:6},
+  {id:'f13', name:'iShares Automation & Robotics', ticker:'RBOT', price:12.84, cls:'equity', region:'Global', risk:7},
+  {id:'f14', name:'iShares Global Clean Energy', ticker:'INRG', price:6.55, cls:'equity', region:'Global', risk:7},
+  {id:'f15', name:'iShares Healthcare Innovation', ticker:'HEAL', price:7.10, cls:'equity', region:'Global', risk:6},
+  {id:'f16', name:'iShares Digitalisation', ticker:'DGTL', price:9.20, cls:'equity', region:'Global', risk:6},
+  {id:'f17', name:'iShares Ageing Population', ticker:'AGED', price:5.85, cls:'equity', region:'Global', risk:6},
+  {id:'f18', name:'iShares Electric Vehicles', ticker:'ECAR', price:6.40, cls:'equity', region:'Global', risk:7},
+  {id:'f19', name:'iShares Metaverse', ticker:'MTVR', price:4.95, cls:'equity', region:'Global', risk:7},
+  {id:'f20', name:'iShares Cybersecurity', ticker:'IHAK', price:30.10, cls:'equity', region:'Global', risk:7},
+  {id:'f21', name:'iShares UK Dividend', ticker:'IUKD', price:6.20, cls:'equity', region:'UK', risk:5},
+  {id:'f22', name:'iShares UK Property', ticker:'IUKP', price:5.40, cls:'property', region:'UK', risk:5},
+  {id:'f23', name:'iShares Global REIT', ticker:'REET', price:22.30, cls:'property', region:'Global', risk:5},
+  {id:'f24', name:'iShares Global Infrastructure', ticker:'INFR', price:27.80, cls:'equity', region:'Global', risk:4},
+  {id:'f25', name:'iShares Global Water', ticker:'IH2O', price:44.60, cls:'equity', region:'Global', risk:4},
+  {id:'f26', name:'iShares Global Timber & Forestry', ticker:'WOOD', price:25.15, cls:'equity', region:'Global', risk:4},
+  {id:'f27', name:'iShares Global Agriculture', ticker:'ISAG', price:21.05, cls:'equity', region:'Global', risk:5},
+  {id:'f28', name:'iShares Gold Producers', ticker:'SPGP', price:38.90, cls:'equity', region:'Global', risk:6},
+  {id:'f29', name:'iShares Physical Gold', ticker:'SGLN', price:42.75, cls:'commodity', region:'Global', risk:4},
+  {id:'f30', name:'iShares Physical Silver', ticker:'SSLN', price:18.60, cls:'commodity', region:'Global', risk:5},
+  {id:'f31', name:'iShares Global Corporate Bond', ticker:'CORP', price:5.12, cls:'bond', region:'Global', risk:3},
+  {id:'f32', name:'iShares $ Treasury 7-10yr', ticker:'IDTM', price:12.35, cls:'bond', region:'US', risk:2},
+  {id:'f33', name:'iShares £ Corporate Bond', ticker:'SLXX', price:13.90, cls:'bond', region:'UK', risk:2},
+  {id:'f34', name:'iShares Global High Yield', ticker:'HYLD', price:8.25, cls:'bond', region:'Global', risk:4},
+  {id:'f35', name:'iShares Inflation Linked Gilt', ticker:'IGIL', price:15.40, cls:'bond', region:'UK', risk:2},
+  {id:'f36', name:'iShares Core UK Gilts', ticker:'IGLT', price:11.05, cls:'bond', region:'UK', risk:1},
+  {id:'f37', name:'iShares MSCI ACWI', ticker:'ACWI', price:88.30, cls:'equity', region:'Global', risk:6},
+  {id:'f38', name:'iShares MSCI World Small Cap', ticker:'WSML', price:46.20, cls:'equity', region:'Global', risk:6},
+  {id:'f39', name:'iShares S&P 500 Equal Weight', ticker:'EWSP', price:55.70, cls:'equity', region:'US', risk:6},
+  {id:'f40', name:'iShares Nasdaq 100', ticker:'CNX1', price:812.40, cls:'equity', region:'US', risk:7},
+  {id:'f41', name:'iShares Core DAX', ticker:'EXS1', price:168.20, cls:'equity', region:'Europe', risk:5},
+  {id:'f42', name:'iShares Core CAC 40', ticker:'CACX', price:78.45, cls:'equity', region:'Europe', risk:5},
+  {id:'f43', name:'iShares MSCI Taiwan', ticker:'TWN', price:33.60, cls:'equity', region:'Emerging', risk:6},
+  {id:'f44', name:'iShares MSCI China', ticker:'ICHN', price:24.10, cls:'equity', region:'Emerging', risk:7},
+  {id:'f45', name:'iShares MSCI India', ticker:'IIND', price:6.90, cls:'equity', region:'Emerging', risk:7},
+  {id:'f46', name:'iShares MSCI Brazil', ticker:'IBZL', price:20.35, cls:'equity', region:'Emerging', risk:7},
+  {id:'f47', name:'iShares MSCI South Africa', ticker:'ISAF', price:28.40, cls:'equity', region:'Emerging', risk:7},
+  {id:'f48', name:'iShares MSCI Mexico', ticker:'MEX', price:31.20, cls:'equity', region:'Emerging', risk:7},
+  {id:'f49', name:'iShares Asia Pacific Dividend', ticker:'IAPD', price:22.85, cls:'equity', region:'Pacific', risk:5},
+  {id:'f50', name:'iShares Global Aggregate Bond Hedged', ticker:'AGBP', price:4.65, cls:'bond', region:'Global', risk:3},
+  {id:'f51', name:'iShares Short Duration Corporate Bond', ticker:'ERNS', price:5.05, cls:'bond', region:'Global', risk:2},
+  {id:'f52', name:'iShares $ Corporate Bond', ticker:'IUCD', price:9.35, cls:'bond', region:'US', risk:3},
+  {id:'f53', name:'iShares € Corporate Bond', ticker:'IEAC', price:6.15, cls:'bond', region:'Europe', risk:3},
+  {id:'f54', name:'iShares Global Government Bond', ticker:'IGLO', price:4.80, cls:'bond', region:'Global', risk:2},
+  {id:'f55', name:'iShares MSCI World Financials', ticker:'WFS', price:12.60, cls:'equity', region:'Global', risk:5},
+  {id:'f56', name:'iShares MSCI World Energy', ticker:'WENG', price:9.80, cls:'equity', region:'Global', risk:6},
+  {id:'f57', name:'iShares MSCI World Health Care', ticker:'WHEA', price:14.25, cls:'equity', region:'Global', risk:4},
+  {id:'f58', name:'iShares MSCI World Information Technology', ticker:'WTEC', price:26.90, cls:'equity', region:'Global', risk:6},
+  {id:'f59', name:'iShares MSCI World Utilities', ticker:'WUTI', price:11.70, cls:'equity', region:'Global', risk:3},
+  {id:'f60', name:'iShares MSCI World Consumer Staples', ticker:'WSTP', price:17.40, cls:'equity', region:'Global', risk:3}
 ];
-
-export const FUND_ALIASES = {
-  swda:'swda', isharescoremsciworld:'swda', msciworld:'swda', world:'swda',
-  cspx:'cspx', isharescoresp500:'cspx', sp500:'cspx',
-  cukx:'cukx', isharescoreftse100:'cukx', ftse100:'cukx',
-  aggg:'aggg', isharescoreglobalaggregatebond:'aggg', bond:'aggg', bonds:'aggg',
-  cash:'cash'
-};
 
 export const PENSION_FUNDS = [
   {id:'pen_world', name:'BlackRock World Equity', alloc:60},
@@ -134,7 +181,7 @@ export const PENSION_FUNDS = [
   {id:'pen_cash', name:'Cash', alloc:15}
 ];
 
-export const POT_EMOJI = ['🏖️','🚗','🎄','🏠','💍','🎓','🎁','🐶','✈️','🎸','📷','🚲','💻','🛠️','🌱','🎂'];
+export const POT_EMOJI = ['🏖️','🚗','🎄','🏠','💍','🎓','🎁','🐶','✈️','🎸','📷','🚲','💻','🛠️','🌱','🎂','🛟','🎅','🏝️','🚐'];
 
 export const POT_COLOURS = ['#ff4f40','#ff8000','#f5a623','#12a150','#1f6feb','#8b5cf6','#d92d20','#0b4ea2','#0891b2','#6b7280'];
 
