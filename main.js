@@ -1,17 +1,17 @@
-import { load, state, runScheduled } from './core.js?v=33';
-import { el, icon, toast } from './ui.js?v=33';
+import { load, state, runScheduled, recoveredFrom } from './core.js?v=34';
+import { el, icon, toast } from './ui.js?v=34';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
   payeeScreen, sendScreen, requestScreen, bankScreen, scheduledScreen,
   borrowingScreen, accountScreen, potsScreen, potScreen
-} from './screens-a.js?v=33';
+} from './screens-a.js?v=34';
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
-  appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet
-} from './screens-b.js?v=33';
+  appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, dataScreen
+} from './screens-b.js?v=34';
 
-const BUILD = 33;
+const BUILD = 34;
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -84,6 +84,7 @@ const SCREENS = {
   appearance: () => appearanceScreen(),
   about: () => aboutScreen(),
   cards: () => cardsScreen(),
+  data: () => dataScreen(),
   payee: a => payeeScreen(a),
   pot: a => potScreen(a),
   tx: a => txScreen(a),
@@ -205,6 +206,13 @@ function boot() {
   if (!sessionStorage.getItem('monzo_auth')) location.hash = '#/login';
 
   render();
+
+  if (recoveredFrom) {
+    toast('Data restored from ' + recoveredFrom, {
+      label: 'Details',
+      onClick: () => { location.hash = '#/data'; }
+    }, 7000);
+  }
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
