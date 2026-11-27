@@ -1,8 +1,8 @@
-import { FUNDS, CATEGORY_IDS } from './data.js?v=35';
+import { FUNDS, CATEGORY_IDS } from './data.js?v=36';
 
-export const VERSION = 24;
-export const KEY = 'monzo_v24';
-export const LEGACY_KEYS = ['monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 25;
+export const KEY = 'monzo_v25';
+export const LEGACY_KEYS = ['monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -53,7 +53,7 @@ export function dayLabel(ts) {
   return d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
 }
 
-/* ---------- seed data ---------- */
+/* ---------- holdings ---------- */
 
 const HOLDING_SEED = [
   ['f01', 18000], ['f02', 21500], ['f03', 16200], ['f04', 24800],
@@ -74,53 +74,156 @@ function seedHoldings() {
   return HOLDING_SEED.map(([f, v]) => ({f, v}));
 }
 
-const HISTORY_SEED = [
-  ['Tesco', -38.20, 'groceries', 3, 'joint'],
-  ['Sainsburys', -51.10, 'groceries', 9, 'joint'],
-  ['Asda', -44.75, 'groceries', 17, 'joint'],
-  ['Tesco', -62.40, 'groceries', 23, 'joint'],
-  ['Greggs', -6.20, 'eating', 4],
-  ['Nandos', -34.60, 'eating', 11, 'joint'],
-  ['Pret', -9.85, 'eating', 18],
-  ['Deliveroo', -28.40, 'eating', 24],
-  ['Northern', -8.40, 'transport', 6],
-  ['Trainline', -42.30, 'transport', 15],
-  ['Uber', -14.60, 'transport', 21],
-  ['Amazon', -89.99, 'shopping', 2],
-  ['ASOS', -64.50, 'shopping', 13],
-  ['Argos', -78.66, 'shopping', 22],
-  ['Octopus Energy', -78.00, 'bills', 5, 'joint'],
-  ['TV Licence', -13.25, 'bills', 12],
-  ['Thames Water', -42.60, 'bills', 19, 'joint'],
-  ['Cineworld', -31.50, 'entertainment', 7, 'joint'],
-  ['Spotify', -11.99, 'entertainment', 14],
-  ['Netflix', -10.99, 'entertainment', 25],
-  ['Boots', -12.45, 'health', 8],
-  ['Specsavers', -26.05, 'health', 20],
-  ['PureGym', -24.99, 'fitness', 4],
-  ['PureGym', -24.99, 'fitness', 16],
-  ['IKEA', -96.00, 'home', 10, 'joint'],
-  ['Dunelm', -45.30, 'home', 26, 'joint'],
-  ['Waterstones', -18.40, 'general', 12],
-  ['Royal Mail', -70.00, 'general', 27]
+/* ---------- investment ledger ---------- */
+
+function makeRng(seed) {
+  let s = seed;
+  return () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    return s / 0x7fffffff;
+  };
+}
+
+function buildLedger() {
+  const rng = makeRng(19921007);
+  const out = [];
+  const end = new Date();
+  const push = (d, type, fund, amount) => {
+    if (d > end) return;
+    out.push({id: uid('led'), ts: d.getTime(), type, fund, amount: round2(amount)});
+  };
+
+  push(new Date(1992, 9, 7), 'gift', 'f01', 500);
+
+  let d = new Date(1993, 0, 5);
+  while (d <= end) {
+    const y = d.getFullYear();
+    const monthly = y >= 2020 ? 750 : y >= 2015 ? 400 : y >= 2010 ? 250 : y >= 2005 ? 150 : y >= 2000 ? 100 : 50;
+    const fund = FUNDS[Math.floor(rng() * 12)].id;
+    push(new Date(d.getTime()), 'buy', fund, monthly);
+    if (d.getMonth() % 3 === 0) {
+      const base = y >= 2020 ? 320 : y >= 2010 ? 120 : 30;
+      push(new Date(d.getFullYear(), d.getMonth(), 15), 'div', fund, base * (0.7 + rng() * 0.6));
+    }
+    d = new Date(d.getFullYear(), d.getMonth() + 1, 5);
+  }
+
+  push(new Date(2010, 9, 7), 'buy', 'f02', 1000);
+  push(new Date(2013, 9, 7), 'buy', 'f01', 5000);
+  push(new Date(2017, 5, 12), 'buy', 'f37', 10000);
+  push(new Date(2019, 6, 18), 'sell', 'f03', -18000);
+  push(new Date(2021, 3, 20), 'buy', 'f25', 25000);
+  push(new Date(2021, 10, 9), 'sell', 'f02', -9500);
+  push(new Date(2023, 8, 2), 'buy', 'f29', 40000);
+
+  out.sort((a, b) => a.ts - b.ts);
+  return out;
+}
+
+/* ---------- transaction history ---------- */
+
+const PREV_MONTH = [
+  ['Salary', 2450.00, 'income', 1, 'personal'],
+  ['Chloe Salary', 1850.00, 'income', 1, 'joint'],
+  ['Council Tax', -142.00, 'bills', 1, 'joint'],
+  ['Octopus Energy', -96.40, 'bills', 3, 'joint'],
+  ['Northumbrian Water', -38.20, 'bills', 4, 'joint'],
+  ['TV Licence', -13.25, 'bills', 5, 'personal'],
+  ['BT Broadband', -32.99, 'bills', 6, 'personal'],
+  ['EE Mobile', -22.00, 'bills', 7, 'personal'],
+  ['Admiral Car Insurance', -48.50, 'bills', 12, 'personal'],
+  ['AA Breakdown', -13.00, 'bills', 14, 'personal'],
+  ['PureGym', -24.99, 'fitness', 8, 'personal'],
+  ['Spotify', -11.99, 'entertainment', 9, 'personal'],
+  ['Netflix', -10.99, 'entertainment', 10, 'personal'],
+  ['Disney+', -7.99, 'entertainment', 11, 'joint'],
+  ['Tesco', -64.20, 'groceries', 2, 'personal'],
+  ['Asda', -51.80, 'groceries', 6, 'personal'],
+  ['Aldi', -38.40, 'groceries', 11, 'joint'],
+  ['Sainsburys', -43.10, 'groceries', 16, 'personal'],
+  ['Tesco', -88.40, 'groceries', 8, 'joint'],
+  ['Asda', -72.15, 'groceries', 14, 'joint'],
+  ['Aldi', -41.20, 'groceries', 21, 'joint'],
+  ['Farmfoods', -29.60, 'groceries', 25, 'joint'],
+  ['Greggs', -5.40, 'eating', 3, 'personal'],
+  ['Greggs', -6.20, 'eating', 5, 'joint'],
+  ['Costa', -8.20, 'eating', 17, 'personal'],
+  ['McDonalds', -12.60, 'eating', 21, 'personal'],
+  ['Toby Carvery', -38.90, 'eating', 23, 'joint'],
+  ['Nandos', -42.70, 'eating', 13, 'joint'],
+  ['Northern', -14.20, 'transport', 5, 'personal'],
+  ['Arriva', -4.50, 'transport', 9, 'personal'],
+  ['Shell', -52.30, 'transport', 13, 'personal'],
+  ['Amazon', -34.99, 'shopping', 7, 'personal'],
+  ['Argos', -27.99, 'shopping', 15, 'personal'],
+  ['Primark', -31.00, 'shopping', 20, 'joint'],
+  ['Smyths Toys', -44.99, 'family', 18, 'personal'],
+  ['Smyths Toys', -59.99, 'family', 10, 'joint'],
+  ['The Entertainer', -22.50, 'family', 16, 'joint'],
+  ['Lego', -34.99, 'family', 22, 'personal'],
+  ['Boots', -16.45, 'health', 22, 'personal'],
+  ['Specsavers', -26.05, 'health', 24, 'personal'],
+  ['B&Q', -42.80, 'home', 24, 'personal'],
+  ['Dunelm', -34.00, 'home', 19, 'joint'],
+  ['The Range', -27.80, 'home', 23, 'joint'],
+  ['Home Bargains', -18.30, 'home', 25, 'personal'],
+  ['Home Bargains', -24.10, 'home', 22, 'joint'],
+  ['Cineworld', -21.00, 'entertainment', 26, 'personal'],
+  ['Odeon', -18.00, 'entertainment', 17, 'joint'],
+  ['Pets at Home', -26.50, 'pets', 27, 'personal'],
+  ['RSPCA', -10.00, 'pets', 28, 'personal'],
+  ['Screwfix', -19.99, 'home', 28, 'personal']
+];
+
+const PREV2_MONTH = [
+  ['Salary', 2450.00, 'income', 1, 'personal'],
+  ['Chloe Salary', 1850.00, 'income', 1, 'joint'],
+  ['Council Tax', -142.00, 'bills', 1, 'joint'],
+  ['Octopus Energy', -78.00, 'bills', 3, 'joint'],
+  ['Northumbrian Water', -38.20, 'bills', 4, 'joint'],
+  ['Tesco', -71.30, 'groceries', 5, 'joint'],
+  ['Asda', -58.90, 'groceries', 12, 'joint'],
+  ['Lidl', -34.70, 'groceries', 19, 'personal'],
+  ['Farmfoods', -26.40, 'groceries', 24, 'joint'],
+  ['Greggs', -4.95, 'eating', 6, 'personal'],
+  ['Hungry Horse', -46.20, 'eating', 15, 'joint'],
+  ['Deliveroo', -28.40, 'eating', 22, 'personal'],
+  ['Northern', -8.40, 'transport', 7, 'personal'],
+  ['Shell', -48.60, 'transport', 14, 'personal'],
+  ['Amazon', -42.50, 'shopping', 9, 'personal'],
+  ['Sports Direct', -39.99, 'shopping', 18, 'personal'],
+  ['Smyths Toys', -49.99, 'family', 20, 'joint'],
+  ['Boots', -11.20, 'health', 11, 'personal'],
+  ['B&M', -22.40, 'home', 17, 'joint'],
+  ['Pets at Home', -18.75, 'pets', 21, 'personal'],
+  ['Cineworld', -19.50, 'entertainment', 23, 'personal'],
+  ['Spotify', -11.99, 'entertainment', 9, 'personal']
 ];
 
 const BUDGET_SEED = {
-  personal: {groceries: 420, eating: 190, transport: 80, shopping: 240, bills: 320,
-    entertainment: 100, health: 40, fitness: 50, home: 150, general: 90},
-  joint: {groceries: 200, eating: 60, bills: 100, home: 150, entertainment: 60}
+  personal: {groceries: 300, eating: 150, transport: 120, shopping: 220, bills: 320,
+    entertainment: 90, health: 50, fitness: 40, home: 120, family: 150, pets: 60, general: 80},
+  joint: {groceries: 400, eating: 120, bills: 380, home: 140, family: 160, entertainment: 70}
 };
 
-function seedHistory(base) {
-  const d = new Date(base);
-  return HISTORY_SEED.map(([name, amount, category, day, acct]) => {
-    const when = new Date(d.getFullYear(), d.getMonth() - 1, day, 12, 0, 0);
+function monthSeed(monthsBack) {
+  const base = new Date();
+  const first = new Date(base.getFullYear(), base.getMonth() - monthsBack, 1);
+  const table = monthsBack === 1 ? PREV_MONTH : PREV2_MONTH;
+  return table.map(([name, amount, category, day, acct]) => {
+    const when = new Date(first.getFullYear(), first.getMonth(), day, 12, 0, 0);
     return {
       id: uid('tx'), name, amount, category, ts: when.getTime(),
-      type: 'out', acct: acct || 'personal', history: true
+      type: amount > 0 ? 'in' : 'out', acct: acct || 'personal', history: true
     };
   });
 }
+
+function seedHistory() {
+  return [...monthSeed(2), ...monthSeed(1)];
+}
+
+/* ---------- default state ---------- */
 
 function defaultState() {
   const base = now();
@@ -150,24 +253,30 @@ function defaultState() {
       {id:'pot_gad', name:'Gadgets', target:3000, saved:1400.00, emoji:'💻', colour:'#0891b2', locked:false, roundUp:false, created:base - 60*86400000}
     ],
     tx: [
-      mk('Tesco', -42.18, 'groceries', 0, 'joint'),
-      mk('Greggs', -4.85, 'eating', 0),
-      mk('Salary', 2450.00, 'income', 1),
+      mk('Tesco', -58.40, 'groceries', 0, 'joint'),
+      mk('Greggs', -5.20, 'eating', 0),
       mk('Northern', -8.40, 'transport', 1),
-      mk('Amazon', -23.99, 'shopping', 2),
-      mk('Octopus Energy', -78.00, 'bills', 3, 'joint'),
-      mk('PureGym', -24.99, 'fitness', 4),
-      mk('Cineworld', -31.50, 'entertainment', 5, 'joint'),
-      mk('Boots', -12.45, 'health', 6),
-      mk('IKEA', -164.00, 'home', 7, 'joint'),
-      mk('Spotify', -11.99, 'entertainment', 8),
-      mk('Sainsburys', -63.40, 'groceries', 9, 'joint'),
-      ...seedHistory(base)
+      mk('Amazon', -23.99, 'shopping', 1),
+      mk('Octopus Energy', -96.40, 'bills', 2, 'joint'),
+      mk('PureGym', -24.99, 'fitness', 3),
+      mk('Smyths Toys', -34.99, 'family', 3, 'joint'),
+      mk('Boots', -12.45, 'health', 4),
+      mk('IKEA', -164.00, 'home', 5, 'joint'),
+      mk('Spotify', -11.99, 'entertainment', 6),
+      mk('Sainsburys', -63.40, 'groceries', 7, 'joint'),
+      mk('Shell', -49.80, 'transport', 7),
+      mk('Pets at Home', -21.30, 'pets', 8),
+      mk('Costa', -7.85, 'eating', 8),
+      mk('Home Bargains', -16.40, 'home', 9, 'joint'),
+      ...seedHistory()
     ],
     scheduled: [
-      {id:uid('sch'), name:'Octopus Energy', amount:-78, category:'bills', day:12, freq:'monthly', next: base + 4*86400000, acct:'joint'},
+      {id:uid('sch'), name:'Octopus Energy', amount:-96.40, category:'bills', day:12, freq:'monthly', next: base + 4*86400000, acct:'joint'},
+      {id:uid('sch'), name:'Council Tax', amount:-142, category:'bills', day:1, freq:'monthly', next: base + 20*86400000, acct:'joint'},
+      {id:uid('sch'), name:'Northumbrian Water', amount:-38.20, category:'bills', day:4, freq:'monthly', next: base + 6*86400000, acct:'joint'},
       {id:uid('sch'), name:'PureGym', amount:-24.99, category:'fitness', day:20, freq:'monthly', next: base + 12*86400000, acct:'personal'},
-      {id:uid('sch'), name:'TV Licence', amount:-13.25, category:'bills', day:1, freq:'monthly', next: base + 20*86400000, acct:'personal'}
+      {id:uid('sch'), name:'TV Licence', amount:-13.25, category:'bills', day:5, freq:'monthly', next: base + 3*86400000, acct:'personal'},
+      {id:uid('sch'), name:'Admiral Car Insurance', amount:-48.50, category:'bills', day:12, freq:'monthly', next: base + 9*86400000, acct:'personal'}
     ],
     cards: [
       {id:uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}
@@ -182,7 +291,7 @@ function defaultState() {
     flex: {limit: 1000, used: 214.40, plan: 'flex', active: true},
     plan: 'plus',
     plus: {since: base - 200*86400000, renews: base + 15*86400000},
-    invest: {cash: 4120.60, holdings: seedHoldings(), contrib: 500, contribDay: 1},
+    invest: {cash: 4120.60, holdings: seedHoldings(), ledger: buildLedger(), contrib: 750, contribDay: 5},
     pension: {provider:'Nest', balance: 41280.55, monthly: 240, employer: 120, growth: 0.055, joined: base - 1200*86400000},
     isa: {balance: 18620.00, allowance: 20000, used: 3400, contrib: 200, contribDay: 5},
     goals: [],
@@ -210,15 +319,23 @@ const migrations = [
   {v: 22, fn: s => s},
   {v: 23, fn: s => s},
   {v: 24, fn: s => {
-    const base = now();
     const hasHistory = Array.isArray(s.tx) &&
       s.tx.some(t => t.ts < new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime());
-    if (!hasHistory) {
-      s.tx = (Array.isArray(s.tx) ? s.tx : []).concat(seedHistory(base));
-    }
+    if (!hasHistory) s.tx = (Array.isArray(s.tx) ? s.tx : []).concat(seedHistory());
     if (!s.budgetSeeded) {
       s.budgets = JSON.parse(JSON.stringify(BUDGET_SEED));
       s.budgetSeeded = true;
+    }
+    return s;
+  }},
+  {v: 25, fn: s => {
+    s.tx = (Array.isArray(s.tx) ? s.tx : []).filter(t => !t.history);
+    s.tx = s.tx.concat(seedHistory());
+    s.budgets = JSON.parse(JSON.stringify(BUDGET_SEED));
+    s.budgetSeeded = true;
+    if (!s.invest) s.invest = {};
+    if (!Array.isArray(s.invest.ledger) || !s.invest.ledger.length) {
+      s.invest.ledger = buildLedger();
     }
     return s;
   }}
@@ -299,7 +416,7 @@ export function normalise(input) {
   s.isa = Object.assign({balance:0, allowance:20000, used:0, contrib:0, contribDay:5}, s.isa);
 
   if (!s.invest) s.invest = {};
-  s.invest = Object.assign({cash:0, holdings:[], contrib:0, contribDay:1}, s.invest);
+  s.invest = Object.assign({cash:0, holdings:[], ledger:[], contrib:0, contribDay:1}, s.invest);
   if (!Array.isArray(s.invest.holdings) || !s.invest.holdings.length) {
     s.invest.holdings = seedHoldings();
   }
@@ -308,6 +425,9 @@ export function normalise(input) {
     .map(h => ({f: h.f, v: round2(h.v)}));
   if (!s.invest.holdings.length) s.invest.holdings = seedHoldings();
   if (typeof s.invest.cash !== 'number') s.invest.cash = 0;
+  if (!Array.isArray(s.invest.ledger) || !s.invest.ledger.length) {
+    s.invest.ledger = buildLedger();
+  }
 
   if (!s.plan || !PLANS[s.plan]) s.plan = 'free';
   if (!s.plus) s.plus = {since: now(), renews: now()};
@@ -477,6 +597,23 @@ export function platformFeeMonthly() {
   return round2(platformFeeAnnual() / 12);
 }
 
+export function ledgerAdd(type, fund, amount, ts = now()) {
+  state.invest.ledger.push({id: uid('led'), ts, type, fund, amount: round2(amount)});
+  save();
+}
+
+export function ledgerNetInvested() {
+  return round2(state.invest.ledger
+    .filter(e => e.type === 'buy' || e.type === 'gift' || e.type === 'sell')
+    .reduce((s, e) => s + e.amount, 0));
+}
+
+export function ledgerIncome() {
+  return round2(state.invest.ledger
+    .filter(e => e.type === 'div')
+    .reduce((s, e) => s + e.amount, 0));
+}
+
 /* ---------- flex ---------- */
 
 export const FLEX_MIN = 100;
@@ -518,6 +655,7 @@ export function investBuy(fundId, amount) {
   const h = state.invest.holdings.find(x => x.f === fundId);
   if (h) h.v = round2(h.v + a);
   else state.invest.holdings.push({f: fundId, v: a});
+  ledgerAdd('buy', fundId, a);
   save();
   return true;
 }
@@ -530,6 +668,7 @@ export function investSell(fundId, amount) {
   h.v = round2(h.v - a);
   if (h.v <= 0.01) state.invest.holdings = state.invest.holdings.filter(x => x !== h);
   state.invest.cash = round2(state.invest.cash + a);
+  ledgerAdd('sell', fundId, -a);
   save();
   return true;
 }
@@ -538,6 +677,7 @@ export function investDeposit(amount) {
   const a = round2(amount);
   if (!takeFunds(a)) return false;
   state.invest.cash = round2(state.invest.cash + a);
+  ledgerAdd('deposit', 'cash', a);
   save();
   return true;
 }
