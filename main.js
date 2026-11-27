@@ -14,12 +14,11 @@ import {
 
 import {
   mountPayees, mountRequest, mountBackup, mountCards, mountPlan, mountLimits, mountBorrow,
-  mountFlex, mountAura, mountOverdraft, mountLoans, mountConnected, mountCredit, mountChallenge,
+  mountFlex, mountPlus, mountOverdraft, mountLoans, mountConnected, mountCredit, mountChallenge,
   mountBillsback, mountInsurance, mountAccounts, mountAppearance, mountSearch, mountNotifs,
   mountChat, mountDisputes, mountJoint, mountPersonal, mountSecurity, mountTxDetail
 } from './screens-b.js';
 
-/* How long the app can sit in the background before it re-locks. */
 const RELOCK_AFTER = 60 * 1000;
 
 function applyTheme(){ document.documentElement.dataset.theme = getState().theme; }
@@ -79,12 +78,9 @@ function unlock(){
   const pad = document.getElementById('pinpad');
   if (pad) pad.classList.remove('on');
   runScheduled();
-  /* back where they were, not home */
   reload();
 }
 
-/* Covers the app and drops the session flag, leaving the screen mounted
-   underneath so unlocking can restore it. */
 function lockNow(){
   if (document.body.classList.contains('locked')) return;
   sessionStorage.removeItem('unlocked');
@@ -117,7 +113,6 @@ async function biometricUnlock(){
 function boot(){
   load();
   runTick();
-  /* catch up on anything the scheduler owes since the app was last open */
   runScheduled();
 
   applyAll();
@@ -131,7 +126,7 @@ function boot(){
     account: mountAccount, acc: mountAcc, pots: mountPots, potdetail: mountPotDetail,
     invest: mountInvest, statements: mountStatements, payees: mountPayees, request: mountRequest,
     backup: mountBackup, cards: mountCards, plan: mountPlan, limits: mountLimits,
-    borrow: mountBorrow, flex: mountFlex, aura: mountAura, overdraft: mountOverdraft,
+    borrow: mountBorrow, flex: mountFlex, plus: mountPlus, overdraft: mountOverdraft,
     loans: mountLoans, connected: mountConnected, credit: mountCredit,
     challenge: mountChallenge, billsback: mountBillsback, insurance: mountInsurance,
     accounts: mountAccounts, appearance: mountAppearance, search: mountSearch,
@@ -163,7 +158,6 @@ function boot(){
     if (node && getState().priv) node.classList.toggle('open');
   });
 
-  /* cross-screen delegation: rows produced by shared components */
   document.getElementById('main').addEventListener('click', e => {
     if (e.target.closest('[data-go]')) return;
     const tx = e.target.closest('[data-tx]');
@@ -174,7 +168,6 @@ function boot(){
 
   subscribe(() => { paintAvatar(); applyAll(); syncBell(); });
 
-  /* --- locking --- */
   document.addEventListener('monzo:lock', lockNow);
 
   document.addEventListener('visibilitychange', () => {
@@ -187,7 +180,6 @@ function boot(){
     hiddenAt = 0;
   });
 
-  /* a reload or a closed tab always needs the passcode again */
   window.addEventListener('pagehide', () => {
     sessionStorage.removeItem('unlocked');
   });
@@ -201,7 +193,7 @@ function boot(){
 
   if ('serviceWorker' in navigator){
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=31').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=32').catch(() => {});
     });
   }
 }
