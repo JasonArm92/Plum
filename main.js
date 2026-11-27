@@ -1,200 +1,166 @@
-/* src/main.js — boot: hydrate state, apply appearance, wire chrome and lock, register screens. */
-
+import { load, state, runScheduled, VERSION, save } from './core.js';
+import { el, icon, toast } from './ui.js';
 import {
-  load, getState, subscribe, runTick, runScheduled, togglePriv, syncBell
-} from './core.js';
-import {
-  initRouter, register, go, goBack, reload, closeSheet, bindGlobalChrome, toast
-} from './ui.js';
-
-import {
-  mountHome, mountSave, mountGrow, mountPay, mountTrends, mountAccount, mountAcc, mountPots,
-  mountPotDetail, mountInvest, mountStatements, addTxSheet
+  homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
+  payeeScreen, sendScreen, requestScreen, bankScreen, scheduledScreen,
+  borrowingScreen, accountScreen, potsScreen, potScreen
 } from './screens-a.js';
-
 import {
-  mountPayees, mountRequest, mountBackup, mountCards, mountPlan, mountLimits, mountBorrow,
-  mountFlex, mountPlus, mountOverdraft, mountLoans, mountConnected, mountCredit, mountChallenge,
-  mountBillsback, mountInsurance, mountAccounts, mountAppearance, mountSearch, mountNotifs,
-  mountChat, mountDisputes, mountJoint, mountPersonal, mountSecurity, mountTxDetail
+  txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
+  profileScreen, securityScreen, notificationsScreen, statementsScreen,
+  appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, cardSheet
 } from './screens-b.js';
 
-const RELOCK_AFTER = 60 * 1000;
+const view = document.getElementById('view');
+const tabbar = document.getElementById('tabbar');
 
-function applyTheme(){ document.documentElement.dataset.theme = getState().theme; }
-function applyZoom(){ document.documentElement.style.setProperty('--zoom', getState().zoom); }
-function applyMotion(){ document.documentElement.dataset.motion = getState().motion ? 'on' : 'off'; }
-function applyPrivacy(){ document.documentElement.dataset.priv = getState().priv ? '1' : '0'; }
-function applyAll(){ applyTheme(); applyZoom(); applyMotion(); applyPrivacy(); }
+const TABS = [
+  {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
+  {id: 'trends', label: 'Trends', icon: 'trends', hash: '#/trends'},
+  {id: 'payments', label: 'Payments', icon: 'payments', hash: '#/payments'},
+  {id: 'borrowing', label: 'Borrowing', icon: 'borrowing', hash: '#/borrowing'},
+  {id: 'account', label: 'Account', icon: 'account', hash: '#/account'}
+];
 
-function paintAvatar(){
-  const name = getState().profile.name;
-  const el = document.getElementById('avatarBtn');
-  if (el) el.textContent = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+function renderTabs(active) {
+  tabbar.innerHTML = '';
+  for (const t of TABS) {
+    const b = el('button', 'tab');
+    b.type = 'button';
+    b.appendChild(icon(t.icon, 23));
+    b.appendChild(el('span', '', t.label));
+    if (t.id === active) b.setAttribute('aria-current', 'page');
+    b.onclick = () => { location.hash = t.hash; };
+    tabbar.appendChild(b);
+  }
 }
 
-let pinBuffer = '';
-let hiddenAt = 0;
-
-function paintDots(){
-  const dots = document.getElementById('dots');
-  if (!dots) return;
-  dots.innerHTML = [0, 1, 2, 3]
-    .map(i => `<span class="dot ${i < pinBuffer.length ? 'f' : ''}"></span>`).join('');
+function parse() {
+  const raw = location.hash.replace(/^#\/?/, '');
+  const parts = raw.split('/').filter(Boolean);
+  return {route: parts[0] || 'home', arg: parts[1] || null};
 }
 
-function buildKeys(){
-  const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
-  const host = document.getElementById('keys');
-  if (!host) return;
-  host.innerHTML = keys.map(k => k === '' ? '<span></span>'
-    : `<button class="key" data-k="${k}" aria-label="${k === '⌫' ? 'Delete' : k}">${k}</button>`).join('');
-  host.addEventListener('click', e => {
-    const btn = e.target.closest('[data-k]');
-    if (!btn) return;
-    const k = btn.dataset.k;
-    if (k === '⌫') pinBuffer = pinBuffer.slice(0, -1);
-    else if (pinBuffer.length < 4) pinBuffer += k;
-    paintDots();
-    if (pinBuffer.length === 4) checkPin();
-  });
+const SCREENS = {
+  home: () => homeScreen(),
+  trends: () => trendsScreen(),
+  payments: () => paymentsScreen(),
+  borrowing: () => borrowingScreen(),
+  account: () => accountScreen(),
+  pots: () => potsScreen(),
+  payees: () => payeesScreen(),
+  send: a => sendScreen(a),
+  request: () => requestScreen(),
+  bank: () => bankScreen(),
+  scheduled: () => scheduledScreen(),
+  invest: () => investScreen(),
+  pension: () => pensionScreen(),
+  isa: () => isaScreen(),
+  plus: () => plusScreen(),
+  profile: () => profileScreen(),
+  security: () => securityScreen(),
+  notifications: () => notificationsScreen(),
+  statements: () => statementsScreen(),
+  appearance: () => appearanceScreen(),
+  about: () => aboutScreen(),
+  cards: () => cardsScreen(),
+  payee: a => payeeScreen(a),
+  pot: a => potScreen(a),
+  tx: a => txScreen(a),
+  fund: a => fundScreen(a),
+  'trend-cat': a => trendCatScreen(a),
+  search: () => homeScreen()
+};
+
+const TAB_ROUTES = new Set(['home', 'trends', 'payments', 'borrowing', 'account']);
+
+function render() {
+  const {route, arg} = parse();
+  const key = route === 'trends' && arg ? 'trend-cat' : route;
+  const fn = SCREENS[key] || SCREENS.home;
+  view.innerHTML = '';
+  view.appendChild(fn(arg));
+  renderTabs(TAB_ROUTES.has(route) ? route : '');
+  window.scrollTo(0, 0);
 }
 
-function checkPin(){
-  if (pinBuffer === getState().pin) return unlock();
-  const err = document.getElementById('pinErr');
-  if (err) err.classList.add('on');
-  pinBuffer = '';
-  paintDots();
-  setTimeout(() => { if (err) err.classList.remove('on'); }, 1600);
-}
-
-function unlock(){
-  sessionStorage.setItem('unlocked', '1');
-  document.body.classList.remove('locked');
-  pinBuffer = '';
-  hiddenAt = 0;
-  paintDots();
-  const pad = document.getElementById('pinpad');
-  if (pad) pad.classList.remove('on');
-  runScheduled();
-  reload();
-}
-
-function lockNow(){
-  if (document.body.classList.contains('locked')) return;
-  sessionStorage.removeItem('unlocked');
-  closeSheet();
-  document.body.classList.add('locked');
-  pinBuffer = '';
-  paintDots();
-  showPinPad();
-}
-
-function showPinPad(){
-  const pad = document.getElementById('pinpad');
-  if (pad) pad.classList.add('on');
-  paintDots();
-}
-
-async function biometricUnlock(){
-  const s = getState();
-  if (!s.credId) return showPinPad();
-  try {
-    await navigator.credentials.get({ publicKey: {
-      challenge: crypto.getRandomValues(new Uint8Array(32)),
-      allowCredentials: [{ type: 'public-key', id: Uint8Array.from(atob(s.credId), c => c.charCodeAt(0)) }],
-      userVerification: 'required', timeout: 60000
-    } });
-    unlock();
-  } catch { toast('Fingerprint not recognised'); }
-}
-
-function boot(){
+function boot() {
   load();
-  runTick();
+  applyTheme();
   runScheduled();
 
-  applyAll();
-  paintAvatar();
+  if (!sessionStorage.getItem('monzo_auth')) {
+    location.hash = '#/login';
+  }
+  if (!location.hash) location.hash = '#/home';
 
-  initRouter(document.getElementById('main'));
-  bindGlobalChrome();
-
-  const screens = {
-    home: mountHome, save: mountSave, grow: mountGrow, pay: mountPay, trends: mountTrends,
-    account: mountAccount, acc: mountAcc, pots: mountPots, potdetail: mountPotDetail,
-    invest: mountInvest, statements: mountStatements, payees: mountPayees, request: mountRequest,
-    backup: mountBackup, cards: mountCards, plan: mountPlan, limits: mountLimits,
-    borrow: mountBorrow, flex: mountFlex, plus: mountPlus, overdraft: mountOverdraft,
-    loans: mountLoans, connected: mountConnected, credit: mountCredit,
-    challenge: mountChallenge, billsback: mountBillsback, insurance: mountInsurance,
-    accounts: mountAccounts, appearance: mountAppearance, search: mountSearch,
-    notifs: mountNotifs, chat: mountChat, disputes: mountDisputes, joint: mountJoint,
-    personal: mountPersonal, security: mountSecurity, txdetail: mountTxDetail
-  };
-  Object.entries(screens).forEach(([name, mount]) => register(name, mount));
-
-  buildKeys();
-  paintDots();
-
-  const on = (id, fn) => { const el = document.getElementById(id); if (el) el.onclick = fn; };
-  on('usePin', showPinPad);
-  on('bioBtn', biometricUnlock);
-  on('avatarBtn', () => go('account'));
-  on('bellBtn', () => go('notifs'));
-  on('searchBtn', () => go('search'));
-  on('backBtn', goBack);
-  on('plusBtn', addTxSheet);
-
-  on('privBtn', () => {
-    const on_ = togglePriv();
-    applyPrivacy();
-    toast(on_ ? 'Privacy mode on' : 'Privacy mode off');
+  window.addEventListener('hashchange', () => {
+    if (location.hash === '#/login') return;
+    render();
   });
+  document.addEventListener('render', render);
 
-  document.addEventListener('click', e => {
-    const node = e.target.closest('.rev');
-    if (node && getState().priv) node.classList.toggle('open');
-  });
+  if (location.hash === '#/login') login();
+  else render();
 
-  document.getElementById('main').addEventListener('click', e => {
-    if (e.target.closest('[data-go]')) return;
-    const tx = e.target.closest('[data-tx]');
-    if (tx) return go('txdetail', { id: tx.dataset.tx });
-    const pot = e.target.closest('[data-pot]');
-    if (pot) return go('potdetail', { id: pot.dataset.pot });
-  });
+  const plusBtn = document.getElementById('plusBtn');
+  if (plusBtn) plusBtn.onclick = addTxSheet;
 
-  subscribe(() => { paintAvatar(); applyAll(); syncBell(); });
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
 
-  document.addEventListener('monzo:lock', lockNow);
+/* ---------- login ---------- */
 
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden'){
-      hiddenAt = Date.now();
-      return;
-    }
-    runScheduled();
-    if (hiddenAt && Date.now() - hiddenAt > RELOCK_AFTER) lockNow();
-    hiddenAt = 0;
-  });
+function login() {
+  view.innerHTML = '';
+  tabbar.innerHTML = '';
+  const wrap = el('div', 'center');
+  const inner = el('div');
+  inner.appendChild(el('div', 'logo', 'M'));
+  inner.appendChild(el('div', 'row__t', 'Welcome back, Jason'));
+  inner.appendChild(el('p', 'hint', 'Enter your PIN to continue'));
 
-  window.addEventListener('pagehide', () => {
-    sessionStorage.removeItem('unlocked');
-  });
+  let entered = '';
+  const dots = el('div', 'pin');
+  for (let i = 0; i < 4; i++) dots.appendChild(el('div', 'pin__d'));
+  inner.appendChild(dots);
 
-  if (sessionStorage.getItem('unlocked') === '1') document.body.classList.remove('locked');
-  go('home');
+  const pad = el('div', 'keypad');
+  for (const k of ['1','2','3','4','5','6','7','8','9','','0','⌫']) {
+    const b = el('button', 'key', k);
+    if (!k) { b.style.background = 'transparent'; }
+    else b.onclick = () => press(k);
+    pad.appendChild(b);
+  }
+  inner.appendChild(pad);
+  wrap.appendChild(inner);
+  view.appendChild(wrap);
 
-  window.addEventListener('online', () => document.body.classList.remove('is-offline'));
-  window.addEventListener('offline', () => document.body.classList.add('is-offline'));
-  if (!navigator.onLine) document.body.classList.add('is-offline');
-
-  if ('serviceWorker' in navigator){
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=32').catch(() => {});
+  function paint() {
+    dots.querySelectorAll('.pin__d').forEach((d, i) => {
+      d.classList.toggle('pin__d--on', i < entered.length);
     });
+  }
+
+  function press(k) {
+    if (k === '⌫') entered = entered.slice(0, -1);
+    else if (entered.length < 4) entered += k;
+    paint();
+    if (entered.length === 4) check();
+  }
+
+  function check() {
+    if (entered === state.user.pin) {
+      sessionStorage.setItem('monzo_auth', '1');
+      location.hash = '#/home';
+      render();
+    } else {
+      toast('Wrong PIN');
+      entered = '';
+      paint();
+    }
   }
 }
 
