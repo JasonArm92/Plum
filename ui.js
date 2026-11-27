@@ -4,10 +4,8 @@ import { esc, fmt, pct } from './core.js';
 import { DOMAINS } from './data.js';
 
 /* --- logo marks ------------------------------------------------------------
-   A branded inline-SVG tile is always drawn first, then a real logo is layered
-   over it inline-styled. If the image resolves you see the logo; if it does not
-   you keep the brand-coloured tile. Chain: icon.horse → favicane → Google
-   favicon. */
+   Branded inline-SVG tile first, real logo layered over it inline-styled.
+   Chain: icon.horse → favicone → Google favicon. */
 
 const ICON = 'https://icon.horse/icon/';
 const FAV  = 'https://favicone.com/';
@@ -108,8 +106,9 @@ addBrand('Netflix', '#0B0B0B', '#E50914');
 addBrand('Spotify', '#1DB954', '#0B0B0B');
 addBrand('Monzo', '#FF4F40', '#fff');
 addBrand('Monzo Flex', '#FF4F40', '#fff');
-addBrand('Monzo Aura', '#FF4F40', '#fff');
+addBrand('Monzo Plus', '#FF4F40', '#fff');
 addBrand('Monzo Loans', '#FF4F40', '#fff');
+addBrand('Monzo Invest', '#FF4F40', '#fff');
 addBrand('Monzo Billsback', '#FF4F40', '#fff');
 addBrand('Saving Challenge', '#FF4F40', '#fff');
 addBrand('Twinkl', '#1F9BD1', '#fff');
@@ -214,7 +213,6 @@ function stepDown(img){
   }
 }
 
-/* `error` does not bubble, so it is captured. */
 document.addEventListener('error', e => {
   const img = e.target;
   if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
@@ -228,7 +226,7 @@ const TABS = new Set(['home', 'save', 'grow', 'pay', 'account']);
 const TITLES = {
   grow:'Grow', save:'Save', pay:'Pay', trends:'Trends', acc:'Current account', pots:'Pots',
   invest:'Investments', statements:'Statements', accounts:'Your accounts', borrow:'Borrowing',
-  flex:'Monzo Flex', aura:'Monzo Aura', overdraft:'Overdraft', loans:'Loans',
+  flex:'Monzo Flex', plus:'Monzo Plus', overdraft:'Overdraft', loans:'Loans',
   connected:'Connected accounts', credit:'Credit insights', challenge:'Saving Challenge',
   billsback:'Billsback', insurance:'Insurance', personal:'Personal details', security:'Security',
   appearance:'Appearance', cards:'Cards', plan:'Plans', limits:'Limits', payees:'Payees',
