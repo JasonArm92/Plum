@@ -1,7 +1,7 @@
-const CACHE = 'monzo-v41';
+const CACHE = 'monzo-v42';
 const ASSETS = [
   './', './index.html', './styles.css', './boot.js', './main.js', './core.js',
-  './data.js', './ui.js', './screens-a.js', './screens-b.js'
+  './data.js', './ui.js', './screens-a.js', './screens-b.js', './screens-c.js'
 ];
 
 self.addEventListener('install', e => {
@@ -28,14 +28,14 @@ self.addEventListener('fetch', e => {
   if (url.origin === location.origin) {
     e.respondWith(
       fetch(req, { cache: 'no-store' })
-        .then(res => {
-          if (res && res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
-          }
-          return res;
-        })
-        .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
+      .then(res => {
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+        }
+        return res;
+      })
+      .catch(() => caches.match(req).then(hit => hit || caches.match('./index.html')))
     );
     return;
   }
