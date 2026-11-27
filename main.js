@@ -1,4 +1,4 @@
-import { load, state, runScheduled, VERSION, save } from './core.js';
+import { load, state, runScheduled } from './core.js';
 import { el, icon, toast } from './ui.js';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
@@ -8,11 +8,8 @@ import {
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
-  appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, cardSheet
+  appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet
 } from './screens-b.js';
-
-const view = document.getElementById('view');
-const tabbar = document.getElementById('tabbar');
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -22,8 +19,29 @@ const TABS = [
   {id: 'account', label: 'Account', icon: 'account', hash: '#/account'}
 ];
 
+function view() {
+  let v = document.getElementById('view');
+  if (!v) {
+    v = el('main');
+    v.id = 'view';
+    (document.getElementById('app') || document.body).appendChild(v);
+  }
+  return v;
+}
+
+function tabbar() {
+  let t = document.getElementById('tabbar');
+  if (!t) {
+    t = el('nav', 'tabbar');
+    t.id = 'tabbar';
+    document.body.appendChild(t);
+  }
+  return t;
+}
+
 function renderTabs(active) {
-  tabbar.innerHTML = '';
+  const bar = tabbar();
+  bar.innerHTML = '';
   for (const t of TABS) {
     const b = el('button', 'tab');
     b.type = 'button';
@@ -31,7 +49,7 @@ function renderTabs(active) {
     b.appendChild(el('span', '', t.label));
     if (t.id === active) b.setAttribute('aria-current', 'page');
     b.onclick = () => { location.hash = t.hash; };
-    tabbar.appendChild(b);
+    bar.appendChild(b);
   }
 }
 
@@ -68,58 +86,59 @@ const SCREENS = {
   pot: a => potScreen(a),
   tx: a => txScreen(a),
   fund: a => fundScreen(a),
-  'trend-cat': a => trendCatScreen(a),
+  trend: a => trendCatScreen(a),
+  split: () => paymentsScreen(),
   search: () => homeScreen()
 };
 
 const TAB_ROUTES = new Set(['home', 'trends', 'payments', 'borrowing', 'account']);
 
-function render() {
-  const {route, arg} = parse();
-  const key = route === 'trends' && arg ? 'trend-cat' : route;
-  const fn = SCREENS[key] || SCREENS.home;
-  view.innerHTML = '';
-  view.appendChild(fn(arg));
-  renderTabs(TAB_ROUTES.has(route) ? route : '');
-  window.scrollTo(0, 0);
+export function render() {
+  try {
+    const {route, arg} = parse();
+    if (route === 'login') { login(); return; }
+    const fn = SCREENS[route] || SCREENS.home;
+    const v = view();
+    v.innerHTML = '';
+    v.appendChild(fn(arg));
+    renderTabs(TAB_ROUTES.has(route) ? route : '');
+    window.scrollTo(0, 0);
+  } catch (err) {
+    showError(err);
+  }
 }
 
-function boot() {
-  load();
-  applyTheme();
-  runScheduled();
-
-  if (!sessionStorage.getItem('monzo_auth')) {
-    location.hash = '#/login';
-  }
-  if (!location.hash) location.hash = '#/home';
-
-  window.addEventListener('hashchange', () => {
-    if (location.hash === '#/login') return;
-    render();
-  });
-  document.addEventListener('render', render);
-
-  if (location.hash === '#/login') login();
-  else render();
-
-  const plusBtn = document.getElementById('plusBtn');
-  if (plusBtn) plusBtn.onclick = addTxSheet;
-
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
-  }
+function showError(err) {
+  const v = view();
+  v.innerHTML = '';
+  const wrap = el('div', 'center');
+  const inner = el('div');
+  inner.appendChild(el('div', 'logo', '!'));
+  inner.appendChild(el('div', 'row__t', 'Something went wrong'));
+  inner.appendChild(el('p', 'hint', 'The screen failed to build. The detail below helps pin it down.'));
+  inner.appendChild(el('pre', 'errbox', String((err && (err.stack || err.message)) || err)));
+  const b = el('button', 'btn btn--primary', 'Reload');
+  b.style.marginTop = '16px';
+  b.onclick = () => location.reload();
+  inner.appendChild(b);
+  const h = el('button', 'btn btn--ghost', 'Go home');
+  h.style.marginTop = '8px';
+  h.onclick = () => { location.hash = '#/home'; render(); };
+  inner.appendChild(h);
+  wrap.appendChild(inner);
+  v.appendChild(wrap);
 }
 
 /* ---------- login ---------- */
 
 function login() {
-  view.innerHTML = '';
-  tabbar.innerHTML = '';
+  const v = view();
+  tabbar().innerHTML = '';
+  v.innerHTML = '';
   const wrap = el('div', 'center');
   const inner = el('div');
   inner.appendChild(el('div', 'logo', 'M'));
-  inner.appendChild(el('div', 'row__t', 'Welcome back, Jason'));
+  inner.appendChild(el('div', 'row__t', 'Welcome back, ' + (state.user.first || 'Jason')));
   inner.appendChild(el('p', 'hint', 'Enter your PIN to continue'));
 
   let entered = '';
@@ -130,13 +149,13 @@ function login() {
   const pad = el('div', 'keypad');
   for (const k of ['1','2','3','4','5','6','7','8','9','','0','⌫']) {
     const b = el('button', 'key', k);
-    if (!k) { b.style.background = 'transparent'; }
+    if (!k) b.style.background = 'transparent';
     else b.onclick = () => press(k);
     pad.appendChild(b);
   }
   inner.appendChild(pad);
   wrap.appendChild(inner);
-  view.appendChild(wrap);
+  v.appendChild(wrap);
 
   function paint() {
     dots.querySelectorAll('.pin__d').forEach((d, i) => {
@@ -152,7 +171,7 @@ function login() {
   }
 
   function check() {
-    if (entered === state.user.pin) {
+    if (entered === (state.user.pin || '2580')) {
       sessionStorage.setItem('monzo_auth', '1');
       location.hash = '#/home';
       render();
@@ -163,5 +182,41 @@ function login() {
     }
   }
 }
+
+/* ---------- boot ---------- */
+
+function boot() {
+  try {
+    load();
+    applyTheme();
+    runScheduled();
+  } catch (err) {
+    showError(err);
+    return;
+  }
+
+  window.addEventListener('hashchange', render);
+  document.addEventListener('render', render);
+
+  if (!location.hash) location.hash = '#/home';
+  if (!sessionStorage.getItem('monzo_auth')) location.hash = '#/login';
+
+  render();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+
+window.addEventListener('error', e => {
+  if (!document.getElementById('view') || !document.getElementById('view').children.length) {
+    showError(e.error || e.message);
+  }
+});
+window.addEventListener('unhandledrejection', e => {
+  if (!document.getElementById('view') || !document.getElementById('view').children.length) {
+    showError(e.reason);
+  }
+});
 
 boot();
