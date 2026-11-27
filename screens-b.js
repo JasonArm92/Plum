@@ -716,7 +716,7 @@ export function mountSearch(root, params){
       (!q || t.name.toLowerCase().includes(q) || (t.note || '').toLowerCase().includes(q))).slice(0, 60);
     list.innerHTML = res.length ? res.map(txRow).join('') : '<li class="empty">No matches</li>';
   };
-  input.addEventListener('input', () => { q = input.value.toLowerCase(); paintChips(); paintList(); });
+  input.addEventListener('input', () => { q = input.value.toLowerCase(); paintList(); });
   root.addEventListener('click', e => {
     const c = e.target.closest('[data-cat]');
     if (c){ cat = c.dataset.cat; paintChips(); paintList(); }
@@ -970,4 +970,4 @@ export function mountTxDetail(root, params){
     if (e.target.closest('[data-del]')){ deleteTx(t.id); toast('Deleted'); go('acc'); }
   });
   render();
-      }
+}
