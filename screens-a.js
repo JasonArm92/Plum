@@ -1,15 +1,17 @@
 import {
   state, fmt, fmtShort, round2, leftToSpend, spentThisMonth, byCategory,
   lastMonthByCategory, upcoming, totalPots, flexApr, flexPurchase, FLEX_MIN,
-  FLEX_MONTHS, addTx, takeFunds, potMove, investDeposit, save
+  FLEX_MONTHS, addTx, takeFunds, potMove, save
 } from './core.js';
-import { CATEGORIES, FUNDS, POT_EMOJI, POT_COLOURS, SAVINGS_INTEREST } from './data.js';
+import { CATEGORIES, POT_EMOJI, POT_COLOURS, SAVINGS_INTEREST } from './data.js';
 import {
-  el, on, screen, header, row, list, section, tile, avatar, icon, cardArt,
-  ring, empty, pill, toast, sheet, confirmSheet, field, input, seg, switchEl
+  el, screen, row, list, section, tile, avatar, icon, cardArt, ring, empty,
+  pill, toast, sheet, confirmSheet, field, input, seg, switchEl
 } from './ui.js';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
+
+const rerender = () => document.dispatchEvent(new CustomEvent('render'));
 
 /* ============ HOME ============ */
 
@@ -28,59 +30,50 @@ export function homeScreen() {
   const title = el('div', 'hdr__title');
   title.textContent = 'Home';
   h.appendChild(title);
-  for (const [ic, label, fn] of [
-    ['search', 'Search', () => location.hash = '#/search'],
-    ['plus', 'Add transaction', () => import('./screens-b.js').then(m => m.addTxSheet())]
-  ]) {
-    const b = el('button', 'hdr__btn');
-    b.type = 'button';
-    b.setAttribute('aria-label', label);
-    b.appendChild(icon(ic, 18));
-    b.onclick = fn;
-    h.appendChild(b);
-  }
+  const add = el('button', 'hdr__btn');
+  add.type = 'button';
+  add.setAttribute('aria-label', 'Add transaction');
+  add.appendChild(icon('plus', 18));
+  add.onclick = () => import('./screens-b.js').then(m => m.addTxSheet());
+  h.appendChild(add);
   s.appendChild(h);
 
   const body = el('div', 'screen__body');
   body.style.padding = '16px 0 16px';
 
-  const L = state.layout || {};
-  const hidden = L.hidden || [];
-  const order = L.order || [];
-
-  for (const key of order) {
+  const L = state.layout;
+  const hidden = L.hidden;
+  for (const key of L.order) {
     if (hidden.includes(key)) continue;
     if (key === 'card') {
       const w = el('div');
       w.style.padding = '0 16px';
       w.appendChild(cardArt(state.cards[0], () => import('./screens-b.js').then(m => m.cardSheet())));
       body.appendChild(w);
-    }
-    if (key === 'balance') {
+    } else if (key === 'balance') {
       const w = el('div');
       w.style.padding = '0 16px';
       const lbl = el('div', 'balance__lbl');
-      lbl.textContent = 'Personal · ' + (state.cards[0]?.last4 || '4821');
+      lbl.textContent = 'Personal · ' + (state.cards[0].last4 || '4821');
       w.appendChild(lbl);
       const b = el('div', 'balance', state.settings.hideBalance ? '••••••' : fmt(state.balance));
-      b.style.cursor = 'pointer';
       b.onclick = () => {
         state.settings.hideBalance = !state.settings.hideBalance;
         save();
-        location.hash = '#/home';
-        document.dispatchEvent(new CustomEvent('render'));
+        rerender();
       };
       w.appendChild(b);
       body.appendChild(w);
-    }
-    if (key === 'ring') {
+    } else if (key === 'ring') {
       const w = el('div');
       w.style.padding = '0 16px';
       w.appendChild(leftToSpendCard());
       body.appendChild(w);
+    } else if (key === 'carousel') {
+      body.appendChild(carousel());
+    } else if (key === 'activity') {
+      body.appendChild(activity());
     }
-    if (key === 'carousel') body.appendChild(carousel());
-    if (key === 'activity') body.appendChild(activity());
   }
 
   const edit = el('div');
@@ -99,22 +92,18 @@ function leftToSpendCard() {
   const c = el('div', 'card');
   const left = leftToSpend();
   const total = Math.max(1, state.balance);
-  const pct = Math.min(1, left / total);
   const w = el('div', 'ringwrap');
-  w.appendChild(ring(pct));
+  w.appendChild(ring(Math.min(1, left / total)));
   const m = el('div', 'ringwrap__main');
   m.appendChild(el('div', 'ringwrap__l', 'Left to spend'));
   m.appendChild(el('div', 'ringwrap__v', fmt(left)));
-  const sub = el('div', 'hint');
-  sub.textContent = 'After ' + fmt(upcoming()) + ' of bills in the next 7 days';
-  m.appendChild(sub);
+  m.appendChild(el('div', 'hint', 'After ' + fmt(upcoming()) + ' of bills in the next 7 days'));
   w.appendChild(m);
   c.appendChild(w);
   return c;
 }
 
 function carousel() {
-  const items = (state.layout.carousel || []).slice();
   const wrap = el('div');
   const head = el('div', 'sect');
   head.style.margin = '4px 16px 8px';
@@ -123,21 +112,21 @@ function carousel() {
 
   const track = el('div', 'carousel');
 
-  for (const key of items) {
+  for (const key of state.layout.carousel) {
     if (key === 'pots') {
       for (const p of state.pots) {
         const b = el('button', 'pcard');
         b.type = 'button';
         const ico = el('div', 'pcard__ico', p.emoji || '🏦');
-        ico.style.background = (p.colour || '#eee') + '22';
+        ico.style.background = (p.colour || '#eeeeee') + '22';
         b.appendChild(ico);
         b.appendChild(el('div', 'pcard__n', p.name));
         const bar = el('div', 'pbar');
         const f = el('div', 'pbar__f');
-        f.style.width = Math.min(100, Math.round((p.saved / Math.max(1, p.target)) * 100)) + '%';
+        f.style.width = Math.min(100, Math.round(((p.saved || 0) / Math.max(1, p.target)) * 100)) + '%';
         bar.appendChild(f);
         b.appendChild(bar);
-        b.appendChild(el('div', 'pcard__v', fmtShort(p.saved)));
+        b.appendChild(el('div', 'pcard__v', fmtShort(p.saved || 0)));
         b.onclick = () => { location.hash = '#/pot/' + p.id; };
         track.appendChild(b);
       }
@@ -146,8 +135,7 @@ function carousel() {
       add.innerHTML = '<div style="font-size:22px">＋</div><div>New pot</div>';
       add.onclick = () => import('./screens-b.js').then(m => m.newPotSheet());
       track.appendChild(add);
-    }
-    if (key === 'pension') {
+    } else if (key === 'pension') {
       const b = el('button', 'pcard');
       b.type = 'button';
       const ico = el('div', 'pcard__ico', '🏛️');
@@ -157,8 +145,7 @@ function carousel() {
       b.appendChild(el('div', 'pcard__v', fmtShort(state.pension.balance)));
       b.onclick = () => { location.hash = '#/pension'; };
       track.appendChild(b);
-    }
-    if (key === 'isa') {
+    } else if (key === 'isa') {
       const b = el('button', 'pcard');
       b.type = 'button';
       const ico = el('div', 'pcard__ico', '📈');
@@ -182,28 +169,23 @@ function activity() {
   head.textContent = 'Activity';
   wrap.appendChild(head);
 
-  const l = el('div', 'list');
-  l.style.background = 'transparent';
+  const l = el('div');
   let lastDay = '';
   const sorted = state.tx.slice().sort((a, b) => b.ts - a.ts).slice(0, 40);
   for (const t of sorted) {
     const d = new Date(t.ts).toDateString();
     if (d !== lastDay) {
       lastDay = d;
-      const sep = el('div', 'daysep', dayText(t.ts));
-      l.appendChild(sep);
+      l.appendChild(el('div', 'daysep', dayText(t.ts)));
     }
     const b = el('button', 'act');
     b.type = 'button';
     b.appendChild(tile(t.name));
     const m = el('div', 'act__main');
     m.appendChild(el('div', 'act__t', t.name));
-    const sub = el('div', 'act__s');
-    sub.textContent = cat(t.category).name;
-    m.appendChild(sub);
+    m.appendChild(el('div', 'act__s', cat(t.category).name));
     b.appendChild(m);
-    const v = el('div', 'act__v' + (t.amount > 0 ? ' pos' : ''), (t.amount > 0 ? '+' : '') + fmt(t.amount));
-    b.appendChild(v);
+    b.appendChild(el('div', 'act__v' + (t.amount > 0 ? ' pos' : ''), (t.amount > 0 ? '+' : '') + fmt(t.amount)));
     b.onclick = () => { location.hash = '#/tx/' + t.id; };
     l.appendChild(b);
   }
@@ -233,7 +215,7 @@ export function trendsScreen() {
   const top = el('div', 'card');
   const rw = el('div', 'ringwrap');
   const budget = 1200;
-  rw.appendChild(ring(Math.min(1, spent / budget), 78));
+  rw.appendChild(ring(Math.min(1, spent / budget)));
   const m = el('div', 'ringwrap__main');
   m.appendChild(el('div', 'ringwrap__l', 'Spent this month'));
   m.appendChild(el('div', 'ringwrap__v', fmt(spent)));
@@ -252,8 +234,7 @@ export function trendsScreen() {
     const r = el('button', 'row');
     r.type = 'button';
     const m2 = el('div', 'row__main');
-    const t = el('div', 'row__t', c.emoji + '  ' + c.name);
-    m2.appendChild(t);
+    m2.appendChild(el('div', 'row__t', c.emoji + '  ' + c.name));
     const bar = el('div', 'pbar');
     bar.style.marginTop = '6px';
     const f = el('div', 'pbar__f');
@@ -263,7 +244,6 @@ export function trendsScreen() {
     m2.appendChild(bar);
     r.appendChild(m2);
     const v = el('div', 'row__v', fmt(amt));
-    r.appendChild(v);
     if (delta !== null) {
       const d = el('span', 'hint');
       d.style.marginLeft = '6px';
@@ -271,7 +251,8 @@ export function trendsScreen() {
       d.style.color = delta > 0 ? '#d92d20' : '#12a150';
       v.appendChild(d);
     }
-    r.onclick = () => { location.hash = '#/trends/' + id; };
+    r.appendChild(v);
+    r.onclick = () => { location.hash = '#/trend/' + id; };
     l.appendChild(r);
   }
   if (!rows.length) l.appendChild(empty('Nothing spent yet', 'Your categories will appear here'));
@@ -280,20 +261,19 @@ export function trendsScreen() {
   body.appendChild(section('Daily'));
   const strip = el('div', 'card');
   const days = new Date().getDate();
-  const perDay = [];
-  for (let i = 1; i <= days; i++) perDay.push(0);
+  const perDay = new Array(days).fill(0);
   const start = new Date(); start.setDate(1); start.setHours(0,0,0,0);
   for (const t of state.tx) {
     if (t.amount >= 0 || t.ts < start.getTime()) continue;
     const d = new Date(t.ts).getDate();
-    perDay[d - 1] = (perDay[d - 1] || 0) + Math.abs(t.amount);
+    if (d >= 1 && d <= days) perDay[d - 1] += Math.abs(t.amount);
   }
   const maxD = Math.max(1, ...perDay);
   const bars = el('div');
   bars.style.cssText = 'display:flex;align-items:flex-end;gap:3px;height:72px';
   perDay.forEach(v => {
     const b = el('div');
-    b.style.cssText = `flex:1;border-radius:2px;background:${v ? '#ff4f40' : '#ececf0'};height:${Math.max(4, (v / maxD) * 72)}px`;
+    b.style.cssText = 'flex:1;border-radius:2px;height:' + Math.max(4, (v / maxD) * 72) + 'px;background:' + (v ? '#ff4f40' : '#ececf0');
     bars.appendChild(b);
   });
   strip.appendChild(bars);
@@ -345,11 +325,9 @@ export function paymentsScreen() {
   ]) {
     const b = el('button', 'card');
     b.type = 'button';
-    b.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px';
+    b.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;font-weight:700;font-size:12px';
     b.appendChild(icon(ic, 22));
     b.appendChild(el('span', '', label));
-    b.style.fontWeight = '700';
-    b.style.fontSize = '12px';
     b.onclick = () => { location.hash = hash; };
     grid.appendChild(b);
   }
@@ -359,8 +337,7 @@ export function paymentsScreen() {
   const l = el('div', 'list list--boxed');
   for (const p of state.payees) {
     l.appendChild(row({
-      title: p.name, sub: p.sort + ' · ' + p.acct,
-      tile: (() => { const t = tile(p.name); return t; })(),
+      title: p.name, sub: p.sort + ' · ' + p.acct, tile: tile(p.name),
       onClick: () => { location.hash = '#/payee/' + p.id; }
     }));
   }
@@ -386,11 +363,12 @@ export function payeeScreen(id) {
   if (!p) return screen('payee', {title: 'Payee', back: '#/payments', body: empty('Not found')});
   const body = el('div');
   const c = el('div', 'card');
+  c.style.textAlign = 'center';
   const t = tile(p.name, 56);
   t.style.margin = '0 auto 12px';
   c.appendChild(t);
-  c.appendChild(el('div', 'row__t', p.name)).style.textAlign = 'center';
-  c.appendChild(el('div', 'hint', p.sort + ' · ' + p.acct)).style.textAlign = 'center';
+  c.appendChild(el('div', 'row__t', p.name));
+  c.appendChild(el('div', 'hint', p.sort + ' · ' + p.acct));
   body.appendChild(c);
   const send = el('button', 'btn btn--primary btn--block', 'Send money');
   send.onclick = () => { location.hash = '#/send/' + p.id; };
@@ -467,16 +445,13 @@ export function scheduledScreen() {
       title: s.name,
       sub: s.freq === 'once' ? 'Once' : 'Day ' + s.day + ' monthly',
       value: fmt(s.amount), tile: tile(s.name),
-      onClick: () => {
-        confirmSheet({
-          title: s.name, text: 'Cancel this scheduled payment?', confirm: 'Cancel payment', danger: true,
-          onConfirm: () => {
-            state.scheduled = state.scheduled.filter(x => x.id !== s.id);
-            save(); toast('Cancelled');
-            document.dispatchEvent(new CustomEvent('render'));
-          }
-        });
-      }
+      onClick: () => confirmSheet({
+        title: s.name, text: 'Cancel this scheduled payment?', confirm: 'Cancel payment', danger: true,
+        onConfirm: () => {
+          state.scheduled = state.scheduled.filter(x => x.id !== s.id);
+          save(); toast('Cancelled'); rerender();
+        }
+      })
     }));
   }
   if (!state.scheduled.length) l.appendChild(empty('Nothing scheduled'));
@@ -512,7 +487,7 @@ export function borrowingScreen() {
 
   body.appendChild(section('Loans'));
   body.appendChild(list([
-    row({title: 'Personal loan', sub: 'Borrow ' + fmt(1000) + ' – ' + fmt(25000), onClick: () => toast('Loan applications open in Phase D')}),
+    row({title: 'Personal loan', sub: 'Borrow ' + fmt(1000) + ' – ' + fmt(25000), onClick: () => toast('Loans arrive in Phase D')}),
     row({title: 'Overdraft', sub: 'Up to ' + fmt(500) + ' · 39% EAR', onClick: () => toast('Overdraft settings')})
   ]));
 
@@ -524,15 +499,9 @@ export function flexSheet() {
   const amount = input({type: 'number', step: '0.01', placeholder: '100.00'});
   const name = input({placeholder: 'What was it for?'});
   let months = 3;
-  body.appendChild(field({label: 'Amount', input: amount, hint: 'Minimum ' + fmt(FLEX_MIN)}));
-  body.appendChild(field({label: 'Merchant', input: name}));
-  const s = seg(FLEX_MONTHS.map(m => ({label: m + ' months', value: m})), 3, v => {
-    months = v;
-    summary.textContent = preview();
-  });
-  body.appendChild(field({label: 'Term', input: s}));
   const summary = el('p', 'hint');
   summary.style.margin = '0';
+
   const preview = () => {
     const a = round2(Number(amount.value) || 0);
     if (a < FLEX_MIN) return 'Enter at least ' + fmt(FLEX_MIN);
@@ -540,6 +509,13 @@ export function flexSheet() {
     const total = round2(a * (1 + apr * (months / 12)));
     return fmt(round2(total / months)) + ' × ' + months + ' = ' + fmt(total) + ' · ' + (apr === 0 ? '0% APR' : (apr * 100).toFixed(0) + '% APR');
   };
+
+  body.appendChild(field({label: 'Amount', input: amount, hint: 'Minimum ' + fmt(FLEX_MIN)}));
+  body.appendChild(field({label: 'Merchant', input: name}));
+  body.appendChild(field({label: 'Term', input: seg(
+    FLEX_MONTHS.map(m => ({label: m + ' months', value: m})), 3,
+    v => { months = v; summary.textContent = preview(); }
+  )}));
   summary.textContent = preview();
   amount.oninput = () => { summary.textContent = preview(); };
   body.appendChild(summary);
@@ -552,7 +528,7 @@ export function flexSheet() {
     if (!r.ok) return toast(r.reason === 'minimum' ? 'Minimum is ' + fmt(FLEX_MIN) : 'Pick a term');
     sh.close();
     toast('Flex plan created');
-    document.dispatchEvent(new CustomEvent('render'));
+    rerender();
   };
 }
 
@@ -563,10 +539,8 @@ export function flexLimitSheet() {
   const go = el('button', 'btn btn--primary btn--block', 'Save limit');
   const sh = sheet({title: 'Flex limit', body, foot: go});
   go.onclick = () => {
-    const v = Math.min(3000, Math.max(250, Number(i.value) || 250));
-    state.flex.limit = v;
-    save(); sh.close(); toast('Limit updated');
-    document.dispatchEvent(new CustomEvent('render'));
+    state.flex.limit = Math.min(3000, Math.max(250, Number(i.value) || 250));
+    save(); sh.close(); toast('Limit updated'); rerender();
   };
 }
 
@@ -611,20 +585,24 @@ export function potsScreen() {
   const c = el('div', 'card');
   c.appendChild(el('div', 'ringwrap__l', 'Total saved'));
   c.appendChild(el('div', 'ringwrap__v', fmt(totalPots())));
-  c.appendChild(el('div', 'hint', SAVINGS_INTEREST * 100 + '% AER on savings'));
+  c.appendChild(el('div', 'hint', (SAVINGS_INTEREST * 100).toFixed(1) + '% AER on savings'));
   body.appendChild(c);
 
   const l = el('div', 'list list--boxed');
   for (const p of state.pots) {
     const t = el('span', 'pcard__ico', p.emoji || '🏦');
-    t.style.background = (p.colour || '#eee') + '22';
+    t.style.background = (p.colour || '#eeeeee') + '22';
     l.appendChild(row({
-      title: p.name, sub: fmt(p.saved) + ' of ' + fmt(p.target),
-      value: p.locked ? '🔒' : '', tile: t, chev: true,
+      title: p.name, sub: fmt(p.saved || 0) + ' of ' + fmt(p.target),
+      value: p.locked ? '🔒' : '', tile: t,
       onClick: () => { location.hash = '#/pot/' + p.id; }
     }));
   }
-  if (!state.pots.length) l.appendChild(empty('No pots yet', 'Pots help you put money aside', {label: 'Create a pot', onClick: () => import('./screens-b.js').then(m => m.newPotSheet())}));
+  if (!state.pots.length) {
+    l.appendChild(empty('No pots yet', 'Pots help you put money aside', {
+      label: 'Create a pot', onClick: () => import('./screens-b.js').then(m => m.newPotSheet())
+    }));
+  }
   body.appendChild(l);
   return screen('pots', {title: 'Pots', back: '#/account', body});
 }
@@ -635,13 +613,15 @@ export function potScreen(id) {
   const body = el('div');
   const c = el('div', 'card');
   c.style.textAlign = 'center';
-  c.appendChild(el('div', '', p.emoji || '🏦')).style.fontSize = '40px';
-  c.appendChild(el('div', 'ringwrap__v', fmt(p.saved)));
+  const e = el('div', '', p.emoji || '🏦');
+  e.style.fontSize = '40px';
+  c.appendChild(e);
+  c.appendChild(el('div', 'ringwrap__v', fmt(p.saved || 0)));
   c.appendChild(el('div', 'hint', 'of ' + fmt(p.target) + ' target'));
   const bar = el('div', 'pbar');
   bar.style.marginTop = '12px';
   const f = el('div', 'pbar__f');
-  f.style.width = Math.min(100, (p.saved / Math.max(1, p.target)) * 100) + '%';
+  f.style.width = Math.min(100, ((p.saved || 0) / Math.max(1, p.target)) * 100) + '%';
   bar.appendChild(f);
   c.appendChild(bar);
   body.appendChild(c);
@@ -655,7 +635,7 @@ export function potScreen(id) {
     if (!a) return toast('Enter an amount');
     if (!potMove(p.id, a, 'in')) return toast('Not enough money');
     toast('Added ' + fmt(a));
-    document.dispatchEvent(new CustomEvent('render'));
+    rerender();
   };
   body.appendChild(add);
 
@@ -665,23 +645,21 @@ export function potScreen(id) {
     if (!a) return toast('Enter an amount');
     if (!potMove(p.id, a, 'out')) return toast('Not enough in the pot');
     toast('Withdrew ' + fmt(a));
-    document.dispatchEvent(new CustomEvent('render'));
+    rerender();
   };
   body.appendChild(wd);
 
   body.appendChild(list([
     row({title: 'Edit pot', onClick: () => import('./screens-b.js').then(m => m.editPotSheet(p.id))}),
     row({title: 'Round-ups', value: p.roundUp ? 'On' : 'Off', chev: false}),
-    row({title: 'Delete pot', onClick: () => {
-      confirmSheet({
-        title: 'Delete ' + p.name, text: 'Money will go back to your balance.', danger: true, confirm: 'Delete',
-        onConfirm: () => {
-          state.balance = round2(state.balance + p.saved);
-          state.pots = state.pots.filter(x => x.id !== p.id);
-          save(); toast('Pot deleted'); location.hash = '#/pots';
-        }
-      });
-    }})
+    row({title: 'Delete pot', onClick: () => confirmSheet({
+      title: 'Delete ' + p.name, text: 'Money will go back to your balance.', danger: true, confirm: 'Delete',
+      onConfirm: () => {
+        state.balance = round2(state.balance + (p.saved || 0));
+        state.pots = state.pots.filter(x => x.id !== p.id);
+        save(); toast('Pot deleted'); location.hash = '#/pots';
+      }
+    })})
   ]));
 
   return screen('pot-' + id, {title: p.name, back: '#/pots', body});
