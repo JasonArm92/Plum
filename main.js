@@ -9,7 +9,7 @@ import {
 
 import {
   mountHome, mountSave, mountGrow, mountPay, mountTrends, mountAccount, mountAcc, mountPots,
-  mountPotDetail, mountInvest, mountStatements
+  mountPotDetail, mountInvest, mountStatements, addTxSheet
 } from './screens-a.js';
 
 import {
@@ -150,6 +150,7 @@ function boot(){
   on('bellBtn', () => go('notifs'));
   on('searchBtn', () => go('search'));
   on('backBtn', goBack);
+  on('plusBtn', addTxSheet);
 
   on('privBtn', () => {
     const on_ = togglePriv();
@@ -200,7 +201,7 @@ function boot(){
 
   if ('serviceWorker' in navigator){
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=22').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=31').catch(() => {});
     });
   }
 }
