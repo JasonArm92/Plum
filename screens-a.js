@@ -1,16 +1,18 @@
 import {
-  state, fmt, fmtShort, round2, leftToSpend, spentThisMonth, byCategory,
+  state, fmt, fmtShort, round2, leftToSpent_placeholder, leftToSpend, spentThisMonth, byCategory,
   lastMonthByCategory, upcoming, totalPots, flexApr, flexPurchase, FLEX_MIN,
   FLEX_MONTHS, addTx, takeFunds, potMove, save, acc, bal, setActive, isJoint,
   portfolioValue, budgetFor, setBudget, totalBudget, hasBudget, budgetLeft,
   payeesSorted, addPayee, updatePayee, removePayee, toggleFav, recentPayments,
-  splitsOutstandingTotal
-} from './core.js?v=38';
-import { CATEGORIES, SAVINGS_INTEREST } from './data.js?v=38';
+  splitsOutstandingTotal, flexUsed, flexAvailable, totalLoanRemaining, totalBorrowed,
+  loanQuote, loanApr, takeLoan, flexSettle, LOAN_MIN, LOAN_MAX, LOAN_TERMS,
+  OVERDRAFT_LIMITS, OVERDRAFT_EAR, overdraftDaily
+} from './core.js?v=39';
+import { CATEGORIES, SAVINGS_INTEREST } from './data.js?v=39';
 import {
   el, screen, row, list, section, tile, avatar, icon, catIcon, cardArt, spendBar,
   empty, toast, sheet, confirmSheet, field, input, seg, switchEl, pill
-} from './ui.js?v=38';
+} from './ui.js?v=39';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -34,7 +36,7 @@ export function homeScreen() {
   add.type = 'button';
   add.setAttribute('aria-label', 'Add transaction');
   add.appendChild(icon('plus', 18));
-  add.onclick = () => import('./screens-b.js?v=38').then(m => m.addTxSheet());
+  add.onclick = () => import('./screens-b.js?v=39').then(m => m.addTxSheet());
   h.appendChild(add);
   s.appendChild(h);
 
@@ -49,7 +51,7 @@ export function homeScreen() {
     if (key === 'card') {
       const w = el('div');
       w.style.padding = '0 16px';
-      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=38').then(m => m.cardSheet())));
+      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=39').then(m => m.cardSheet())));
       body.appendChild(w);
     } else if (key === 'balance') {
       const w = el('div');
@@ -81,7 +83,7 @@ export function homeScreen() {
   edit.style.padding = '8px 16px 0';
   const eb = el('button', 'btn btn--ghost btn--sm btn--block');
   eb.textContent = 'Edit home';
-  eb.onclick = () => import('./screens-b.js?v=38').then(m => m.layoutSheet());
+  eb.onclick = () => import('./screens-b.js?v=39').then(m => m.layoutSheet());
   edit.appendChild(eb);
   body.appendChild(edit);
 
@@ -156,7 +158,7 @@ function carousel() {
       const add = el('button', 'pcard pcard--new');
       add.type = 'button';
       add.innerHTML = '<div style="font-size:22px">＋</div><div>New pot</div>';
-      add.onclick = () => import('./screens-b.js?v=38').then(m => m.newPotSheet());
+      add.onclick = () => import('./screens-b.js?v=39').then(m => m.newPotSheet());
       track.appendChild(add);
     } else if (key === 'invest') {
       const b = el('button', 'pcard');
@@ -266,7 +268,7 @@ export function trendsScreen() {
     top.appendChild(el('div', 'hint', 'No budget set'));
     const b = el('button', 'btn btn--ghost btn--sm btn--block', 'Set a budget');
     b.style.marginTop = '12px';
-    b.onclick = () => import('./screens-b.js?v=38').then(x => x.budgetSheet());
+    b.onclick = () => import('./screens-b.js?v=39').then(x => x.budgetSheet());
     top.appendChild(b);
   }
   body.appendChild(top);
@@ -301,7 +303,7 @@ export function trendsScreen() {
     const amtBtn = el('button', 'catrow__v');
     amtBtn.type = 'button';
     amtBtn.textContent = fmt(amt);
-    amtBtn.onclick = () => import('./screens-b.js?v=38').then(x => x.targetSheet(id));
+    amtBtn.onclick = () => import('./screens-b.js?v=39').then(x => x.targetSheet(id));
     amtWrap.appendChild(amtBtn);
     if (delta !== null) {
       const d = el('span', 'hint');
@@ -312,7 +314,7 @@ export function trendsScreen() {
     const chip = el('button', 'tgt' + (tgt ? ' tgt--on' : ''));
     chip.type = 'button';
     chip.textContent = tgt ? fmt(tgt, {dp: 0}) : 'Set';
-    chip.onclick = () => import('./screens-b.js?v=38').then(x => x.targetSheet(id));
+    chip.onclick = () => import('./screens-b.js?v=39').then(x => x.targetSheet(id));
     amtWrap.appendChild(chip);
     r.appendChild(amtWrap);
 
@@ -379,7 +381,7 @@ export function trendCatScreen(id) {
   tgtRow.appendChild(tm);
   const tb = el('button', 'btn btn--primary btn--sm');
   tb.textContent = tgt ? 'Edit' : 'Set';
-  tb.onclick = () => import('./screens-b.js?v=38').then(x => x.targetSheet(id));
+  tb.onclick = () => import('./screens-b.js?v=39').then(x => x.targetSheet(id));
   tgtRow.appendChild(tb);
   body.appendChild(tgtRow);
 
@@ -429,11 +431,8 @@ export function paymentsScreen() {
   const outstanding = splitsOutstandingTotal();
   if (outstanding > 0) {
     body.appendChild(list([
-      row({
-        title: 'Owed to you', sub: 'From your splits',
-        value: fmt(outstanding),
-        onClick: () => { location.hash = '#/splits'; }
-      })
+      row({title: 'Owed to you', sub: 'From your splits', value: fmt(outstanding),
+        onClick: () => { location.hash = '#/splits'; }})
     ]));
   }
 
@@ -464,7 +463,7 @@ export function paymentsScreen() {
   body.appendChild(add);
 
   const edit = el('button', 'btn btn--ghost btn--sm btn--block', 'Edit actions');
-  edit.onclick = () => import('./screens-b.js?v=38').then(m => m.paymentsEditorSheet());
+  edit.onclick = () => import('./screens-b.js?v=39').then(m => m.paymentsEditorSheet());
   body.appendChild(edit);
 
   return screen('payments', {title: 'Payments', body});
@@ -516,8 +515,7 @@ export function payeeScreen(id) {
     const rl = el('div', 'list list--boxed');
     for (const r of recents) {
       rl.appendChild(row({
-        title: fmt(r.amount), sub: new Date(r.ts).toLocaleDateString('en-GB'),
-        chev: false
+        title: fmt(r.amount), sub: new Date(r.ts).toLocaleDateString('en-GB'), chev: false
       }));
     }
     body.appendChild(rl);
@@ -588,10 +586,7 @@ export function sendScreen(payeeId) {
     const a = round2(Number(amount.value));
     if (!a || a <= 0) return toast('Enter an amount');
     if (!takeFunds(a)) return toast('Not enough money');
-    const tx = addTx({
-      name: p ? p.name : 'Bank transfer', amount: -a,
-      category: 'transfers', note: ref.value, ref: ref.value
-    });
+    const tx = addTx({name: p ? p.name : 'Bank transfer', amount: -a, category: 'transfers', note: ref.value, ref: ref.value});
     toast('Sent ' + fmt(a));
     location.hash = '#/receipt/' + tx.id;
   };
@@ -662,32 +657,122 @@ export function scheduledScreen() {
   return screen('scheduled', {title: 'Scheduled', back: '#/payments', body});
 }
 
+/* ---------- borrowing ---------- */
+
 export function borrowingScreen() {
   const body = el('div');
-  const f = state.flex;
-  const avail = round2(Math.max(0, f.limit - f.used));
+  const owed = totalBorrowed();
 
   const c = el('div', 'card');
-  c.appendChild(el('div', 'lts__l', 'Flex available'));
-  c.appendChild(el('div', 'lts__v', fmt(avail)));
-  c.appendChild(spendBar(f.used / Math.max(1, f.limit)));
-  c.appendChild(el('div', 'hint', fmt(f.used) + ' of ' + fmt(f.limit) + ' in use'));
+  c.appendChild(el('div', 'lts__l', 'Total borrowed'));
+  c.appendChild(el('div', 'lts__v', fmt(owed)));
+  c.appendChild(el('div', 'hint', 'Across Flex, loans and overdraft'));
   body.appendChild(c);
 
   body.appendChild(section('Flex'));
   body.appendChild(list([
-    row({title: 'Split a purchase', sub: 'Minimum ' + fmt(FLEX_MIN) + ' · 0% on 3 months', onClick: () => flexSheet()}),
-    row({title: 'Manage limit', sub: 'Current limit ' + fmt(f.limit), onClick: () => flexLimitSheet()}),
-    row({title: 'Flex plan', value: f.active ? 'Active' : 'Off', chev: false})
+    row({title: 'Flex', sub: flexUsed() > 0 ? fmt(flexUsed()) + ' in plans' : 'Nothing owed',
+      value: fmt(flexAvailable()) + ' left', onClick: () => { location.hash = '#/flex'; }}),
+    row({title: 'Split a purchase', sub: 'Minimum ' + fmt(FLEX_MIN) + ' · 0% on 3 months',
+      onClick: () => flexSheet()})
   ]));
 
-  body.appendChild(section('Loans'));
+  body.appendChild(section('Borrow'));
   body.appendChild(list([
-    row({title: 'Personal loan', sub: 'Borrow ' + fmt(1000) + ' – ' + fmt(25000), onClick: () => toast('Loans arrive next phase')}),
-    row({title: 'Overdraft', sub: 'Up to ' + fmt(500) + ' · 39% EAR', onClick: () => toast('Overdraft settings')})
+    row({title: 'Personal loan', sub: fmt(LOAN_MIN) + ' – ' + fmt(LOAN_MAX) + ' · from 7.9% APR',
+      value: state.loans.length ? fmt(totalLoanRemaining()) : '',
+      onClick: () => { location.hash = '#/loan'; }}),
+    row({title: 'Overdraft', sub: state.overdraft.enabled ? 'Up to ' + fmt(state.overdraft.limit) : 'Not set up',
+      onClick: () => { location.hash = '#/overdraft'; }})
   ]));
+
+  if (state.flex.plans.length) {
+    body.appendChild(section('Your Flex plans'));
+    const l = el('div', 'list list--boxed');
+    for (const p of state.flex.plans) {
+      l.appendChild(row({
+        title: p.name, sub: fmt(p.per) + '/month · ' + p.months + ' months',
+        value: fmt(p.remaining), onClick: () => { location.hash = '#/flex-plan/' + p.id; }
+      }));
+    }
+    body.appendChild(l);
+  }
+
+  if (state.loans.length) {
+    body.appendChild(section('Your loans'));
+    const l = el('div', 'list list--boxed');
+    for (const l2 of state.loans) {
+      l.appendChild(row({
+        title: 'Personal loan', sub: fmt(l2.per) + '/month · ' + l2.months + ' months',
+        value: fmt(l2.remaining), chev: false
+      }));
+    }
+    body.appendChild(l);
+  }
 
   return screen('borrowing', {title: 'Borrowing', body});
+}
+
+export function flexScreen() {
+  const body = el('div');
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'lts__l', 'Available to Flex'));
+  c.appendChild(el('div', 'lts__v', fmt(flexAvailable())));
+  c.appendChild(spendBar(flexUsed() / Math.max(1, state.flex.limit)));
+  c.appendChild(el('div', 'hint', 'Limit ' + fmt(state.flex.limit)));
+  body.appendChild(c);
+
+  const s = el('button', 'btn btn--primary btn--block', 'Flex a purchase');
+  s.onclick = () => flexSheet();
+  body.appendChild(s);
+
+  const lim = el('button', 'btn btn--ghost btn--block', 'Manage limit');
+  lim.onclick = () => flexLimitSheet();
+  body.appendChild(lim);
+
+  if (state.flex.plans.length) {
+    body.appendChild(section('Plans'));
+    const l = el('div', 'list list--boxed');
+    for (const p of state.flex.plans) {
+      l.appendChild(row({
+        title: p.name, sub: fmt(p.per) + '/month · ' + p.months + ' months',
+        value: fmt(p.remaining), onClick: () => { location.hash = '#/flex-plan/' + p.id; }
+      }));
+    }
+    body.appendChild(l);
+  } else {
+    body.appendChild(empty('No Flex plans', 'Flex a purchase to start one'));
+  }
+
+  return screen('flex', {title: 'Flex', back: '#/borrowing', body});
+}
+
+export function flexPlanScreen(id) {
+  const p = state.flex.plans.find(x => x.id === id);
+  if (!p) return screen('flex-plan', {title: 'Plan', back: '#/flex', body: empty('Not found')});
+  const body = el('div');
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'row__t', p.name));
+  c.appendChild(el('div', 'lts__v', fmt(p.remaining)));
+  c.appendChild(el('div', 'hint', 'left of ' + fmt(p.principal) + ' · ' + (p.apr * 100).toFixed(0) + '% APR'));
+  c.appendChild(el('div', 'hint', fmt(p.per) + ' a month for ' + p.months + ' months'));
+  body.appendChild(c);
+
+  const settle = el('button', 'btn btn--primary btn--block', 'Settle early');
+  settle.onclick = () => confirmSheet({
+    title: 'Settle ' + p.name,
+    text: 'Pay ' + fmt(round2(p.remaining * 0.98)) + ' now and save ' + fmt(round2(p.remaining * 0.02)) + '.',
+    confirm: 'Settle',
+    onConfirm: () => {
+      const r = flexSettle(p.id);
+      if (!r) return toast('Not enough money');
+      toast('Settled, saved ' + fmt(r.saved));
+      location.hash = '#/flex';
+    }
+  });
+  body.appendChild(settle);
+
+  return screen('flex-plan-' + id, {title: 'Flex plan', back: '#/flex', body});
 }
 
 export function flexSheet() {
@@ -701,6 +786,7 @@ export function flexSheet() {
   const preview = () => {
     const a = round2(Number(amount.value) || 0);
     if (a < FLEX_MIN) return 'Enter at least ' + fmt(FLEX_MIN);
+    if (a > flexAvailable()) return 'Over your ' + fmt(flexAvailable()) + ' available';
     const apr = flexApr(a, months);
     const total = round2(a * (1 + apr * (months / 12)));
     return fmt(round2(total / months)) + ' × ' + months + ' = ' + fmt(total) + ' · ' + (apr === 0 ? '0% APR' : (apr * 100).toFixed(0) + '% APR');
@@ -721,10 +807,11 @@ export function flexSheet() {
   go.onclick = () => {
     const a = round2(Number(amount.value) || 0);
     const r = flexPurchase(a, months, name.value || 'Flex purchase');
-    if (!r.ok) return toast(r.reason === 'minimum' ? 'Minimum is ' + fmt(FLEX_MIN) : 'Pick a term');
+    if (!r.ok) return toast(r.reason === 'minimum' ? 'Minimum is ' + fmt(FLEX_MIN)
+      : r.reason === 'limit' ? 'Over your available limit' : 'Pick a term');
     sh.close();
     toast('Flex plan created');
-    rerender();
+    location.hash = '#/flex';
   };
 }
 
@@ -739,6 +826,117 @@ export function flexLimitSheet() {
     save(); sh.close(); toast('Limit updated'); rerender();
   };
 }
+
+export function loanScreen() {
+  const body = el('div');
+  let amount = 5000;
+  let months = 36;
+
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'lts__l', 'How much'));
+  c.appendChild(el('div', 'lts__v', fmt(amount)));
+  const slider = el('input', 'slider');
+  slider.type = 'range';
+  slider.min = String(LOAN_MIN);
+  slider.max = String(LOAN_MAX);
+  slider.step = '500';
+  slider.value = String(amount);
+  c.appendChild(slider);
+  body.appendChild(c);
+
+  const termCard = el('div', 'card card--flat');
+  termCard.appendChild(el('div', 'row__t', 'Over how long'));
+  termCard.appendChild(field({label: '', input: seg(
+    LOAN_TERMS.map(m => ({label: m + 'm', value: m})), months,
+    v => { months = v; update(); }
+  )}));
+  body.appendChild(termCard);
+
+  const q = el('div', 'quote');
+  body.appendChild(q);
+
+  const update = () => {
+    const quote = loanQuote(amount, months);
+    q.innerHTML = '';
+    q.appendChild(el('div', 'hint', 'Monthly repayment'));
+    q.appendChild(el('div', 'quote__v', fmt(quote.per)));
+    q.appendChild(el('div', 'hint',
+      fmt(quote.total) + ' total · ' + (quote.apr * 100).toFixed(1) + '% APR representative'));
+  };
+  update();
+  slider.oninput = () => {
+    amount = Number(slider.value);
+    c.querySelector('.lts__v').textContent = fmt(amount);
+    update();
+  };
+
+  const eligible = el('div', 'card card--flat');
+  eligible.appendChild(el('div', 'row__t', 'You are eligible'));
+  eligible.appendChild(el('div', 'hint', 'Based on your Monzo history. A hard check happens when you accept.'));
+  body.appendChild(eligible);
+
+  const go = el('button', 'btn btn--primary btn--block', 'Accept ' + fmt(amount));
+  go.onclick = () => {
+    takeLoan(amount, months);
+    toast('Loan paid into your account');
+    location.hash = '#/borrowing';
+  };
+  body.appendChild(go);
+
+  const note = el('p', 'hint',
+    'Representative example: ' + fmt(5000) + ' over 36 months at 12.9% APR costs ' +
+    fmt(loanQuote(5000, 36).total) + ' in total.');
+  body.appendChild(note);
+
+  return screen('loan', {title: 'Personal loan', back: '#/borrowing', body});
+}
+
+export function overdraftScreen() {
+  const body = el('div');
+  const bodyCard = el('div', 'card');
+  bodyCard.appendChild(el('div', 'lts__l', 'Overdraft'));
+  bodyCard.appendChild(el('div', 'lts__v', state.overdraft.enabled ? fmt(state.overdraft.limit) : 'Off'));
+  bodyCard.appendChild(el('div', 'hint', (OVERDRAFT_EAR * 100).toFixed(0) + '% EAR · charged daily only when used'));
+  body.appendChild(bodyCard);
+
+  body.appendChild(section('Choose a limit'));
+  const l = el('div', 'list list--boxed');
+  for (const lim of OVERDRAFT_LIMITS) {
+    l.appendChild(row({
+      title: fmt(lim),
+      sub: fmt(overdraftDaily(lim)) + ' a day when fully used',
+      value: state.overdraft.enabled && state.overdraft.limit === lim ? '✓' : '',
+      chev: false,
+      onClick: () => {
+        state.overdraft.enabled = true;
+        state.overdraft.limit = lim;
+        save(); toast('Overdraft set to ' + fmt(lim)); rerender();
+      }
+    }));
+  }
+  body.appendChild(l);
+
+  const cost = el('div', 'card card--flat');
+  cost.appendChild(el('div', 'row__t', 'What it costs'));
+  cost.appendChild(el('div', 'hint',
+    'Using the full ' + fmt(OVERDRAFT_LIMITS[1]) + ' for 30 days costs about ' +
+    fmt(round2(overdraftDaily(OVERDRAFT_LIMITS[1]) * 30)) + '.'));
+  body.appendChild(cost);
+
+  if (state.overdraft.enabled) {
+    const off = el('button', 'btn btn--ghost btn--block', 'Turn off overdraft');
+    off.onclick = () => {
+      state.overdraft.enabled = false;
+      state.overdraft.limit = 0;
+      save(); toast('Overdraft off'); rerender();
+    };
+    body.appendChild(off);
+  }
+
+  return screen('overdraft', {title: 'Overdraft', back: '#/borrowing', body});
+}
+
+/* ---------- account & settings ---------- */
 
 export function accountScreen() {
   const body = el('div');
@@ -773,18 +971,88 @@ export function accountScreen() {
     row({title: 'Monzo Plus', sub: 'Manage your plan', onClick: () => { location.hash = '#/plus'; }})
   ]));
 
-  body.appendChild(section('Account'));
   body.appendChild(list([
-    row({title: 'Personal details', onClick: () => { location.hash = '#/profile'; }}),
-    row({title: 'Cards', sub: state.cards.length + ' active', onClick: () => { location.hash = '#/cards'; }}),
-    row({title: 'Security', onClick: () => { location.hash = '#/security'; }}),
-    row({title: 'Notifications', onClick: () => { location.hash = '#/notifications'; }}),
-    row({title: 'Statements', onClick: () => { location.hash = '#/statements'; }}),
-    row({title: 'Appearance', onClick: () => { location.hash = '#/appearance'; }}),
-    row({title: 'About', onClick: () => { location.hash = '#/about'; }})
+    row({title: 'Settings', sub: 'Details, security, preferences', onClick: () => { location.hash = '#/settings'; }})
   ]));
 
   return screen('account', {title: 'Account', body});
+}
+
+export function settingsScreen() {
+  const body = el('div');
+  body.appendChild(list([
+    row({title: 'Personal details', sub: 'Name, address, contact', onClick: () => { location.hash = '#/settings-personal'; }}),
+    row({title: 'Security and privacy', sub: 'PIN, biometrics, app lock', onClick: () => { location.hash = '#/settings-security'; }}),
+    row({title: 'Preferences', sub: 'Theme, notifications, budgets', onClick: () => { location.hash = '#/settings-preferences'; }}),
+    row({title: 'Documents', sub: 'Statements and letters', onClick: () => { location.hash = '#/settings-documents'; }}),
+    row({title: 'About Monzo', sub: 'Version and legal', onClick: () => { location.hash = '#/settings-about'; }})
+  ]));
+  return screen('settings', {title: 'Settings', back: '#/account', body});
+}
+
+export function settingsPersonalScreen() {
+  const body = el('div');
+  body.appendChild(list([
+    row({title: 'Name and date of birth', onClick: () => { location.hash = '#/profile'; }}),
+    row({title: 'Address', sub: state.user.address + ', ' + state.user.postcode, onClick: () => { location.hash = '#/profile'; }}),
+    row({title: 'Email', sub: state.user.email, onClick: () => { location.hash = '#/profile'; }}),
+    row({title: 'Phone', sub: state.user.phone, onClick: () => { location.hash = '#/profile'; }}),
+    row({title: 'Cards', sub: state.cards.length + ' active', onClick: () => { location.hash = '#/cards'; }})
+  ]));
+  return screen('settings-personal', {title: 'Personal details', back: '#/settings', body});
+}
+
+export function settingsSecurityScreen() {
+  const body = el('div');
+  body.appendChild(list([
+    row({title: 'Change PIN', onClick: () => toast('PIN change')}),
+    row({title: 'Biometrics', value: state.settings.biometrics ? 'On' : 'Off', chev: false}),
+    row({title: 'App lock', sub: 'Require PIN on open', chev: false, value: 'On'})
+  ]));
+  const r = el('button', 'btn btn--ghost btn--block', 'Reset app data');
+  r.onclick = () => confirmSheet({
+    title: 'Reset everything', text: 'This wipes all local data.', danger: true, confirm: 'Reset',
+    onConfirm: () => { reset(); location.hash = '#/login'; }
+  });
+  body.appendChild(r);
+  return screen('settings-security', {title: 'Security and privacy', back: '#/settings', body});
+}
+
+export function settingsPreferencesScreen() {
+  const body = el('div');
+  body.appendChild(list([
+    row({title: 'Appearance', sub: 'Theme and motion', onClick: () => { location.hash = '#/appearance'; }}),
+    row({title: 'Notifications', sub: 'Alerts and haptics', onClick: () => { location.hash = '#/notifications'; }}),
+    row({title: 'Budgets', sub: 'Monthly targets', onClick: () => { location.hash = '#/trends'; }}),
+    row({title: 'Home layout', sub: 'Reorder sections', onClick: () => import('./screens-b.js?v=39').then(m => m.layoutSheet())})
+  ]));
+  return screen('settings-preferences', {title: 'Preferences', back: '#/settings', body});
+}
+
+export function settingsDocumentsScreen() {
+  const body = el('div');
+  body.appendChild(list([
+    row({title: 'Statements', sub: 'Monthly PDFs', onClick: () => { location.hash = '#/statements'; }}),
+    row({title: 'Proof of income', sub: 'Letters for landlords', onClick: () => toast('Letter requested')}),
+    row({title: 'Terms and conditions', onClick: () => toast('Opening terms')})
+  ]));
+  return screen('settings-documents', {title: 'Documents', back: '#/settings', body});
+}
+
+export function settingsAboutScreen() {
+  const body = el('div');
+  body.appendChild(list([
+    row({title: 'About', sub: 'Version and build', onClick: () => { location.hash = '#/about'; }}),
+    row({title: 'Privacy policy', onClick: () => toast('Opening policy')})
+  ]));
+  const out = el('button', 'btn btn--danger btn--block', 'Log out');
+  out.onclick = () => {
+    sessionStorage.removeItem('monzo_auth');
+    location.hash = '#/login';
+    rerender();
+  };
+  body.appendChild(out);
+  return screen('settings-about', {title: 'About Monzo', back: '#/settings', body});
 }
 
 export function potsScreen() {
@@ -807,7 +1075,7 @@ export function potsScreen() {
   }
   if (!state.pots.length) {
     l.appendChild(empty('No pots yet', 'Pots help you put money aside', {
-      label: 'Create a pot', onClick: () => import('./screens-b.js?v=38').then(m => m.newPotSheet())
+      label: 'Create a pot', onClick: () => import('./screens-b.js?v=39').then(m => m.newPotSheet())
     }));
   }
   body.appendChild(l);
@@ -852,7 +1120,7 @@ export function potScreen(id) {
   body.appendChild(wd);
 
   body.appendChild(list([
-    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=38').then(m => m.editPotSheet(p.id))}),
+    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=39').then(m => m.editPotSheet(p.id))}),
     row({title: 'Round-ups', value: p.roundUp ? 'On' : 'Off', chev: false}),
     row({title: 'Delete pot', onClick: () => confirmSheet({
       title: 'Delete ' + p.name, text: 'Money will go back to your balance.', danger: true, confirm: 'Delete',
