@@ -269,7 +269,8 @@ textarea.input{padding:var(--s3) var(--s4);min-height:88px;resize:vertical}
 @keyframes shim{to{background-position:-200% 0}}
 .errbox{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
   white-space:pre-wrap;word-break:break-word;text-align:left;background:var(--bg-2);
-  padding:var(--s3);border-radius:var(--d1);max-height:220px;overflow:auto;width:100%}
+  padding:var(--s3);border-radius:var(--d1);max-height:220px;overflow:auto;width:100%;
+  border:1px solid var(--line);margin:12px 0 0}
 
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms!important;transition-duration:.01ms!important}
