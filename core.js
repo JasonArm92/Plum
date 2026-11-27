@@ -1,9 +1,8 @@
-import { FUNDS, FUND_ALIASES, CATEGORY_IDS } from './data.js?v=34';
+import { FUNDS, CATEGORY_IDS } from './data.js?v=34';
 
-export const VERSION = 22;
-export const KEY = 'monzo_v22';
-export const LEGACY_KEYS = ['monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
-export const ALL_KEYS = [KEY, ...LEGACY_KEYS];
+export const VERSION = 23;
+export const KEY = 'monzo_v23';
+export const LEGACY_KEYS = ['monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -30,6 +29,7 @@ export function fmt(n, opts = {}) {
 
 export function fmtShort(n) {
   const v = Math.abs(Number(n) || 0);
+  if (v >= 1000000) return '£' + (v / 1000000).toFixed(2).replace(/0$/, '') + 'm';
   if (v >= 1000) return '£' + (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
   return fmt(n, {dp: v % 1 === 0 ? 0 : 2});
 }
@@ -53,11 +53,32 @@ export function dayLabel(ts) {
   return d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
 }
 
+/* ---------- holdings seed ---------- */
+
+const HOLDING_SEED = [
+  ['f01', 18000], ['f02', 21500], ['f03', 16200], ['f04', 24800],
+  ['f05', 13400], ['f06', 19700], ['f07', 22800], ['f08', 15100],
+  ['f09', 26300], ['f10', 17600], ['f11', 20300], ['f12', 14400],
+  ['f13', 23500], ['f14', 18900], ['f15', 27200], ['f16', 12500],
+  ['f17', 21800], ['f18', 16600], ['f19', 25100], ['f20', 19300],
+  ['f21', 15900], ['f22', 22600], ['f23', 18100], ['f24', 24400],
+  ['f25', 13700], ['f26', 20900], ['f27', 17200], ['f28', 25800],
+  ['f29', 14800], ['f30', 22100], ['f31', 19400], ['f32', 16500],
+  ['f33', 23700], ['f34', 12900], ['f35', 20600], ['f36', 18300],
+  ['f37', 25400], ['f38', 15600], ['f39', 21900], ['f40', 17800],
+  ['f41', 23100], ['f42', 14200], ['f43', 24700], ['f44', 16900],
+  ['f45', 21200], ['f46', 19100], ['f47', 15400], ['f48', 17545.44]
+];
+
+function seedHoldings() {
+  return HOLDING_SEED.map(([f, v]) => ({f, v}));
+}
+
 function defaultState() {
   const base = now();
-  const mk = (name, amount, cat, daysAgo) => ({
+  const mk = (name, amount, cat, daysAgo, acct) => ({
     id: uid('tx'), name, amount, category: cat, ts: base - daysAgo * 86400000,
-    type: amount > 0 ? 'in' : 'out'
+    type: amount > 0 ? 'in' : 'out', acct: acct || 'personal'
   });
   return {
     v: VERSION,
@@ -67,52 +88,57 @@ function defaultState() {
       address: '259 Piper Knowle Road', city: 'Stockton-on-Tees',
       postcode: 'TS19 8JQ', pin: PIN
     },
-    balance: 4382.19,
-    savings: 12980.00,
+    accounts: {
+      personal: {id:'personal', name:'Personal', balance: 4823.70, card: {last4:'4821', frozen:false}},
+      joint: {id:'joint', name:'Joint', balance: 7121.92, with:'Chloe Brown', card: {last4:'7734', frozen:false}}
+    },
+    active: 'personal',
     pots: [
-      {id:'pot_holiday', name:'Holiday', target:3000, saved:2400, emoji:'🏖️', colour:'#1f6feb', locked:false, roundUp:true, created:base - 240*86400000},
-      {id:'pot_car', name:'Car service', target:1500, saved:1150, emoji:'🚗', colour:'#ff8000', locked:false, roundUp:false, created:base - 180*86400000},
-      {id:'pot_xmas', name:'Christmas', target:1200, saved:640, emoji:'🎄', colour:'#12a150', locked:true, roundUp:true, created:base - 120*86400000},
-      {id:'pot_house', name:'House deposit', target:20000, saved:8400, emoji:'🏠', colour:'#8b5cf6', locked:false, roundUp:true, created:base - 420*86400000}
+      {id:'pot_holiday', name:'Holiday', target:6000, saved:4250.00, emoji:'🏖️', colour:'#1f6feb', locked:false, roundUp:true, created:base - 300*86400000},
+      {id:'pot_car', name:'New car', target:12000, saved:6800.00, emoji:'🚗', colour:'#ff8000', locked:false, roundUp:false, created:base - 240*86400000},
+      {id:'pot_xmas', name:'Christmas', target:2000, saved:1240.50, emoji:'🎄', colour:'#12a150', locked:true, roundUp:true, created:base - 120*86400000},
+      {id:'pot_emerg', name:'Emergency fund', target:10000, saved:5000.00, emoji:'🛟', colour:'#d92d20', locked:false, roundUp:false, created:base - 400*86400000},
+      {id:'pot_dep', name:'House deposit', target:20000, saved:2748.53, emoji:'🏠', colour:'#8b5cf6', locked:false, roundUp:true, created:base - 80*86400000},
+      {id:'pot_gad', name:'Gadgets', target:3000, saved:1400.00, emoji:'💻', colour:'#0891b2', locked:false, roundUp:false, created:base - 60*86400000}
     ],
     tx: [
-      mk('Tesco', -42.18, 'groceries', 0),
+      mk('Tesco', -42.18, 'groceries', 0, 'joint'),
       mk('Greggs', -4.85, 'eating', 0),
-      mk('Salary', 5450.00, 'income', 1),
+      mk('Salary', 2450.00, 'income', 1),
       mk('Northern', -8.40, 'transport', 1),
       mk('Amazon', -23.99, 'shopping', 2),
-      mk('Octopus Energy', -178.00, 'bills', 3),
+      mk('Octopus Energy', -78.00, 'bills', 3, 'joint'),
       mk('PureGym', -24.99, 'fitness', 4),
-      mk('Cineworld', -31.50, 'entertainment', 5),
-      mk('Boots', -12.45, 'health', 6)
+      mk('Cineworld', -31.50, 'entertainment', 5, 'joint'),
+      mk('Boots', -12.45, 'health', 6),
+      mk('IKEA', -164.00, 'home', 7, 'joint'),
+      mk('Spotify', -11.99, 'entertainment', 8),
+      mk('Sainsburys', -63.40, 'groceries', 9, 'joint')
     ],
     scheduled: [
-      {id:uid('sch'), name:'Octopus Energy', amount:-178, category:'bills', day:12, freq:'monthly', next: base + 4*86400000},
-      {id:uid('sch'), name:'PureGym', amount:-24.99, category:'fitness', day:20, freq:'monthly', next: base + 12*86400000},
-      {id:uid('sch'), name:'TV Licence', amount:-13.25, category:'bills', day:1, freq:'monthly', next: base + 20*86400000}
+      {id:uid('sch'), name:'Octopus Energy', amount:-78, category:'bills', day:12, freq:'monthly', next: base + 4*86400000, acct:'joint'},
+      {id:uid('sch'), name:'PureGym', amount:-24.99, category:'fitness', day:20, freq:'monthly', next: base + 12*86400000, acct:'personal'},
+      {id:uid('sch'), name:'TV Licence', amount:-13.25, category:'bills', day:1, freq:'monthly', next: base + 20*86400000, acct:'personal'}
     ],
     cards: [
       {id:uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}
     ],
     payees: [
       {id:uid('pay'), name:'Sophie Armstrong', sort:'04-00-04', acct:'12345678', initials:'SA'},
-      {id:uid('pay'), name:'Liam Fletcher', sort:'20-45-11', acct:'87654321', initials:'LF'}
+      {id:uid('pay'), name:'Liam Fletcher', sort:'20-45-11', acct:'87654321', initials:'LF'},
+      {id:uid('pay'), name:'Chloe Brown', sort:'30-96-14', acct:'55120934', initials:'CB'}
     ],
-    flex: {limit: 2000, used: 214.40, plan: 'flex', active: true},
+    flex: {limit: 1000, used: 214.40, plan: 'flex', active: true},
     plan: 'plus',
     plus: {since: base - 200*86400000, renews: base + 15*86400000},
-    invest: {
-      cash: 1240.00,
-      units: {swda: 6000, cspx: 700, cukx: 5000, aggg: 5000, cash: 0},
-      contrib: 750, contribDay: 1
-    },
-    pension: {provider:'Nest', balance: 184320.55, monthly: 480, employer: 240, growth: 0.055, joined: base - 4200*86400000},
-    isa: {balance: 62480.00, allowance: 20000, used: 12000, contrib: 500, contribDay: 5},
+    invest: {cash: 4120.60, holdings: seedHoldings(), contrib: 500, contribDay: 1},
+    pension: {provider:'Nest', balance: 41280.55, monthly: 240, employer: 120, growth: 0.055, joined: base - 1200*86400000},
+    isa: {balance: 18620.00, allowance: 20000, used: 3400, contrib: 200, contribDay: 5},
     goals: [],
     layout: {
       order: ['card','balance','ring','carousel','activity'],
       hidden: [],
-      carousel: ['pots','pension','isa']
+      carousel: ['pots','invest','pension','isa']
     },
     settings: {
       notifications: true, marketing: false, biometrics: true,
@@ -130,55 +156,9 @@ const migrations = [
     if (s.plan === 'aura') s.plan = 'plus';
     return s;
   }},
-  {v: 22, fn: s => s}
+  {v: 22, fn: s => s},
+  {v: 23, fn: s => s}
 ];
-
-function num(...vals) {
-  for (const v of vals) {
-    const n = Number(v);
-    if (isFinite(n) && n !== 0) return n;
-  }
-  return 0;
-}
-
-function normaliseUnits(raw) {
-  const out = {};
-  for (const f of FUNDS) out[f.id] = 0;
-  if (!raw) return out;
-
-  const put = (key, value) => {
-    const k = String(key || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const id = FUND_ALIASES[k] || (FUNDS.find(f => f.id === k) ? k : null);
-    if (id) out[id] = (out[id] || 0) + (Number(value) || 0);
-  };
-
-  if (Array.isArray(raw)) {
-    for (const h of raw) {
-      if (!h || typeof h !== 'object') continue;
-      const price = Number(h.price) || 0;
-      const units = h.units !== undefined ? h.units
-        : (h.quantity !== undefined ? h.quantity
-        : (h.value !== undefined && price ? Number(h.value) / price : 0));
-      put(h.id || h.symbol || h.ticker || h.fundId || h.name, units);
-    }
-    return out;
-  }
-
-  if (typeof raw === 'object') {
-    for (const [k, v] of Object.entries(raw)) {
-      if (v && typeof v === 'object') {
-        const price = Number(v.price) || 0;
-        const units = v.units !== undefined ? v.units
-          : (v.quantity !== undefined ? v.quantity
-          : (v.value !== undefined && price ? Number(v.value) / price : 0));
-        put(v.id || v.symbol || v.ticker || k, units);
-      } else {
-        put(k, v);
-      }
-    }
-  }
-  return out;
-}
 
 export function normalise(input) {
   const s = (input && typeof input === 'object') ? input : defaultState();
@@ -187,98 +167,73 @@ export function normalise(input) {
     name: 'Jason Armstrong', first: 'Jason', dob: '1992-10-07', email: '',
     phone: '', address: '', city: '', postcode: '', pin: PIN
   }, s.user || {});
-  if (!s.user.first && s.user.name) s.user.first = String(s.user.name).split(' ')[0];
 
   s.settings = Object.assign({
     notifications: true, marketing: false, biometrics: true, theme: 'system',
     reducedMotion: false, haptics: true, roundUpDefault: true, hideBalance: false
   }, s.settings || {});
 
+  if (!s.accounts || typeof s.accounts !== 'object') {
+    s.accounts = {
+      personal: {id:'personal', name:'Personal', balance: 4823.70, card:{last4:'4821', frozen:false}},
+      joint: {id:'joint', name:'Joint', balance: 7121.92, with:'Chloe Brown', card:{last4:'7734', frozen:false}}
+    };
+  }
+  if (!s.accounts.personal) {
+    s.accounts.personal = {id:'personal', name:'Personal', balance: 0, card:{last4:'4821', frozen:false}};
+  }
+  if (!s.accounts.joint) {
+    s.accounts.joint = {id:'joint', name:'Joint', balance: 0, with:'Chloe Brown', card:{last4:'7734', frozen:false}};
+  }
+  for (const k of Object.keys(s.accounts)) {
+    const a = s.accounts[k];
+    a.id = k;
+    if (typeof a.balance !== 'number' || !isFinite(a.balance)) a.balance = 0;
+    if (!a.card) a.card = {last4: k === 'joint' ? '7734' : '4821', frozen:false};
+    if (!a.name) a.name = k === 'joint' ? 'Joint' : 'Personal';
+  }
+  if (s.active !== 'joint') s.active = 'personal';
+
   s.layout = s.layout || {};
   if (!Array.isArray(s.layout.order) || !s.layout.order.length) {
     s.layout.order = ['card','balance','ring','carousel','activity'];
   }
   if (!Array.isArray(s.layout.hidden)) s.layout.hidden = [];
-  if (!Array.isArray(s.layout.carousel)) s.layout.carousel = ['pots','pension','isa'];
+  if (!Array.isArray(s.layout.carousel)) s.layout.carousel = ['pots','invest','pension','isa'];
 
-  const rawPots = Array.isArray(s.pots) ? s.pots
-    : (Array.isArray(s.savingsPots) ? s.savingsPots
-    : (Array.isArray(s.savings) ? s.savings : []));
-  s.pots = rawPots.map(p => ({
-    id: p.id || uid('pot'),
-    name: p.name || 'Pot',
-    target: num(p.target, p.goal, 100),
-    saved: num(p.saved, p.balance, p.amount, p.value),
-    emoji: p.emoji || '🏦',
-    colour: p.colour || '#6b6b76',
-    locked: !!p.locked,
-    roundUp: !!p.roundUp,
-    created: p.created || now()
-  }));
+  if (!Array.isArray(s.pots)) s.pots = [];
+  if (!Array.isArray(s.tx)) s.tx = [];
+  if (!Array.isArray(s.scheduled)) s.scheduled = [];
+  if (!Array.isArray(s.payees)) s.payees = [];
+  if (!Array.isArray(s.goals)) s.goals = [];
+  if (!Array.isArray(s.cards) || !s.cards.length) {
+    s.cards = [{id: uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}];
+  }
+  for (const t of s.tx) if (!t.acct) t.acct = 'personal';
+  for (const t of s.scheduled) if (!t.acct) t.acct = 'personal';
 
-  s.tx = Array.isArray(s.tx) ? s.tx
-    : (Array.isArray(s.transactions) ? s.transactions : []);
-  s.tx = s.tx.filter(t => t && typeof t === 'object').map(t => ({
-    id: t.id || uid('tx'),
-    name: t.name || t.merchant || t.description || 'Transaction',
-    amount: Number(t.amount) || 0,
-    category: t.category || 'general',
-    ts: t.ts || t.date || t.timestamp || now(),
-    type: (Number(t.amount) || 0) > 0 ? 'in' : 'out',
-    note: t.note || '',
-    receipt: t.receipt || null,
-    potId: t.potId || null
-  }));
-
-  s.scheduled = Array.isArray(s.scheduled) ? s.scheduled
-    : (Array.isArray(s.subscriptions) ? s.subscriptions : []);
-  s.scheduled = s.scheduled.filter(x => x && typeof x === 'object');
-
-  s.payees = Array.isArray(s.payees) ? s.payees : [];
-  s.goals = Array.isArray(s.goals) ? s.goals : [];
-
-  const rawCards = Array.isArray(s.cards) ? s.cards : [];
-  s.cards = rawCards.length ? rawCards.map(c => ({
-    id: c.id || uid('card'),
-    label: c.label || 'Coral',
-    last4: String(c.last4 || '4821'),
-    type: c.type || 'debit',
-    frozen: !!c.frozen,
-    virtual: !!c.virtual,
-    network: c.network || 'mastercard'
-  })) : [{id: uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}];
-
-  const acc = (s.account && typeof s.account === 'object') ? s.account : {};
-  s.balance = num(s.balance, acc.balance, s.currentBalance, 0);
-  s.savings = num(s.savingsBalance, 0);
+  if (typeof s.savings !== 'number') s.savings = 0;
 
   if (!s.flex) s.flex = {limit: 1000, used: 0, plan: 'flex', active: true};
-  s.flex.limit = num(s.flex.limit, 1000);
-  s.flex.used = num(s.flex.used, 0);
+  if (typeof s.flex.limit !== 'number') s.flex.limit = 1000;
+  if (typeof s.flex.used !== 'number') s.flex.used = 0;
 
   if (!s.pension) s.pension = {};
-  s.pension = Object.assign(
-    {provider:'Nest', balance:0, monthly:0, employer:0, growth:0.055, joined: now()},
-    s.pension
-  );
-  s.pension.balance = num(s.pension.balance, 0);
+  s.pension = Object.assign({provider:'Nest', balance:0, monthly:0, employer:0, growth:0.055, joined: now()}, s.pension);
 
   if (!s.isa) s.isa = {};
   s.isa = Object.assign({balance:0, allowance:20000, used:0, contrib:0, contribDay:5}, s.isa);
-  s.isa.balance = num(s.isa.balance, 0);
 
-  const rawInvest = s.invest || s.investments || s.portfolio || {};
-  const rawUnits = (rawInvest && typeof rawInvest === 'object')
-    ? (rawInvest.units || rawInvest.holdings || rawInvest.positions || rawInvest)
-    : {};
-  s.invest = {
-    cash: num(rawInvest && rawInvest.cash, 0),
-    units: normaliseUnits(rawUnits),
-    contrib: num(rawInvest && rawInvest.contrib, 0),
-    contribDay: num(rawInvest && rawInvest.contribDay, 1)
-  };
-  delete s.investments;
-  delete s.portfolio;
+  if (!s.invest) s.invest = {};
+  s.invest = Object.assign({cash:0, holdings:[], contrib:0, contribDay:1}, s.invest);
+  if (!Array.isArray(s.invest.holdings) || !s.invest.holdings.length) {
+    s.invest.holdings = seedHoldings();
+  }
+  s.invest.holdings = s.invest.holdings
+    .filter(h => h && typeof h.f === 'string' && FUNDS.some(f => f.id === h.f))
+    .map(h => ({f: h.f, v: round2(h.v)}));
+  if (!s.invest.holdings.length) s.invest.holdings = seedHoldings();
+  if (typeof s.invest.cash !== 'number') s.invest.cash = 0;
 
   if (!s.plan || !PLANS[s.plan]) s.plan = 'free';
   if (!s.plus) s.plus = {since: now(), renews: now()};
@@ -290,7 +245,6 @@ export function normalise(input) {
 }
 
 export let state = normalise(defaultState());
-export let recoveredFrom = null;
 
 export function migrate(raw) {
   let s = raw;
@@ -299,86 +253,17 @@ export function migrate(raw) {
   return s;
 }
 
-function portfolioOf(s) {
-  const u = s && (s.invest || s.investments || s.portfolio);
-  const units = u && (u.units || u.holdings || u.positions || u);
-  if (!units || typeof units !== 'object') return 0;
-  const norm = normaliseUnits(units);
-  return FUNDS.reduce((a, f) => a + (norm[f.id] || 0) * f.price, 0);
-}
-
-function potTotalOf(s) {
-  const list = Array.isArray(s && s.pots) ? s.pots
-    : (Array.isArray(s && s.savingsPots) ? s.savingsPots : []);
-  return list.reduce((a, p) => a + num(p && p.saved, p && p.balance, p && p.value), 0);
-}
-
-export function score(s) {
-  if (!s || typeof s !== 'object') return 0;
-  const txCount = Array.isArray(s.tx) ? s.tx.length
-    : (Array.isArray(s.transactions) ? s.transactions.length : 0);
-  const pots = Array.isArray(s.pots) ? s.pots.length : 0;
-  const bal = num(s.balance, s.account && s.account.balance, 0);
-  return bal + potTotalOf(s) + portfolioOf(s) + pots * 250 + txCount * 400;
-}
-
-function candidates() {
-  const out = [];
-  for (const k of ALL_KEYS) {
-    let raw = null;
-    try { raw = localStorage.getItem(k); } catch {}
-    if (!raw) continue;
-    try {
-      const data = JSON.parse(raw);
-      out.push({key: k, data, score: score(data)});
-    } catch {}
-  }
-  return out;
-}
-
-export function scan() {
-  return candidates().map(c => ({
-    key: c.key,
-    score: c.score,
-    balance: num(c.data && c.data.balance, 0),
-    pots: Array.isArray(c.data && c.data.pots) ? c.data.pots.length : 0,
-    portfolio: portfolioOf(c.data),
-    tx: Array.isArray(c.data && c.data.tx) ? c.data.tx.length : 0
-  })).sort((a, b) => b.score - a.score);
-}
-
-export function restoreFrom(key) {
-  let raw = null;
-  try { raw = localStorage.getItem(key); } catch {}
-  if (!raw) return false;
-  try {
-    state = normalise(migrate(JSON.parse(raw)));
-  } catch {
-    return false;
-  }
-  recoveredFrom = key;
-  save();
-  return true;
-}
-
-export function recover() {
-  const list = candidates();
-  if (!list.length) return null;
-  list.sort((a, b) => b.score - a.score);
-  const best = list[0];
-  const current = list.find(c => c.key === KEY);
-  if (current && current.score >= best.score) return null;
-  state = normalise(migrate(best.data));
-  recoveredFrom = best.key;
-  save();
-  return best.key;
-}
-
 export function load() {
-  const found = recover();
-  if (found) return state;
   let raw = null;
   try { raw = localStorage.getItem(KEY); } catch {}
+  if (!raw) {
+    for (const k of LEGACY_KEYS) {
+      try {
+        const old = localStorage.getItem(k);
+        if (old) { raw = old; break; }
+      } catch {}
+    }
+  }
   if (!raw) { state = normalise(defaultState()); save(); return state; }
   try {
     state = normalise(migrate(JSON.parse(raw)));
@@ -399,30 +284,49 @@ export function save() {
 
 export function reset() {
   state = normalise(defaultState());
-  recoveredFrom = null;
   save();
 }
 
-export function addTx({name, amount, category = 'general', ts = now(), note = '', receipt = null, potId = null}) {
+/* ---------- accounts ---------- */
+
+export function acc() {
+  return state.accounts[state.active] || state.accounts.personal;
+}
+export function bal() {
+  return acc().balance;
+}
+export function setActive(id) {
+  if (state.accounts[id]) { state.active = id; save(); }
+}
+export function isJoint() {
+  return state.active === 'joint';
+}
+
+/* ---------- money movement ---------- */
+
+export function addTx({name, amount, category = 'general', ts = now(), note = '', receipt = null, potId = null, acct = null}) {
+  const a = acct || state.active;
   const tx = {
     id: uid('tx'), name, amount: round2(amount), category,
-    ts, type: amount > 0 ? 'in' : 'out', note, receipt, potId
+    ts, type: amount > 0 ? 'in' : 'out', note, receipt, potId, acct: a
   };
   state.tx.unshift(tx);
-  state.balance = round2(state.balance + tx.amount);
+  if (state.accounts[a]) state.accounts[a].balance = round2(state.accounts[a].balance + tx.amount);
   save();
   return tx;
 }
 
 export function takeFunds(amount, from = 'balance') {
   const a = round2(amount);
-  if (from === 'balance') {
-    if (state.balance < a) return false;
-    state.balance = round2(state.balance - a);
-  } else if (from === 'savings') {
+  if (from === 'savings') {
     if (state.savings < a) return false;
     state.savings = round2(state.savings - a);
+    save();
+    return true;
   }
+  const account = acc();
+  if (account.balance < a) return false;
+  account.balance = round2(account.balance - a);
   save();
   return true;
 }
@@ -438,7 +342,7 @@ export function potMove(potId, amount, dir) {
   } else {
     if ((pot.saved || 0) < a) return false;
     pot.saved = round2(pot.saved - a);
-    state.balance = round2(state.balance + a);
+    acc().balance = round2(acc().balance + a);
     addTx({name: pot.name + ' pot', amount: a, category: 'transfers', potId});
   }
   save();
@@ -449,12 +353,24 @@ export function totalPots() {
   return round2(state.pots.reduce((s, p) => s + (p.saved || 0), 0));
 }
 
+/* ---------- portfolio ---------- */
+
 export function planInfo(id = state.plan) {
   return PLANS[id] || PLANS.free;
 }
 
+export function holdingValue(h) {
+  const f = FUNDS.find(x => x.id === h.f);
+  return f ? round2(h.v) : 0;
+}
+
 export function portfolioValue() {
-  return round2(FUNDS.reduce((s, f) => s + (state.invest.units[f.id] || 0) * f.price, 0));
+  return round2(state.invest.holdings.reduce((s, h) => s + (h.v || 0), 0));
+}
+
+export function unitsOf(h) {
+  const f = FUNDS.find(x => x.id === h.f);
+  return f && f.price ? h.v / f.price : 0;
 }
 
 export function platformFeeAnnual() {
@@ -464,6 +380,8 @@ export function platformFeeAnnual() {
 export function platformFeeMonthly() {
   return round2(platformFeeAnnual() / 12);
 }
+
+/* ---------- flex ---------- */
 
 export const FLEX_MIN = 100;
 export const FLEX_MONTHS = [3, 6, 12];
@@ -486,12 +404,14 @@ export function flexPurchase(amount, months, name = 'Flex purchase') {
     const when = now() + (i + 1) * 30 * 86400000;
     state.scheduled.push({
       id: uid('sch'), name: 'Flex · ' + name, amount: -per, category: 'finance',
-      day: new Date(when).getDate(), freq: 'once', next: when, flex: true
+      day: new Date(when).getDate(), freq: 'once', next: when, flex: true, acct: state.active
     });
   }
   save();
   return {ok:true, per, total, apr};
 }
+
+/* ---------- investments ---------- */
 
 export function investBuy(fundId, amount) {
   const f = FUNDS.find(x => x.id === fundId);
@@ -499,19 +419,20 @@ export function investBuy(fundId, amount) {
   const a = round2(amount);
   if (state.invest.cash < a) return false;
   state.invest.cash = round2(state.invest.cash - a);
-  state.invest.units[fundId] = (state.invest.units[fundId] || 0) + a / f.price;
+  const h = state.invest.holdings.find(x => x.f === fundId);
+  if (h) h.v = round2(h.v + a);
+  else state.invest.holdings.push({f: fundId, v: a});
   save();
   return true;
 }
 
 export function investSell(fundId, amount) {
-  const f = FUNDS.find(x => x.id === fundId);
-  if (!f) return false;
-  const units = state.invest.units[fundId] || 0;
-  const held = round2(units * f.price);
-  const a = Math.min(round2(amount), held);
+  const h = state.invest.holdings.find(x => x.f === fundId);
+  if (!h) return false;
+  const a = Math.min(round2(amount), round2(h.v));
   if (a <= 0) return false;
-  state.invest.units[fundId] = units - a / f.price;
+  h.v = round2(h.v - a);
+  if (h.v <= 0.01) state.invest.holdings = state.invest.holdings.filter(x => x !== h);
   state.invest.cash = round2(state.invest.cash + a);
   save();
   return true;
@@ -529,10 +450,12 @@ export function pensionProjection() {
   const p = state.pension;
   const years = Math.max(0, 68 - (new Date().getFullYear() - new Date(p.joined).getFullYear()));
   const annual = (p.monthly + p.employer) * 12;
-  let bal = p.balance;
-  for (let i = 0; i < years; i++) bal = bal * (1 + p.growth) + annual;
-  return {pot: round2(bal), years, annual};
+  let bal2 = p.balance;
+  for (let i = 0; i < years; i++) bal2 = bal2 * (1 + p.growth) + annual;
+  return {pot: round2(bal2), years, annual};
 }
+
+/* ---------- scheduler ---------- */
 
 export function runScheduled() {
   const today = new Date();
@@ -548,12 +471,12 @@ export function runScheduled() {
         const when = new Date(s.next);
         when.setHours(0, 0, 0, 0);
         if (when.getTime() === cur.getTime()) {
-          addTx({name: s.name, amount: s.amount, category: s.category, ts: cur.getTime()});
+          addTx({name: s.name, amount: s.amount, category: s.category, ts: cur.getTime(), acct: s.acct});
           s.done = true;
           count++;
         }
       } else if (cur.getDate() === s.day) {
-        addTx({name: s.name, amount: s.amount, category: s.category, ts: cur.getTime()});
+        addTx({name: s.name, amount: s.amount, category: s.category, ts: cur.getTime(), acct: s.acct});
         count++;
       }
     }
@@ -567,22 +490,24 @@ export function runScheduled() {
   return count;
 }
 
+/* ---------- derived ---------- */
+
 export function upcoming() {
   const cutoff = now() + 7 * 86400000;
   return state.scheduled
-    .filter(s => s.next <= cutoff && s.amount < 0)
+    .filter(s => s.next <= cutoff && s.amount < 0 && (s.acct || 'personal') === state.active)
     .reduce((s, x) => s + Math.abs(x.amount), 0);
 }
 
 export function leftToSpend() {
-  return Math.max(0, round2(state.balance - upcoming()));
+  return Math.max(0, round2(bal() - upcoming()));
 }
 
 export function spentThisMonth() {
   const d = new Date();
   const start = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
   return round2(Math.abs(state.tx
-    .filter(t => t.ts >= start && t.amount < 0 && t.category !== 'transfers')
+    .filter(t => t.ts >= start && t.amount < 0 && t.category !== 'transfers' && (t.acct || 'personal') === state.active)
     .reduce((s, t) => s + t.amount, 0)));
 }
 
@@ -592,6 +517,7 @@ export function byCategory() {
   const map = {};
   for (const t of state.tx) {
     if (t.ts < start || t.amount >= 0 || t.category === 'transfers') continue;
+    if ((t.acct || 'personal') !== state.active) continue;
     map[t.category] = round2((map[t.category] || 0) + Math.abs(t.amount));
   }
   return map;
@@ -604,6 +530,7 @@ export function lastMonthByCategory() {
   const map = {};
   for (const t of state.tx) {
     if (t.ts < start || t.ts >= end || t.amount >= 0) continue;
+    if ((t.acct || 'personal') !== state.active) continue;
     map[t.category] = round2((map[t.category] || 0) + Math.abs(t.amount));
   }
   return map;
