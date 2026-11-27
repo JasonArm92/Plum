@@ -17,8 +17,21 @@ import {
 } from './core.js';
 
 import {
-  go, toast, sheet, closeSheet, logo, kv, badge, empty, txRow, meter, chipRow
-} from './ui.js';
+  getState, commit, esc, fmt, TODAY, round2, plan, PLANS_BANK, CATS, BANKS, BB_CAP,
+  jointBills, jointContribution, JOINT_SHARE,
+  setProfile, setPin, setCredId, setTheme, setZoom, setMotion, togglePriv, toggleRoundups,
+  roundupPotName, exportState, importState,
+  addPayee, updatePayee, deletePayee, sendMoney, requestMoney, settleRequest, cancelRequest,
+  addVirtualCard, freezeVCard, renameVCard,
+  deleteVCard, toggleFreeze, setPlan, setFamily, flexAvail, flexPurchase, flexMonthly,
+  settleFlex, arrangeOverdraft, cancelOverdraft, takeLoan, loanMonthly, aprForLoan, overpayLoan,
+  challengeSave, restartChallenge, billsbackOptIn, billsbackDraw, bbBills, connectBank,
+  removeBank, addExtraAccount, updateExtraAccount, closeExtraAccount, moveToExtraAccount,
+  closeAccount, reopenAccount, setActiveAccount,
+  takeAura, setAura, payOutCashback, CASHBACK_MIN, raiseDispute, closeDispute,
+  creditAction, CREDIT_ACTIONS, pushChat, clearNotifs, markAllRead, updateTx, deleteTx,
+  balNow, addTx
+} from './core.js';
 
 export function mountPayees(root){
   const render = () => {
@@ -783,13 +796,13 @@ export function mountDisputes(root){
 export function mountJoint(root){
   const render = () => {
     const s = getState();
-    const income = s.tx.filter(t => t.date.slice(0, 7) === TODAY.slice(0, 7) && t.cat === 'Income').reduce((a, t) => a + t.amt, 0);
     root.innerHTML = `<div class="h-sec"><h2>Joint account</h2></div><div class="card">
       <div class="sub">Shared with ${esc(s.partner)} · FSCS to £240,000</div>
       <div class="balance rev" style="font-size:28px;margin:4px 0">${fmt(s.jointBal || 0)}</div>
-      ${kv('Contributions this month', `<span class="rev">${fmt(round2(income * 0.35))}</span>`)}
-      ${kv('Joint bills', `<span class="rev">${fmt(1240)}</span>`)}
-      <button class="btn" data-contrib style="margin-top:12px">Add money</button></div>`;
+      ${kv('Contributions this month', `<span class="rev">${fmt(jointContribution())}</span>`)}
+      ${kv('Joint bills this month', `<span class="rev">${fmt(jointBills())}</span>`)}
+      <button class="btn" data-contrib style="margin-top:12px">Add money</button></div>
+      <p class="note">Your share is ${Math.round(JOINT_SHARE * 100)}% of income in. Bills come off the current account ledger.</p>`;
   };
   root.addEventListener('click', e => {
     if (!e.target.closest('[data-contrib]')) return;
