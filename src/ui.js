@@ -1,15 +1,72 @@
 /* src/ui.js — router, sheet, toast, charts, logo, shared components. */
 
 import { esc, fmt, pct } from './core.js';
+import { DOMAINS } from './data.js';
 
 /* --- logo marks ------------------------------------------------------------
-   Inline SVG, no network at all: each merchant gets its real brand colour and a
-   monogram drawn as vector text. Nothing can block it, and it works offline. */
+   A branded inline-SVG tile is always drawn first, then a real logo is layered
+   over it inline-styled. If the image resolves you see the logo; if it does not
+   you keep the brand-coloured tile. Chain: icon.horse → favicone → Google
+   favicon. (Clearbit's public API was shut down in December 2025.) */
+
+const ICON = 'https://icon.horse/icon/';
+const FAV  = 'https://favicone.com/';
+const GOOG = 'https://www.google.com/s2/favicons?sz=128&domain=';
+
+const FUNDS = {
+  iShares: 'ishares.com',
+  Invesco: 'invesco.co.uk',
+  'Legal & General': 'legalandgeneral.com',
+  Fidelity: 'fidelity.co.uk',
+  BlackRock: 'blackrock.com',
+  abrdn: 'abrdn.com',
+  'Scottish Widows': 'scottishwidows.co.uk'
+};
+
+export const TICKERS = {
+  VUSA: 'vanguardinvestor.co.uk',
+  VWRL: 'vanguardinvestor.co.uk',
+  VUKE: 'vanguardinvestor.co.uk',
+  VFEM: 'vanguardinvestor.co.uk',
+  VHYL: 'vanguardinvestor.co.uk',
+  VAGP: 'vanguardinvestor.co.uk',
+  VWRP: 'vanguardinvestor.co.uk'
+};
+
+const norm = s => String(s || '')
+  .toLowerCase()
+  .replace(/[’‘]/g, "'")
+  .replace(/\s+(retainer|dividend.*|subscription)$/, '')
+  .replace(/[^a-z0-9'& ]/g, '')
+  .trim();
+
+const DOMAIN_MAP = new Map();
+const addDomain = (k, v) => { if (v) DOMAIN_MAP.set(norm(k), v); };
+Object.entries(DOMAINS).forEach(([k, v]) => addDomain(k, v));
+Object.entries(FUNDS).forEach(([k, v]) => addDomain(k, v));
+Object.entries(TICKERS).forEach(([k, v]) => addDomain(k, v));
+
+const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const DOMAIN_MATCHERS = [...DOMAIN_MAP.keys()]
+  .sort((a, b) => b.length - a.length)
+  .map(k => [new RegExp(`(^|[^a-z0-9])${escapeRe(k)}([^a-z0-9]|$)`), DOMAIN_MAP.get(k)]);
+
+export function domainFor(name){
+  const n = norm(name);
+  if (!n) return '';
+  const exact = DOMAIN_MAP.get(n);
+  if (exact) return exact;
+  for (const [re, domain] of DOMAIN_MATCHERS) if (re.test(n)) return domain;
+  return '';
+}
+
+export function hasLogo(name){ return !!domainFor(name); }
+
+/* --- brand colours, for the base tile -------------------------------------- */
 
 const BRANDS = new Map();
-const addBrand = (k, bg, fg) => BRANDS.set(k.toLowerCase(), { bg, fg });
+const addBrand = (k, bg, fg) => BRANDS.set(norm(k), { bg, fg });
 
-/* bg, fg */
 addBrand('Tesco', '#00539F', '#fff');
 addBrand('Aldi', '#00005A', '#fff');
 addBrand('Asda', '#6DBE45', '#053B2C');
@@ -99,24 +156,9 @@ addBrand('Rent buffer', '#6B5B2F', '#fff');
 addBrand('Home education', '#4B5B8F', '#fff');
 addBrand("Kids' savings", '#8F2F6A', '#fff');
 
-const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const MATCHERS = [...BRANDS.keys()]
+const BRAND_MATCHERS = [...BRANDS.keys()]
   .sort((a, b) => b.length - a.length)
   .map(k => [new RegExp(`(^|[^a-z0-9])${escapeRe(k)}([^a-z0-9]|$)`), BRANDS.get(k)]);
-
-const norm = s => String(s || '')
-  .toLowerCase()
-  .replace(/[’‘]/g, "'")
-  .replace(/\s+(retainer|dividend.*|subscription)$/, '')
-  .replace(/[^a-z0-9'& ]/g, '')
-  .trim();
-
-export function initials(name){
-  const words = String(name || '').replace(/[^A-Za-z ]/g, ' ').split(/\s+/).filter(Boolean);
-  const a = (words[0] || '?').charAt(0) || '?';
-  const b = words[1] ? words[1].charAt(0) : '';
-  return (a + b).toUpperCase();
-}
 
 const hueOf = s => {
   let h = 0;
@@ -130,9 +172,19 @@ function brandOf(name){
   if (!n) return { bg: '#6B7C8A', fg: '#fff' };
   const exact = BRANDS.get(n);
   if (exact) return exact;
-  for (const [re, brand] of MATCHERS) if (re.test(n)) return brand;
+  for (const [re, brand] of BRAND_MATCHERS) if (re.test(n)) return brand;
   return { bg: `hsl(${hueOf(n)} 38% 32%)`, fg: '#fff' };
 }
+
+export function initials(name){
+  const words = String(name || '').replace(/[^A-Za-z ]/g, ' ').split(/\s+/).filter(Boolean);
+  const a = (words[0] || '?').charAt(0) || '?';
+  const b = words[1] ? words[1].charAt(0) : '';
+  return (a + b).toUpperCase();
+}
+
+const IMG_STYLE = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;'
+  + 'background:#fff;padding:14%;box-sizing:border-box';
 
 export function logoHTML(name, big){
   const size = big ? 48 : 40;
@@ -140,13 +192,18 @@ export function logoHTML(name, big){
   const mono = esc(initials(name));
   const fs = Math.round(size * (mono.length > 1 ? 0.32 : 0.42));
   const wrap = `position:relative;display:inline-flex;align-items:center;justify-content:center;`
-    + `width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex:0 0 auto`;
-  return `<span class="lg" style="${wrap}">`
-    + `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true" focusable="false" style="display:block">`
-    + `<rect width="${size}" height="${size}" fill="${bg}"/>`
+    + `width:${size}px;height:${size}px;border-radius:50%;overflow:hidden;flex:0 0 auto;background:${bg}`;
+  const tile = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true"`
+    + ` focusable="false" style="display:block"><rect width="${size}" height="${size}" fill="${bg}"/>`
     + `<text x="50%" y="50%" dy=".36em" text-anchor="middle" fill="${fg}"`
     + ` font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-weight="700"`
-    + ` font-size="${fs}" letter-spacing=".4">${mono}</text></svg></span>`;
+    + ` font-size="${fs}" letter-spacing=".4">${mono}</text></svg>`;
+
+  const d = domainFor(name);
+  if (!d) return `<span class="lg" style="${wrap}">${tile}</span>`;
+  return `<span class="lg" style="${wrap}">${tile}`
+    + `<img src="${ICON}${d}" alt="" decoding="async" referrerpolicy="no-referrer"`
+    + ` style="${IMG_STYLE}" data-fb="${FAV}${d}?s=128|${GOOG}${d}"></span>`;
 }
 
 export function logoEl(name, big){
@@ -161,6 +218,29 @@ export function paintLogos(root){
     el.replaceWith(logoEl(el.dataset.logo, el.dataset.logoBig === '1'));
   });
 }
+
+function stepDown(img){
+  const chain = (img.dataset.fb || '').split('|').filter(Boolean);
+  if (chain.length){
+    img.dataset.fb = chain.slice(1).join('|');
+    img.src = chain[0];
+  } else {
+    img.remove();
+  }
+}
+
+document.addEventListener('error', e => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
+  stepDown(img);
+}, true);
+
+document.addEventListener('load', e => {
+  const img = e.target;
+  if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
+  if (img.naturalWidth > 0) img.removeAttribute('data-fb');
+  else stepDown(img);
+}, true);
 
 /* -------------------------------------------------------------------------- */
 
