@@ -2,13 +2,14 @@ import {
   state, fmt, fmtShort, round2, addTx, save, uid, investBuy, investSell,
   investDeposit, portfolioValue, platformFeeMonthly, planInfo, PLANS,
   pensionProjection, reset, dateStr, timeStr, acc, unitsOf,
-  budgetFor, setBudget, totalBudget, spentThisMonth
-} from './core.js?v=35';
-import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js?v=35';
+  budgetFor, setBudget, totalBudget, spentThisMonth,
+  ledgerNetInvested, ledgerIncome
+} from './core.js?v=36';
+import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js?v=36';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, cardArt, avatar
-} from './ui.js?v=35';
+} from './ui.js?v=36';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -72,19 +73,13 @@ export function targetSheet(catId) {
   const current = budgetFor(catId);
   const body = el('div');
   const i = input({type: 'number', step: '1', value: current || '', placeholder: '0.00'});
-  body.appendChild(field({
-    label: c.emoji + ' ' + c.name + ' target',
-    input: i,
-    hint: 'Monthly. Spent so far ' + fmt(spentThisMonth() ? (0) : 0)
-  }));
-  const hint = body.querySelector('.hint');
+  const hint = el('p', 'hint');
+  body.appendChild(field({label: c.emoji + ' ' + c.name + ' target', input: i}));
+  body.appendChild(hint);
 
   const update = () => {
     const v = round2(Number(i.value) || 0);
-    const spent = Object.entries({}).length ? 0 : 0;
-    hint.textContent = v
-      ? 'Monthly target ' + fmt(v)
-      : 'No target set';
+    hint.textContent = v ? 'Monthly target ' + fmt(v) : 'No target set';
   };
   update();
   i.oninput = update;
@@ -116,6 +111,7 @@ export function budgetSheet() {
     'Set a monthly target per category. Your totals add up to ' + fmt(totalBudget()) + '.'));
 
   const l = el('div', 'list list--boxed');
+  const s = sheet({title: 'Budgets', body});
   for (const c of CATEGORIES) {
     if (c.id === 'transfers' || c.id === 'income') continue;
     const cur = budgetFor(c.id);
@@ -131,7 +127,80 @@ export function budgetSheet() {
     l.appendChild(r);
   }
   body.appendChild(l);
-  const s = sheet({title: 'Budgets', body});
+}
+
+/* ---------- investment ledger ---------- */
+
+const LED_LABEL = {
+  buy: 'Monthly investment',
+  gift: 'Opening gift',
+  sell: 'Sale',
+  div: 'Dividend',
+  deposit: 'Cash added'
+};
+
+export function ledgerScreen() {
+  const body = el('div');
+  const value = portfolioValue();
+  const net = ledgerNetInvested();
+  const income = ledgerIncome();
+  const growth = round2(value - net);
+  const pct = net ? Math.round((growth / net) * 100) : 0;
+
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'ringwrap__l', 'Current value'));
+  c.appendChild(el('div', 'ringwrap__v', fmt(value)));
+  c.appendChild(el('div', 'hint', 'Invested ' + fmt(net) + ' · dividends ' + fmt(income)));
+  c.appendChild(el('div', 'hint budgetleft', 'Growth ' + fmt(growth) + ' (' + pct + '%)'));
+  body.appendChild(c);
+
+  const years = el('div', 'years');
+  const l = el('div', 'list list--boxed');
+  let year = new Date().getFullYear();
+
+  const draw = () => {
+    l.innerHTML = '';
+    const rows = state.invest.ledger
+      .filter(e => new Date(e.ts).getFullYear() === year)
+      .sort((a, b) => b.ts - a.ts);
+    if (!rows.length) l.appendChild(empty('Nothing in ' + year));
+    for (const e of rows) {
+      const f = FUNDS.find(x => x.id === e.fund);
+      const r = el('div', 'led');
+      const d = new Date(e.ts);
+      r.appendChild(el('div', 'led__d',
+        d.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'})));
+      const m = el('div', 'led__main');
+      const label = e.type === 'buy' && e.amount >= 1000 ? 'Lump sum' : (LED_LABEL[e.type] || e.type);
+      m.appendChild(el('div', 'led__t', label));
+      m.appendChild(el('div', 'led__s', f ? f.name : 'Cash'));
+      r.appendChild(m);
+      r.appendChild(el('div', 'led__v ' + (e.amount > 0 ? 'led__v--in' : 'led__v--out'),
+        (e.amount > 0 ? '+' : '') + fmt(e.amount)));
+      l.appendChild(r);
+    }
+  };
+
+  const nowYear = new Date().getFullYear();
+  for (let y = nowYear; y >= 1992; y--) {
+    const b = el('button', 'year');
+    b.type = 'button';
+    b.textContent = String(y);
+    b.setAttribute('aria-pressed', String(y === year));
+    b.onclick = () => {
+      year = y;
+      years.querySelectorAll('.year').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      draw();
+    };
+    years.appendChild(b);
+  }
+
+  body.appendChild(years);
+  body.appendChild(l);
+  draw();
+
+  return screen('ledger', {title: 'Investment activity', back: '#/invest', body});
 }
 
 export function txScreen(id) {
@@ -320,6 +389,10 @@ export function investScreen() {
   dep.onclick = () => depositSheet();
   cash.appendChild(dep);
   body.appendChild(cash);
+
+  body.appendChild(list([
+    row({title: 'Activity', sub: 'Full ledger since October 1992', onClick: () => { location.hash = '#/ledger'; }})
+  ]));
 
   body.appendChild(section('Holdings'));
   const l = el('div', 'list list--boxed');
@@ -598,7 +671,7 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v35', chev: false}),
+    row({title: 'Build', value: 'v36', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   return screen('about', {title: 'About', back: '#/account', body});
@@ -686,4 +759,4 @@ export function layoutSheet() {
 
   draw();
   sheet({title: 'Edit home', body});
-    }
+}
