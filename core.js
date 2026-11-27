@@ -1,8 +1,8 @@
-import { FUNDS, CATEGORY_IDS, RISK_FUNDS } from './data.js?v=37';
+import { FUNDS, CATEGORY_IDS, RISK_FUNDS } from './data.js?v=38';
 
-export const VERSION = 26;
-export const KEY = 'monzo_v26';
-export const LEGACY_KEYS = ['monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 27;
+export const KEY = 'monzo_v27';
+export const LEGACY_KEYS = ['monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -255,10 +255,12 @@ function defaultState() {
       {id:uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}
     ],
     payees: [
-      {id:uid('pay'), name:'Sophie Armstrong', sort:'04-00-04', acct:'12345678', initials:'SA'},
-      {id:uid('pay'), name:'Liam Fletcher', sort:'20-45-11', acct:'87654321', initials:'LF'},
-      {id:uid('pay'), name:'Chloe Brown', sort:'30-96-14', acct:'55120934', initials:'CB'}
+      {id:uid('pay'), name:'Sophie Armstrong', sort:'04-00-04', acct:'12345678', initials:'SA', fav:true},
+      {id:uid('pay'), name:'Liam Fletcher', sort:'20-45-11', acct:'87654321', initials:'LF', fav:false},
+      {id:uid('pay'), name:'Chloe Brown', sort:'30-96-14', acct:'55120934', initials:'CB', fav:true},
+      {id:uid('pay'), name:'Mum', sort:'11-22-33', acct:'44119822', initials:'MU', fav:false}
     ],
+    splits: [],
     budgets: JSON.parse(JSON.stringify(BUDGET_SEED)),
     budgetSeeded: true,
     flex: {limit: 1000, used: 214.40, plan: 'flex', active: true},
@@ -283,7 +285,9 @@ function defaultState() {
     settings: {
       notifications: true, marketing: false, biometrics: true,
       theme: 'system', reducedMotion: false, haptics: true,
-      roundUpDefault: true, hideBalance: false
+      roundUpDefault: true, hideBalance: false,
+      payOrder: ['send','request','split','bank','scheduled','payees'],
+      payHidden: []
     },
     lastRun: base,
     seen: {welcome: true}
@@ -335,6 +339,18 @@ const migrations = [
         .map(e => ids.has(e.fund) ? e : Object.assign({}, e, {fund: 'balanced'}));
     }
     return s;
+  }},
+  {v: 27, fn: s => {
+    if (!Array.isArray(s.splits)) s.splits = [];
+    if (!s.settings) s.settings = {};
+    if (!Array.isArray(s.settings.payOrder) || !s.settings.payOrder.length) {
+      s.settings.payOrder = ['send','request','split','bank','scheduled','payees'];
+    }
+    if (!Array.isArray(s.settings.payHidden)) s.settings.payHidden = [];
+    if (Array.isArray(s.payees)) {
+      for (const p of s.payees) if (typeof p.fav !== 'boolean') p.fav = false;
+    }
+    return s;
   }}
 ];
 
@@ -348,8 +364,13 @@ export function normalise(input) {
 
   s.settings = Object.assign({
     notifications: true, marketing: false, biometrics: true, theme: 'system',
-    reducedMotion: false, haptics: true, roundUpDefault: true, hideBalance: false
+    reducedMotion: false, haptics: true, roundUpDefault: true, hideBalance: false,
+    payOrder: ['send','request','split','bank','scheduled','payees'], payHidden: []
   }, s.settings || {});
+  if (!Array.isArray(s.settings.payOrder) || !s.settings.payOrder.length) {
+    s.settings.payOrder = ['send','request','split','bank','scheduled','payees'];
+  }
+  if (!Array.isArray(s.settings.payHidden)) s.settings.payHidden = [];
 
   if (!s.accounts || typeof s.accounts !== 'object') {
     s.accounts = {
@@ -394,11 +415,13 @@ export function normalise(input) {
   if (!Array.isArray(s.scheduled)) s.scheduled = [];
   if (!Array.isArray(s.payees)) s.payees = [];
   if (!Array.isArray(s.goals)) s.goals = [];
+  if (!Array.isArray(s.splits)) s.splits = [];
   if (!Array.isArray(s.cards) || !s.cards.length) {
     s.cards = [{id: uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}];
   }
   for (const t of s.tx) if (!t.acct) t.acct = 'personal';
   for (const t of s.scheduled) if (!t.acct) t.acct = 'personal';
+  for (const p of s.payees) if (typeof p.fav !== 'boolean') p.fav = false;
 
   if (typeof s.savings !== 'number') s.savings = 0;
 
@@ -493,6 +516,96 @@ export function isJoint() {
   return state.active === 'joint';
 }
 
+/* ---------- payees ---------- */
+
+export function payeesSorted() {
+  return state.payees.slice().sort((a, b) => {
+    if (!!b.fav !== !!a.fav) return b.fav ? 1 : -1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+export function addPayee({name, sort, acct}) {
+  const p = {
+    id: uid('pay'), name: String(name).trim(),
+    sort: String(sort).trim(), acct: String(acct).trim(),
+    initials: '', fav: false
+  };
+  state.payees.push(p);
+  save();
+  return p;
+}
+
+export function updatePayee(id, patch) {
+  const p = state.payees.find(x => x.id === id);
+  if (!p) return false;
+  Object.assign(p, patch);
+  save();
+  return true;
+}
+
+export function removePayee(id) {
+  state.payees = state.payees.filter(x => x.id !== id);
+  save();
+}
+
+export function toggleFav(id) {
+  const p = state.payees.find(x => x.id === id);
+  if (!p) return;
+  p.fav = !p.fav;
+  save();
+}
+
+export function recentPayments(payeeId) {
+  const p = state.payees.find(x => x.id === payeeId);
+  if (!p) return [];
+  return state.tx.filter(t => t.name === p.name && t.amount < 0).slice(0, 5);
+}
+
+/* ---------- splits ---------- */
+
+export function createSplit(txId, people) {
+  const t = state.tx.find(x => x.id === txId);
+  if (!t || !people.length) return null;
+  const total = Math.abs(round2(t.amount));
+  const base = Math.floor((total / people.length) * 100) / 100;
+  let remainder = round2(total - base * people.length);
+  const rows = people.map((p, i) => {
+    let share = base;
+    if (remainder > 0) { share = round2(share + 0.01); remainder = round2(remainder - 0.01); }
+    return {payeeId: p.id, name: p.name, amount: share, paid: false};
+  });
+  const split = {
+    id: uid('spl'), txId, name: t.name, ts: now(),
+    total, people: rows
+  };
+  state.splits.unshift(split);
+  save();
+  return split;
+}
+
+export function splitOutstanding(split) {
+  return round2(split.people.filter(p => !p.paid).reduce((s, p) => s + p.amount, 0));
+}
+
+export function splitsOutstandingTotal() {
+  return round2(state.splits.reduce((s, x) => s + splitOutstanding(x), 0));
+}
+
+export function markSplitPaid(splitId, index) {
+  const s = state.splits.find(x => x.id === splitId);
+  if (!s || !s.people[index]) return;
+  s.people[index].paid = !s.people[index].paid;
+  save();
+}
+
+export function removeSplit(splitId) {
+  state.splits = state.splits.filter(x => x.id !== splitId);
+  save();
+}
+
+/* ---------- budgets ---------- */
+
 export function budgets() {
   if (!state.budgets[state.active]) state.budgets[state.active] = {};
   return state.budgets[state.active];
@@ -518,11 +631,11 @@ export function budgetLeft() {
   return round2(totalBudget() - spentThisMonth());
 }
 
-export function addTx({name, amount, category = 'general', ts = now(), note = '', receipt = null, potId = null, acct = null}) {
+export function addTx({name, amount, category = 'general', ts = now(), note = '', receipt = null, potId = null, acct = null, ref = null}) {
   const a = acct || state.active;
   const tx = {
     id: uid('tx'), name, amount: round2(amount), category,
-    ts, type: amount > 0 ? 'in' : 'out', note, receipt, potId, acct: a
+    ts, type: amount > 0 ? 'in' : 'out', note, receipt, potId, acct: a, ref
   };
   state.tx.unshift(tx);
   if (state.accounts[a]) state.accounts[a].balance = round2(state.accounts[a].balance + tx.amount);
