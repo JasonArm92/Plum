@@ -1,17 +1,18 @@
-import { load, state, runScheduled } from './core.js?v=37';
-import { el, icon, toast } from './ui.js?v=37';
+import { load, state, runScheduled } from './core.js?v=38';
+import { el, icon, toast } from './ui.js?v=38';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
-  payeeScreen, sendScreen, requestScreen, bankScreen, scheduledScreen,
-  borrowingScreen, accountScreen, potsScreen, potScreen
-} from './screens-a.js?v=37';
+  payeeScreen, payeeFormScreen, sendScreen, requestScreen, bankScreen,
+  scheduledScreen, borrowingScreen, accountScreen, potsScreen, potScreen
+} from './screens-a.js?v=38';
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
-  appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, ledgerScreen
-} from './screens-b.js?v=37';
+  appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, ledgerScreen,
+  splitScreen, splitsScreen, splitDetailScreen, receiptScreen
+} from './screens-b.js?v=38';
 
-const BUILD = 37;
+const BUILD = 38;
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -69,6 +70,8 @@ const SCREENS = {
   account: () => accountScreen(),
   pots: () => potsScreen(),
   payees: () => payeesScreen(),
+  'payee-new': () => payeeFormScreen(null),
+  'payee-edit': a => payeeFormScreen(a),
   send: a => sendScreen(a),
   request: () => requestScreen(),
   bank: () => bankScreen(),
@@ -90,7 +93,10 @@ const SCREENS = {
   tx: a => txScreen(a),
   fund: a => fundScreen(a),
   trend: a => trendCatScreen(a),
-  split: () => paymentsScreen(),
+  split: a => a ? splitScreen(a) : splitsScreen(),
+  splits: () => splitsScreen(),
+  'split-detail': a => splitDetailScreen(a),
+  receipt: a => receiptScreen(a),
   search: () => homeScreen()
 };
 
