@@ -235,13 +235,6 @@ document.addEventListener('error', e => {
   stepDown(img);
 }, true);
 
-document.addEventListener('load', e => {
-  const img = e.target;
-  if (!(img instanceof HTMLImageElement) || !img.hasAttribute('data-fb')) return;
-  if (img.naturalWidth > 0) img.removeAttribute('data-fb');
-  else stepDown(img);
-}, true);
-
 /* -------------------------------------------------------------------------- */
 
 const registry = new Map();
@@ -535,3 +528,28 @@ export function bindGlobalChrome(){
     if (h) h.classList.toggle('hdr--scrolled', window.scrollY > 4);
   }, { passive: true });
 }
+
+/* TEMP diagnostic — delete once logos work */
+setTimeout(() => {
+  try {
+    const csp = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    const imgs = document.querySelectorAll('.lg img');
+    const d = document.createElement('div');
+    d.style.cssText = 'font:12px/1.5 monospace;background:#000;color:#0f0;padding:8px;'
+      + 'white-space:pre-wrap;word-break:break-all;margin:0 0 8px';
+    d.textContent = 'csp=' + (csp ? 'YES' : 'none')
+      + '\nimgs=' + imgs.length
+      + '\nsrc=' + (imgs[0] ? imgs[0].getAttribute('src') : 'none');
+    if (csp) d.textContent += '\n' + csp.getAttribute('content');
+    document.body.prepend(d);
+    const t = document.getElementById('hdrTitle');
+    if (t) t.textContent = 'csp=' + (csp ? 'YES' : 'none') + ' imgs=' + imgs.length;
+    const p = new Image();
+    p.onload = () => { d.textContent += '\nimg=OK ' + p.naturalWidth + 'px'; };
+    p.onerror = () => { d.textContent += '\nimg=FAIL'; };
+    p.src = 'https://icon.horse/icon/tesco.com';
+    fetch('https://icon.horse/icon/tesco.com', { mode: 'no-cors' })
+      .then(() => { d.textContent += '\nfetch=OK'; })
+      .catch(() => { d.textContent += '\nfetch=FAIL'; });
+  } catch (e) { document.title = 'diag:' + e.message; }
+}, 1500);
