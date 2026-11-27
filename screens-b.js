@@ -1,15 +1,15 @@
 import {
   state, fmt, fmtShort, round2, addTx, save, uid, investBuy, investSell,
-  investDeposit, portfolioValue, platformFeeMonthly, planInfo, PLANS,
-  pensionProjection, reset, dateStr, timeStr, acc, unitsOf,
-  budgetFor, setBudget, totalBudget, spentThisMonth,
-  ledgerNetInvested, ledgerIncome
-} from './core.js?v=36';
-import { FUNDS, CATEGORIES, POT_EMOJI, POT_COLOURS } from './data.js?v=36';
+  investDeposit, portfolioValue, fundValue, platformFeeMonthly, planInfo, PLANS,
+  pensionProjection, reset, dateStr, timeStr, acc,
+  budgetFor, setBudget, totalBudget,
+  ledgerNetInvested, ledgerIncome, riskInfo, setChosenFund
+} from './core.js?v=37';
+import { FUNDS, CATEGORIES, RISK_FUNDS, CONSTITUENTS, POT_EMOJI, POT_COLOURS } from './data.js?v=37';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
-  field, input, seg, switchEl, pill, cardArt, avatar
-} from './ui.js?v=36';
+  field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar
+} from './ui.js?v=37';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -43,7 +43,8 @@ export function addTxSheet() {
   for (const c of CATEGORIES) {
     const b = el('button', 'pill');
     b.type = 'button';
-    b.textContent = c.emoji + ' ' + c.name;
+    b.appendChild(catIcon(c.icon, 18, c.colour));
+    b.appendChild(el('span', '', c.name));
     b.onclick = () => {
       category = c.id;
       cats.querySelectorAll('.pill').forEach(x => x.className = 'pill');
@@ -66,15 +67,13 @@ export function addTxSheet() {
   };
 }
 
-/* ---------- targets & budgets ---------- */
-
 export function targetSheet(catId) {
   const c = cat(catId);
   const current = budgetFor(catId);
   const body = el('div');
   const i = input({type: 'number', step: '1', value: current || '', placeholder: '0.00'});
   const hint = el('p', 'hint');
-  body.appendChild(field({label: c.emoji + ' ' + c.name + ' target', input: i}));
+  body.appendChild(field({label: c.name + ' target', input: i}));
   body.appendChild(hint);
 
   const update = () => {
@@ -117,7 +116,7 @@ export function budgetSheet() {
     const cur = budgetFor(c.id);
     const r = el('div', 'row');
     const m = el('div', 'row__main');
-    m.appendChild(el('div', 'row__t', c.emoji + ' ' + c.name));
+    m.appendChild(el('div', 'row__t', c.name));
     r.appendChild(m);
     const b = el('button', 'tgt' + (cur ? ' tgt--on' : ''));
     b.type = 'button';
@@ -129,7 +128,7 @@ export function budgetSheet() {
   body.appendChild(l);
 }
 
-/* ---------- investment ledger ---------- */
+/* ---------- investments ---------- */
 
 const LED_LABEL = {
   buy: 'Monthly investment',
@@ -138,6 +137,159 @@ const LED_LABEL = {
   div: 'Dividend',
   deposit: 'Cash added'
 };
+
+export function investScreen() {
+  const value = portfolioValue();
+  const chosen = riskInfo(state.invest.chosen);
+  const body = el('div');
+
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'lts__l', 'Portfolio value'));
+  c.appendChild(el('div', 'lts__v', fmt(value)));
+  c.appendChild(el('div', 'hint', 'Platform fee ' + fmt(platformFeeMonthly()) + '/month'));
+  body.appendChild(c);
+
+  const cur = el('div', 'card card--flat');
+  cur.appendChild(pill(chosen.name.toUpperCase(), 'coral'));
+  cur.appendChild(el('div', 'row__t', 'Your fund'));
+  cur.appendChild(el('div', 'hint', chosen.blurb));
+  const rm = el('div', 'riskmeter');
+  for (let i = 1; i <= 7; i++) {
+    const bar = el('i');
+    if (i <= chosen.risk) bar.className = 'on';
+    rm.appendChild(bar);
+  }
+  cur.appendChild(rm);
+  const ch = el('button', 'btn btn--ghost btn--sm btn--block', 'Change fund');
+  ch.style.marginTop = '12px';
+  ch.onclick = () => changeFundSheet();
+  cur.appendChild(ch);
+  body.appendChild(cur);
+
+  const cash = el('div', 'card card--flat');
+  cash.appendChild(el('div', 'row__t', 'Cash to invest'));
+  cash.appendChild(el('div', 'row__v', fmt(state.invest.cash)));
+  const dep = el('button', 'btn btn--primary btn--sm btn--block', 'Add money');
+  dep.style.marginTop = '10px';
+  dep.onclick = () => depositSheet();
+  cash.appendChild(dep);
+  body.appendChild(cash);
+
+  body.appendChild(list([
+    row({title: 'Activity', sub: 'Full ledger since October 1992', onClick: () => { location.hash = '#/ledger'; }})
+  ]));
+
+  body.appendChild(section('Your funds'));
+  const l = el('div', 'list list--boxed');
+  for (const f of RISK_FUNDS) {
+    l.appendChild(row({
+      title: f.name, sub: 'Risk ' + f.risk + '/7 · ' + f.equity + '% shares',
+      value: fmt(fundValue(f.id)),
+      onClick: () => { location.hash = '#/fund/' + f.id; }
+    }));
+  }
+  body.appendChild(l);
+
+  const proj = el('div', 'card');
+  proj.appendChild(el('div', 'row__t', 'Projected in 10 years'));
+  proj.appendChild(el('div', 'row__v', fmt(value * Math.pow(1.05, 10))));
+  proj.appendChild(el('div', 'hint', 'At 5% a year after fees. Not a guarantee.'));
+  body.appendChild(proj);
+
+  return screen('invest', {title: 'Investments', back: '#/account', body});
+}
+
+export function changeFundSheet() {
+  const body = el('div');
+  body.appendChild(el('p', 'hint', 'Your existing money stays where it is until you move it.'));
+  const l = el('div', 'list list--boxed');
+  const s = sheet({title: 'Choose a fund', body});
+  for (const f of RISK_FUNDS) {
+    l.appendChild(row({
+      title: f.name, sub: 'Risk ' + f.risk + '/7',
+      value: state.invest.chosen === f.id ? '✓' : '', chev: false,
+      onClick: () => { setChosenFund(f.id); s.close(); toast('Now investing in ' + f.name); rerender(); }
+    }));
+  }
+  body.appendChild(l);
+}
+
+export function depositSheet() {
+  const body = el('div');
+  const a = input({type: 'number', step: '0.01', placeholder: '100.00'});
+  body.appendChild(field({label: 'Amount', input: a}));
+  const go = el('button', 'btn btn--primary btn--block', 'Add money');
+  const s = sheet({title: 'Add money', body, foot: go});
+  go.onclick = () => {
+    const v = round2(Number(a.value) || 0);
+    if (!v) return toast('Enter an amount');
+    if (!investDeposit(v)) return toast('Not enough money');
+    s.close(); toast('Added ' + fmt(v)); rerender();
+  };
+}
+
+export function fundScreen(id) {
+  const f = RISK_FUNDS.find(x => x.id === id);
+  if (!f) return screen('fund', {title: 'Fund', back: '#/invest', body: empty('Not found')});
+  const held = fundValue(f.id);
+  const body = el('div');
+
+  const c = el('div', 'card');
+  c.appendChild(pill(f.name.toUpperCase(), 'coral'));
+  c.appendChild(el('div', 'hint', f.blurb));
+  const rm = el('div', 'riskmeter');
+  for (let i = 1; i <= 7; i++) {
+    const bar = el('i');
+    if (i <= f.risk) bar.className = 'on';
+    rm.appendChild(bar);
+  }
+  c.appendChild(rm);
+  body.appendChild(c);
+
+  const mix = el('div', 'card card--flat');
+  mix.appendChild(el('div', 'row__t', 'How it is split'));
+  mix.appendChild(el('div', 'hint', f.equity + '% shares · ' + f.bond + '% bonds · ' + f.cash + '% cash'));
+  body.appendChild(mix);
+
+  const heldCard = el('div', 'card card--flat');
+  heldCard.appendChild(el('div', 'row__t', 'Your holding'));
+  heldCard.appendChild(el('div', 'row__v', fmt(held)));
+  body.appendChild(heldCard);
+
+  body.appendChild(section('What it holds'));
+  const l = el('div', 'list list--boxed');
+  for (const [fid, weight] of CONSTITUENTS[f.id] || []) {
+    const u = FUNDS.find(x => x.id === fid);
+    if (!u) continue;
+    l.appendChild(row({title: u.name, sub: weight + '% of the fund', chev: false}));
+  }
+  body.appendChild(l);
+
+  const amt = input({type: 'number', step: '0.01', placeholder: '0.00'});
+  body.appendChild(field({label: 'Amount', input: amt}));
+
+  const buy = el('button', 'btn btn--primary btn--block', 'Buy');
+  buy.onclick = () => {
+    const v = round2(Number(amt.value) || 0);
+    if (!v) return toast('Enter an amount');
+    if (!investBuy(f.id, v)) return toast('Add cash first');
+    toast('Bought ' + fmt(v)); rerender();
+  };
+  body.appendChild(buy);
+
+  if (held > 0) {
+    const sell = el('button', 'btn btn--ghost btn--block', 'Sell');
+    sell.onclick = () => {
+      const v = round2(Number(amt.value) || 0);
+      if (!v) return toast('Enter an amount');
+      if (!investSell(f.id, v)) return toast('Nothing to sell');
+      toast('Sold ' + fmt(v)); rerender();
+    };
+    body.appendChild(sell);
+  }
+
+  return screen('fund-' + id, {title: f.name, back: '#/invest', body});
+}
 
 export function ledgerScreen() {
   const body = el('div');
@@ -148,8 +300,8 @@ export function ledgerScreen() {
   const pct = net ? Math.round((growth / net) * 100) : 0;
 
   const c = el('div', 'card');
-  c.appendChild(el('div', 'ringwrap__l', 'Current value'));
-  c.appendChild(el('div', 'ringwrap__v', fmt(value)));
+  c.appendChild(el('div', 'lts__l', 'Current value'));
+  c.appendChild(el('div', 'lts__v', fmt(value)));
   c.appendChild(el('div', 'hint', 'Invested ' + fmt(net) + ' · dividends ' + fmt(income)));
   c.appendChild(el('div', 'hint budgetleft', 'Growth ' + fmt(growth) + ' (' + pct + '%)'));
   body.appendChild(c);
@@ -165,7 +317,7 @@ export function ledgerScreen() {
       .sort((a, b) => b.ts - a.ts);
     if (!rows.length) l.appendChild(empty('Nothing in ' + year));
     for (const e of rows) {
-      const f = FUNDS.find(x => x.id === e.fund);
+      const f = riskInfo(e.fund);
       const r = el('div', 'led');
       const d = new Date(e.ts);
       r.appendChild(el('div', 'led__d',
@@ -173,7 +325,7 @@ export function ledgerScreen() {
       const m = el('div', 'led__main');
       const label = e.type === 'buy' && e.amount >= 1000 ? 'Lump sum' : (LED_LABEL[e.type] || e.type);
       m.appendChild(el('div', 'led__t', label));
-      m.appendChild(el('div', 'led__s', f ? f.name : 'Cash'));
+      m.appendChild(el('div', 'led__s', f.name + ' fund'));
       r.appendChild(m);
       r.appendChild(el('div', 'led__v ' + (e.amount > 0 ? 'led__v--in' : 'led__v--out'),
         (e.amount > 0 ? '+' : '') + fmt(e.amount)));
@@ -212,13 +364,13 @@ export function txScreen(id) {
   const tl = tile(t.name, 60);
   tl.style.margin = '0 auto 12px';
   c.appendChild(tl);
-  c.appendChild(el('div', 'ringwrap__v', (t.amount > 0 ? '+' : '') + fmt(t.amount)));
+  c.appendChild(el('div', 'lts__v', (t.amount > 0 ? '+' : '') + fmt(t.amount)));
   c.appendChild(el('div', 'row__t', t.name));
   c.appendChild(el('div', 'hint', dateStr(t.ts) + ' · ' + timeStr(t.ts) + ' · ' + (t.acct === 'joint' ? 'Joint' : 'Personal')));
   body.appendChild(c);
 
   body.appendChild(list([
-    row({title: 'Category', value: cat(t.category).emoji + ' ' + cat(t.category).name, onClick: () => categorySheet(t.id)}),
+    row({title: 'Category', value: cat(t.category).name, onClick: () => categorySheet(t.id)}),
     row({title: 'Note', value: t.note || 'Add', onClick: () => noteSheet(t.id)}),
     row({title: 'Receipt', value: t.receipt ? 'Attached' : 'Add', onClick: () => receiptSheet(t.id)}),
     row({title: 'Split bill', onClick: () => splitSheet(t.id)}),
@@ -236,14 +388,16 @@ export function categorySheet(id) {
   body.appendChild(l);
   const s = sheet({title: 'Category', body});
   for (const c of CATEGORIES) {
-    l.appendChild(row({
-      title: c.emoji + ' ' + c.name, chev: false,
+    const r = row({
+      title: c.name, chev: false,
       value: t.category === c.id ? '✓' : '',
       onClick: () => {
         t.category = c.id;
         save(); s.close(); toast('Category updated'); rerender();
       }
-    }));
+    });
+    r.insertBefore(catIcon(c.icon, 26, c.colour), r.firstChild);
+    l.appendChild(r);
   }
 }
 
@@ -370,124 +524,12 @@ export function editPotSheet(id) {
   };
 }
 
-/* ---------- investments ---------- */
-
-export function investScreen() {
-  const value = portfolioValue();
-  const body = el('div');
-  const c = el('div', 'card');
-  c.appendChild(el('div', 'ringwrap__l', 'Portfolio value'));
-  c.appendChild(el('div', 'ringwrap__v', fmt(value)));
-  c.appendChild(el('div', 'hint', state.invest.holdings.length + ' holdings · platform fee ' + fmt(platformFeeMonthly()) + '/month'));
-  body.appendChild(c);
-
-  const cash = el('div', 'card card--flat');
-  cash.appendChild(el('div', 'row__t', 'Cash to invest'));
-  cash.appendChild(el('div', 'row__v', fmt(state.invest.cash)));
-  const dep = el('button', 'btn btn--primary btn--sm btn--block', 'Add money');
-  dep.style.marginTop = '10px';
-  dep.onclick = () => depositSheet();
-  cash.appendChild(dep);
-  body.appendChild(cash);
-
-  body.appendChild(list([
-    row({title: 'Activity', sub: 'Full ledger since October 1992', onClick: () => { location.hash = '#/ledger'; }})
-  ]));
-
-  body.appendChild(section('Holdings'));
-  const l = el('div', 'list list--boxed');
-  const sorted = state.invest.holdings.slice().sort((a, b) => b.v - a.v);
-  for (const h of sorted) {
-    const f = FUNDS.find(x => x.id === h.f);
-    if (!f) continue;
-    const weight = value ? Math.round((h.v / value) * 1000) / 10 : 0;
-    l.appendChild(row({
-      title: f.name,
-      sub: unitsOf(h).toFixed(3) + ' units · ' + f.ticker + ' · ' + weight + '%',
-      value: fmt(h.v),
-      onClick: () => { location.hash = '#/fund/' + f.id; }
-    }));
-  }
-  body.appendChild(l);
-
-  body.appendChild(section('All funds'));
-  const l2 = el('div', 'list list--boxed');
-  for (const f of FUNDS) {
-    l2.appendChild(row({
-      title: f.name, sub: f.region + ' · risk ' + f.risk + '/7',
-      value: fmt(f.price),
-      onClick: () => { location.hash = '#/fund/' + f.id; }
-    }));
-  }
-  body.appendChild(l2);
-
-  return screen('invest', {title: 'Investments', back: '#/account', body});
-}
-
-export function depositSheet() {
-  const body = el('div');
-  const a = input({type: 'number', step: '0.01', placeholder: '100.00'});
-  body.appendChild(field({label: 'Amount', input: a}));
-  const go = el('button', 'btn btn--primary btn--block', 'Add money');
-  const s = sheet({title: 'Add money', body, foot: go});
-  go.onclick = () => {
-    const v = round2(Number(a.value) || 0);
-    if (!v) return toast('Enter an amount');
-    if (!investDeposit(v)) return toast('Not enough money');
-    s.close(); toast('Added ' + fmt(v)); rerender();
-  };
-}
-
-export function fundScreen(id) {
-  const f = FUNDS.find(x => x.id === id);
-  if (!f) return screen('fund', {title: 'Fund', back: '#/invest', body: empty('Not found')});
-  const h = state.invest.holdings.find(x => x.f === f.id);
-  const held = h ? h.v : 0;
-  const body = el('div');
-  const c = el('div', 'card');
-  c.appendChild(el('div', 'row__t', f.name));
-  c.appendChild(el('div', 'hint', f.ticker + ' · ' + f.region + ' · risk ' + f.risk + '/7'));
-  c.appendChild(el('div', 'ringwrap__v', fmt(f.price)));
-  body.appendChild(c);
-
-  const heldCard = el('div', 'card card--flat');
-  heldCard.appendChild(el('div', 'row__t', 'Your holding'));
-  heldCard.appendChild(el('div', 'row__v', held ? (held / f.price).toFixed(4) + ' units' : 'None'));
-  heldCard.appendChild(el('div', 'hint', fmt(held)));
-  body.appendChild(heldCard);
-
-  const amt = input({type: 'number', step: '0.01', placeholder: '0.00'});
-  body.appendChild(field({label: 'Amount', input: amt}));
-
-  const buy = el('button', 'btn btn--primary btn--block', 'Buy');
-  buy.onclick = () => {
-    const v = round2(Number(amt.value) || 0);
-    if (!v) return toast('Enter an amount');
-    if (!investBuy(f.id, v)) return toast('Add cash first');
-    toast('Bought ' + fmt(v)); rerender();
-  };
-  body.appendChild(buy);
-
-  const sell = el('button', 'btn btn--ghost btn--block', 'Sell');
-  sell.onclick = () => {
-    const v = round2(Number(amt.value) || 0);
-    if (!v) return toast('Enter an amount');
-    if (!investSell(f.id, v)) return toast('Nothing to sell');
-    toast('Sold ' + fmt(v)); rerender();
-  };
-  body.appendChild(sell);
-
-  return screen('fund-' + id, {title: f.ticker, back: '#/invest', body});
-}
-
-/* ---------- pension & ISA ---------- */
-
 export function pensionScreen() {
   const p = pensionProjection();
   const body = el('div');
   const c = el('div', 'card');
-  c.appendChild(el('div', 'ringwrap__l', 'Pension pot'));
-  c.appendChild(el('div', 'ringwrap__v', fmt(state.pension.balance)));
+  c.appendChild(el('div', 'lts__l', 'Pension pot'));
+  c.appendChild(el('div', 'lts__v', fmt(state.pension.balance)));
   c.appendChild(el('div', 'hint', state.pension.provider + ' · joined ' + dateStr(state.pension.joined)));
   body.appendChild(c);
 
@@ -518,14 +560,9 @@ export function pensionScreen() {
 export function isaScreen() {
   const body = el('div');
   const c = el('div', 'card');
-  c.appendChild(el('div', 'ringwrap__l', 'ISA balance'));
-  c.appendChild(el('div', 'ringwrap__v', fmt(state.isa.balance)));
-  const bar = el('div', 'pbar');
-  bar.style.marginTop = '10px';
-  const f = el('div', 'pbar__f');
-  f.style.width = Math.round((state.isa.used / Math.max(1, state.isa.allowance)) * 100) + '%';
-  bar.appendChild(f);
-  c.appendChild(bar);
+  c.appendChild(el('div', 'lts__l', 'ISA balance'));
+  c.appendChild(el('div', 'lts__v', fmt(state.isa.balance)));
+  c.appendChild(spendBar(state.isa.used / Math.max(1, state.isa.allowance)));
   c.appendChild(el('div', 'hint', fmt(state.isa.used) + ' of ' + fmt(state.isa.allowance) + ' allowance used'));
   body.appendChild(c);
 
@@ -546,7 +583,7 @@ export function plusScreen() {
   const cur = planInfo();
   const c = el('div', 'card');
   c.appendChild(pill(cur.name.toUpperCase(), 'coral'));
-  c.appendChild(el('div', 'ringwrap__v', fmt(cur.price) + '/mo'));
+  c.appendChild(el('div', 'lts__v', fmt(cur.price) + '/mo'));
   c.appendChild(el('div', 'hint', 'Renews ' + dateStr(state.plus.renews)));
   body.appendChild(c);
 
@@ -671,7 +708,7 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v36', chev: false}),
+    row({title: 'Build', value: 'v37', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   return screen('about', {title: 'About', back: '#/account', body});
