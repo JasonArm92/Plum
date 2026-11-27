@@ -186,11 +186,11 @@ export const FUNDS = [
 
 export const RISK_FUNDS = [
   {id:'careful', name:'Careful', risk:3, equity:25, bond:70, cash:5,
-   blurb:'Mostly bonds with a slice of shares. Smaller ups and downs.'},
+    blurb:'Mostly bonds with a slice of shares. Smaller ups and downs.'},
   {id:'balanced', name:'Balanced', risk:5, equity:65, bond:30, cash:5,
-   blurb:'A mix of shares and bonds. Moderate ups and downs.'},
+    blurb:'A mix of shares and bonds. Moderate ups and downs.'},
   {id:'adventurous', name:'Adventurous', risk:7, equity:90, bond:8, cash:2,
-   blurb:'Mostly shares. Bigger ups and downs over time.'}
+    blurb:'Mostly shares. Bigger ups and downs over time.'}
 ];
 
 export const CONSTITUENTS = {
@@ -214,3 +214,57 @@ export const SAVINGS_INTEREST = 0.04;
 export const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 export const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/* ---------- credit ---------- */
+
+export const CREDIT_MIN = 0;
+export const CREDIT_MAX = 999;
+
+export const CREDIT_BANDS = [
+  {id:'poor', from:0, to:438, label:'Poor', colour:'#d92d20'},
+  {id:'fair', from:439, to:566, label:'Fair', colour:'#ff8000'},
+  {id:'good', from:567, to:682, label:'Good', colour:'#f5a623'},
+  {id:'verygood', from:683, to:783, label:'Very good', colour:'#12a150'},
+  {id:'excellent', from:784, to:999, label:'Excellent', colour:'#0b7a3c'}
+];
+
+export const CREDIT_FACTORS = [
+  {id:'electoral', label:'On the electoral roll', impact:'good',
+    note:'Registered at your current address since 2019.'},
+  {id:'payments', label:'Payment history', impact:'good',
+    note:'No missed payments in the last 24 months.'},
+  {id:'age', label:'Age of your accounts', impact:'good',
+    note:'Your oldest account is 11 years old.'},
+  {id:'utilisation', label:'Credit used', impact:'watch',
+    note:'You are using 37% of your £3,200 limit.'},
+  {id:'searches', label:'Recent applications', impact:'watch',
+    note:'2 hard searches in the last 6 months.'}
+];
+
+export const CREDIT_TIPS = [
+  'Bring your credit card balance under 25% of its limit.',
+  'Leave six months between new credit applications.',
+  'Check your report for anything that is not yours.',
+  'Keep old accounts open. Closing them shortens your history.'
+];
+
+/* ---------- connected accounts ---------- */
+
+export const CONNECTED_BANKS = [
+  {id:'barclays', name:'Barclays', colour:'#00aeef'},
+  {id:'halifax', name:'Halifax', colour:'#005eb8'},
+  {id:'lloyds', name:'Lloyds', colour:'#006a4d'},
+  {id:'natwest', name:'NatWest', colour:'#5a287d'},
+  {id:'nationwide', name:'Nationwide', colour:'#00457c'},
+  {id:'hsbc', name:'HSBC', colour:'#db0011'},
+  {id:'santander', name:'Santander', colour:'#ec0000'},
+  {id:'firstdirect', name:'first direct', colour:'#1c1c1c'},
+  {id:'starling', name:'Starling', colour:'#6935d3'},
+  {id:'revolut', name:'Revolut', colour:'#0666eb'},
+  {id:'chase', name:'Chase', colour:'#117aca'},
+  {id:'monzo', name:'Monzo', colour:'#ff4f40'}
+];
+
+export const CONNECT_CONSENT_DAYS = 90;
+
+export const MORTGAGE_TERMS = [15, 20, 25, 30, 35];
