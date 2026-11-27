@@ -1,15 +1,17 @@
-import { load, state, runScheduled } from './core.js';
-import { el, icon, toast } from './ui.js';
+import { load, state, runScheduled } from './core.js?v=33';
+import { el, icon, toast } from './ui.js?v=33';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
   payeeScreen, sendScreen, requestScreen, bankScreen, scheduledScreen,
   borrowingScreen, accountScreen, potsScreen, potScreen
-} from './screens-a.js';
+} from './screens-a.js?v=33';
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
   appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet
-} from './screens-b.js';
+} from './screens-b.js?v=33';
+
+const BUILD = 33;
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -114,8 +116,7 @@ function showError(err) {
   const wrap = el('div', 'center');
   const inner = el('div');
   inner.appendChild(el('div', 'logo', '!'));
-  inner.appendChild(el('div', 'row__t', 'Something went wrong'));
-  inner.appendChild(el('p', 'hint', 'The screen failed to build. The detail below helps pin it down.'));
+  inner.appendChild(el('div', 'row__t', 'Screen failed'));
   inner.appendChild(el('pre', 'errbox', String((err && (err.stack || err.message)) || err)));
   const b = el('button', 'btn btn--primary', 'Reload');
   b.style.marginTop = '16px';
@@ -128,8 +129,6 @@ function showError(err) {
   wrap.appendChild(inner);
   v.appendChild(wrap);
 }
-
-/* ---------- login ---------- */
 
 function login() {
   const v = view();
@@ -154,6 +153,12 @@ function login() {
     pad.appendChild(b);
   }
   inner.appendChild(pad);
+
+  const foot = el('p', 'hint');
+  foot.style.marginTop = '16px';
+  foot.textContent = 'build ' + BUILD;
+  inner.appendChild(foot);
+
   wrap.appendChild(inner);
   v.appendChild(wrap);
 
@@ -183,8 +188,6 @@ function login() {
   }
 }
 
-/* ---------- boot ---------- */
-
 function boot() {
   try {
     load();
@@ -207,16 +210,5 @@ function boot() {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 }
-
-window.addEventListener('error', e => {
-  if (!document.getElementById('view') || !document.getElementById('view').children.length) {
-    showError(e.error || e.message);
-  }
-});
-window.addEventListener('unhandledrejection', e => {
-  if (!document.getElementById('view') || !document.getElementById('view').children.length) {
-    showError(e.reason);
-  }
-});
 
 boot();
