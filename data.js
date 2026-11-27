@@ -120,6 +120,14 @@ export const FUNDS = [
   {id:'cash', name:'Cash', ticker:'GBP', price:1, cls:'cash', region:'UK', risk:1}
 ];
 
+export const FUND_ALIASES = {
+  swda:'swda', isharescoremsciworld:'swda', msciworld:'swda', world:'swda',
+  cspx:'cspx', isharescoresp500:'cspx', sp500:'cspx',
+  cukx:'cukx', isharescoreftse100:'cukx', ftse100:'cukx',
+  aggg:'aggg', isharescoreglobalaggregatebond:'aggg', bond:'aggg', bonds:'aggg',
+  cash:'cash'
+};
+
 export const PENSION_FUNDS = [
   {id:'pen_world', name:'BlackRock World Equity', alloc:60},
   {id:'pen_bond', name:'iShares Global Bond', alloc:25},
