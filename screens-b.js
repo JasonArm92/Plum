@@ -5,12 +5,12 @@ import {
   budgetFor, setBudget, totalBudget, ledgerNetInvested, ledgerIncome,
   riskInfo, setChosenFund, payeesSorted, createSplit, splitOutstanding,
   splitsOutstandingTotal, markSplitPaid, removeSplit
-} from './core.js?v=38';
-import { FUNDS, CATEGORIES, RISK_FUNDS, CONSTITUENTS, POT_EMOJI, POT_COLOURS } from './data.js?v=38';
+} from './core.js?v=39';
+import { FUNDS, CATEGORIES, RISK_FUNDS, CONSTITUENTS, POT_EMOJI, POT_COLOURS } from './data.js?v=39';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar
-} from './ui.js?v=38';
+} from './ui.js?v=39';
 
 const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -129,8 +129,6 @@ export function budgetSheet() {
   body.appendChild(l);
 }
 
-/* ---------- splits ---------- */
-
 export function splitScreen(txId) {
   const t = state.tx.find(x => x.id === txId);
   if (!t) return screen('split', {title: 'Split bill', back: '#/payments', body: empty('Transaction not found')});
@@ -156,8 +154,7 @@ export function splitScreen(txId) {
     const m = el('div', 'row__main');
     m.appendChild(el('div', 'row__t', p.name));
     r.appendChild(m);
-    const tick = el('span', 'person__tick', '✓');
-    r.appendChild(tick);
+    r.appendChild(el('span', 'person__tick', '✓'));
     r.onclick = () => {
       const on = r.getAttribute('aria-pressed') === 'true';
       r.setAttribute('aria-pressed', String(!on));
@@ -177,14 +174,13 @@ export function splitScreen(txId) {
       preview.appendChild(el('div', 'hint', 'Pick at least one person'));
       return;
     }
-    const each = round2(total / n);
-    preview.appendChild(el('div', 'row__t', fmt(each) + ' each'));
+    preview.appendChild(el('div', 'row__t', fmt(round2(total / n)) + ' each'));
     preview.appendChild(el('div', 'hint', 'Split evenly between ' + n + (n === 1 ? ' person' : ' people')));
   };
   paint();
   body.appendChild(preview);
 
-  const go = el('button', 'btn btn--primary btn--block', 'Request ' + 'shares');
+  const go = el('button', 'btn btn--primary btn--block', 'Request shares');
   go.onclick = () => {
     if (!chosen.size) return toast('Pick at least one person');
     const people = [...chosen].map(id => state.payees.find(p => p.id === id)).filter(Boolean);
@@ -240,10 +236,7 @@ export function splitDetailScreen(id) {
   const l = el('div', 'list list--boxed');
   s.people.forEach((p, i) => {
     l.appendChild(row({
-      title: p.name,
-      sub: p.paid ? 'Paid' : 'Waiting',
-      value: fmt(p.amount),
-      chev: false,
+      title: p.name, sub: p.paid ? 'Paid' : 'Waiting', value: fmt(p.amount), chev: false,
       onClick: () => { markSplitPaid(s.id, i); rerender(); }
     }));
   });
@@ -342,14 +335,8 @@ export function paymentsEditorSheet() {
   sheet({title: 'Edit actions', body});
 }
 
-/* ---------- investments ---------- */
-
 const LED_LABEL = {
-  buy: 'Monthly investment',
-  gift: 'Opening gift',
-  sell: 'Sale',
-  div: 'Dividend',
-  deposit: 'Cash added'
+  buy: 'Monthly investment', gift: 'Opening gift', sell: 'Sale', div: 'Dividend', deposit: 'Cash added'
 };
 
 export function investScreen() {
@@ -534,8 +521,7 @@ export function ledgerScreen() {
       const f = riskInfo(e.fund);
       const r = el('div', 'led');
       const d = new Date(e.ts);
-      r.appendChild(el('div', 'led__d',
-        d.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'})));
+      r.appendChild(el('div', 'led__d', d.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'})));
       const m = el('div', 'led__main');
       const label = e.type === 'buy' && e.amount >= 1000 ? 'Lump sum' : (LED_LABEL[e.type] || e.type);
       m.appendChild(el('div', 'led__t', label));
@@ -816,7 +802,7 @@ export function profileScreen() {
     i.onchange = () => { u[key] = i.value; save(); toast('Saved'); };
     body.appendChild(field({label, input: i}));
   }
-  return screen('profile', {title: 'Personal details', back: '#/account', body});
+  return screen('profile', {title: 'Personal details', back: '#/settings-personal', body});
 }
 
 export function securityScreen() {
@@ -832,13 +818,7 @@ export function securityScreen() {
     rerender();
   };
   body.appendChild(b);
-  const r = el('button', 'btn btn--ghost btn--block', 'Reset app data');
-  r.onclick = () => confirmSheet({
-    title: 'Reset everything', text: 'This wipes all local data.', danger: true, confirm: 'Reset',
-    onConfirm: () => { reset(); location.hash = '#/login'; rerender(); }
-  });
-  body.appendChild(r);
-  return screen('security', {title: 'Security', back: '#/account', body});
+  return screen('security', {title: 'Security', back: '#/settings-security', body});
 }
 
 export function notificationsScreen() {
@@ -858,7 +838,7 @@ export function notificationsScreen() {
     mk('Marketing', 'Offers and product news', 'marketing'),
     mk('Haptics', 'Vibrate on actions', 'haptics')
   ]));
-  return screen('notifications', {title: 'Notifications', back: '#/account', body});
+  return screen('notifications', {title: 'Notifications', back: '#/settings-preferences', body});
 }
 
 export function statementsScreen() {
@@ -871,7 +851,7 @@ export function statementsScreen() {
     l.appendChild(row({title: label, sub: 'PDF statement', onClick: () => toast('Preparing ' + label)}));
   }
   body.appendChild(l);
-  return screen('statements', {title: 'Statements', back: '#/account', body});
+  return screen('statements', {title: 'Statements', back: '#/settings-documents', body});
 }
 
 export function appearanceScreen() {
@@ -887,7 +867,7 @@ export function appearanceScreen() {
   r.appendChild(m);
   r.appendChild(switchEl(s.reducedMotion, v => { s.reducedMotion = v; save(); applyTheme(); }));
   body.appendChild(list([r]));
-  return screen('appearance', {title: 'Appearance', back: '#/account', body});
+  return screen('appearance', {title: 'Appearance', back: '#/settings-preferences', body});
 }
 
 export function applyTheme() {
@@ -903,10 +883,10 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v38', chev: false}),
+    row({title: 'Build', value: 'v39', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
-  return screen('about', {title: 'About', back: '#/account', body});
+  return screen('about', {title: 'About', back: '#/settings-about', body});
 }
 
 export function cardsScreen() {
@@ -929,7 +909,7 @@ export function cardsScreen() {
     save(); toast('Virtual card created'); rerender();
   };
   body.appendChild(add);
-  return screen('cards', {title: 'Cards', back: '#/account', body});
+  return screen('cards', {title: 'Cards', back: '#/settings-personal', body});
 }
 
 const LAYOUT_LABELS = {
@@ -991,4 +971,4 @@ export function layoutSheet() {
 
   draw();
   sheet({title: 'Edit home', body});
-      }
+}
