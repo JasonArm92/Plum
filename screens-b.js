@@ -12,7 +12,7 @@ import {
   challengeSave, restartChallenge, billsbackOptIn, billsbackDraw, bbBills, connectBank,
   removeBank, addExtraAccount, updateExtraAccount, closeExtraAccount, moveToExtraAccount,
   closeAccount, reopenAccount, setActiveAccount,
-  takeAura, setAura, payOutCashback, CASHBACK_MIN, raiseDispute, closeDispute,
+  takePlus, setPlus, payOutCashback, CASHBACK_MIN, raiseDispute, closeDispute,
   creditAction, CREDIT_ACTIONS, pushChat, clearNotifs, markAllRead, updateTx, deleteTx,
   balNow, addTx
 } from './core.js';
@@ -26,7 +26,7 @@ export function mountPayees(root){
     const s = getState();
     const sorted = s.payees.slice().sort((a, b) => (b.fav ? 1 : 0) - (a.fav ? 1 : 0) || (b.last || '').localeCompare(a.last || ''));
     root.innerHTML = `<div class="h-sec"><h2>Payees</h2><button data-add>Add</button></div>
-      <div class="card" style="padding:6px 8px">${sorted.map(p => `
+      <div class="card p6-8">${sorted.map(p => `
         <div class="pot">${logo(p.name)}
           <span class="mid"><span class="nm">${esc(p.name)} ${p.fav ? badge('Fav', 'ok') : ''}${p.last === TODAY ? badge('Recent') : ''}</span>
             <span class="sub">${esc(p.sc)} · ${esc(p.ac)}</span></span>
@@ -41,7 +41,7 @@ export function mountPayees(root){
       <div class="field"><label>Sort code</label><input id="pySc" value="${esc(p.sc)}"></div>
       <div class="field"><label>Account number</label><input id="pyAc" value="${esc(p.ac)}"></div>
       <button class="btn" id="pySave">Save</button>
-      ${id ? `<button class="btn ghost" id="pyDel" style="margin-top:10px">Delete</button>` : ''}`);
+      ${id ? `<button class="btn ghost mt10" id="pyDel">Delete</button>` : ''}`);
     document.getElementById('pySave').onclick = () => {
       const name = document.getElementById('pyName').value.trim();
       if (!name) return toast('Enter a name');
@@ -65,8 +65,8 @@ export function mountPayees(root){
       if (!v || v <= 0) return toast('Enter an amount');
       sheet(`<h2>Confirm</h2>${kv('To', esc(p.name))}${kv('Sort code', esc(p.sc))}${kv('Account', esc(p.ac))}
         ${kv('Reference', esc(ref))}${kv('Amount', `<span class="rev">${fmt(v)}</span>`)}
-        <button class="btn" id="sdGo" style="margin-top:14px">Send ${fmt(v)}</button>
-        <button class="btn ghost" id="sdBack" style="margin-top:8px">Back</button>`);
+        <button class="btn mt14" id="sdGo">Send ${fmt(v)}</button>
+        <button class="btn ghost mt8" id="sdBack">Back</button>`);
       document.getElementById('sdBack').onclick = () => send(id);
       document.getElementById('sdGo').onclick = () => {
         const res = sendMoney(id, v, ref);
@@ -140,10 +140,10 @@ export function mountBackup(root){
       <div class="card"><h2>Export</h2>
         <div class="sub">Your whole ledger, pots, policies and settings in one file.</div>
         ${s.lastBackup ? kv('Last export', esc(s.lastBackup)) : `<p class="note">${badge('Never exported', 'warn')}</p>`}
-        <button class="btn" data-export style="margin-top:12px">Download backup</button></div>
+        <button class="btn mt12" data-export>Download backup</button></div>
       <div class="card"><h2>Restore</h2>
         <div class="sub">Replaces everything currently on this device.</div>
-        <label class="filebtn" style="margin-top:4px">Choose file
+        <label class="filebtn mt8">Choose file
           <input type="file" accept="application/json,.json" data-import></label></div>
       <p class="note">The file is plain JSON and contains your name, address and full history, so keep it somewhere you trust.</p>`;
   };
@@ -188,7 +188,7 @@ export function mountCards(root){
           <span class="mid"><span class="nm">Physical card · 4000 1234</span>
             <span class="sub">${s.frozen ? 'Frozen' : 'Active'}</span></span>
           ${badge(s.frozen ? 'Frozen' : 'Active', s.frozen ? 'bad' : 'ok')}</div>
-        <button class="btn ghost sm" data-freeze style="margin:10px 0">${s.frozen ? 'Unfreeze' : 'Freeze'}</button>
+        <button class="btn ghost sm mt10" data-freeze>${s.frozen ? 'Unfreeze' : 'Freeze'}</button>
         ${s.vcards.map(v => `<div class="pot">${logo(v.label)}
           <span class="mid"><span class="nm">${esc(v.label)}</span><span class="sub">${esc(v.num)}</span></span>
           <button class="iconbtn" data-vf="${v.id}" aria-label="Freeze">${v.frozen ? '❄' : '✓'}</button>
@@ -224,16 +224,17 @@ export function mountPlan(root){
     root.innerHTML = `<div class="h-sec"><h2>Plans</h2></div>` +
       Object.entries(PLANS_BANK()).map(([k, p]) => `
         <div class="card" style="border:2px solid ${k === s.plan ? 'var(--coral)' : 'transparent'}">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="display:flex;gap:10px;align-items:center">${logo('Monzo')}<h2 style="margin:0">${p.name}</h2></div>
+          <div class="fx fx-b fx-c">
+            <div class="fx fx-c gap10">${logo('Monzo')}<h2 class="m0">${p.name}</h2></div>
             <b>${p.price ? '£' + p.price + '/mo' : 'Free'}</b></div>
           <div class="sub">${p.age}</div>
           ${kv('Instant Access rate', p.ia + '% AER')}
           ${kv('ATM abroad', '£' + p.atmRow)}
           ${kv('Billsback', p.billsback ? 'Yes' : 'No')}
           ${kv('Insurance', p.cover ? 'Yes' : 'No')}
-          ${k === s.plan ? `<div style="margin-top:10px">${badge('Your plan', 'coral')}</div>`
-            : `<button class="btn" data-plan="${k}" style="margin-top:10px">Switch to ${p.name}</button>`}</div>`).join('') +
+          ${kv('Platform fee', p.cover ? '0.20% capped at £200' : '0.25% capped at £250')}
+          ${k === s.plan ? `<div class="mt10">${badge('Your plan', 'coral')}</div>`
+            : `<button class="btn mt10" data-plan="${k}">Switch to ${p.name}</button>`}</div>`).join('') +
       `<div class="card"><h2>Family add-on</h2><div class="sub">Max only · +£4/month · covers 2 adults and 2 children</div>
         <div class="toggle"><div><div class="t">Cover the household</div></div>
           <button class="sw ${s.family ? 'on' : ''}" data-family aria-label="Family add-on"></button></div></div>`;
@@ -281,10 +282,10 @@ export function mountLimits(root){
 
 export function mountBorrow(root){
   const s = getState();
-  root.innerHTML = `<div class="h-sec"><h2>Borrowing</h2></div><div class="card" style="padding:6px 8px">
+  root.innerHTML = `<div class="h-sec"><h2>Borrowing</h2></div><div class="card p6-8">
     <button class="pot" data-go="flex">${logo('Monzo Flex')}<span class="mid"><span class="nm">Monzo Flex</span>
       <span class="sub">${fmt(flexAvail())} available</span></span><span class="amt">›</span></button>
-    <button class="pot" data-go="aura">${logo('Monzo Aura')}<span class="mid"><span class="nm">Monzo Aura</span>
+    <button class="pot" data-go="plus">${logo('Monzo Plus')}<span class="mid"><span class="nm">Monzo Plus</span>
       <span class="sub">Cashback card</span></span><span class="amt">›</span></button>
     <button class="pot" data-go="overdraft">${logo('Monzo')}<span class="mid"><span class="nm">Overdraft</span>
       <span class="sub">${s.overdraft.limit ? fmt(s.overdraft.limit) : 'Not arranged'}</span></span><span class="amt">›</span></button>
@@ -298,26 +299,27 @@ export function mountFlex(root){
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Monzo Flex</h2></div>
       <div class="card"><div class="sub">Available</div>
-        <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(flexAvail())}</div>
+        <div class="balance rev fs30">${fmt(flexAvail())}</div>
         ${meter(s.flex.used, s.flex.limit)}${kv('Limit', `<span class="rev">${fmt(s.flex.limit)}</span>`)}
-        <button class="btn" data-new style="margin-top:12px">Pay with Flex</button></div>
+        <button class="btn mt12" data-new>Pay with Flex</button></div>
       <div class="card"><h2>Plans</h2>
         ${s.flex.plans.length ? s.flex.plans.map(p => `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
-          <div style="display:flex;justify-content:space-between;font-size:14px;gap:10px;align-items:center">
-            ${logo(p.name)}<span style="flex:1">${esc(p.name)}</span><b class="rev">${fmt(p.remaining)}</b></div>
+          <div class="fx fx-b fx-c gap10 fs14">
+            ${logo(p.name)}<span class="grow">${esc(p.name)}</span><b class="rev">${fmt(p.remaining)}</b></div>
           ${meter(round2(p.amount - p.remaining), p.amount)}
-          <div style="font-size:12.5px;color:var(--ink2)">${p.term} months · ${fmt(p.monthly)}/mo</div>
-          <button class="btn ghost sm" data-settle="${p.id}" style="margin-top:6px">Settle ${fmt(p.remaining)}</button></div>`).join('')
+          <div class="fs125 ink2">${p.term} months · ${fmt(p.monthly)}/mo</div>
+          <button class="btn ghost sm mt8" data-settle="${p.id}">Settle ${fmt(p.remaining)}</button></div>`).join('')
           : empty('No plans')}</div>`;
   };
   const form = () => {
     term = 3;
-    sheet(`<h2>Pay with Flex</h2><div class="sub">${fmt(flexAvail())} available</div>
+    sheet(`<h2>Pay with Flex</h2><div class="sub">${fmt(flexAvail())} available · £100 minimum</div>
       <div class="field"><label>Where</label><input id="fxName"></div>
-      <div class="field"><label>Amount</label><input id="fxAmt" type="number" min="1"></div>
+      <div class="field"><label>Amount</label><input id="fxAmt" type="number" min="100"></div>
       ${chipRow([{ value: 3, label: '3 months · 0%' }, { value: 6, label: '6 · 29%' }, { value: 12, label: '12 · 29%' }], 3, 'term')}
+      <p class="note">0% applies to three months on £100 or more. Longer terms are 29% APR.</p>
       ${kv('Monthly', '<span class="rev" id="fxMonthly">—</span>')}
-      <button class="btn" id="fxGo" style="margin-top:12px">Confirm</button>`);
+      <button class="btn mt12" id="fxGo">Confirm</button>`);
     const quote = () => {
       const a = +document.getElementById('fxAmt').value || 0;
       document.getElementById('fxMonthly').textContent = a ? fmt(flexMonthly(a, term)) : '—';
@@ -341,37 +343,37 @@ export function mountFlex(root){
   render();
 }
 
-export function mountAura(root){
+export function mountPlus(root){
   const render = () => {
-    const a = getState().aura;
+    const a = getState().plus;
     const cash = round2(a.cashback || 0);
-    root.innerHTML = `<div class="h-sec"><h2>Monzo Aura</h2></div><div class="card">
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logo('Monzo Aura')}
-        <div class="sub" style="margin:0">£15 per month · 1% cashback on card spend</div></div>
+    root.innerHTML = `<div class="h-sec"><h2>Monzo Plus</h2></div><div class="card">
+      <div class="fx fx-c gap10 mb20">${logo('Monzo Plus')}
+        <div class="sub m0">£15 per month · 1% cashback on card spend</div></div>
       ${kv('Status', a.active ? badge('Active', 'ok') : badge('Off'))}
       ${kv('Cashback earned', `<span class="rev">${fmt(cash)}</span>`)}
       ${kv('Lounge passes', a.lounge)}${kv('Fast track', a.fast)}
-      <div class="row2" style="margin-top:10px">
+      <div class="row2 mt10">
         <button class="btn ghost sm" data-lounge ${a.lounge ? '' : 'disabled'}>Use lounge pass</button>
         <button class="btn ghost sm" data-fast ${a.fast ? '' : 'disabled'}>Use fast track</button></div>
-      <button class="btn ghost sm" data-cashback style="margin-top:10px;width:100%"
+      <button class="btn ghost sm w100 mt10" data-cashback
         ${cash >= CASHBACK_MIN ? '' : 'disabled'}>Move ${fmt(cash)} to balance</button>
-      <div class="toggle" style="margin-top:10px"><div><div class="t">Auto-invest cashback</div></div>
+      <div class="toggle mt10"><div><div class="t">Auto-invest cashback</div></div>
         <button class="sw ${a.auto ? 'on' : ''}" data-auto aria-label="Auto invest"></button></div>
-      <button class="btn" data-toggle style="margin-top:14px">${a.active ? 'Close Aura' : 'Take out Aura'}</button></div>
+      <button class="btn mt14" data-toggle>${a.active ? 'Close Plus' : 'Take out Plus'}</button></div>
       <p class="note">Cashback accrues at 1% on groceries, eating out, transport, shopping, health, education, entertainment, fitness and kids. £${CASHBACK_MIN} minimum to move out.</p>`;
   };
   root.addEventListener('click', e => {
-    const a = getState().aura;
-    if (e.target.closest('[data-lounge]') && a.lounge){ setAura({ lounge: a.lounge - 1 }); render(); return toast('Pass used'); }
-    if (e.target.closest('[data-fast]') && a.fast){ setAura({ fast: a.fast - 1 }); render(); return toast('Pass used'); }
-    if (e.target.closest('[data-auto]')){ setAura({ auto: !a.auto }); return render(); }
+    const a = getState().plus;
+    if (e.target.closest('[data-lounge]') && a.lounge){ setPlus({ lounge: a.lounge - 1 }); render(); return toast('Pass used'); }
+    if (e.target.closest('[data-fast]') && a.fast){ setPlus({ fast: a.fast - 1 }); render(); return toast('Pass used'); }
+    if (e.target.closest('[data-auto]')){ setPlus({ auto: !a.auto }); return render(); }
     if (e.target.closest('[data-cashback]')){
       const r = payOutCashback();
       if (!r.ok) return toast(r.msg);
       render(); return toast(`${fmt(r.amt)} moved to your balance`);
     }
-    if (e.target.closest('[data-toggle]')){ const on = takeAura(); render(); toast(on ? 'Aura active' : 'Closed'); }
+    if (e.target.closest('[data-toggle]')){ const on = takePlus(); render(); toast(on ? 'Plus active' : 'Closed'); }
   });
   render();
 }
@@ -381,13 +383,13 @@ export function mountOverdraft(root){
   const render = () => {
     const o = getState().overdraft, bal = balNow();
     root.innerHTML = `<div class="h-sec"><h2>Overdraft</h2></div><div class="card">
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logo('Monzo')}
-        <div class="sub" style="margin:0">Arranged overdraft on your current account</div></div>
-      <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(o.limit)}</div>
+      <div class="fx fx-c gap10 mb20">${logo('Monzo')}
+        <div class="sub m0">Arranged overdraft on your current account</div></div>
+      <div class="balance rev fs30">${fmt(o.limit)}</div>
       ${kv('Rate', o.rate ? o.rate + '% EAR' : '—')}${kv('Used', `<span class="rev">${fmt(Math.max(0, -bal))}</span>`)}
       ${chipRow([250, 500, 1000, 2000].map(v => ({ value: v, label: '£' + v })), pending || null, 'od')}
-      <button class="btn" data-apply style="margin-top:12px">Apply</button>
-      ${o.limit ? `<button class="btn ghost" data-cancel style="margin-top:8px">Cancel overdraft</button>` : ''}</div>`;
+      <button class="btn mt12" data-apply>Apply</button>
+      ${o.limit ? `<button class="btn ghost mt8" data-cancel>Cancel overdraft</button>` : ''}</div>`;
   };
   root.addEventListener('click', e => {
     const c = e.target.closest('[data-od]');
@@ -404,18 +406,18 @@ export function mountLoans(root){
     const term = +((root.querySelector('#lnTerm') || {}).value) || 24;
     const apr = aprForLoan(amt), monthly = loanMonthly(amt, term);
     root.innerHTML = `<div class="h-sec"><h2>Loans</h2></div><div class="card">
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logo('Monzo Loans')}
-        <div class="sub" style="margin:0">Borrow £1,000 to £35,000</div></div>
+      <div class="fx fx-c gap10 mb20">${logo('Monzo Loans')}
+        <div class="sub m0">Borrow £1,000 to £35,000</div></div>
       <div class="field"><label>Amount</label><input id="lnAmt" type="number" min="1000" max="35000" step="500" value="${amt}"></div>
       <div class="field"><label>Term</label><select id="lnTerm">${[12,24,36,48,60].map(t => `<option ${t === term ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
       ${kv('APR', apr + '%')}${kv('Monthly', `<span class="rev">${fmt(monthly)}</span>`)}
       ${kv('Total', `<span class="rev">${fmt(round2(monthly * term))}</span>`)}
-      <button class="btn" data-apply style="margin-top:12px">Apply</button></div>
+      <button class="btn mt12" data-apply>Apply</button></div>
       <div class="card"><h2>Your loans</h2>
         ${getState().loans.length ? getState().loans.map(l => `<div style="padding:9px 0;border-bottom:1px solid var(--line)">
-          <div style="display:flex;justify-content:space-between;font-size:14px"><span>${fmt(l.amount)}</span><b class="rev">${fmt(l.outstanding)}</b></div>
+          <div class="fx fx-b fs14"><span>${fmt(l.amount)}</span><b class="rev">${fmt(l.outstanding)}</b></div>
           ${meter(l.paid, l.term)}
-          <button class="btn ghost sm" data-over="${l.id}" style="margin-top:6px">Overpay</button></div>`).join('') : empty('No loans')}</div>`;
+          <button class="btn ghost sm mt8" data-over="${l.id}">Overpay</button></div>`).join('') : empty('No loans')}</div>`;
     root.querySelector('#lnAmt').oninput = render;
     root.querySelector('#lnTerm').onchange = render;
   };
@@ -464,10 +466,10 @@ export function mountCredit(root){
   const render = () => {
     const s = getState(), scores = plan().scores;
     root.innerHTML = `<div class="h-sec"><h2>Credit insights</h2></div>
-      <div class="card"><div style="display:flex;gap:20px">
-        <div style="flex:1"><div class="sub">Equifax</div><div class="score">${s.credit.eq}</div>
+      <div class="card"><div class="fx" style="gap:20px">
+        <div class="grow"><div class="sub">Equifax</div><div class="score">${s.credit.eq}</div>
           ${badge(s.credit.eq > 650 ? 'Good' : 'Fair', s.credit.eq > 650 ? 'ok' : 'warn')}</div>
-        ${scores > 1 ? `<div style="flex:1"><div class="sub">TransUnion</div><div class="score">${s.credit.tu}</div>
+        ${scores > 1 ? `<div class="grow"><div class="sub">TransUnion</div><div class="score">${s.credit.tu}</div>
           ${badge(s.credit.tu > 650 ? 'Good' : 'Fair', s.credit.tu > 650 ? 'ok' : 'warn')}</div>` : ''}
       </div></div>
       <div class="card"><h2>Boost your score</h2>
@@ -490,13 +492,13 @@ export function mountChallenge(root){
   const render = () => {
     const c = getState().challenge;
     root.innerHTML = `<div class="h-sec"><h2>Saving Challenge</h2></div>
-      <div class="card"><div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">${logo('Saving Challenge')}
-        <div class="sub" style="margin:0">Save 1p more than yesterday, every day</div></div>
-        <div class="balance rev" style="font-size:30px;margin:4px 0">${fmt(c.saved)}</div>
+      <div class="card"><div class="fx fx-c gap10 mb20">${logo('Saving Challenge')}
+        <div class="sub m0">Save 1p more than yesterday, every day</div></div>
+        <div class="balance rev fs30">${fmt(c.saved)}</div>
         ${meter(c.saved, 667.95)}${kv('Day', `${c.day} of 365`)}
         ${kv('Today', `<span class="rev">${fmt(round2((c.day + 1) / 100))}</span>`)}
-        <button class="btn" data-save style="margin-top:12px">Save today's amount</button>
-        <button class="btn ghost" data-restart style="margin-top:8px">Restart challenge</button></div>`;
+        <button class="btn mt12" data-save>Save today's amount</button>
+        <button class="btn ghost mt8" data-restart>Restart challenge</button></div>`;
   };
   root.addEventListener('click', e => {
     if (e.target.closest('[data-save]')){ const r = challengeSave(); if (!r.ok) return toast(r.msg); render(); return toast('Saved ' + fmt(r.amt)); }
@@ -512,7 +514,7 @@ export function mountBillsback(root){
       <div class="card">${kv('Eligible', plan().billsback ? badge('Yes', 'ok') : badge('Needs Extra', 'bad'))}
         <div class="toggle"><div><div class="t">Opt in</div></div>
           <button class="sw ${s.billsback.optIn ? 'on' : ''}" data-opt aria-label="Opt in"></button></div>
-        <button class="btn" data-draw style="margin-top:14px">Enter draw</button></div>
+        <button class="btn mt14" data-draw>Enter draw</button></div>
       <div class="card"><h2>Eligible bills</h2>
         ${bills.length ? bills.map(b => kv(`${logo(b.name)}<span class="billname">${esc(b.name)}</span> · ${fmt(Math.min(Math.abs(b.amt), BB_CAP))}`, esc(b.date))).join('') : empty('None this month')}</div>
       <div class="card"><h2>Results</h2>
@@ -533,12 +535,12 @@ export function mountInsurance(root){
     const live = s.policies.filter(p => p.status === 'Active').length;
     root.innerHTML = `<div class="h-sec"><h2>Insurance</h2></div>
       ${covered ? '' : `<div class="card"><div class="sub">Not on ${esc(plan().name)} — cover ends when your plan does.</div>
-        <button class="btn" data-go="plan" style="margin-top:10px">See plans</button></div>`}
+        <button class="btn mt10" data-go="plan">See plans</button></div>`}
       <div class="card">
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">${logo('Aviva')}
-          <div class="sub" style="margin:0">Policies held with Aviva</div></div>
+        <div class="fx fx-c gap10 mb8">${logo('Aviva')}
+          <div class="sub m0">Policies held with Aviva</div></div>
         ${s.policies.length ? s.policies.map(p => kv(
-          `${esc(p.name)}<br><span style="font-size:12.5px">${esc(p.number)} · ${p.status === 'Active' ? badge('Active', 'ok') : badge(esc(p.status), 'bad')}</span>`,
+          `${esc(p.name)}<br><span class="fs125">${esc(p.number)} · ${p.status === 'Active' ? badge('Active', 'ok') : badge(esc(p.status), 'bad')}</span>`,
           `<button class="btn ghost sm" data-pol="${p.id}">Document</button>`)).join('') : empty('No policies')}
         <p class="note">Held with Aviva. ${live} of ${s.policies.length} policies in force. £75 excess per claim on travel and phone.</p></div>`;
   };
@@ -578,7 +580,7 @@ export function mountAccounts(root){
   const render = () => {
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Your accounts</h2><button data-add>Add</button></div>
-      <div class="card" style="padding:6px 8px">
+      <div class="card p6-8">
         <div class="pot">${logo('Monzo')}
           <span class="mid"><span class="nm">${esc(s.acctName)} ${s.acctClosed ? badge('Closed', 'bad') : badge('Active', 'ok')}</span>
             <span class="sub">${s.acctClosed ? 'Closed — reopen to use it' : fmt(balNow())}</span></span>
@@ -708,7 +710,7 @@ export function mountSearch(root, params){
   root.innerHTML = `<div class="h-sec"><h2>Search</h2></div>
     <div class="field"><input id="sq" placeholder="Search" autocomplete="off"></div>
     <div id="schips"></div>
-    <div class="card" style="padding:4px 14px"><ul class="txlist" id="sres"></ul></div>`;
+    <div class="card p4-14"><ul class="txlist" id="sres"></ul></div>`;
   const chips = root.querySelector('#schips'), list = root.querySelector('#sres'), input = root.querySelector('#sq');
   const paintChips = () => { chips.innerHTML = chipRow(['All', ...CATS], cat, 'cat'); };
   const paintList = () => {
@@ -741,7 +743,7 @@ export function mountNotifs(root){
       <div class="card">${s.notifs.length ? s.notifs.map(n => `<button class="pot" data-notif="${target(n)}">
         <span class="lg"><span class="lg__i">${n.read ? '·' : '●'}</span></span>
         <span class="mid"><span class="nm">${esc(n.title)}</span><span class="sub">${esc(n.body)}</span></span>
-        <span class="amt" style="font-size:12px;color:var(--ink3)">${esc(n.time)}</span></button>`).join('')
+        <span class="amt fs12 ink3">${esc(n.time)}</span></button>`).join('')
         : empty('Nothing new')}</div>`;
     markAllRead();
   };
@@ -761,8 +763,8 @@ export function mountChat(root){
       <div class="card">${s.chat.length ? s.chat.map(m => `<div style="margin:9px 0;text-align:${m.who === 'me' ? 'right' : 'left'}">
         <div style="display:inline-block;max-width:82%;padding:10px 14px;border-radius:16px;
           background:${m.who === 'me' ? 'var(--coral)' : 'var(--line)'};color:${m.who === 'me' ? '#fff' : 'var(--ink)'}">${esc(m.text)}</div>
-        <div style="font-size:11.5px;color:var(--ink3)">${esc(m.time)}</div></div>`).join('') : empty('Say hello')}</div>
-      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <div class="fs11 ink3">${esc(m.time)}</div></div>`).join('') : empty('Say hello')}</div>
+      <div class="fx gap10 mb20">
         <input id="chatIn" class="chatinput" placeholder="Type a message">
         <button class="btn sm" data-send>Send</button></div>`;
   };
@@ -801,10 +803,10 @@ export function mountJoint(root){
     const s = getState();
     root.innerHTML = `<div class="h-sec"><h2>Joint account</h2></div><div class="card">
       <div class="sub">Shared with ${esc(s.partner)} · FSCS to £240,000</div>
-      <div class="balance rev" style="font-size:28px;margin:4px 0">${fmt(s.jointBal || 0)}</div>
+      <div class="balance rev fs28">${fmt(s.jointBal || 0)}</div>
       ${kv('Contributions this month', `<span class="rev">${fmt(jointContribution())}</span>`)}
       ${kv('Joint bills this month', `<span class="rev">${fmt(jointBills())}</span>`)}
-      <button class="btn" data-contrib style="margin-top:12px">Add money</button></div>
+      <button class="btn mt12" data-contrib>Add money</button></div>
       <p class="note">Your share is ${Math.round(JOINT_SHARE * 100)}% of income in. Bills come off the current account ledger.</p>`;
   };
   root.addEventListener('click', e => {
@@ -857,7 +859,7 @@ export function mountSecurity(root){
         <button class="sw ${s.roundups ? 'on' : ''}" data-round aria-label="Round-ups"></button></div>
       <div class="field"><label for="newPin">New passcode</label><input id="newPin" maxlength="4" inputmode="numeric"></div>
       <button class="btn" data-pin>Update</button>
-      <button class="btn ghost" data-lock-now style="margin-top:8px">Lock now</button></div>
+      <button class="btn ghost mt8" data-lock-now>Lock now</button></div>
       <p class="note">The app locks itself after a minute in the background. Round-ups go to ${esc(roundupPotName() || 'whichever pot you choose on its page')}.</p>`;
   };
   root.addEventListener('click', async e => {
@@ -914,9 +916,9 @@ export function mountTxDetail(root, params){
           <button class="iconbtn" data-unreceipt aria-label="Remove receipt">✕</button></div>`
       : '';
     root.innerHTML = `<div class="h-sec"><h2>Transaction</h2></div><div class="card">
-      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">${logo(t.name)}
-        <div><div style="font-weight:700">${esc(t.name)}</div><div class="sub">${esc(t.cat)}</div></div></div>
-      <div class="balance rev" style="font-size:28px;margin:0 0 12px">${t.amt > 0 ? '+' : ''}${fmt(t.amt)}</div>
+      <div class="fx fx-c gap10 mb20">${logo(t.name)}
+        <div><div class="strong">${esc(t.name)}</div><div class="sub">${esc(t.cat)}</div></div></div>
+      <div class="balance rev fs28">${t.amt > 0 ? '+' : ''}${fmt(t.amt)}</div>
       ${kv('Date', t.date)}${kv('Time', esc(t.time))}${kv('Balance after', `<span class="rev">${fmt(t.bal)}</span>`)}
       <div class="field"><label for="txName">Name</label><input id="txName" value="${esc(t.name)}"></div>
       <div class="field"><label for="txCat">Category</label><select id="txCat">${CATS.map(c => `<option ${c === t.cat ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
@@ -925,11 +927,11 @@ export function mountTxDetail(root, params){
       <div class="divider"></div>
       <div class="receipt-head">Receipt</div>
       ${receipt || '<p class="note">No receipt attached</p>'}
-      <label class="filebtn" style="margin-top:8px">${t.receipt ? 'Replace receipt' : 'Attach receipt'}
+      <label class="filebtn mt8">${t.receipt ? 'Replace receipt' : 'Attach receipt'}
         <input type="file" accept="image/*" data-receipt></label>
-      <button class="btn ghost" data-split style="margin-top:12px">Split with a tab</button>
-      <button class="btn ghost" data-disp style="margin-top:8px">Raise a dispute</button>
-      <button class="btn red" data-del style="margin-top:8px">Delete transaction</button></div>`;
+      <button class="btn ghost mt12" data-split>Split with a tab</button>
+      <button class="btn ghost mt8" data-disp>Raise a dispute</button>
+      <button class="btn red mt8" data-del>Delete transaction</button></div>`;
   };
   root.addEventListener('change', e => {
     const input = e.target.closest('[data-receipt]');
