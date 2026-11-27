@@ -1,1106 +1,421 @@
-/* src/core.js — clock, format, storage, state, actions, selectors. */
+import { FUNDS, CATEGORY_IDS } from './data.js';
 
-import {
-  PLANS, CATS, FLEX, COMMITTED, DEFAULT_TARGETS, BANKS, BB_PROVIDERS, BB_CAP,
-  DOMAINS, POTS0, TARGET_ISA, DIVIDEND_RATE, buildSeed, uid
-} from './data.js';
+export const VERSION = 22;
+export const KEY = 'monzo_v22';
+export const LEGACY_KEYS = ['monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const MAX_CATCHUP_DAYS = 35;
+export const PIN = '2580';
 
-const VERSION = 21;
-const KEY = 'monzo_v21';
-const LEGACY_KEYS = ['monzo_v20', 'monzo_v19', 'monzo_v18', 'monzo_v17', 'monzo_v16',
-  'monzo_v15', 'monzo_v14', 'monzo_v13', 'monzo_v12', 'monzo_v11'];
+export const PLANS = {
+  free:  {id:'free',  name:'Basic', price:0,  feeRate:0.0045, feeCap:250},
+  plus:  {id:'plus',  name:'Plus',  price:5,  feeRate:0.0035, feeCap:250},
+  perks: {id:'perks', name:'Perks', price:13, feeRate:0.0025, feeCap:200},
+  max:   {id:'max',   name:'Max',   price:17, feeRate:0.0015, feeCap:200}
+};
 
-const NOW = new Date();
-const NOWT = `${p2(NOW.getHours())}:${p2(NOW.getMinutes())}`;
-export const TODAY = iso(NOW);
-const THIS_YM = TODAY.slice(0, 7);
-export const MONTHS = ['January','February','March','April','May','June','July',
-  'August','September','October','November','December'];
-const TAX_START = `${NOW.getMonth() >= 3 ? NOW.getFullYear() : NOW.getFullYear() - 1}-04-06`;
-
-const CASHBACK_RATE = 0.01;
-export const CASHBACK_MIN = 1;
-export const JOINT_SHARE = 0.35;
-const FALLBACK_SALARY = 2480;
-
-const MAX_CATCHUP_DAYS = 35;
-
-function p2(n){ return String(n).padStart(2, '0'); }
-function iso(d){ return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; }
-function asDate(s){ return new Date(s + 'T12:00:00'); }
-function monthLen(y, m){ return new Date(y, m + 1, 0).getDate(); }
-function dom(y, m, day){
-  const d = new Date(y, m, 1);
-  const last = monthLen(d.getFullYear(), d.getMonth());
-  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(Math.min(day, last))}`;
-}
-function nextPayday(){
-  const d = new Date(NOW.getFullYear(), NOW.getMonth(), 28);
-  if (TODAY >= iso(d)) d.setMonth(d.getMonth() + 1);
-  return iso(d);
-}
-export function daysToPayday(){
-  return Math.max(0, Math.round((asDate(nextPayday()) - asDate(TODAY)) / 86400000));
-}
-
-export function fmt(n){
-  return '£' + Math.abs(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
+export const uid = (p = 'id') => p + '_' + Math.random().toString(36).slice(2, 9);
+export const now = () => Date.now();
+export const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 export const round2 = n => Math.round(n * 100) / 100;
-export const esc = s => String(s).replace(/[&<>"']/g,
-  c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-export const pct = (a, b) => b ? Math.min(100, (a / b) * 100) : 0;
 
-/* ---------------- state ---------------- */
-let S = null;
-const listeners = new Set();
-export function getState(){ return S; }
-export function subscribe(fn){ listeners.add(fn); return () => listeners.delete(fn); }
-function notify(){ listeners.forEach(fn => fn(S)); }
-
-const POLICY_TEMPLATES = [
-  ['travel',    'Worldwide travel insurance',   'POL-TRV-8842190', 75, 'Covers all named travellers, up to 31 days per trip.'],
-  ['phone',     'Worldwide phone insurance',    'POL-PHN-8842191', 75, 'Covers four registered handsets, £75 excess per claim.'],
-  ['breakdown', 'UK & Europe breakdown cover',  'POL-BRK-8842192', 0,  'Vehicle-based, any driver, home start included.']
-];
-
-function policySeed(covered){
-  const start = `${NOW.getFullYear() - 2}-04-01`;
-  return POLICY_TEMPLATES.map(([key, name, number, excess, note]) => ({
-    id: uid(), key, name, number, excess, note, start,
-    status: covered ? 'Active' : 'Not included', ended: ''
-  }));
+export function fmt(n, opts = {}) {
+  const v = Math.abs(Number(n) || 0);
+  const s = v.toLocaleString('en-GB', {
+    minimumFractionDigits: opts.dp ?? 2,
+    maximumFractionDigits: opts.dp ?? 2
+  });
+  return (n < 0 ? '-' : '') + '£' + s;
 }
 
-export function freshState(){
-  const seedData = buildSeed(NOW);
+export function fmtShort(n) {
+  const v = Math.abs(Number(n) || 0);
+  if (v >= 1000) return '£' + (v / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+  return fmt(n, {dp: v % 1 === 0 ? 0 : 2});
+}
+
+export function dateStr(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+}
+export function timeStr(ts) {
+  return new Date(ts).toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+}
+export function dayKey(ts) {
+  const d = new Date(ts);
+  return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate();
+}
+export function dayLabel(ts) {
+  const d = new Date(ts), t = new Date();
+  const diff = Math.round((new Date(t.getFullYear(), t.getMonth(), t.getDate()) -
+    new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+  if (diff === 0) return 'Today';
+  if (diff === 1) return 'Yesterday';
+  return d.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
+}
+
+function defaultState() {
+  const base = now();
+  const mk = (name, amount, cat, daysAgo, extra = {}) => ({
+    id: uid('tx'), name, amount, category: cat, ts: base - daysAgo * 86400000,
+    type: amount > 0 ? 'in' : 'out', ...extra
+  });
   return {
     v: VERSION,
-    tx: seedData.tx,
-    isa: seedData.isa,
-    pots: POTS0.map(p => ({ id: uid(), locked: false, autoSave: 0, ...p })),
-    payees: [
-      { id: uid(), name: 'Chloe Brown',      sc: '04-00-04', ac: '73829104', fav: true,  last: TODAY },
-      { id: uid(), name: 'David Armstrong',  sc: '09-01-28', ac: '11293847', fav: false, last: '' },
-      { id: uid(), name: 'Halcyon Digital',  sc: '20-45-77', ac: '55102238', fav: false, last: '' },
-      { id: uid(), name: 'Northgate Studio', sc: '40-11-62', ac: '90817263', fav: false, last: '' }
-    ],
-    sos: [
-      { id: uid(), name: 'OpenRent',    amt: 799, day: 1, active: true },
-      { id: uid(), name: 'British Gas', amt: 96,  day: 2, active: true }
-    ],
-    tabs: [{ id: uid(), name: 'Steak night', total: 148.40, mine: 74.20, people: 2 }],
-    requests: [],
-    vcards: [{ id: uid(), label: 'Subscriptions', frozen: false, num: '4000 1234', created: TODAY, single: false }],
-    targets: { ...DEFAULT_TARGETS },
-    layout: [
-      { id: 'spotlights', on: true }, { id: 'personal', on: true }, { id: 'joint', on: true },
-      { id: 'pots', on: true }, { id: 'invest', on: true }, { id: 'latest', on: true }
-    ],
-    profile: {
-      name: 'Jason Armstrong', dob: '1992-10-07', email: 'jasonarm82@gmail.com', phone: '07356170033',
-      a1: '259 Piper Knowle Road', a2: '', city: 'Stockton-on-Tees', post: 'TS19 8JQ',
-      occ: 'Security Officer', emp: 'Kingdom Services Group'
+    user: {
+      name: 'Jason Armstrong',
+      first: 'Jason',
+      dob: '1992-10-07',
+      email: 'jason.armstrong@example.com',
+      phone: '07700 900412',
+      address: '259 Piper Knowle Road',
+      city: 'Stockton-on-Tees',
+      postcode: 'TS19 8JQ',
+      pin: PIN
     },
-    partner: 'Chloe Brown',
-    plan: 'max', family: false, priv: false, roundups: true, credId: null, pin: '2580', frozen: false,
-    theme: 'auto', zoom: 1, motion: true,
-    activeAccount: 'personal', acctName: 'Personal current account', acctClosed: false,
-    atmLimit: 400, jointBal: 4180,
-    pension: 96400.18, pensionMonthly: 240,
-    flex: { limit: 4000, used: 0, plans: [] },
-    plus: { active: true, auto: true, lounge: 2, fast: 2, cashback: 0 },
-    policies: policySeed(true),
-    overdraft: { limit: 0, rate: 0 },
-    loans: [], connected: [], extraAccounts: [],
-    sorter: { on: false, splits: {} },
-    gpeMonth: '',
-    lastRun: TODAY,
-    roundupPotId: '',
-    lastBackup: '',
-    credit: { eq: 560 + Math.floor(Math.random() * 160), tu: 540 + Math.floor(Math.random() * 160), done: [] },
-    challenge: { day: 0, saved: 0, level: '1p' },
-    billsback: { optIn: false, history: [] },
-    lastInterest: '', lastTick: '', notifsCleared: false,
-    notifs: [], chat: [], disputes: []
+    balance: 1842.63,
+    savings: 4210.00,
+    pots: [
+      {id:'pot_holiday', name:'Holiday', target:1500, saved:640, emoji:'🏖️', colour:'#1f6feb', locked:false, roundUp:true, created:base - 90*86400000},
+      {id:'pot_car', name:'Car service', target:600, saved:310, emoji:'🚗', colour:'#ff8000', locked:false, roundUp:false, created:base - 60*86400000},
+      {id:'pot_xmas', name:'Christmas', target:800, saved:120, emoji:'🎄', colour:'#12a150', locked:true, roundUp:true, created:base - 30*86400000}
+    ],
+    tx: [
+      mk('Tesco', -42.18, 'groceries', 0, {time:'18:42'}),
+      mk('Greggs', -4.85, 'eating', 0, {time:'12:10'}),
+      mk('Salary', 2450.00, 'income', 1),
+      mk('Northern', -8.40, 'transport', 1),
+      mk('Amazon', -23.99, 'shopping', 2),
+      mk('Octopus Energy', -78.00, 'bills', 3),
+      mk('PureGym', -24.99, 'fitness', 4),
+      mk('Cineworld', -31.50, 'entertainment', 5),
+      mk('Boots', -12.45, 'health', 6)
+    ],
+    scheduled: [
+      {id:uid('sch'), name:'Octopus Energy', amount:-78, category:'bills', day:12, freq:'monthly', next: base + 4*86400000},
+      {id:uid('sch'), name:'PureGym', amount:-24.99, category:'fitness', day:20, freq:'monthly', next: base + 12*86400000},
+      {id:uid('sch'), name:'TV Licence', amount:-13.25, category:'bills', day:1, freq:'monthly', next: base + 20*86400000}
+    ],
+    cards: [
+      {id:uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}
+    ],
+    payees: [
+      {id:uid('pay'), name:'Sophie Armstrong', sort:'04-00-04', acct:'12345678', initials:'SA'},
+      {id:uid('pay'), name:'Liam Fletcher', sort:'20-45-11', acct:'87654321', initials:'LF'}
+    ],
+    flex: {limit: 1000, used: 214.40, plan: 'flex', active: true},
+    plan: 'plus',
+    plus: {since: base - 200*86400000, renews: base + 15*86400000},
+    invest: {
+      cash: 320.00,
+      units: {swda: 6.4, cspx: 0.8, cukx: 24, aggg: 60, cash: 0},
+      contrib: 120,
+      contribDay: 1
+    },
+    pension: {provider:'Nest', balance: 18420.55, monthly: 240, employer: 120, growth: 0.055, joined: base - 1200*86400000},
+    isa: {balance: 6320.00, allowance: 20000, used: 3400, contrib: 200, contribDay: 5},
+    goals: [],
+    layout: {
+      order: ['card','balance','ring','carousel','activity'],
+      hidden: [],
+      carousel: ['pots','pension','isa']
+    },
+    settings: {
+      notifications: true, marketing: false, biometrics: true,
+      theme: 'system', reducedMotion: false, haptics: true,
+      roundUpDefault: true, hideBalance: false
+    },
+    lastRun: base,
+    seen: {welcome: true}
   };
 }
 
 const migrations = [
-  /* 11 -> 12 */
-  s => {
-    s.v = 12;
-    s.flex ||= { limit: 4000, used: 0, plans: [] };
-    s.aura ||= { active: true, auto: true, lounge: 2, fast: 2, cashback: 0 };
-    s.overdraft ||= { limit: 0, rate: 0 };
-    s.loans ||= []; s.connected ||= []; s.extraAccounts ||= [];
-    s.credit ||= { eq: 640, tu: 620, done: [] };
-    s.challenge ||= { day: 0, saved: 0, level: '1p' };
-    s.billsback ||= { optIn: false, history: [] };
-    s.layout ||= [{ id: 'spotlights', on: true }, { id: 'personal', on: true },
-      { id: 'joint', on: true }, { id: 'pots', on: true }, { id: 'invest', on: true },
-      { id: 'latest', on: true }];
-    s.partner ||= 'Chloe Brown';
-    s.theme ||= 'auto'; s.zoom ||= 1; s.motion ??= true;
-    s.pension ||= 41250.18;
-    s.targets ||= { ...DEFAULT_TARGETS };
-    s.notifs ||= []; s.chat ||= []; s.disputes ||= [];
+  {v: 21, fn: s => {
+    if (s.aura) { s.plus = s.aura; delete s.aura; }
+    if (s.plan === 'aura') s.plan = 'plus';
     return s;
-  },
-  /* 12 -> 13 */
-  s => {
-    s.v = 13;
-    s.family ??= false;
-    s.activeAccount ||= 'personal';
-    s.pensionMonthly ||= 180;
-    s.credit.done ||= [];
-    s.pots = (s.pots || []).map(p => ({ locked: false, autoSave: 0, ...p }));
-    s.vcards = (s.vcards || []).map(v => ({ single: false, ...v }));
+  }},
+  {v: 22, fn: s => {
+    s.layout = s.layout || {};
+    s.layout.order = s.layout.order || ['card','balance','ring','carousel','activity'];
+    s.layout.hidden = s.layout.hidden || [];
+    s.layout.carousel = s.layout.carousel || ['pots','pension','isa'];
+    if (!Array.isArray(s.layout.carousel)) s.layout.carousel = ['pots','pension','isa'];
+    s.pension = s.pension || {provider:'Nest', balance: 0, monthly: 0, employer: 0, growth: 0.055, joined: now()};
+    s.isa = s.isa || {balance: 0, allowance: 20000, used: 0, contrib: 0, contribDay: 5};
+    if (!s.invest) s.invest = {cash: 0, units: {}, contrib: 0, contribDay: 1};
+    if (!s.invest.units) s.invest.units = {};
+    for (const f of FUNDS) if (s.invest.units[f.id] === undefined) s.invest.units[f.id] = 0;
     return s;
-  },
-  /* 13 -> 14 */
-  s => {
-    s.v = 14;
-    s.acctName ||= 'Personal current account';
-    s.acctClosed ??= false;
-    s.atmLimit ||= 400;
-    s.jointBal ||= 0;
-    s.notifsCleared ??= false;
-    s.tx = (s.tx || []).slice().sort((a, b) =>
-      (b.date + (b.time || '')).localeCompare(a.date + (a.time || '')));
-    return s;
-  },
-  /* 14 -> 15 */
-  s => {
-    s.v = 15;
-    s.extraAccounts = (s.extraAccounts || []).map(a => ({ bal: 0, ...a }));
-    s.sorter ||= { on: false, splits: {} };
-    s.sorter.splits ||= {};
-    s.requests ||= [];
-    s.gpeMonth ||= '';
-    if (!Array.isArray(s.policies) || !s.policies.length){
-      s.policies = policySeed(!!(PLANS[s.plan] || {}).cover);
-    }
-    if (s.aura){
-      s.aura.cashback = round2(s.aura.cashback || 0);
-      if (!s.aura.cashback){
-        const spent = (s.tx || [])
-          .filter(t => t.date.slice(0, 7) === THIS_YM && t.amt < 0 && FLEX.includes(t.cat))
-          .reduce((a, t) => a + Math.abs(t.amt), 0);
-        s.aura.cashback = round2(spent * CASHBACK_RATE);
-      }
-    }
-    return s;
-  },
-  /* 15 -> 16 */
-  s => {
-    s.v = 16;
-    s.lastRun ||= TODAY;
-    s.roundupPotId ||= '';
-    if (!Array.isArray(s.policies) || !s.policies.length){
-      s.policies = policySeed(!!(PLANS[s.plan] || {}).cover);
-    }
-    return s;
-  },
-  /* 16 -> 17 */
-  s => {
-    s.v = 17;
-    s.lastBackup ||= '';
-    return s;
-  },
-  /* 17 -> 18 */
-  s => {
-    s.v = 18;
-    delete s.revealed;
-    delete s.potSort;
-    return s;
-  },
-  /* 18 -> 19 */
-  s => {
-    s.v = 19;
-    if (s.pension === 41250.18) s.pension = 96400.18;
-    if (s.pensionMonthly === 180) s.pensionMonthly = 240;
-    if (!s.jointBal) s.jointBal = 4180;
-    s.pots = (s.pots || []).map(p => {
-      const base = POTS0.find(x => x.name === p.name);
-      return base && p.bal < base.bal ? { ...p, bal: base.bal } : p;
-    });
-    return s;
-  },
-  /* 19 -> 20: no property, so the mortgage and valuation fields go */
-  s => {
-    s.v = 20;
-    delete s.homeValue;
-    delete s.mortgage;
-    return s;
-  },
-  /* 20 -> 21: Aura becomes Plus */
-  s => {
-    s.v = 21;
-    s.plus = s.aura || { active: true, auto: true, lounge: 2, fast: 2, cashback: 0 };
-    delete s.aura;
-    return s;
-  }
+  }}
 ];
 
-export function migrate(raw){
+export let state = defaultState();
+
+export function migrate(raw) {
   let s = raw;
-  const from = Math.max(11, s.v || 11);
-  for (let v = from; v < VERSION; v++){
-    const step = migrations[v - 11];
-    if (step) s = step(s);
-  }
+  const from = Number(s.v) || 11;
+  for (const m of migrations) if (from < m.v) s = m.fn(s);
   s.v = VERSION;
   return s;
 }
 
-function readLegacy(){
-  for (const k of LEGACY_KEYS){
-    let raw = null;
-    try { raw = JSON.parse(localStorage.getItem(k)); } catch { raw = null; }
-    if (raw && typeof raw === 'object'){ localStorage.removeItem(k); return raw; }
-  }
-  return null;
-}
-
-export function load(){
-  const params = new URLSearchParams(location.search);
-  if (params.get('reset') === '1'){
-    localStorage.removeItem(KEY);
-    LEGACY_KEYS.forEach(k => localStorage.removeItem(k));
-  }
+export function load() {
   let raw = null;
-  try { raw = JSON.parse(localStorage.getItem(KEY)); } catch { raw = null; }
-  if (!raw) raw = readLegacy();
-
-  S = (!raw || (raw.v || 0) > VERSION) ? freshState() : migrate(raw);
-  if (!S.notifs.length && !S.notifsCleared) seedNotifs();
-  recompute();
+  try { raw = localStorage.getItem(KEY); } catch {}
+  if (!raw) {
+    for (const k of LEGACY_KEYS) {
+      try {
+        const old = localStorage.getItem(k);
+        if (old) { raw = old; break; }
+      } catch {}
+    }
+  }
+  if (!raw) { state = defaultState(); save(); return state; }
+  try {
+    state = migrate(JSON.parse(raw));
+  } catch {
+    state = defaultState();
+  }
   save();
-  return S;
+  return state;
 }
 
 let saveTimer = null;
-export function save(){
+export function save() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
-  }, 60);
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+  }, 120);
 }
-export function commit(){ save(); notify(S); }
 
-/* ---------------- backup ---------------- */
-export function exportState(){
-  S.lastBackup = TODAY;
+export function reset() {
+  state = defaultState();
   save();
-  notify(S);
-  return JSON.stringify({ ...S, exported: NOW.toISOString() }, null, 2);
 }
 
-export function importState(text){
-  let raw;
-  try { raw = JSON.parse(text); } catch { return { ok: false, msg: 'That is not valid JSON' }; }
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, msg: 'Unexpected file shape' };
-  if (!Array.isArray(raw.tx)) return { ok: false, msg: 'No ledger in that file' };
-  if ((raw.v || 0) > VERSION) return { ok: false, msg: 'That backup is from a newer version' };
+/* ---------- money movement ---------- */
 
-  const migrated = migrate(raw);
-  const base = freshState();
-  S = { ...base, ...migrated, v: VERSION, lastBackup: TODAY };
-  if (!S.notifs.length && !S.notifsCleared) seedNotifs();
-  recompute();
+export function addTx({name, amount, category = 'general', ts = now(), note = '', receipt = null, potId = null}) {
+  const tx = {
+    id: uid('tx'), name, amount: round2(amount), category,
+    ts, type: amount > 0 ? 'in' : 'out', note, receipt, potId
+  };
+  state.tx.unshift(tx);
+  state.balance = round2(state.balance + tx.amount);
   save();
-  notify(S);
-  return { ok: true, rows: S.tx.length };
+  return tx;
 }
 
-/* ---------------- selectors ---------------- */
-export const plan = () => PLANS[S.plan];
-export const PLANS_BANK = () => PLANS;
-export const balNow = () => S.tx.length ? S.tx[0].bal : 0;
-export const isaBal = () => S.isa.length ? S.isa[0].value : 0;
-export const savingsTotal = () => S.pots.filter(p => p.type === 'savings').reduce((a, p) => a + p.bal, 0);
-export const interestThisMonth = () => round2(savingsTotal() * (plan().ia / 100 / 12));
-export const connTotal = () => S.connected.reduce((a, c) => a + c.bal, 0);
-export const loanOwed = () => S.loans.reduce((a, l) => a + l.outstanding, 0);
-export const growTotal = () => savingsTotal() + isaBal() + (S.pension || 0) + connTotal() - loanOwed();
-export const flexAvail = () => Math.max(0, round2(S.flex.limit - S.flex.used));
-
-/* Platform fee: 0.25%, or 0.20% on Perks and Max, capped annually. */
-export const platformFeeRate = () => plan().cover ? 0.002 : 0.0025;
-export const platformFeeCap = () => plan().cover ? 200 : 250;
-export const platformFeeAnnual = () => round2(Math.min(isaBal() * platformFeeRate(), platformFeeCap()));
-export const platformFeeMonthly = () => round2(platformFeeAnnual() / 12);
-
-export const spentThisMonth = () => S.tx
-  .filter(t => t.date.slice(0, 7) === THIS_YM && FLEX.includes(t.cat))
-  .reduce((a, t) => a + Math.abs(t.amt), 0);
-export const spentCat = c => S.tx
-  .filter(t => t.date.slice(0, 7) === THIS_YM && t.cat === c)
-  .reduce((a, t) => a + Math.abs(t.amt), 0);
-export const spentToday = () => S.tx
-  .filter(t => t.date === TODAY && t.amt < 0).reduce((a, t) => a + Math.abs(t.amt), 0);
-
-export function committedLeft(){
-  const pay = nextPayday();
-  const since = iso(new Date(NOW.getFullYear(), NOW.getMonth() - 2, 1));
-  const latest = new Map();
-  for (const t of S.tx){
-    if (t.date < since) break;
-    if (t.amt >= 0 || !COMMITTED.includes(t.cat)) continue;
-    if (!latest.has(t.name)) latest.set(t.name, t);
+export function takeFunds(amount, from = 'balance') {
+  const a = round2(amount);
+  if (from === 'balance') {
+    if (state.balance < a) return false;
+    state.balance = round2(state.balance - a);
+  } else if (from === 'savings') {
+    if (state.savings < a) return false;
+    state.savings = round2(state.savings - a);
   }
-  let sum = 0;
-  latest.forEach(t => {
-    const day = Number(t.date.slice(8, 10));
-    let due = dom(NOW.getFullYear(), NOW.getMonth(), day);
-    if (due < TODAY) due = dom(NOW.getFullYear(), NOW.getMonth() + 1, day);
-    if (due >= TODAY && due < pay) sum += Math.abs(t.amt);
-  });
-  return round2(sum);
-}
-export const leftToSpend = () => Math.max(0, round2(balNow() - committedLeft()));
-
-export const jointBills = () => round2(S.tx
-  .filter(t => t.date.slice(0, 7) === THIS_YM && t.amt < 0 && (t.cat === 'Rent' || t.cat === 'Bills'))
-  .reduce((a, t) => a + Math.abs(t.amt), 0));
-export const jointContribution = () => round2(S.tx
-  .filter(t => t.date.slice(0, 7) === THIS_YM && t.cat === 'Income')
-  .reduce((a, t) => a + t.amt, 0) * JOINT_SHARE);
-
-export function balanceSeries(days){
-  const map = {};
-  S.tx.slice().reverse().forEach(t => { map[t.date] = t.bal; });
-  const out = [];
-  let last = null;
-  for (let i = days - 1; i >= 0; i--){
-    const k = iso(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() - i));
-    if (map[k] !== undefined) last = map[k];
-    out.push({ d: k, v: last });
-  }
-  const firstKnown = out.find(p => p.v !== null);
-  if (firstKnown){
-    let carry = firstKnown.v;
-    out.forEach(p => { if (p.v === null) p.v = carry; else carry = p.v; });
-  } else out.forEach(p => { p.v = balNow(); });
-  if (out.length === 1) out.unshift({ ...out[0] });
-  return out;
+  save();
+  return true;
 }
 
-export const bbBills = () => S.tx.filter(t =>
-  t.date.slice(0, 7) === THIS_YM && t.amt < 0 &&
-  (t.cat === 'Bills' || t.cat === 'Rent') && BB_PROVIDERS.includes(t.name));
-
-export const tyUsed = () => S.isa
-  .filter(r => r.date >= TAX_START && r.type === 'ISA')
-  .reduce((a, r) => a + r.contrib, 0);
-
-/* Flex: 0% only on three months, and only for £100 or more. */
-export function flexMonthly(amount, term){
-  if (term === 3 && amount >= 100) return round2(amount / 3);
-  return round2(amount * (1 + 0.29 * term / 12) / term);
-}
-export function aprForLoan(amount){ return amount > 10000 ? 10 : 23; }
-export function loanMonthly(amount, term){
-  const apr = aprForLoan(amount);
-  return round2(amount * (1 + apr / 100 * term / 12) / term);
-}
-
-/* ---------------- ledger ---------------- */
-function insertTx(row){
-  const key = row.date + row.time;
-  let i = 0;
-  while (i < S.tx.length && (S.tx[i].date + S.tx[i].time) > key) i++;
-  S.tx.splice(i, 0, row);
-}
-
-function recompute(){
-  if (!S.tx.length) return;
-  const last = S.tx.length - 1;
-  let bal = round2(S.tx[last].bal - S.tx[last].amt);
-  for (let i = last; i >= 0; i--){
-    bal = round2(bal + S.tx[i].amt);
-    S.tx[i].bal = bal;
-  }
-}
-
-function accrueCashback(amt, cat){
-  if (!S.plus || !S.plus.active) return;
-  if (amt >= 0 || !FLEX.includes(cat)) return;
-  const gain = round2(Math.abs(amt) * CASHBACK_RATE);
-  if (gain <= 0) return;
-  S.plus.cashback = round2((S.plus.cashback || 0) + gain);
-}
-
-function roundupPot(){
-  const chosen = S.pots.find(p => p.id === S.roundupPotId);
-  if (chosen) return chosen;
-  return S.pots.find(p => /rainy/i.test(p.name)) || S.pots[0] || null;
-}
-export const roundupPotName = () => (roundupPot() || {}).name || '';
-
-function accrueRoundup(amt, cat){
-  if (!S.roundups || amt >= 0 || !FLEX.includes(cat)) return;
-  const up = round2(Math.ceil(Math.abs(amt)) - Math.abs(amt));
-  if (up < 0.01 || up > balNow()) return;
-  const p = roundupPot();
-  if (!p) return;
-  p.bal = round2(p.bal + up);
-  insertTx({ id: uid(), date: TODAY, time: NOWT, name: p.name, cat: 'Transfers',
-    amt: -up, bal: 0, note: 'Round-up' });
-}
-
-export function addTx(name, cat, amt, note = '', dateOverride){
-  const date = dateOverride || TODAY;
-  const time = dateOverride && dateOverride !== TODAY ? '12:00' : NOWT;
-  insertTx({ id: uid(), date, time, name, cat, amt: round2(amt), bal: 0, note });
-  recompute();
-  accrueCashback(round2(amt), cat);
-  accrueRoundup(round2(amt), cat);
-  recompute();
-  commit();
-}
-export function updateTx(id, patch){
-  const t = S.tx.find(x => x.id === id);
-  if (!t) return { ok: false };
-  Object.assign(t, patch);
-  recompute();
-  commit();
-  return { ok: true };
-}
-export function deleteTx(id){
-  const t = S.tx.find(x => x.id === id);
-  if (!t) return { ok: false };
-  S.tx = S.tx.filter(x => x.id !== id);
-  recompute();
-  commit();
-  return { ok: true };
-}
-
-export function moveToPot(potId, amt, dir){
-  const p = S.pots.find(x => x.id === potId);
-  if (!p) return { ok: false, msg: 'No such pot' };
-  if (dir === 'in'){
-    if (amt > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-    p.bal = round2(p.bal + amt);
-    addTx(p.name, 'Transfers', -amt, 'Moved to pot');
+export function potMove(potId, amount, dir) {
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return false;
+  const a = round2(amount);
+  if (dir === 'in') {
+    if (!takeFunds(a)) return false;
+    pot.saved = round2(pot.saved + a);
+    addTx({name: pot.name + ' pot', amount: -a, category: 'transfers', potId});
   } else {
-    if (p.locked) return { ok: false, msg: 'Pot is locked' };
-    if (amt > p.bal) return { ok: false, msg: 'Not enough in that pot' };
-    p.bal = round2(p.bal - amt);
-    addTx(p.name, 'Transfers', amt, 'Moved from pot');
+    if (pot.saved < a) return false;
+    pot.saved = round2(pot.saved - a);
+    state.balance = round2(state.balance + a);
+    addTx({name: pot.name + ' pot', amount: a, category: 'transfers', potId});
   }
-  return { ok: true };
-}
-export function createPot(name, type, goal){
-  S.pots.push({ id: uid(), name, type, goal: Math.max(1, goal), bal: 0, locked: false, autoSave: 0 });
-  commit();
-}
-export function updatePot(id, patch){
-  const p = S.pots.find(x => x.id === id);
-  if (p) Object.assign(p, patch);
-  commit();
-}
-export function deletePot(id){
-  const p = S.pots.find(x => x.id === id);
-  if (!p) return { ok: false, msg: 'No such pot' };
-  const bal = p.bal;
-  S.pots = S.pots.filter(x => x.id !== id);
-  if (S.sorter.splits[id] !== undefined) delete S.sorter.splits[id];
-  if (S.roundupPotId === id) S.roundupPotId = '';
-  if (bal > 0) addTx('Pot closed', 'Transfers', bal, p.name + ' returned');
-  else commit();
-  return { ok: true };
-}
-export function togglePotLock(id){
-  const p = S.pots.find(x => x.id === id);
-  if (!p) return { ok: false };
-  p.locked = !p.locked;
-  commit();
-  return { ok: true, locked: p.locked };
-}
-export function setRoundupPot(id){
-  const p = S.pots.find(x => x.id === id);
-  if (!p) return { ok: false, msg: 'No such pot' };
-  S.roundupPotId = p.id;
-  S.roundups = true;
-  commit();
-  return { ok: true, name: p.name };
-}
-export function clearRoundupPot(){ S.roundupPotId = ''; commit(); }
-
-export function sendMoney(payeeId, amount, ref){
-  const p = S.payees.find(x => x.id === payeeId);
-  if (!p) return { ok: false, msg: 'No such payee' };
-  if (amount > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-  p.last = TODAY;
-  addTx(p.name, 'Transfers', -amount, ref || 'Payment');
-  notif('Payment sent', `${fmt(amount)} to ${p.name}`);
-  return { ok: true };
-}
-export function addPayee(data){ S.payees.push({ id: uid(), fav: false, last: '', ...data }); commit(); }
-export function updatePayee(id, patch){
-  const p = S.payees.find(x => x.id === id);
-  if (p) Object.assign(p, patch);
-  commit();
-}
-export function deletePayee(id){
-  S.payees = S.payees.filter(p => p.id !== id);
-  S.requests = S.requests.filter(r => r.payeeId !== id);
-  commit();
+  save();
+  return true;
 }
 
-/* ---------------- money requests ---------------- */
-export function requestMoney(payeeId, amount, note){
-  const p = S.payees.find(x => x.id === payeeId);
-  if (!p) return { ok: false, msg: 'Add a payee first' };
-  if (!amount || amount <= 0) return { ok: false, msg: 'Enter an amount' };
-  S.requests.unshift({ id: uid(), payeeId, name: p.name, amount: round2(amount),
-    note: note || '', date: TODAY, status: 'Pending' });
-  notif('Request sent', `${fmt(amount)} requested from ${p.name}`);
-  return { ok: true };
-}
-export function settleRequest(id){
-  const r = S.requests.find(x => x.id === id);
-  if (!r) return { ok: false, msg: 'Request not found' };
-  S.requests = S.requests.filter(x => x.id !== id);
-  addTx(r.name, 'Income', r.amount, r.note || 'Money request paid');
-  notif('Request paid', `${fmt(r.amount)} from ${r.name}`);
-  return { ok: true };
-}
-export function cancelRequest(id){
-  const before = S.requests.length;
-  S.requests = S.requests.filter(x => x.id !== id);
-  commit();
-  return { ok: S.requests.length < before };
+export function totalPots() {
+  return round2(state.pots.reduce((s, p) => s + p.saved, 0));
 }
 
-/* ---------------- salary sorter & paid early ---------------- */
-export const sorterTotal = () =>
-  round2(Object.values(S.sorter.splits || {}).reduce((a, v) => a + (Number(v) || 0), 0));
+/* ---------- platform fee ---------- */
 
-export function salaryAmount(){
-  const t = S.tx.find(x => x.cat === 'Income' && /kingdom/i.test(x.name) && x.date < TODAY);
-  return t ? Math.abs(t.amt) : FALLBACK_SALARY;
-}
-export const salaryIsEstimate = () =>
-  !S.tx.some(x => x.cat === 'Income' && /kingdom/i.test(x.name) && x.date < TODAY);
-
-export function setSorter(splits, on = true){
-  const clean = {};
-  for (const [k, v] of Object.entries(splits || {})){
-    const amt = round2(Math.max(0, Number(v) || 0));
-    if (amt > 0) clean[k] = amt;
-  }
-  S.sorter = { on, splits: clean };
-  commit();
-  return { ok: true, total: sorterTotal() };
-}
-export function setSorterOn(on){ S.sorter.on = !!on; commit(); return { ok: true }; }
-
-/* ---------------- scheduled money ---------------- */
-let runBal = 0;
-
-function takeFunds(amt){
-  const v = round2(Math.min(Number(amt) || 0, Math.max(0, runBal)));
-  if (v <= 0) return 0;
-  runBal = round2(runBal - v);
-  return v;
+export function planInfo(id = state.plan) {
+  return PLANS[id] || PLANS.free;
 }
 
-function applySorter(date = TODAY){
-  if (!S.sorter || !S.sorter.on) return [];
-  const done = [];
-  for (const [potId, raw] of Object.entries(S.sorter.splits || {})){
-    const p = S.pots.find(x => x.id === potId);
-    if (!p) continue;
-    const amt = takeFunds(raw);
-    if (!amt) continue;
-    p.bal = round2(p.bal + amt);
-    insertTx({ id: uid(), date, time: '06:05', name: p.name, cat: 'Transfers',
-      amt: -amt, bal: 0, note: 'Salary sorter' });
-    done.push({ kind: 'sorter', pot: p.name, amt, date });
-  }
-  return done;
+export function portfolioValue() {
+  return round2(FUNDS.reduce((s, f) => s + (state.invest.units[f.id] || 0) * f.price, 0));
 }
 
-function paySalary(date){
-  const ym = date.slice(0, 7);
-  if (S.gpeMonth === ym) return [];
-  const salary = salaryAmount();
-  if (salary <= 0) return [];
-  S.gpeMonth = ym;
-  runBal = round2(runBal + salary);
-  insertTx({ id: uid(), date, time: '06:00', name: 'Kingdom Services Group',
-    cat: 'Income', amt: salary, bal: 0, note: 'Net salary' });
-  return [{ kind: 'salary', amt: salary, date }, ...applySorter(date)];
+export function platformFeeAnnual() {
+  const p = planInfo();
+  return round2(Math.min(portfolioValue() * p.feeRate, p.feeCap));
+}
+export function platformFeeMonthly() {
+  return round2(platformFeeAnnual() / 12);
 }
 
-function autoSavePots(date){
-  const done = [];
-  for (const p of S.pots){
-    if (!p.autoSave || p.autoSave <= 0) continue;
-    const amt = takeFunds(p.autoSave);
-    if (!amt) continue;
-    p.bal = round2(p.bal + amt);
-    insertTx({ id: uid(), date, time: '07:05', name: p.name, cat: 'Transfers',
-      amt: -amt, bal: 0, note: 'Auto-save' });
-    done.push({ kind: 'auto-save', pot: p.name, amt, date });
-  }
-  return done;
+/* ---------- flex ---------- */
+
+export const FLEX_MIN = 100;
+export const FLEX_MONTHS = [3, 6, 12];
+
+export function flexApr(amount, months) {
+  if (months === 3 && amount >= FLEX_MIN) return 0;
+  return 0.29;
 }
 
-export function runScheduled(until = TODAY){
-  if (!S) return [];
-  const from = S.lastRun || TODAY;
-  if (until <= from){
-    if (until > (S.lastRun || '')){ S.lastRun = until; commit(); }
-    return [];
-  }
-
-  const gap = Math.round((asDate(until) - asDate(from)) / 86400000);
-  const span = Math.min(MAX_CATCHUP_DAYS, gap);
-  const skipped = gap - span;
-
-  const endD = asDate(until);
-  const startD = new Date(endD.getFullYear(), endD.getMonth(), endD.getDate() - span);
-
-  runBal = balNow();
-  const applied = [];
-  let short = 0;
-
-  for (let i = 1; i <= span; i++){
-    const d = new Date(startD.getFullYear(), startD.getMonth(), startD.getDate() + i);
-    const date = iso(d), day = d.getDate();
-
-    if (day === 28) applied.push(...paySalary(date));
-    if (day === 1) applied.push(...autoSavePots(date));
-
-    S.sos.filter(s => s.active && s.day === day).forEach(s => {
-      const amt = takeFunds(s.amt);
-      if (!amt){ short++; return; }
-      insertTx({ id: uid(), date, time: '07:00', name: s.name, cat: 'Bills',
-        amt: -amt, bal: 0, note: 'Standing order' });
-      applied.push({ kind: 'standing-order', name: s.name, amt, date });
+export function flexPurchase(amount, months, name = 'Flex purchase') {
+  const a = round2(amount);
+  if (a < FLEX_MIN) return {ok:false, reason:'minimum'};
+  if (!FLEX_MONTHS.includes(months)) return {ok:false, reason:'term'};
+  const apr = flexApr(a, months);
+  const total = round2(a * (1 + apr * (months / 12)));
+  const per = round2(total / months);
+  state.flex.used = round2(state.flex.used + a);
+  addTx({name, amount: -a, category: 'general'});
+  for (let i = 0; i < months; i++) {
+    state.scheduled.push({
+      id: uid('sch'), name: 'Flex · ' + name, amount: -per, category: 'finance',
+      day: new Date(now() + (i + 1) * 30 * 86400000).getDate(),
+      freq: 'once', next: now() + (i + 1) * 30 * 86400000, flex: true
     });
+  }
+  save();
+  return {ok:true, per, total, apr};
+}
 
-    /* dividends, platform fee and savings interest land on the last day */
-    if (new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate() === day){
-      const div = round2(isaBal() * DIVIDEND_RATE);
-      if (div > 0){
-        runBal = round2(runBal + div);
-        insertTx({ id: uid(), date, time: '16:30', name: 'Vanguard', cat: 'Investments',
-          amt: div, bal: 0, note: 'Dividend — FTSE Global All Cap' });
-        applied.push({ kind: 'dividend', amt: div, date });
-      }
-      const fee = takeFunds(platformFeeMonthly());
-      if (fee > 0){
-        insertTx({ id: uid(), date, time: '16:35', name: 'Monzo Invest', cat: 'Investments',
-          amt: -fee, bal: 0, note: 'Platform fee' });
-        applied.push({ kind: 'fee', amt: fee, date });
-      }
-      const interest = round2(savingsTotal() * (plan().ia / 100 / 12));
-      if (interest > 0){
-        runBal = round2(runBal + interest);
-        insertTx({ id: uid(), date, time: '16:40', name: 'Savings interest', cat: 'Income',
-          amt: interest, bal: 0, note: 'Monthly interest' });
-        applied.push({ kind: 'interest', amt: interest, date });
+/* ---------- investments ---------- */
+
+export function investBuy(fundId, amount) {
+  const f = FUNDS.find(x => x.id === fundId);
+  if (!f) return false;
+  const a = round2(amount);
+  if (state.invest.cash < a) return false;
+  state.invest.cash = round2(state.invest.cash - a);
+  state.invest.units[fundId] = (state.invest.units[fundId] || 0) + a / f.price;
+  save();
+  return true;
+}
+
+export function investSell(fundId, amount) {
+  const f = FUNDS.find(x => x.id === fundId);
+  if (!f) return false;
+  const units = state.invest.units[fundId] || 0;
+  const held = round2(units * f.price);
+  const a = Math.min(round2(amount), held);
+  if (a <= 0) return false;
+  state.invest.units[fundId] = units - a / f.price;
+  state.invest.cash = round2(state.invest.cash + a);
+  save();
+  return true;
+}
+
+export function investDeposit(amount) {
+  const a = round2(amount);
+  if (!takeFunds(a)) return false;
+  state.invest.cash = round2(state.invest.cash + a);
+  save();
+  return true;
+}
+
+export function pensionProjection() {
+  const p = state.pension;
+  const years = Math.max(0, 68 - (new Date().getFullYear() - new Date(p.joined).getFullYear()));
+  const annual = (p.monthly + p.employer) * 12;
+  let bal = p.balance;
+  for (let i = 0; i < years; i++) bal = bal * (1 + p.growth) + annual;
+  return {pot: round2(bal), years, annual};
+}
+
+/* ---------- scheduler ---------- */
+
+export function runScheduled() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const last = new Date(state.lastRun || now());
+  last.setHours(0, 0, 0, 0);
+  const days = clamp(Math.round((today - last) / 86400000), 0, MAX_CATCHUP_DAYS);
+  let count = 0;
+  for (let d = 1; d <= days; d++) {
+    const cur = new Date(last.getTime() + d * 86400000);
+    for (const s of state.scheduled) {
+      if (s.freq === 'once') {
+        const when = new Date(s.next);
+        when.setHours(0, 0, 0, 0);
+        if (when.getTime() === cur.getTime()) {
+          addTx({name: s.name, amount: s.amount, category: s.category, ts: cur.getTime()});
+          s.done = true;
+          count++;
+        }
+      } else if (cur.getDate() === s.day) {
+        addTx({name: s.name, amount: s.amount, category: s.category, ts: cur.getTime()});
+        count++;
       }
     }
   }
-
-  S.lastRun = until;
-  recompute();
-  commit();
-  if (applied.length) notif('Scheduled payments', `${applied.length} applied to your account`);
-  if (short) notif('Standing orders', `${short} skipped — not enough in your balance`);
-  if (skipped) notif('Scheduler', `${skipped} day${skipped === 1 ? '' : 's'} not replayed — showed the last ${span}`);
-  return applied;
-}
-
-export const gpeClaimed = () => S.gpeMonth === THIS_YM;
-
-export function getPaidEarly(){
-  if (S.gpeMonth === THIS_YM) return { ok: false, msg: 'Already claimed this month' };
-  const salary = salaryAmount();
-  if (salary <= 0) return { ok: false, msg: 'No salary due' };
-  S.gpeMonth = THIS_YM;
-  addTx('Kingdom Services Group', 'Income', salary, 'Salary paid early');
-  runBal = balNow();
-  const split = applySorter();
-  if (split.length) recompute();
-  notif('Paid early', `${fmt(salary)} is in your account`);
-  commit();
-  return { ok: true, salary, split };
-}
-
-export function addStandingOrder(name, amt, day){
-  S.sos.push({ id: uid(), name, amt, day, active: true });
-  commit();
-}
-export function toggleStandingOrder(id){
-  const s = S.sos.find(x => x.id === id);
-  if (s) s.active = !s.active;
-  commit();
-}
-export function addSharedTab(name, total, people){
-  S.tabs.push({ id: uid(), name, total, mine: round2(total / people), people, settled: false });
-  commit();
-}
-export function settleTab(id){
-  const t = S.tabs.find(x => x.id === id);
-  if (!t) return { ok: false };
-  if (t.mine > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-  S.tabs = S.tabs.filter(x => x.id !== id);
-  addTx(t.name, 'Transfers', -t.mine, 'Shared tab settled');
-  return { ok: true };
-}
-
-export function addVirtualCard(){
-  const p = plan();
-  if (!p.vcLive) return { ok: false, msg: 'Virtual cards need Extra, Perks or Max' };
-  if (S.vcards.length >= p.vcLive) return { ok: false, msg: `Limit of ${p.vcLive} live virtual cards` };
-  S.vcards.push({ id: uid(), label: 'Virtual card ' + (S.vcards.length + 1), frozen: false,
-    num: '4000 ' + (1000 + Math.floor(Math.random() * 9000)), created: TODAY, single: false });
-  commit();
-  return { ok: true };
-}
-export function freezeVCard(id){
-  const v = S.vcards.find(x => x.id === id);
-  if (!v) return;
-  v.frozen = !v.frozen;
-  commit();
-}
-export function renameVCard(id, label){
-  const v = S.vcards.find(x => x.id === id);
-  if (v) v.label = label;
-  commit();
-}
-export function deleteVCard(id){
-  S.vcards = S.vcards.filter(v => v.id !== id);
-  commit();
-}
-export function toggleFreeze(){ S.frozen = !S.frozen; commit(); }
-
-export function setPlan(key){
-  const from = plan(), to = PLANS[key];
-  if (!to || key === S.plan) return { ok: false };
-  const diff = round2(to.price - from.price);
-  S.plan = key;
-  syncPolicies();
-  if (diff > 0) addTx('Monzo', 'Subscriptions', -diff, `${to.name} plan`);
-  else commit();
-  notif('Plan changed', `You're now on ${to.name}`);
-  return { ok: true, diff };
-}
-export function setFamily(on){
-  if (S.plan !== 'max') return { ok: false, msg: 'Family add-on needs Max' };
-  S.family = on;
-  if (on) addTx('Monzo', 'Subscriptions', -4, 'Max family add-on');
-  else commit();
-  return { ok: true };
-}
-
-export function setTarget(cat, value){ S.targets[cat] = Math.max(0, value); commit(); }
-export function setProfile(patch){ Object.assign(S.profile, patch); commit(); }
-export function setPin(pin){ S.pin = pin; commit(); }
-export function setCredId(id){ S.credId = id; commit(); }
-export function togglePriv(){ S.priv = !S.priv; commit(); return S.priv; }
-export function toggleRoundups(){ S.roundups = !S.roundups; commit(); return S.roundups; }
-export function setTheme(t){ S.theme = t; commit(); }
-export function setZoom(z){ S.zoom = z; commit(); }
-export function setMotion(on){ S.motion = on; commit(); }
-export function setPensionMonthly(v){ S.pensionMonthly = v; commit(); }
-export function setActiveAccount(key){ S.activeAccount = key; commit(); }
-
-export function moveLayoutSection(id, dir){
-  const i = S.layout.findIndex(s => s.id === id), j = i + dir;
-  if (i < 0 || j < 0 || j >= S.layout.length) return;
-  [S.layout[i], S.layout[j]] = [S.layout[j], S.layout[i]];
-  commit();
-}
-export function toggleLayoutSection(id){
-  const s = S.layout.find(x => x.id === id);
-  if (s){ s.on = !s.on; commit(); }
-}
-
-export function flexPurchase(name, amount, term){
-  if (!amount || amount <= 0) return { ok: false, msg: 'Enter an amount' };
-  if (amount < 100) return { ok: false, msg: 'Flex is for purchases of £100 or more' };
-  if (amount > flexAvail()) return { ok: false, msg: 'Over your available limit' };
-  S.flex.used = round2(S.flex.used + amount);
-  S.flex.plans.unshift({ id: uid(), name, amount, remaining: amount, principal: amount, term,
-    monthly: flexMonthly(amount, term) });
-  notif('Paid with Flex', `${name} — ${fmt(amount)} over ${term} months`);
-  commit();
-  return { ok: true };
-}
-export function settleFlex(id){
-  const p = S.flex.plans.find(x => x.id === id);
-  if (!p) return { ok: false };
-  if (p.remaining > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-  S.flex.plans = S.flex.plans.filter(x => x.id !== id);
-  S.flex.used = Math.max(0, round2(S.flex.used - p.remaining));
-  addTx('Monzo Flex', 'Transfers', -p.remaining, 'Settled early — ' + p.name);
-  return { ok: true };
-}
-
-export function arrangeOverdraft(limit){
-  S.overdraft = { limit, rate: limit > 1000 ? 19 : 29 };
-  notif('Overdraft arranged', `${fmt(limit)} available`);
-  commit();
-}
-export function cancelOverdraft(){
-  S.overdraft = { limit: 0, rate: 0 };
-  notif('Overdraft cancelled', 'Your arranged limit is now £0');
-  commit();
-}
-
-export function takeLoan(amount, term){
-  if (amount < 1000 || amount > 35000) return { ok: false, msg: 'Enter £1,000 to £35,000' };
-  const apr = aprForLoan(amount);
-  const monthly = loanMonthly(amount, term);
-  S.loans.push({ id: uid(), amount, term, apr, monthly, outstanding: round2(monthly * term), paid: 0 });
-  notif('Loan approved', `${fmt(amount)} paid into your account`);
-  addTx('Monzo Loans', 'Income', amount, 'Loan advance');
-  return { ok: true };
-}
-export function overpayLoan(id, amt){
-  const l = S.loans.find(x => x.id === id);
-  if (!l) return { ok: false };
-  if (amt <= 0) return { ok: false, msg: 'Enter an amount' };
-  if (amt > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-  const pay = Math.min(amt, l.outstanding);
-  l.outstanding = round2(l.outstanding - pay);
-  if (l.outstanding <= 0.01) S.loans = S.loans.filter(x => x.id !== id);
-  addTx('Monzo Loans', 'Transfers', -pay, 'Overpayment');
-  return { ok: true };
-}
-
-export function challengeSave(){
-  const c = S.challenge;
-  if (c.day >= 365) return { ok: false, msg: 'Challenge complete' };
-  const amt = round2((c.day + 1) / 100);
-  if (amt > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-  c.day++;
-  c.saved = round2(c.saved + amt);
-  addTx('Saving Challenge', 'Savings', -amt, 'Day ' + c.day);
-  return { ok: true, amt };
-}
-export function restartChallenge(){
-  const back = S.challenge.saved;
-  S.challenge = { day: 0, saved: 0, level: '1p' };
-  if (back > 0) addTx('Saving Challenge', 'Savings', back, 'Challenge reset');
-  else commit();
-}
-
-export function billsbackOptIn(){
-  if (!plan().billsback) return { ok: false, msg: 'Billsback needs Extra' };
-  S.billsback.optIn = !S.billsback.optIn;
-  commit();
-  return { ok: true, on: S.billsback.optIn };
-}
-export function billsbackDraw(rng = Math.random){
-  if (!plan().billsback) return { ok: false, msg: 'Billsback needs Extra' };
-  if (!S.billsback.optIn) return { ok: false, msg: 'Opt in first' };
-  const bills = bbBills();
-  if (!bills.length) return { ok: false, msg: 'No eligible bills this month' };
-  const won = rng() < 0.25;
-  const bill = bills[Math.floor(rng() * bills.length)] || bills[0];
-  const amount = won ? round2(Math.min(Math.abs(bill.amt), BB_CAP)) : 0;
-  S.billsback.history.unshift({ month: MONTHS[NOW.getMonth()], won, amount, bill: won ? bill.name : '' });
-  if (won){
-    notif('Billsback', `${bill.name} — ${fmt(amount)} paid back`);
-    addTx('Monzo Billsback', 'Income', amount, bill.name + ' paid back');
-  } else {
-    notif('Billsback', 'No win this month');
-    commit();
+  state.scheduled = state.scheduled.filter(s => !s.done);
+  if (days > 0) {
+    state.lastRun = now();
+    const potPct = 0.004;
+    for (const p of state.pots) if (p.roundUp) p.saved = round2(p.saved + 0.35);
+    save();
   }
-  return { ok: true, won, amount };
+  return count;
 }
 
-export function connectBank(bank){
-  if (S.connected.some(c => c.bank === bank)) return { ok: false, msg: 'Already connected' };
-  S.connected.push({ id: uid(), bank, kind: 'Current account', bal: 1500 + Math.floor(Math.random() * 7500) });
-  notif('Account connected', bank + ' added');
-  commit();
-  return { ok: true };
-}
-export function removeBank(id){
-  S.connected = S.connected.filter(c => c.id !== id);
-  commit();
+/* ---------- derived ---------- */
+
+export function upcoming() {
+  const cutoff = now() + 7 * 86400000;
+  return state.scheduled.filter(s => s.next <= cutoff && s.amount < 0)
+    .reduce((s, x) => s + Math.abs(x.amount), 0);
 }
 
-export function addExtraAccount(name, type){
-  S.extraAccounts.push({ id: uid(), name, type, status: 'Active', bal: 0 });
-  notif('Account opened', `${type} account for ${name}`);
-  commit();
+export function committed() {
+  return round2(upcoming() + totalPots() * 0);
 }
-export function updateExtraAccount(id, patch){
-  const a = S.extraAccounts.find(x => x.id === id);
-  if (a) Object.assign(a, patch);
-  commit();
+
+export function leftToSpend() {
+  return Math.max(0, round2(state.balance - upcoming()));
 }
-export function moveToExtraAccount(id, amt){
-  const a = S.extraAccounts.find(x => x.id === id);
-  if (!a) return { ok: false, msg: 'No such account' };
-  if (!amt || amt <= 0) return { ok: false, msg: 'Enter an amount' };
-  if (amt > balNow()) return { ok: false, msg: 'Not enough in your balance' };
-  a.bal = round2((a.bal || 0) + amt);
-  addTx(a.name, 'Transfers', -amt, 'Moved to ' + a.name);
-  return { ok: true };
+
+export function spentThisMonth() {
+  const d = new Date();
+  const start = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+  return round2(Math.abs(state.tx
+    .filter(t => t.ts >= start && t.amount < 0 && t.category !== 'transfers')
+    .reduce((s, t) => s + t.amount, 0)));
 }
-export function closeExtraAccount(id){
-  const a = S.extraAccounts.find(x => x.id === id);
-  if (!a) return { ok: false, msg: 'No such account' };
-  const bal = round2(a.bal || 0);
-  S.extraAccounts = S.extraAccounts.filter(x => x.id !== id);
-  if (bal > 0){
-    addTx(a.name, 'Transfers', bal, a.name + ' closed — balance returned');
-    notif('Account closed', `${fmt(bal)} returned to ${S.acctName}`);
-    return { ok: true, returned: bal };
+
+export function byCategory() {
+  const d = new Date();
+  const start = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+  const map = {};
+  for (const t of state.tx) {
+    if (t.ts < start || t.amount >= 0 || t.category === 'transfers') continue;
+    map[t.category] = round2((map[t.category] || 0) + Math.abs(t.amount));
   }
-  notif('Account closed', a.name + ' closed');
-  commit();
-  return { ok: true, returned: 0 };
+  return map;
 }
 
-export function closeAccount(){
-  if (S.acctClosed) return { ok: false, msg: 'Already closed' };
-  const bal = round2(balNow());
-  if (bal > 0){
-    S.jointBal = round2((S.jointBal || 0) + bal);
-    insertTx({ id: uid(), date: TODAY, time: NOWT, name: 'Joint account', cat: 'Transfers',
-      amt: -bal, bal: 0, note: 'Balance moved — account closed' });
-    recompute();
+export function lastMonthByCategory() {
+  const d = new Date();
+  const start = new Date(d.getFullYear(), d.getMonth() - 1, 1).getTime();
+  const end = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+  const map = {};
+  for (const t of state.tx) {
+    if (t.ts < start || t.ts >= end || t.amount >= 0) continue;
+    map[t.category] = round2((map[t.category] || 0) + Math.abs(t.amount));
   }
-  S.acctClosed = true;
-  S.activeAccount = 'joint';
-  notif('Account closed', bal > 0
-    ? `${fmt(bal)} moved to your joint account`
-    : 'Your current account is closed');
-  commit();
-  return { ok: true, moved: bal };
-}
-export function reopenAccount(){
-  if (!S.acctClosed) return { ok: false, msg: 'Already open' };
-  S.acctClosed = false;
-  S.activeAccount = 'personal';
-  notif('Account reopened', 'Your current account is active again');
-  commit();
-  return { ok: true };
+  return map;
 }
 
-export function setPlus(patch){ Object.assign(S.plus, patch); commit(); }
-export function takePlus(){
-  const next = !S.plus.active;
-  S.plus.active = next;
-  if (next) addTx('Monzo Plus', 'Subscriptions', -15, 'Plus monthly fee');
-  else commit();
-  return next;
+export function ensureCategory(id) {
+  return CATEGORY_IDS.includes(id) ? id : 'general';
 }
-export function payOutCashback(){
-  const amt = round2(S.plus.cashback || 0);
-  if (amt < CASHBACK_MIN) return { ok: false, msg: `£${CASHBACK_MIN} minimum to move out` };
-  S.plus.cashback = 0;
-  addTx('Monzo Plus', 'Income', amt, 'Cashback paid out');
-  return { ok: true, amt };
-}
-
-export function syncPolicies(){
-  const cover = !!plan().cover;
-  S.policies.forEach(p => {
-    if (cover){ p.status = 'Active'; p.ended = ''; }
-    else { p.status = 'Ended'; p.ended ||= TODAY; }
-  });
-  commit();
-}
-
-export const CREDIT_ACTIONS = [
-  { key: 'electoral', label: 'Register on the electoral roll', gain: 22 },
-  { key: 'utilisation', label: 'Keep utilisation under 30%', gain: 15 },
-  { key: 'directdebit', label: 'Add a direct debit', gain: 10 },
-  { key: 'address', label: 'Confirm your address history', gain: 8 }
-];
-export function creditAction(key){
-  if (S.credit.done.includes(key)) return { ok: false, msg: 'Already done' };
-  const action = CREDIT_ACTIONS.find(a => a.key === key);
-  if (!action) return { ok: false };
-  S.credit.done.push(key);
-  S.credit.eq = Math.min(999, S.credit.eq + action.gain);
-  S.credit.tu = Math.min(999, S.credit.tu + action.gain);
-  notif('Credit score updated', action.label);
-  commit();
-  return { ok: true, gain: action.gain };
-}
-
-export function raiseDispute(name, reason){
-  S.disputes.unshift({ id: uid(), name, reason, date: TODAY, status: 'Open' });
-  notif('Dispute raised', name + " — we'll look into it");
-  commit();
-}
-export function closeDispute(id){
-  const d = S.disputes.find(x => x.id === id);
-  if (d) d.status = 'Closed';
-  commit();
-}
-
-function notif(title, body){
-  S.notifs.unshift({ title, body, date: TODAY, time: NOWT, read: false });
-  S.notifs = S.notifs.slice(0, 40);
-  S.notifsCleared = false;
-  commit();
-}
-function seedNotifs(){
-  const back = n => iso(new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate() - n));
-  S.notifs = [
-    { title: 'Left to spend updated', body: 'Recalculated for the days before payday', date: TODAY, time: NOWT, read: false },
-    { title: 'Salary received', body: '£2,850.00 from Kingdom Services Group', date: back(1), time: '06:00', read: true },
-    { title: 'Round-ups', body: '£1.42 moved to Rainy Day', date: back(2), time: '18:24', read: true }
-  ];
-  S.notifsCleared = false;
-}
-const unread = () => S.notifs.filter(n => !n.read).length;
-export function syncBell(){
-  const d = document.getElementById('bellDot');
-  if (d) d.classList.toggle('on', unread() > 0);
-}
-export function markAllRead(){ S.notifs.forEach(n => { n.read = true; }); commit(); syncBell(); }
-export function clearNotifs(){ S.notifs = []; S.notifsCleared = true; commit(); syncBell(); }
-export function pushChat(who, text){ S.chat.push({ who, text, time: NOWT }); commit(); }
-
-export function runTick(){
-  if (S.lastTick === THIS_YM) return;
-  let flexPaid = 0, loanPaid = 0;
-  S.flex.plans.forEach(p => {
-    if (p.remaining <= 0) return;
-    const pay = round2(Math.min(p.monthly, p.remaining));
-    if (pay > balNow()) return;
-    p.remaining = round2(p.remaining - pay);
-    const principal = round2(Math.min(pay, p.principal));
-    p.principal = round2(p.principal - principal);
-    S.flex.used = Math.max(0, round2(S.flex.used - principal));
-    insertTx({ id: uid(), date: TODAY, time: NOWT, name: 'Monzo Flex', cat: 'Transfers',
-      amt: -pay, bal: 0, note: `Instalment of ${p.term}` });
-    flexPaid = round2(flexPaid + pay);
-  });
-  S.flex.plans = S.flex.plans.filter(p => p.remaining > 0.01);
-  S.loans.forEach(l => {
-    if (l.outstanding <= 0) return;
-    const pay = round2(Math.min(l.monthly, l.outstanding));
-    if (pay > balNow()) return;
-    l.outstanding = round2(l.outstanding - pay);
-    l.paid += 1;
-    insertTx({ id: uid(), date: TODAY, time: NOWT, name: 'Monzo Loans', cat: 'Transfers',
-      amt: -pay, bal: 0, note: `Repayment ${l.paid} of ${l.term}` });
-    loanPaid = round2(loanPaid + pay);
-  });
-  S.loans = S.loans.filter(l => l.outstanding > 0.01);
-  S.lastTick = THIS_YM;
-  recompute();
-  if (flexPaid) S.notifs.unshift({ title: 'Flex instalment', body: `${fmt(flexPaid)} taken`, date: TODAY, time: NOWT, read: false });
-  if (loanPaid) S.notifs.unshift({ title: 'Loan repayment', body: `${fmt(loanPaid)} taken`, date: TODAY, time: NOWT, read: false });
-  commit();
-}
-
-export { CATS, FLEX, COMMITTED, BANKS, BB_PROVIDERS, BB_CAP, DOMAINS, TARGET_ISA };
