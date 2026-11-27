@@ -99,22 +99,22 @@ export const BRANDS = {
 };
 
 export const CATEGORIES = [
-  {id:'groceries', name:'Groceries', emoji:'🛒', colour:'#12a150'},
-  {id:'eating', name:'Eating out', emoji:'🍔', colour:'#ff8000'},
-  {id:'transport', name:'Transport', emoji:'🚆', colour:'#1f6feb'},
-  {id:'shopping', name:'Shopping', emoji:'🛍️', colour:'#8b5cf6'},
-  {id:'bills', name:'Bills', emoji:'🧾', colour:'#0b4ea2'},
-  {id:'entertainment', name:'Entertainment', emoji:'🎬', colour:'#d92d20'},
-  {id:'health', name:'Health', emoji:'💊', colour:'#0891b2'},
-  {id:'fitness', name:'Fitness', emoji:'🏋️', colour:'#b25e00'},
-  {id:'home', name:'Home', emoji:'🏠', colour:'#6b7280'},
-  {id:'family', name:'Family', emoji:'👨‍👩‍👧', colour:'#c2410c'},
-  {id:'pets', name:'Pets', emoji:'🐶', colour:'#0f766e'},
-  {id:'finance', name:'Finance', emoji:'💳', colour:'#334155'},
-  {id:'income', name:'Income', emoji:'💰', colour:'#12a150'},
-  {id:'transfers', name:'Transfers', emoji:'🔁', colour:'#6b6b76'},
-  {id:'cash', name:'Cash', emoji:'💵', colour:'#0f766e'},
-  {id:'general', name:'General', emoji:'📦', colour:'#6b6b76'}
+  {id:'groceries', name:'Groceries', icon:'basket', colour:'#12a150'},
+  {id:'eating', name:'Eating out', icon:'cutlery', colour:'#ff8000'},
+  {id:'transport', name:'Transport', icon:'train', colour:'#1f6feb'},
+  {id:'shopping', name:'Shopping', icon:'bag', colour:'#8b5cf6'},
+  {id:'bills', name:'Bills', icon:'receipt', colour:'#0b4ea2'},
+  {id:'entertainment', name:'Entertainment', icon:'film', colour:'#d92d20'},
+  {id:'health', name:'Health', icon:'pill', colour:'#0891b2'},
+  {id:'fitness', name:'Fitness', icon:'dumbbell', colour:'#b25e00'},
+  {id:'home', name:'Home', icon:'house', colour:'#6b7280'},
+  {id:'family', name:'Family', icon:'family', colour:'#c2410c'},
+  {id:'pets', name:'Pets', icon:'paw', colour:'#0f766e'},
+  {id:'finance', name:'Finance', icon:'card', colour:'#334155'},
+  {id:'income', name:'Income', icon:'arrowdown', colour:'#12a150'},
+  {id:'transfers', name:'Transfers', icon:'swap', colour:'#6b6b76'},
+  {id:'cash', name:'Cash', icon:'note', colour:'#0f766e'},
+  {id:'general', name:'General', icon:'box', colour:'#6b6b76'}
 ];
 
 export const CATEGORY_IDS = CATEGORIES.map(c => c.id);
@@ -183,6 +183,21 @@ export const FUNDS = [
   {id:'f59', name:'iShares MSCI World Utilities', ticker:'WUTI', price:11.70, cls:'equity', region:'Global', risk:3},
   {id:'f60', name:'iShares MSCI World Consumer Staples', ticker:'WSTP', price:17.40, cls:'equity', region:'Global', risk:3}
 ];
+
+export const RISK_FUNDS = [
+  {id:'careful', name:'Careful', risk:3, equity:25, bond:70, cash:5,
+   blurb:'Mostly bonds with a slice of shares. Smaller ups and downs.'},
+  {id:'balanced', name:'Balanced', risk:5, equity:65, bond:30, cash:5,
+   blurb:'A mix of shares and bonds. Moderate ups and downs.'},
+  {id:'adventurous', name:'Adventurous', risk:7, equity:90, bond:8, cash:2,
+   blurb:'Mostly shares. Bigger ups and downs over time.'}
+];
+
+export const CONSTITUENTS = {
+  careful: [['f36', 30], ['f35', 20], ['f33', 15], ['f04', 25], ['f01', 10]],
+  balanced: [['f01', 35], ['f02', 20], ['f37', 15], ['f04', 20], ['f31', 10]],
+  adventurous: [['f01', 25], ['f40', 20], ['f13', 15], ['f05', 15], ['f38', 15], ['f44', 10]]
+};
 
 export const PENSION_FUNDS = [
   {id:'pen_world', name:'BlackRock World Equity', alloc:60},
