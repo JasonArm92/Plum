@@ -1,5 +1,5 @@
-import { fmt, state } from './core.js';
-import { DOMAINS, BRANDS } from './data.js';
+import { fmt, state } from './core.js?v=33';
+import { DOMAINS, BRANDS } from './data.js?v=33';
 
 export const el = (tag, cls, html) => {
   const n = document.createElement(tag);
@@ -180,7 +180,7 @@ export function ring(pct, size = 78, stroke = 8) {
   const c = 2 * Math.PI * r;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'ring');
-  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
   svg.setAttribute('width', size);
   svg.setAttribute('height', size);
   const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -232,8 +232,6 @@ export function toast(msg, action = null, ms = 3200) {
   wrap.appendChild(t);
   setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 220); }, ms);
 }
-
-/* ---------- sheets ---------- */
 
 let openSheets = 0;
 let lastFocus = null;
@@ -305,7 +303,7 @@ export function sheet({title = '', body = null, foot = null, onClose = null}) {
 }
 
 export function confirmSheet({title, text, confirm = 'Confirm', danger = false, onConfirm}) {
-  const body = el('div', '', `<p class="hint" style="margin:0">${text}</p>`);
+  const body = el('div', '', '<p class="hint" style="margin:0">' + text + '</p>');
   const btn = el('button', 'btn btn--block ' + (danger ? 'btn--danger' : 'btn--primary'));
   btn.textContent = confirm;
   const s = sheet({title, body, foot: btn});
