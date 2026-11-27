@@ -1,7 +1,7 @@
 /* src/main.js — boot: hydrate state, apply appearance, wire chrome and lock, register screens. */
 
 import {
-  load, getState, subscribe, runInterest, runTick, runScheduled, togglePriv, syncBell
+  load, getState, subscribe, runTick, runScheduled, togglePriv, syncBell
 } from './core.js';
 import {
   initRouter, register, go, goBack, reload, closeSheet, bindGlobalChrome, toast
@@ -116,7 +116,6 @@ async function biometricUnlock(){
 
 function boot(){
   load();
-  runInterest();
   runTick();
   /* catch up on anything the scheduler owes since the app was last open */
   runScheduled();
@@ -201,7 +200,7 @@ function boot(){
 
   if ('serviceWorker' in navigator){
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js?v=20').catch(() => {});
+      navigator.serviceWorker.register('sw.js?v=22').catch(() => {});
     });
   }
 }
