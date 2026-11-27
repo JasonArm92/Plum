@@ -3,11 +3,13 @@ import {
   creditScore, creditBand, creditHistory, creditUpdatedDays, creditRefresh,
   mipQuote, takeDip, MIP_MIN_DEPOSIT_PCT, MIP_INCOME_MULTIPLE,
   connectedExpired, connectedAdd, connectedRefresh, connectedReauth,
-  connectedRemove, connectedTotal, connectedConsentDays, CONNECT_CONSENT_DAYS
+  connectedRemove, connectedTotal, connectedConsentDays
 } from './core.js?v=40';
-import { CREDIT_BANDS, CREDIT_FACTORS, CREDIT_TIPS, CONNECTED_BANKS, MORTGAGE_TERMS } from './data.js?v=40';
 import {
-  el, screen, row, list, section, tile, icon, catIcon, pill,
+  CREDIT_FACTORS, CREDIT_TIPS, CONNECTED_BANKS, CONNECT_CONSENT_DAYS, MORTGAGE_TERMS
+} from './data.js?v=40';
+import {
+  el, screen, row, list, section, tile, catIcon,
   empty, toast, sheet, confirmSheet, field, input, seg
 } from './ui.js?v=40';
 
