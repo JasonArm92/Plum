@@ -91,7 +91,7 @@ const round = n => Math.round(n * 100) / 100;
    interest stays believable across three decades. */
 const savingsAt = y => (y < 2000 ? 0 : Math.min(74400, (y - 1999) * 3900));
 
-export function buildISA(now){
+function buildISA(now){
   const months = [];
   let d = new Date(1992, 9, 1);
   const end = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -131,7 +131,7 @@ export function buildISA(now){
 /* Household of four: two adults, two home-schooled children.
    October 1992 to 2018 carries only the investment income and the pot
    movements; the household spending starts in 2019. */
-export function buildAccount(now, isaByMonth = {}){
+function buildAccount(now, isaByMonth = {}){
   const today = isoS(now);
   const tx = [];
   let bal = OPENING_BALANCE;
