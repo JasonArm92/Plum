@@ -16,6 +16,7 @@ import {
   field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar, haptic
 } from './ui.js?v=42';
 import { buildStatement, download } from './statement.js?v=42';
+import { planChangeSheet } from './screens-d.js?v=42';
 
 const cat = id => catById(id);
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -807,8 +808,7 @@ export function cardsScreen() {
   const add = el('button', 'btn btn--primary btn--block', 'Create virtual card');
   add.onclick = () => {
     if (!canUseVirtualCards()) {
-      const s = sheet({title: 'Virtual cards', body: el('div', '', '<p class="hint">Virtual cards come with Plus, Perks and Max. You are on ' + planInfo().name + '.</p>')});
-      setTimeout(() => s.close(), 1200);
+      toast('Virtual cards come with Plus');
       location.hash = '#/plus';
       return;
     }
@@ -1263,4 +1263,4 @@ export function layoutSheet() {
 
   draw();
   sheet({title: 'Edit home', body});
-                           }
+      }
