@@ -1,8 +1,8 @@
-import { FUNDS, CATEGORY_IDS, CATEGORIES, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS, BENEFITS } from './data.js?v=41';
+import { FUNDS, CATEGORY_IDS, CATEGORIES, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS, BENEFITS } from './data.js?v=42';
 
-export const VERSION = 30;
-export const KEY = 'monzo_v30';
-export const LEGACY_KEYS = ['monzo_v29','monzo_v28','monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 31;
+export const KEY = 'monzo_v31';
+export const LEGACY_KEYS = ['monzo_v30','monzo_v29','monzo_v28','monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -17,6 +17,7 @@ export const uid = (p = 'id') => p + '_' + Math.random().toString(36).slice(2, 9
 export const now = () => Date.now();
 export const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 export const round2 = n => Math.round((Number(n) || 0) * 100) / 100;
+export const rand4 = () => String(Math.floor(1000 + Math.random() * 9000));
 
 export function fmt(n, opts = {}) {
   const v = Math.abs(Number(n) || 0);
@@ -524,6 +525,156 @@ export function changePlan(id) {
   return q;
 }
 
+/* ---------- undo ---------- */
+
+export function snapshot() {
+  return JSON.parse(JSON.stringify(state));
+}
+
+export function restore(snap) {
+  state = normalise(snap);
+  save();
+}
+
+/* ---------- notifications ---------- */
+
+export function notifySupported() {
+  return typeof Notification !== 'undefined';
+}
+
+export function notifyPermission() {
+  return notifySupported() ? Notification.permission : 'unsupported';
+}
+
+export async function requestNotify() {
+  if (!notifySupported()) return 'unsupported';
+  try { return await Notification.requestPermission(); } catch { return 'denied'; }
+}
+
+export function notify(title, body) {
+  if (!state.settings.notifications) return false;
+  if (notifyPermission() !== 'granted') return false;
+  try {
+    new Notification(title, {
+      body,
+      icon: 'https://jasonarm92.github.io/icon-192.png',
+      tag: 'monzo-' + title
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ---------- statements ---------- */
+
+export function statementMonths() {
+  const out = [];
+  const d = new Date();
+  for (let i = 0; i < 12; i++) {
+    const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
+    const start = m.getTime();
+    const end = new Date(d.getFullYear(), d.getMonth() - i + 1, 1).getTime();
+    const rows = state.tx.filter(t => t.ts >= start && t.ts < end);
+    out.push({
+      key: m.getFullYear() + '-' + m.getMonth(),
+      label: m.toLocaleDateString('en-GB', {month:'long', year:'numeric'}),
+      start, end, count: rows.length
+    });
+  }
+  return out;
+}
+
+export function statementRows(start, end) {
+  return state.tx
+    .filter(t => t.ts >= start && t.ts < end && (t.acct || 'personal') === state.active)
+    .sort((a, b) => a.ts - b.ts);
+}
+
+export function statementTotals(start, end, rows) {
+  const after = state.tx.filter(t => t.ts >= end).reduce((s, t) => s + t.amount, 0);
+  const closing = round2(acc().balance - after);
+  const sum = rows.reduce((s, t) => s + t.amount, 0);
+  return {opening: round2(closing - sum), closing};
+}
+
+/* ---------- virtual cards ---------- */
+
+export const VIRTUAL_CARD_PLANS = ['plus', 'perks', 'max'];
+
+export function canUseVirtualCards() {
+  return VIRTUAL_CARD_PLANS.includes(state.plan);
+}
+
+export function virtualCards() {
+  return state.cards.filter(c => c.virtual);
+}
+
+export function virtualCardCreate(potId) {
+  if (!canUseVirtualCards()) return {ok:false, reason:'plan'};
+  const pot = state.pots.find(p => p.id === potId);
+  if (!pot) return {ok:false, reason:'pot'};
+  const card = {
+    id: uid('card'),
+    label: pot.name,
+    last4: rand4(),
+    type: 'virtual',
+    frozen: false,
+    virtual: true,
+    network: 'mastercard',
+    potId: pot.id,
+    singleUse: false,
+    spent: 0
+  };
+  state.cards.push(card);
+  save();
+  return {ok:true, card};
+}
+
+export function virtualCardRemove(id) {
+  state.cards = state.cards.filter(c => c.id !== id);
+  save();
+}
+
+export function virtualCardFreeze(id) {
+  const c = state.cards.find(x => x.id === id);
+  if (!c) return false;
+  c.frozen = !c.frozen;
+  save();
+  return c.frozen;
+}
+
+export function virtualCardSingleUse(id) {
+  const c = state.cards.find(x => x.id === id);
+  if (!c) return false;
+  c.singleUse = !c.singleUse;
+  save();
+  return c.singleUse;
+}
+
+export function virtualCardSpend(id, amount) {
+  const c = state.cards.find(x => x.id === id);
+  if (!c) return {ok:false, reason:'missing'};
+  if (c.frozen) return {ok:false, reason:'frozen'};
+  const a = round2(amount);
+  if (!a || a <= 0) return {ok:false, reason:'amount'};
+  const pot = state.pots.find(p => p.id === c.potId);
+  if (pot) {
+    if ((pot.saved || 0) < a) return {ok:false, reason:'funds'};
+    pot.saved = round2(pot.saved - a);
+  } else {
+    if (acc().balance < a) return {ok:false, reason:'funds'};
+    acc().balance = round2(acc().balance - a);
+  }
+  addTx({name: 'Card · ' + c.label, amount: -a, category: 'general'});
+  c.spent = round2((c.spent || 0) + a);
+  const single = c.singleUse;
+  if (single) state.cards = state.cards.filter(x => x.id !== id);
+  save();
+  notify('Card used', fmt(a) + ' on your ' + c.label + ' card');
+  return {ok:true, single};
+}
+
 function defaultState() {
   const base = now();
   const mk = (name, amount, cat, daysAgo, acct) => ({
@@ -544,12 +695,12 @@ function defaultState() {
     },
     active: 'personal',
     pots: [
-      {id:'pot_holiday', name:'Holiday', target:6000, saved:4250.00, emoji:'🏖️', colour:'#1f6feb', locked:false, roundUp:true, created:base - 300*86400000},
-      {id:'pot_car', name:'New car', target:12000, saved:6800.00, emoji:'🚗', colour:'#ff8000', locked:false, roundUp:false, created:base - 240*86400000},
-      {id:'pot_xmas', name:'Christmas', target:2000, saved:1240.50, emoji:'🎄', colour:'#12a150', locked:true, roundUp:true, created:base - 120*86400000},
-      {id:'pot_emerg', name:'Emergency fund', target:10000, saved:5000.00, emoji:'🛟', colour:'#d92d20', locked:false, roundUp:false, created:base - 400*86400000},
-      {id:'pot_dep', name:'House deposit', target:20000, saved:2748.53, emoji:'🏠', colour:'#8b5cf6', locked:false, roundUp:true, created:base - 80*86400000},
-      {id:'pot_gad', name:'Gadgets', target:3000, saved:1400.00, emoji:'💻', colour:'#0891b2', locked:false, roundUp:false, created:base - 60*86400000}
+      {id:'pot_holiday', name:'Holiday', target:6000, saved:4250.00, emoji:'🏖️', icon:'train', colour:'#1f6feb', locked:false, roundUp:true, created:base - 300*86400000},
+      {id:'pot_car', name:'New car', target:12000, saved:6800.00, emoji:'🚗', icon:'card', colour:'#ff8000', locked:false, roundUp:false, created:base - 240*86400000},
+      {id:'pot_xmas', name:'Christmas', target:2000, saved:1240.50, emoji:'🎄', icon:'box', colour:'#12a150', locked:true, roundUp:true, created:base - 120*86400000},
+      {id:'pot_emerg', name:'Emergency fund', target:10000, saved:5000.00, emoji:'🛟', icon:'receipt', colour:'#d92d20', locked:false, roundUp:false, created:base - 400*86400000},
+      {id:'pot_dep', name:'House deposit', target:20000, saved:2748.53, emoji:'🏠', icon:'house', colour:'#8b5cf6', locked:false, roundUp:true, created:base - 80*86400000},
+      {id:'pot_gad', name:'Gadgets', target:3000, saved:1400.00, emoji:'💻', icon:'note', colour:'#0891b2', locked:false, roundUp:false, created:base - 60*86400000}
     ],
     tx: [
       mk('Tesco', -58.40, 'groceries', 0, 'joint'),
@@ -578,7 +729,7 @@ function defaultState() {
       {id:uid('sch'), name:'Admiral Car Insurance', amount:-48.50, category:'bills', day:12, freq:'monthly', next: base + 9*86400000, acct:'personal'}
     ],
     cards: [
-      {id:uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}
+      {id:uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard', potId:null, singleUse:false, spent:0}
     ],
     payees: [
       {id:uid('pay'), name:'Sophie Armstrong', sort:'04-00-04', acct:'12345678', initials:'SA', fav:true},
@@ -627,6 +778,7 @@ function defaultState() {
       notifications: true, marketing: false, biometrics: true,
       theme: 'system', reducedMotion: false, haptics: true,
       appLock: true, roundUpDefault: true, hideBalance: false,
+      notifyBills: true, notifySpending: false, notifyPots: false,
       payOrder: ['send','request','split','bank','scheduled','payees'],
       payHidden: []
     },
@@ -729,6 +881,23 @@ const migrations = [
     if (!s.catOverrides || typeof s.catOverrides !== 'object') s.catOverrides = {};
     if (!Array.isArray(s.searches)) s.searches = [];
     return s;
+  }},
+  {v: 31, fn: s => {
+    if (!Array.isArray(s.cards)) s.cards = [];
+    for (const c of s.cards) {
+      if (typeof c.virtual !== 'boolean') c.virtual = false;
+      if (c.virtual && typeof c.singleUse !== 'boolean') c.singleUse = false;
+      if (c.virtual && typeof c.spent !== 'number') c.spent = 0;
+      if (!('potId' in c)) c.potId = null;
+    }
+    if (!s.settings) s.settings = {};
+    if (typeof s.settings.notifyBills !== 'boolean') s.settings.notifyBills = true;
+    if (typeof s.settings.notifySpending !== 'boolean') s.settings.notifySpending = false;
+    if (typeof s.settings.notifyPots !== 'boolean') s.settings.notifyPots = false;
+    if (Array.isArray(s.pots)) {
+      for (const p of s.pots) if (!p.icon) p.icon = 'box';
+    }
+    return s;
   }}
 ];
 
@@ -743,7 +912,7 @@ export function normalise(input) {
   s.settings = Object.assign({
     notifications: true, marketing: false, biometrics: true, theme: 'system',
     reducedMotion: false, haptics: true, appLock: true, roundUpDefault: true,
-    hideBalance: false,
+    hideBalance: false, notifyBills: true, notifySpending: false, notifyPots: false,
     payOrder: ['send','request','split','bank','scheduled','payees'], payHidden: []
   }, s.settings || {});
   if (!Array.isArray(s.settings.payOrder) || !s.settings.payOrder.length) {
@@ -809,13 +978,21 @@ export function normalise(input) {
   if (!Array.isArray(s.layout.carousel)) s.layout.carousel = ['pots','invest','pension','isa'];
 
   if (!Array.isArray(s.pots)) s.pots = [];
+  for (const p of s.pots) if (!p.icon) p.icon = 'box';
   if (!Array.isArray(s.tx)) s.tx = [];
   if (!Array.isArray(s.scheduled)) s.scheduled = [];
   if (!Array.isArray(s.payees)) s.payees = [];
   if (!Array.isArray(s.goals)) s.goals = [];
   if (!Array.isArray(s.splits)) s.splits = [];
   if (!Array.isArray(s.cards) || !s.cards.length) {
-    s.cards = [{id: uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}];
+    s.cards = [{id: uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard', potId:null, singleUse:false, spent:0}];
+  }
+  for (const c of s.cards) {
+    if (typeof c.virtual !== 'boolean') c.virtual = false;
+    if (typeof c.singleUse !== 'boolean') c.singleUse = false;
+    if (typeof c.spent !== 'number') c.spent = 0;
+    if (!('potId' in c)) c.potId = null;
+    if (c.potId && !s.pots.some(p => p.id === c.potId)) c.potId = null;
   }
   const known = new Set(CATEGORY_IDS.concat(s.customCats.map(c => c.id)));
   for (const t of s.tx) {
@@ -1274,10 +1451,12 @@ export function runScheduled() {
           addTx({name: s.name, amount: s.amount, category: s.category, ts: cur.getTime(), acct: s.acct});
           s.done = true;
           count++;
+          if (state.settings.notifyBills) notify(s.name, fmt(s.amount) + ' left your account');
         }
       } else if (cur.getDate() === s.day) {
         addTx({name: s.name, amount: s.amount, category: s.category, ts: cur.getTime(), acct: s.acct});
         count++;
+        if (state.settings.notifyBills) notify(s.name, fmt(s.amount) + ' left your account');
       }
     }
   }
@@ -1338,4 +1517,4 @@ export function lastMonthByCategory() {
 
 export function ensureCategory(id) {
   return categories().some(c => c.id === id) ? id : 'general';
-}
+    }
