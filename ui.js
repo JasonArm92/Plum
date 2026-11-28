@@ -1,5 +1,5 @@
-import { fmt, state } from './core.js?v=43';
-import { DOMAINS, BRANDS } from './data.js?v=43';
+import { fmt, state } from './core.js?v=44';
+import { DOMAINS, BRANDS } from './data.js?v=44';
 
 export const el = (tag, cls, html) => {
   const n = document.createElement(tag);
@@ -254,6 +254,9 @@ export function cardArt(card, onClick = null) {
   bottom.appendChild(dots);
   a.appendChild(bottom);
   if (card && card.frozen) a.style.opacity = '0.55';
+  if (card && card.colour) {
+    a.style.background = 'linear-gradient(145deg,' + card.colour + 'cc 0%,' + card.colour + ' 45%,' + card.colour + 'aa 100%)';
+  }
   return a;
 }
 
