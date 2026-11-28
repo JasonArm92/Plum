@@ -7,15 +7,17 @@ import {
   splitsOutstandingTotal, flexUsed, flexAvailable, totalLoanRemaining, totalBorrowed,
   loanQuote, loanApr, takeLoan, flexSettle, LOAN_MIN, LOAN_MAX, LOAN_TERMS,
   OVERDRAFT_LIMITS, OVERDRAFT_EAR, overdraftDaily, reset,
-  creditScore, creditBand, creditUpdatedDays, connectedTotal, connectedExpired
-} from './core.js?v=40';
-import { CATEGORIES, SAVINGS_INTEREST } from './data.js?v=40';
+  creditScore, creditBand, creditUpdatedDays, connectedTotal, connectedExpired,
+  categories, catById, isCustomCategory, addCategory, updateCategory,
+  removeCategory, categoryUsage
+} from './core.js?v=41';
+import { SAVINGS_INTEREST, CATEGORY_ICONS, CATEGORY_COLOURS } from './data.js?v=41';
 import {
   el, screen, row, list, section, tile, avatar, icon, catIcon, cardArt, spendBar,
   empty, toast, sheet, confirmSheet, field, input, seg, switchEl, pill
-} from './ui.js?v=40';
+} from './ui.js?v=41';
 
-const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
+const cat = id => catById(id);
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
 
 export function homeScreen() {
@@ -33,11 +35,17 @@ export function homeScreen() {
   const title = el('div', 'hdr__title');
   title.textContent = acc().name;
   h.appendChild(title);
+  const find = el('button', 'hdr__btn');
+  find.type = 'button';
+  find.setAttribute('aria-label', 'Search');
+  find.appendChild(icon('search', 18));
+  find.onclick = () => { location.hash = '#/search'; };
+  h.appendChild(find);
   const add = el('button', 'hdr__btn');
   add.type = 'button';
   add.setAttribute('aria-label', 'Add transaction');
   add.appendChild(icon('plus', 18));
-  add.onclick = () => import('./screens-b.js?v=40').then(m => m.addTxSheet());
+  add.onclick = () => import('./screens-b.js?v=41').then(m => m.addTxSheet());
   h.appendChild(add);
   s.appendChild(h);
 
@@ -52,7 +60,7 @@ export function homeScreen() {
     if (key === 'card') {
       const w = el('div');
       w.style.padding = '0 16px';
-      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=40').then(m => m.cardSheet())));
+      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=41').then(m => m.cardSheet())));
       body.appendChild(w);
     } else if (key === 'balance') {
       const w = el('div');
@@ -84,7 +92,7 @@ export function homeScreen() {
   edit.style.padding = '8px 16px 0';
   const eb = el('button', 'btn btn--ghost btn--sm btn--block');
   eb.textContent = 'Edit home';
-  eb.onclick = () => import('./screens-b.js?v=40').then(m => m.layoutSheet());
+  eb.onclick = () => import('./screens-b.js?v=41').then(m => m.layoutSheet());
   edit.appendChild(eb);
   body.appendChild(edit);
 
@@ -159,7 +167,7 @@ function carousel() {
       const add = el('button', 'pcard pcard--new');
       add.type = 'button';
       add.innerHTML = '<div style="font-size:22px;line-height:1">＋</div><div style="margin-top:6px">New pot</div>';
-      add.onclick = () => import('./screens-b.js?v=40').then(m => m.newPotSheet());
+      add.onclick = () => import('./screens-b.js?v=41').then(m => m.newPotSheet());
       track.appendChild(add);
     } else if (key === 'invest') {
       const b = el('button', 'pcard');
@@ -269,7 +277,7 @@ export function trendsScreen() {
     top.appendChild(el('div', 'hint', 'No budget set'));
     const b = el('button', 'btn btn--ghost btn--sm btn--block', 'Set a budget');
     b.style.marginTop = '12px';
-    b.onclick = () => import('./screens-b.js?v=40').then(x => x.budgetSheet());
+    b.onclick = () => import('./screens-b.js?v=41').then(x => x.budgetSheet());
     top.appendChild(b);
   }
   body.appendChild(top);
@@ -304,7 +312,7 @@ export function trendsScreen() {
     const amtBtn = el('button', 'catrow__v');
     amtBtn.type = 'button';
     amtBtn.textContent = fmt(amt);
-    amtBtn.onclick = () => import('./screens-b.js?v=40').then(x => x.targetSheet(id));
+    amtBtn.onclick = () => import('./screens-b.js?v=41').then(x => x.targetSheet(id));
     amtWrap.appendChild(amtBtn);
     if (delta !== null) {
       const d = el('span', 'hint');
@@ -315,7 +323,7 @@ export function trendsScreen() {
     const chip = el('button', 'tgt' + (tgt ? ' tgt--on' : ''));
     chip.type = 'button';
     chip.textContent = tgt ? fmt(tgt, {dp: 0}) : 'Set';
-    chip.onclick = () => import('./screens-b.js?v=40').then(x => x.targetSheet(id));
+    chip.onclick = () => import('./screens-b.js?v=41').then(x => x.targetSheet(id));
     amtWrap.appendChild(chip);
     r.appendChild(amtWrap);
 
@@ -329,6 +337,10 @@ export function trendsScreen() {
   }
   if (!rows.length) l.appendChild(empty('Nothing spent yet', 'Your categories will appear here'));
   body.appendChild(l);
+
+  const manage = el('button', 'btn btn--ghost btn--sm btn--block', 'Manage categories');
+  manage.onclick = () => { location.hash = '#/categories'; };
+  body.appendChild(manage);
 
   body.appendChild(section('Daily'));
   const strip = el('div', 'card');
@@ -382,7 +394,7 @@ export function trendCatScreen(id) {
   tgtRow.appendChild(tm);
   const tb = el('button', 'btn btn--primary btn--sm');
   tb.textContent = tgt ? 'Edit' : 'Set';
-  tb.onclick = () => import('./screens-b.js?v=40').then(x => x.targetSheet(id));
+  tb.onclick = () => import('./screens-b.js?v=41').then(x => x.targetSheet(id));
   tgtRow.appendChild(tb);
   body.appendChild(tgtRow);
 
@@ -398,6 +410,157 @@ export function trendCatScreen(id) {
   body.appendChild(l);
 
   return screen('trend-' + id, {title: c.name, back: '#/trends', body});
+}
+
+/* ---------- categories ---------- */
+
+export function categoriesScreen() {
+  const body = el('div');
+  body.appendChild(el('p', 'hint', 'Rename, recolour or add your own. Deleting one moves its transactions to General.'));
+
+  const custom = state.customCats;
+  if (custom.length) {
+    body.appendChild(section('Yours'));
+    const cl = el('div', 'list list--boxed');
+    for (const c of custom) {
+      const r = row({
+        title: c.name,
+        sub: categoryUsage(c.id) + ' transactions',
+        tile: catIcon(c.icon, 30, c.colour),
+        onClick: () => { location.hash = '#/category-edit/' + c.id; }
+      });
+      cl.appendChild(r);
+    }
+    body.appendChild(cl);
+  }
+
+  body.appendChild(section('Built in'));
+  const l = el('div', 'list list--boxed');
+  for (const c of categories()) {
+    if (isCustomCategory(c.id)) continue;
+    if (c.id === 'transfers' || c.id === 'income') continue;
+    l.appendChild(row({
+      title: c.name,
+      sub: categoryUsage(c.id) + ' transactions',
+      tile: catIcon(c.icon, 30, c.colour),
+      onClick: () => { location.hash = '#/category-edit/' + c.id; }
+    }));
+  }
+  body.appendChild(l);
+
+  const add = el('button', 'btn btn--primary btn--block', 'New category');
+  add.onclick = () => { location.hash = '#/category-new'; };
+  body.appendChild(add);
+
+  return screen('categories', {title: 'Categories', back: '#/trends', body});
+}
+
+export function categoryFormScreen(id) {
+  const editing = !!id;
+  const existing = editing ? categories().find(c => c.id === id) : null;
+  if (editing && !existing) {
+    return screen('category-form', {title: 'Category', back: '#/categories', body: empty('Not found')});
+  }
+  const custom = editing && isCustomCategory(id);
+  const body = el('div');
+
+  const name = input({value: existing ? existing.name : '', placeholder: 'Category name'});
+  body.appendChild(field({label: 'Name', input: name}));
+
+  let icon = existing ? existing.icon : 'box';
+  let colour = existing ? existing.colour : CATEGORY_COLOURS[0];
+
+  const preview = el('div', 'card card--flat');
+  preview.style.cssText = 'display:flex;align-items:center;gap:12px';
+  const previewIcon = el('span');
+  const previewName = el('div', 'row__t');
+  preview.appendChild(previewIcon);
+  preview.appendChild(previewName);
+  body.appendChild(preview);
+
+  const paint = () => {
+    previewIcon.innerHTML = '';
+    previewIcon.appendChild(catIcon(icon, 32, colour));
+    previewName.textContent = name.value.trim() || 'New category';
+  };
+
+  const iconWrap = el('div');
+  iconWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  for (const ic of CATEGORY_ICONS) {
+    const b = el('button');
+    b.type = 'button';
+    b.style.cssText = 'border:0;background:transparent;padding:0;border-radius:50%';
+    b.setAttribute('aria-label', ic);
+    b.setAttribute('aria-pressed', String(ic === icon));
+    b.appendChild(catIcon(ic, 36, ic === icon ? colour : '#6b6b76'));
+    b.onclick = () => {
+      icon = ic;
+      iconWrap.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      paint();
+    };
+    iconWrap.appendChild(b);
+  }
+  body.appendChild(field({label: 'Icon', input: iconWrap}));
+
+  const colourWrap = el('div');
+  colourWrap.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  for (const col of CATEGORY_COLOURS) {
+    const b = el('button');
+    b.type = 'button';
+    b.style.cssText = 'width:32px;height:32px;border-radius:50%;background:' + col;
+    b.setAttribute('aria-label', col);
+    b.setAttribute('aria-pressed', String(col === colour));
+    b.onclick = () => {
+      colour = col;
+      colourWrap.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      paint();
+    };
+    colourWrap.appendChild(b);
+  }
+  body.appendChild(field({label: 'Colour', input: colourWrap}));
+
+  name.oninput = paint;
+  paint();
+
+  const go = el('button', 'btn btn--primary btn--block', editing ? 'Save category' : 'Create category');
+  go.onclick = () => {
+    const n = name.value.trim();
+    if (!n) return toast('Give it a name');
+    if (editing) {
+      updateCategory(id, {name: n, icon, colour});
+      toast('Category updated');
+    } else {
+      addCategory({name: n, icon, colour});
+      toast('Category created');
+    }
+    location.hash = '#/categories';
+  };
+  body.appendChild(go);
+
+  if (custom) {
+    const rm = el('button', 'btn btn--ghost btn--block', 'Delete category');
+    rm.onclick = () => confirmSheet({
+      title: 'Delete ' + existing.name,
+      text: categoryUsage(id) + ' transactions will move to General.',
+      danger: true, confirm: 'Delete',
+      onConfirm: () => {
+        removeCategory(id);
+        toast('Category deleted');
+        location.hash = '#/categories';
+      }
+    });
+    body.appendChild(rm);
+  } else if (editing) {
+    body.appendChild(el('p', 'hint', 'Built-in categories can be renamed but not deleted.'));
+  }
+
+  return screen('category-form', {
+    title: editing ? 'Edit category' : 'New category',
+    back: '#/categories',
+    body
+  });
 }
 
 /* ---------- payments ---------- */
@@ -464,7 +627,7 @@ export function paymentsScreen() {
   body.appendChild(add);
 
   const edit = el('button', 'btn btn--ghost btn--sm btn--block', 'Edit actions');
-  edit.onclick = () => import('./screens-b.js?v=40').then(m => m.paymentsEditorSheet());
+  edit.onclick = () => import('./screens-b.js?v=41').then(m => m.paymentsEditorSheet());
   body.appendChild(edit);
 
   return screen('payments', {title: 'Payments', body});
@@ -1058,7 +1221,8 @@ export function settingsPreferencesScreen() {
     row({title: 'Appearance', sub: 'Theme and motion', onClick: () => { location.hash = '#/appearance'; }}),
     row({title: 'Notifications', sub: 'Alerts and haptics', onClick: () => { location.hash = '#/notifications'; }}),
     row({title: 'Budgets', sub: 'Monthly targets', onClick: () => { location.hash = '#/trends'; }}),
-    row({title: 'Home layout', sub: 'Reorder sections', onClick: () => import('./screens-b.js?v=40').then(m => m.layoutSheet())})
+    row({title: 'Categories', sub: 'Add your own', onClick: () => { location.hash = '#/categories'; }}),
+    row({title: 'Home layout', sub: 'Reorder sections', onClick: () => import('./screens-b.js?v=41').then(m => m.layoutSheet())})
   ]));
   return screen('settings-preferences', {title: 'Preferences', back: '#/settings', body});
 }
@@ -1109,7 +1273,7 @@ export function potsScreen() {
   }
   if (!state.pots.length) {
     l.appendChild(empty('No pots yet', 'Pots help you put money aside', {
-      label: 'Create a pot', onClick: () => import('./screens-b.js?v=40').then(m => m.newPotSheet())
+      label: 'Create a pot', onClick: () => import('./screens-b.js?v=41').then(m => m.newPotSheet())
     }));
   }
   body.appendChild(l);
@@ -1154,7 +1318,7 @@ export function potScreen(id) {
   body.appendChild(wd);
 
   body.appendChild(list([
-    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=40').then(m => m.editPotSheet(p.id))}),
+    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=41').then(m => m.editPotSheet(p.id))}),
     row({title: 'Round-ups', value: p.roundUp ? 'On' : 'Off', chev: false}),
     row({title: 'Delete pot', onClick: () => confirmSheet({
       title: 'Delete ' + p.name, text: 'Money will go back to your balance.', danger: true, confirm: 'Delete',
@@ -1167,4 +1331,4 @@ export function potScreen(id) {
   ]));
 
   return screen('pot-' + id, {title: p.name, back: '#/pots', body});
-    }
+}
