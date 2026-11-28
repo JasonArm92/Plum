@@ -1,18 +1,18 @@
 import {
   state, fmt, fmtShort, round2, addTx, save, uid, investBuy, investSell,
   investDeposit, portfolioValue, fundValue, platformFeeMonthly, planInfo, PLANS,
-  pensionProjection, reset, dateStr, timeStr, acc,
+  pensionProjection, reset, dateStr, timeStr, acc, catById, categories,
   budgetFor, setBudget, totalBudget, ledgerNetInvested, ledgerIncome,
   riskInfo, setChosenFund, payeesSorted, createSplit, splitOutstanding,
-  splitsOutstandingTotal, markSplitPaid, removeSplit
-} from './core.js?v=39';
-import { FUNDS, CATEGORIES, RISK_FUNDS, CONSTITUENTS, POT_EMOJI, POT_COLOURS } from './data.js?v=39';
+  splitsOutstandingTotal, markSplitPaid, removeSplit, planHasBenefit
+} from './core.js?v=41';
+import { FUNDS, RISK_FUNDS, CONSTITUENTS, POT_EMOJI, POT_COLOURS, BENEFITS } from './data.js?v=41';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar
-} from './ui.js?v=39';
+} from './ui.js?v=41';
 
-const cat = id => CATEGORIES.find(c => c.id === id) || CATEGORIES[CATEGORIES.length - 1];
+const cat = id => catById(id);
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
 
 export function cardSheet() {
@@ -41,7 +41,7 @@ export function addTxSheet() {
   let category = 'general';
   const cats = el('div');
   cats.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
-  for (const c of CATEGORIES) {
+  for (const c of categories()) {
     const b = el('button', 'pill');
     b.type = 'button';
     b.appendChild(catIcon(c.icon, 18, c.colour));
@@ -112,7 +112,7 @@ export function budgetSheet() {
 
   const l = el('div', 'list list--boxed');
   const s = sheet({title: 'Budgets', body});
-  for (const c of CATEGORIES) {
+  for (const c of categories()) {
     if (c.id === 'transfers' || c.id === 'income') continue;
     const cur = budgetFor(c.id);
     const r = el('div', 'row');
@@ -587,7 +587,7 @@ export function categorySheet(id) {
   const l = el('div', 'list list--boxed');
   body.appendChild(l);
   const s = sheet({title: 'Category', body});
-  for (const c of CATEGORIES) {
+  for (const c of categories()) {
     const r = row({
       title: c.name, chev: false,
       value: t.category === c.id ? '✓' : '',
@@ -775,17 +775,26 @@ export function plusScreen() {
       title: p.name,
       sub: p.price ? fmt(p.price) + '/mo · fee ' + (p.feeRate * 100).toFixed(2) + '%' : 'Free',
       value: state.plan === p.id ? '✓' : '', chev: false,
-      onClick: () => { state.plan = p.id; save(); toast('Switched to ' + p.name); rerender(); }
+      onClick: () => planChangeSheet(p.id)
     }));
   }
   body.appendChild(l);
 
   body.appendChild(section('Benefits'));
-  body.appendChild(list([
-    row({title: 'Fee-free spending abroad', chev: false, value: cur.id === 'free' ? '—' : '✓'}),
-    row({title: 'Capped platform fee', chev: false, value: fmt(cur.feeCap)}),
-    row({title: 'Priority support', chev: false, value: (cur.id === 'max' || cur.id === 'perks') ? '✓' : '—'})
-  ]));
+  const bl = el('div', 'list list--boxed');
+  for (const b of BENEFITS) {
+    bl.appendChild(row({
+      title: b.name,
+      sub: b.blurb,
+      value: planHasBenefit(cur.id, b.id) ? '✓' : '—',
+      onClick: () => { location.hash = '#/benefit/' + b.id; }
+    }));
+  }
+  body.appendChild(bl);
+
+  const note = el('p', 'hint');
+  note.textContent = 'Cancel any time. Benefits stop when your plan ends.';
+  body.appendChild(note);
 
   return screen('plus', {title: 'Monzo Plus', back: '#/account', body});
 }
@@ -883,7 +892,7 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v39', chev: false}),
+    row({title: 'Build', value: 'v41', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   return screen('about', {title: 'About', back: '#/settings-about', body});
