@@ -1,6 +1,6 @@
-import { load, state, runScheduled } from './core.js?v=42';
-import { el, icon, toast } from './ui.js?v=42';
-import { verify } from './verify.js?v=42';
+import { load, state, runScheduled } from './core.js?v=43';
+import { el, icon, toast } from './ui.js?v=43';
+import { verify } from './verify.js?v=43';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
   payeeScreen, payeeFormScreen, sendScreen, requestScreen, bankScreen,
@@ -9,20 +9,21 @@ import {
   settingsScreen, settingsPersonalScreen, settingsSecurityScreen,
   settingsPreferencesScreen, settingsDocumentsScreen, settingsAboutScreen,
   categoriesScreen, categoryFormScreen
-} from './screens-a.js?v=42';
+} from './screens-a.js?v=43';
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
   appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, ledgerScreen,
   splitScreen, splitsScreen, splitDetailScreen, receiptScreen, virtualCardScreen
-} from './screens-b.js?v=42';
+} from './screens-b.js?v=43';
 import {
   creditScreen, creditReportScreen, mortgageScreen, dipScreen,
   connectedScreen, connectedAccountScreen
-} from './screens-c.js?v=42';
-import { searchScreen, benefitScreen, planChangeSheet } from './screens-d.js?v=42';
+} from './screens-c.js?v=43';
+import { searchScreen, benefitScreen, planChangeSheet } from './screens-d.js?v=43';
+import { testsScreen } from './tests.js?v=43';
 
-const BUILD = 42;
+const BUILD = 43;
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -79,6 +80,7 @@ const SCREENS = {
   borrowing: () => borrowingScreen(),
   account: () => accountScreen(),
   search: () => searchScreen(),
+  tests: () => testsScreen(),
   categories: () => categoriesScreen(),
   'category-new': () => categoryFormScreen(null),
   'category-edit': a => categoryFormScreen(a),
