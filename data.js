@@ -119,6 +119,10 @@ export const CATEGORIES = [
 
 export const CATEGORY_IDS = CATEGORIES.map(c => c.id);
 
+export const CATEGORY_ICONS = ['basket','cutlery','train','bag','receipt','film','pill','dumbbell','house','family','paw','card','note','box'];
+
+export const CATEGORY_COLOURS = ['#ff4f40','#ff8000','#f5a623','#12a150','#1f6feb','#8b5cf6','#d92d20','#0b4ea2','#0891b2','#6b7280'];
+
 export const MERCHANTS = Object.keys(DOMAINS);
 
 export const FUNDS = [
@@ -268,3 +272,119 @@ export const CONNECTED_BANKS = [
 export const CONNECT_CONSENT_DAYS = 90;
 
 export const MORTGAGE_TERMS = [15, 20, 25, 30, 35];
+
+/* ---------- plans and benefits ---------- */
+
+export const BENEFITS = [
+  {
+    id:'travel',
+    name:'Fee-free spending abroad',
+    plans:['plus','perks','max'],
+    blurb:'Pay with your Monzo card anywhere in the world and skip the 3% conversion fee.',
+    includes:[
+      'No conversion fee in any country',
+      'Same exchange rate Monzo gets',
+      'Covers card, Apple Pay and Google Pay'
+    ],
+    how:[
+      'Nothing to switch on. It applies to your card automatically.',
+      'Cash machine fees are separate and still apply.'
+    ]
+  },
+  {
+    id:'fees',
+    name:'Capped investing platform fee',
+    plans:['plus','perks','max'],
+    blurb:'A lower percentage fee on your portfolio, with a cap so it stops growing.',
+    includes:[
+      'Lower rate than Basic',
+      'Monthly fee never goes above your cap',
+      'Applies to Investments and your ISA'
+    ],
+    how:[
+      'The cap is applied automatically to your monthly fee.',
+      'You can see the exact figure on the Investments screen.'
+    ]
+  },
+  {
+    id:'support',
+    name:'Priority support',
+    plans:['perks','max'],
+    blurb:'Skip the queue. Your chats are picked up first, any hour.',
+    includes:[
+      'Front of the support queue',
+      '24 hours a day, every day',
+      'Covers card, payments and account issues'
+    ],
+    how:[
+      'Open a chat from any transaction or from Help.',
+      'The queue jump is automatic while you are on a qualifying plan.'
+    ]
+  },
+  {
+    id:'offers',
+    name:'Offers and rewards',
+    plans:['perks','max'],
+    blurb:'Cashback offers from brands you already use, activated in a tap.',
+    includes:[
+      'Rotating weekly offers',
+      'Cashback paid straight into your account',
+      'No vouchers or codes'
+    ],
+    how:[
+      'Activate an offer before you pay.',
+      'Pay with your Monzo card and the cashback lands within a day.'
+    ]
+  },
+  {
+    id:'travelins',
+    name:'Worldwide travel insurance',
+    plans:['max'],
+    blurb:'Cover for trips up to 45 days, including winter sports.',
+    includes:[
+      'Medical cover up to £10m',
+      'Cancellation up to £5,000',
+      'Winter sports included as standard'
+    ],
+    how:[
+      'Cover starts as soon as you are on Max.',
+      'Add trip details before you travel to confirm cover.'
+    ]
+  },
+  {
+    id:'breakdown',
+    name:'Vehicle breakdown cover',
+    plans:['max'],
+    blurb:'Roadside recovery anywhere in the UK for the vehicle on your policy.',
+    includes:[
+      'Roadside recovery',
+      'Home start',
+      'Onward travel up to 20 miles'
+    ],
+    how:[
+      'Register your vehicle in the benefit screen.',
+      'Call the number in the app and quote your membership.'
+    ]
+  },
+  {
+    id:'tastecard',
+    name:'tastecard',
+    plans:['max'],
+    blurb:'Up to 50% off the food bill at thousands of restaurants.',
+    includes:[
+      'Discount for the whole table',
+      'No booking fees',
+      'Digital card in the app'
+    ],
+    how:[
+      'Show the digital card when you order.',
+      'Discount applies to food, not drinks.'
+    ]
+  }
+];
+
+export const SEARCH_DIRS = [
+  {id:'all', label:'All'},
+  {id:'out', label:'Money out'},
+  {id:'in', label:'Money in'}
+];
