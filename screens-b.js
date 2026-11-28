@@ -9,14 +9,14 @@ import {
   virtualCardCreate, virtualCardRemove, virtualCardFreeze, virtualCardSingleUse,
   virtualCardSpend, canUseVirtualCards, notify, requestNotify, notifyPermission,
   notifySupported
-} from './core.js?v=44';
-import { FUNDS, RISK_FUNDS, CONSTITUENTS, POT_ICONS, POT_COLOURS, BENEFITS, NOTIFY_TYPES } from './data.js?v=44';
+} from './core.js?v=45';
+import { FUNDS, RISK_FUNDS, CONSTITUENTS, POT_ICONS, POT_COLOURS, BENEFITS, NOTIFY_TYPES } from './data.js?v=45';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar, haptic
-} from './ui.js?v=44';
-import { buildStatement, download } from './statement.js?v=44';
-import { planChangeSheet } from './screens-d.js?v=44';
+} from './ui.js?v=45';
+import { buildStatement, download } from './statement.js?v=45';
+import { planChangeSheet } from './screens-d.js?v=45';
 
 const cat = id => catById(id);
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -596,6 +596,10 @@ export function txScreen(id) {
     row({title: 'Repeat', onClick: () => toast('Repeat payment set up')})
   ]));
 
+  const help = el('button', 'btn btn--ghost btn--block', 'Something wrong? Tell us');
+  help.onclick = () => { location.hash = '#/help-article/transfer-late-a'; };
+  body.appendChild(help);
+
   return screen('tx-' + id, {title: 'Transaction', back: '#/home', body});
 }
 
@@ -1060,8 +1064,8 @@ export function notificationsScreen() {
   stateCard.appendChild(el('div', 'hint', perm === 'granted'
     ? 'Monzo can send you alerts on this device.'
     : perm === 'denied'
-      ? 'Allow notifications for this site in your browser settings.'
-      : 'Allow notifications to get bill and spending alerts.'));
+    ? 'Allow notifications for this site in your browser settings.'
+    : 'Allow notifications to get bill and spending alerts.'));
   body.appendChild(stateCard);
 
   if (perm !== 'granted') {
@@ -1178,7 +1182,7 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v44', chev: false}),
+    row({title: 'Build', value: 'v45', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   body.appendChild(list([
@@ -1199,9 +1203,9 @@ export function layoutSheet() {
 
   const widget = el('div', 'card card--flat');
   widget.style.cssText = 'background:#ff4f40;color:#fff;padding:16px;border-radius:20px';
-  widget.appendChild(el('div', '', '<div style="font-size:11px;font-weight:700;opacity:.8">MONZO · ' + acc().name.toUpperCase() + '</div>'));
-  widget.appendChild(el('div', '', '<div style="font-size:24px;font-weight:800;margin-top:6px">' + fmt(bal()) + '</div>'));
-  widget.appendChild(el('div', '', '<div style="font-size:11px;opacity:.85;margin-top:2px">' + fmt(leftToSpend()) + ' left to spend</div>'));
+  widget.appendChild(el('div', '', '<br>MONZO · ' + acc().name.toUpperCase() + '<br>'));
+  widget.appendChild(el('div', '', '<br>' + fmt(bal()) + '<br>'));
+  widget.appendChild(el('div', '', '<br>' + fmt(leftToSpend()) + ' left to spend<br>'));
   const wl = el('div');
   wl.style.cssText = 'display:flex;gap:4px;margin-top:10px';
   for (let i = 0; i < 7; i++) {
@@ -1266,4 +1270,4 @@ export function layoutSheet() {
 
   draw();
   sheet({title: 'Edit home', body});
-      }
+}
