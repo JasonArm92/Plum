@@ -1,25 +1,28 @@
-import { load, state, runScheduled } from './core.js?v=40';
-import { el, icon, toast } from './ui.js?v=40';
+import { load, state, runScheduled } from './core.js?v=41';
+import { el, icon, toast } from './ui.js?v=41';
+import { verify } from './verify.js?v=41';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
   payeeScreen, payeeFormScreen, sendScreen, requestScreen, bankScreen,
   scheduledScreen, borrowingScreen, accountScreen, potsScreen, potScreen,
   flexScreen, flexPlanScreen, loanScreen, overdraftScreen,
   settingsScreen, settingsPersonalScreen, settingsSecurityScreen,
-  settingsPreferencesScreen, settingsDocumentsScreen, settingsAboutScreen
-} from './screens-a.js?v=40';
+  settingsPreferencesScreen, settingsDocumentsScreen, settingsAboutScreen,
+  categoriesScreen, categoryFormScreen
+} from './screens-a.js?v=41';
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
   appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, ledgerScreen,
   splitScreen, splitsScreen, splitDetailScreen, receiptScreen
-} from './screens-b.js?v=40';
+} from './screens-b.js?v=41';
 import {
   creditScreen, creditReportScreen, mortgageScreen, dipScreen,
   connectedScreen, connectedAccountScreen
-} from './screens-c.js?v=40';
+} from './screens-c.js?v=41';
+import { searchScreen, benefitScreen, planChangeSheet } from './screens-d.js?v=41';
 
-const BUILD = 40;
+const BUILD = 41;
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -75,6 +78,11 @@ const SCREENS = {
   payments: () => paymentsScreen(),
   borrowing: () => borrowingScreen(),
   account: () => accountScreen(),
+  search: () => searchScreen(),
+  categories: () => categoriesScreen(),
+  'category-new': () => categoryFormScreen(null),
+  'category-edit': a => categoryFormScreen(a),
+  benefit: a => benefitScreen(a),
   pots: () => potsScreen(),
   payees: () => payeesScreen(),
   'payee-new': () => payeeFormScreen(null),
@@ -119,8 +127,7 @@ const SCREENS = {
   split: a => a ? splitScreen(a) : splitsScreen(),
   splits: () => splitsScreen(),
   'split-detail': a => splitDetailScreen(a),
-  receipt: a => receiptScreen(a),
-  search: () => homeScreen()
+  receipt: a => receiptScreen(a)
 };
 
 const TAB_ROUTES = new Set(['home', 'trends', 'payments', 'borrowing', 'account']);
@@ -225,6 +232,12 @@ function boot() {
     runScheduled();
   } catch (err) {
     showError(err);
+    return;
+  }
+
+  const problems = verify(SCREENS);
+  if (problems.length) {
+    showError(new Error('Build ' + BUILD + ' failed its checks:\n\n' + problems.join('\n')));
     return;
   }
 
