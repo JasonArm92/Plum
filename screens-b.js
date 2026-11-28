@@ -9,14 +9,14 @@ import {
   virtualCardCreate, virtualCardRemove, virtualCardFreeze, virtualCardSingleUse,
   virtualCardSpend, canUseVirtualCards, notify, requestNotify, notifyPermission,
   notifySupported
-} from './core.js?v=42';
-import { FUNDS, RISK_FUNDS, CONSTITUENTS, POT_ICONS, POT_COLOURS, BENEFITS, NOTIFY_TYPES } from './data.js?v=42';
+} from './core.js?v=43';
+import { FUNDS, RISK_FUNDS, CONSTITUENTS, POT_ICONS, POT_COLOURS, BENEFITS, NOTIFY_TYPES } from './data.js?v=43';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar, haptic
-} from './ui.js?v=42';
-import { buildStatement, download } from './statement.js?v=42';
-import { planChangeSheet } from './screens-d.js?v=42';
+} from './ui.js?v=43';
+import { buildStatement, download } from './statement.js?v=43';
+import { planChangeSheet } from './screens-d.js?v=43';
 
 const cat = id => catById(id);
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -1178,8 +1178,11 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v42', chev: false}),
+    row({title: 'Build', value: 'v43', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
+  ]));
+  body.appendChild(list([
+    row({title: 'Run tests', sub: '25 checks over the money model', onClick: () => { location.hash = '#/tests'; }})
   ]));
   return screen('about', {title: 'About', back: '#/settings-about', body});
 }
