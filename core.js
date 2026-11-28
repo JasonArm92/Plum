@@ -1,4 +1,4 @@
-import { FUNDS, CATEGORY_IDS, CATEGORIES, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS, BENEFITS } from './data.js?v=44';
+import { FUNDS, CATEGORY_IDS, CATEGORIES, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS, BENEFITS } from './data.js?v=45';
 
 export const VERSION = 33;
 export const KEY = 'monzo_v33';
@@ -1583,4 +1583,4 @@ export function lastMonthByCategory() {
 
 export function ensureCategory(id) {
   return categories().some(c => c.id === id) ? id : 'general';
-}
+         }
