@@ -10,7 +10,7 @@ import {
   creditScore, creditBand, creditUpdatedDays, connectedTotal, connectedExpired,
   categories, catById, isCustomCategory, addCategory, updateCategory,
   removeCategory, categoryUsage, virtualCardCreate, canUseVirtualCards
-} from './core.js?v=42';
+} from './core.js?v=43';
 import { SAVINGS_INTEREST, CATEGORY_ICONS, CATEGORY_COLOURS, POT_ICONS, POT_COLOURS } from './data.js?v=42';
 import {
   el, screen, row, list, section, tile, avatar, icon, catIcon, cardArt, spendBar,
