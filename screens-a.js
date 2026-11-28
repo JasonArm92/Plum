@@ -9,7 +9,7 @@ import {
   OVERDRAFT_LIMITS, OVERDRAFT_EAR, overdraftDaily, reset, snapshot, restore,
   creditScore, creditBand, creditUpdatedDays, connectedTotal, connectedExpired,
   categories, catById, isCustomCategory, addCategory, updateCategory,
-  removeCategory, categoryUsage
+  removeCategory, categoryUsage, virtualCardCreate, canUseVirtualCards
 } from './core.js?v=42';
 import { SAVINGS_INTEREST, CATEGORY_ICONS, CATEGORY_COLOURS, POT_ICONS, POT_COLOURS } from './data.js?v=42';
 import {
@@ -1387,4 +1387,4 @@ export function potCardScreen(potId) {
   }
 
   return screen('pot-card-' + potId, {title: 'Virtual card', back: '#/pot/' + potId, body});
-                                              }
+                   }
