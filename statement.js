@@ -1,4 +1,4 @@
-import { fmt } from './core.js?v=42';
+import { fmt } from './core.js?v=45';
 
 function esc(s) {
   return String(s)
