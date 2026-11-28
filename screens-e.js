@@ -1,9 +1,9 @@
 import {
   state, save, acc, onboardSet, onboarded, finishOnboard,
   setPin, checkPin, maskEmail, maskPhone
-} from './core.js?v=44';
-import { ONBOARD_SLIDES, CARD_COLOURS, PIN_KEYS } from './data.js?v=44';
-import { el, field, input, toast, haptic, motionOK, cardArt } from './ui.js?v=44';
+} from './core.js?v=45';
+import { ONBOARD_SLIDES, CARD_COLOURS, PIN_KEYS } from './data.js?v=45';
+import { el, field, input, toast, haptic, motionOK, cardArt } from './ui.js?v=45';
 
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
 
@@ -104,10 +104,9 @@ function faceButton(label) {
 
 function faceScan(pin, pad, onOk, onBad) {
   let i = 0;
-  let timer = null;
   pad.reset();
   pad.clear();
-  timer = setInterval(() => {
+  const timer = setInterval(() => {
     if (i >= pin.length) {
       clearInterval(timer);
       setTimeout(() => {
