@@ -4,16 +4,30 @@ import {
   pensionProjection, reset, dateStr, timeStr, acc, catById, categories,
   budgetFor, setBudget, totalBudget, ledgerNetInvested, ledgerIncome,
   riskInfo, setChosenFund, payeesSorted, createSplit, splitOutstanding,
-  splitsOutstandingTotal, markSplitPaid, removeSplit, planHasBenefit
-} from './core.js?v=41';
-import { FUNDS, RISK_FUNDS, CONSTITUENTS, POT_EMOJI, POT_COLOURS, BENEFITS } from './data.js?v=41';
+  splitsOutstandingTotal, markSplitPaid, removeSplit, planHasBenefit,
+  snapshot, restore, statementMonths, statementRows, statementTotals,
+  virtualCardCreate, virtualCardRemove, virtualCardFreeze, virtualCardSingleUse,
+  virtualCardSpend, canUseVirtualCards, notify, requestNotify, notifyPermission,
+  notifySupported
+} from './core.js?v=42';
+import { FUNDS, RISK_FUNDS, CONSTITUENTS, POT_ICONS, POT_COLOURS, BENEFITS, NOTIFY_TYPES } from './data.js?v=42';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
-  field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar
-} from './ui.js?v=41';
+  field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar, haptic
+} from './ui.js?v=42';
+import { buildStatement, download } from './statement.js?v=42';
 
 const cat = id => catById(id);
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
+
+function potIcon(p, size = 34) {
+  const wrap = el('span', 'pcard__ico');
+  wrap.style.width = size + 'px';
+  wrap.style.height = size + 'px';
+  wrap.style.background = (p.colour || '#eeeeee') + '22';
+  wrap.appendChild(catIcon(p.icon || 'box', Math.round(size * 0.6), p.colour || '#6b6b76'));
+  return wrap;
+}
 
 export function cardSheet() {
   const card = acc().card;
@@ -23,13 +37,15 @@ export function cardSheet() {
   body.appendChild(list([
     row({title: 'View card number', onClick: () => toast('•••• •••• •••• ' + card.last4)}),
     row({title: 'Card PIN', onClick: () => toast('PIN 2580')}),
-    row({title: 'Add to Apple Pay', onClick: () => toast('Added to Apple Pay')})
+    row({title: 'Add to Apple Pay', onClick: () => toast('Added to Apple Pay')}),
+    row({title: 'Virtual cards', onClick: () => { location.hash = '#/cards'; }})
   ]));
   freeze.onclick = () => {
     card.frozen = !card.frozen;
     save();
     freeze.textContent = card.frozen ? 'Unfreeze card' : 'Freeze card';
     toast(card.frozen ? 'Card frozen' : 'Card unfrozen');
+    rerender();
   };
   sheet({title: 'Your card', body, foot: freeze});
 }
@@ -243,10 +259,12 @@ export function splitDetailScreen(id) {
   body.appendChild(l);
 
   const rm = el('button', 'btn btn--ghost btn--block', 'Delete split');
-  rm.onclick = () => confirmSheet({
-    title: 'Delete split', text: 'This removes the record.', danger: true, confirm: 'Delete',
-    onConfirm: () => { removeSplit(s.id); toast('Deleted'); location.hash = '#/splits'; }
-  });
+  rm.onclick = () => {
+    const snap = snapshot();
+    removeSplit(s.id);
+    toast('Split deleted', {label: 'Undo', onClick: () => { restore(snap); rerender(); }});
+    location.hash = '#/splits';
+  };
   body.appendChild(rm);
 
   return screen('split-detail-' + id, {title: 'Split', back: '#/splits', body});
@@ -633,20 +651,24 @@ export function newPotSheet() {
   const body = el('div');
   const name = input({placeholder: 'Pot name'});
   const target = input({type: 'number', step: '1', placeholder: '500'});
-  let emoji = POT_EMOJI[0], colour = POT_COLOURS[0];
+  let icon = POT_ICONS[0], colour = POT_COLOURS[0];
 
-  const emojis = el('div');
-  emojis.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
-  POT_EMOJI.forEach(e => {
-    const b = el('button', 'pill');
+  const icons = el('div');
+  icons.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  POT_ICONS.forEach(ic => {
+    const b = el('button');
     b.type = 'button';
-    b.textContent = e;
+    b.style.cssText = 'border:0;background:transparent;padding:0;border-radius:50%';
+    b.setAttribute('aria-label', ic);
+    b.setAttribute('aria-pressed', String(ic === icon));
+    b.appendChild(catIcon(ic, 36, ic === icon ? colour : '#6b6b76'));
     b.onclick = () => {
-      emoji = e;
-      emojis.querySelectorAll('.pill').forEach(x => x.className = 'pill');
-      b.className = 'pill pill--coral';
+      icon = ic;
+      icons.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      haptic();
     };
-    emojis.appendChild(b);
+    icons.appendChild(b);
   });
 
   const colours = el('div');
@@ -655,17 +677,19 @@ export function newPotSheet() {
     const b = el('button');
     b.type = 'button';
     b.style.cssText = 'width:30px;height:30px;border-radius:50%;background:' + c;
+    b.setAttribute('aria-pressed', String(c === colour));
     b.onclick = () => {
       colour = c;
-      colours.querySelectorAll('button').forEach(x => x.style.outline = 'none');
-      b.style.outline = '3px solid currentColor';
+      colours.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      haptic();
     };
     colours.appendChild(b);
   });
 
   body.appendChild(field({label: 'Name', input: name}));
   body.appendChild(field({label: 'Target', input: target}));
-  body.appendChild(field({label: 'Icon', input: emojis}));
+  body.appendChild(field({label: 'Icon', input: icons}));
   body.appendChild(field({label: 'Colour', input: colours}));
 
   const go = el('button', 'btn btn--primary btn--block', 'Create pot');
@@ -675,7 +699,7 @@ export function newPotSheet() {
     state.pots.push({
       id: uid('pot'), name: name.value.trim(),
       target: Math.max(1, Number(target.value) || 100),
-      saved: 0, emoji, colour, locked: false, roundUp: false, created: Date.now()
+      saved: 0, emoji: '', icon, colour, locked: false, roundUp: false, created: Date.now()
     });
     save(); s.close(); toast('Pot created'); rerender();
   };
@@ -687,8 +711,48 @@ export function editPotSheet(id) {
   const body = el('div');
   const name = input({value: p.name});
   const target = input({type: 'number', value: p.target});
+  let icon = p.icon || 'box';
+  let colour = p.colour || POT_COLOURS[0];
+
+  const icons = el('div');
+  icons.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  POT_ICONS.forEach(ic => {
+    const b = el('button');
+    b.type = 'button';
+    b.style.cssText = 'border:0;background:transparent;padding:0;border-radius:50%';
+    b.setAttribute('aria-label', ic);
+    b.setAttribute('aria-pressed', String(ic === icon));
+    b.appendChild(catIcon(ic, 36, ic === icon ? colour : '#6b6b76'));
+    b.onclick = () => {
+      icon = ic;
+      icons.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      haptic();
+    };
+    icons.appendChild(b);
+  });
+
+  const colours = el('div');
+  colours.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  POT_COLOURS.forEach(c => {
+    const b = el('button');
+    b.type = 'button';
+    b.style.cssText = 'width:30px;height:30px;border-radius:50%;background:' + c;
+    b.setAttribute('aria-pressed', String(c === colour));
+    b.onclick = () => {
+      colour = c;
+      colours.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+      b.setAttribute('aria-pressed', 'true');
+      haptic();
+    };
+    colours.appendChild(b);
+  });
+
   body.appendChild(field({label: 'Name', input: name}));
   body.appendChild(field({label: 'Target', input: target}));
+  body.appendChild(field({label: 'Icon', input: icons}));
+  body.appendChild(field({label: 'Colour', input: colours}));
+
   const rw = el('div', 'row');
   const m = el('div', 'row__main');
   m.appendChild(el('div', 'row__t', 'Round-ups'));
@@ -696,13 +760,168 @@ export function editPotSheet(id) {
   rw.appendChild(m);
   rw.appendChild(switchEl(p.roundUp, v => { p.roundUp = v; save(); }));
   body.appendChild(rw);
+
   const go = el('button', 'btn btn--primary btn--block', 'Save');
   const s = sheet({title: 'Edit pot', body, foot: go});
   go.onclick = () => {
     p.name = name.value.trim() || p.name;
     p.target = Math.max(1, Number(target.value) || p.target);
+    p.icon = icon;
+    p.colour = colour;
     save(); s.close(); toast('Pot updated'); rerender();
   };
+}
+
+export function cardsScreen() {
+  const body = el('div');
+  const physical = state.cards.filter(c => !c.virtual);
+  const virtual = state.cards.filter(c => c.virtual);
+
+  body.appendChild(section('Your card'));
+  const pl = el('div', 'list list--boxed');
+  for (const c of physical) {
+    pl.appendChild(row({
+      title: c.label + ' card', sub: '•••• ' + c.last4 + (c.frozen ? ' · frozen' : ''),
+      onClick: () => cardSheet()
+    }));
+  }
+  body.appendChild(pl);
+
+  body.appendChild(section('Virtual cards'));
+  if (virtual.length) {
+    const vl = el('div', 'list list--boxed');
+    for (const c of virtual) {
+      const pot = state.pots.find(p => p.id === c.potId);
+      vl.appendChild(row({
+        title: c.label + ' · •••• ' + c.last4,
+        sub: (pot ? pot.name : 'No pot') + (c.frozen ? ' · frozen' : '') + (c.singleUse ? ' · single use' : ''),
+        value: fmt(c.spent || 0),
+        onClick: () => { location.hash = '#/virtual-card/' + c.id; }
+      }));
+    }
+    body.appendChild(vl);
+  } else {
+    body.appendChild(empty('No virtual cards', 'Create one against a pot to spend from it'));
+  }
+
+  const add = el('button', 'btn btn--primary btn--block', 'Create virtual card');
+  add.onclick = () => {
+    if (!canUseVirtualCards()) {
+      const s = sheet({title: 'Virtual cards', body: el('div', '', '<p class="hint">Virtual cards come with Plus, Perks and Max. You are on ' + planInfo().name + '.</p>')});
+      setTimeout(() => s.close(), 1200);
+      location.hash = '#/plus';
+      return;
+    }
+    if (!state.pots.length) return toast('Create a pot first');
+    potPickerSheet();
+  };
+  body.appendChild(add);
+
+  const note = el('p', 'hint');
+  note.textContent = 'A virtual card can only spend what is in its pot. Freeze it or make it single use any time.';
+  body.appendChild(note);
+
+  return screen('cards', {title: 'Cards', back: '#/settings-personal', body});
+}
+
+function potPickerSheet() {
+  const body = el('div');
+  body.appendChild(el('p', 'hint', 'Pick the pot this card spends from.'));
+  const l = el('div', 'list list--boxed');
+  const s = sheet({title: 'New virtual card', body});
+  for (const p of state.pots) {
+    l.appendChild(row({
+      title: p.name, sub: fmt(p.saved || 0) + ' in the pot', tile: potIcon(p, 30), chev: false,
+      onClick: () => {
+        const r = virtualCardCreate(p.id);
+        s.close();
+        if (!r.ok) return toast('Could not create the card');
+        toast('Card created');
+        location.hash = '#/virtual-card/' + r.card.id;
+      }
+    }));
+  }
+  body.appendChild(l);
+}
+
+export function virtualCardScreen(id) {
+  const c = state.cards.find(x => x.id === id);
+  if (!c || !c.virtual) return screen('virtual-card', {title: 'Virtual card', back: '#/cards', body: empty('Not found')});
+  const pot = state.pots.find(p => p.id === c.potId);
+  const body = el('div');
+
+  body.appendChild(cardArt(c));
+
+  const info = el('div', 'card');
+  info.appendChild(el('div', 'lts__l', 'Spends from'));
+  info.appendChild(el('div', 'lts__v', pot ? fmt(pot.saved || 0) : 'No pot'));
+  info.appendChild(el('div', 'hint', pot ? pot.name + ' pot · •••• ' + c.last4 : 'This card has no pot'));
+  body.appendChild(info);
+
+  const amt = input({type: 'number', step: '0.01', placeholder: '0.00'});
+  body.appendChild(field({label: 'Simulate a payment', input: amt, hint: 'Takes the money from the pot'}));
+  const spend = el('button', 'btn btn--primary btn--block', 'Pay with this card');
+  spend.onclick = () => {
+    const v = round2(Number(amt.value) || 0);
+    const r = virtualCardSpend(c.id, v);
+    if (!r.ok) return toast(
+      r.reason === 'frozen' ? 'This card is frozen'
+      : r.reason === 'funds' ? 'Not enough in the pot'
+      : 'Enter an amount'
+    );
+    toast(r.single ? 'Paid · card used up' : 'Paid ' + fmt(v));
+    if (r.single) location.hash = '#/cards';
+    else rerender();
+  };
+  body.appendChild(spend);
+
+  const sw = el('div', 'row');
+  const m = el('div', 'row__main');
+  m.appendChild(el('div', 'row__t', 'Single use'));
+  m.appendChild(el('div', 'row__s', 'Card is destroyed after one payment'));
+  sw.appendChild(m);
+  sw.appendChild(switchEl(c.singleUse, v => { virtualCardSingleUse(c.id); c.singleUse = v; rerender(); }));
+  body.appendChild(list([sw]));
+
+  body.appendChild(list([
+    row({
+      title: c.frozen ? 'Unfreeze card' : 'Freeze card',
+      onClick: () => {
+        const frozen = virtualCardFreeze(c.id);
+        toast(frozen ? 'Card frozen' : 'Card unfrozen');
+        rerender();
+      }
+    }),
+    row({
+      title: 'Change pot',
+      value: pot ? pot.name : 'None',
+      onClick: () => {
+        const b2 = el('div');
+        const l2 = el('div', 'list list--boxed');
+        const s2 = sheet({title: 'Spend from', body: b2});
+        for (const p of state.pots) {
+          l2.appendChild(row({
+            title: p.name, chev: false,
+            onClick: () => { c.potId = p.id; c.label = p.name; save(); s2.close(); rerender(); }
+          }));
+        }
+        b2.appendChild(l2);
+      }
+    }),
+    row({
+      title: 'Delete card',
+      onClick: () => {
+        const snap = snapshot();
+        virtualCardRemove(c.id);
+        toast('Card deleted', {label: 'Undo', onClick: () => { restore(snap); rerender(); }});
+        location.hash = '#/cards';
+      }
+    })
+  ]));
+
+  body.appendChild(el('p', 'hint', 'Card number, expiry and CVV are hidden in this clone.'));
+
+  return screen('virtual-card-' + id, {title: 'Virtual card', back: '#/cards', body});
 }
 
 export function pensionScreen() {
@@ -833,33 +1052,93 @@ export function securityScreen() {
 export function notificationsScreen() {
   const body = el('div');
   const s = state.settings;
-  const mk = (title, sub, key) => {
+  const perm = notifyPermission();
+
+  const stateCard = el('div', 'card');
+  stateCard.appendChild(el('div', 'row__t',
+    perm === 'granted' ? 'Notifications on' : perm === 'denied' ? 'Blocked in your browser' : 'Notifications off'));
+  stateCard.appendChild(el('div', 'hint', perm === 'granted'
+    ? 'Monzo can send you alerts on this device.'
+    : perm === 'denied'
+      ? 'Allow notifications for this site in your browser settings.'
+      : 'Allow notifications to get bill and spending alerts.'));
+  body.appendChild(stateCard);
+
+  if (perm !== 'granted') {
+    const ask = el('button', 'btn btn--primary btn--block', 'Turn on notifications');
+    ask.onclick = async () => {
+      const r = await requestNotify();
+      if (r === 'granted') {
+        notify('Notifications on', 'This is what an alert looks like');
+        toast('Notifications on');
+      } else if (r === 'unsupported') {
+        toast('This browser has no notifications');
+      } else {
+        toast('Not allowed');
+      }
+      rerender();
+    };
+    body.appendChild(ask);
+  } else {
+    const test = el('button', 'btn btn--ghost btn--block', 'Send a test');
+    test.onclick = () => {
+      const sent = notify('Test alert', 'Sent from your Monzo clone');
+      toast(sent ? 'Test sent' : 'Could not send');
+    };
+    body.appendChild(test);
+  }
+
+  body.appendChild(section('What to send'));
+  const l = el('div', 'list list--boxed');
+  const keys = {bills: 'notifyBills', spending: 'notifySpending', pots: 'notifyPots', marketing: 'marketing'};
+  for (const t of NOTIFY_TYPES) {
     const r = el('div', 'row');
     const m = el('div', 'row__main');
-    m.appendChild(el('div', 'row__t', title));
-    if (sub) m.appendChild(el('div', 'row__s', sub));
+    m.appendChild(el('div', 'row__t', t.label));
+    m.appendChild(el('div', 'row__s', t.note));
     r.appendChild(m);
-    r.appendChild(switchEl(s[key], v => { s[key] = v; save(); }));
-    return r;
-  };
-  body.appendChild(list([
-    mk('Push notifications', 'Transactions and bills', 'notifications'),
-    mk('Marketing', 'Offers and product news', 'marketing'),
-    mk('Haptics', 'Vibrate on actions', 'haptics')
-  ]));
+    r.appendChild(switchEl(s[keys[t.id]], v => { s[keys[t.id]] = v; save(); }));
+    l.appendChild(r);
+  }
+  body.appendChild(l);
+
+  body.appendChild(el('p', 'hint', 'Notifications only work while the app is installed or the tab is open.'));
+
   return screen('notifications', {title: 'Notifications', back: '#/settings-preferences', body});
 }
 
 export function statementsScreen() {
   const body = el('div');
+  const months = statementMonths();
+  body.appendChild(el('p', 'hint', 'Pick a month. A PDF downloads to your device.'));
+
   const l = el('div', 'list list--boxed');
-  const d = new Date();
-  for (let i = 0; i < 12; i++) {
-    const m = new Date(d.getFullYear(), d.getMonth() - i, 1);
-    const label = m.toLocaleDateString('en-GB', {month: 'long', year: 'numeric'});
-    l.appendChild(row({title: label, sub: 'PDF statement', onClick: () => toast('Preparing ' + label)}));
+  for (const m of months) {
+    l.appendChild(row({
+      title: m.label,
+      sub: m.count + (m.count === 1 ? ' transaction' : ' transactions') + ' · PDF',
+      onClick: () => {
+        if (!m.count) return toast('Nothing in ' + m.label);
+        const rows = statementRows(m.start, m.end);
+        const totals = statementTotals(m.start, m.end, rows);
+        const blob = buildStatement({
+          title: 'Statement · ' + m.label,
+          account: acc().name + ' account · •••• ' + acc().card.last4,
+          from: dateStr(m.start),
+          to: dateStr(m.end - 1),
+          opening: totals.opening,
+          closing: totals.closing,
+          rows
+        });
+        download(blob, 'monzo-statement-' + m.key + '.pdf');
+        toast('Statement downloaded');
+      }
+    }));
   }
   body.appendChild(l);
+
+  body.appendChild(el('p', 'hint', 'Statements cover the last 12 months. Older ones can be requested from support.'));
+
   return screen('statements', {title: 'Statements', back: '#/settings-documents', body});
 }
 
@@ -872,10 +1151,16 @@ export function appearanceScreen() {
   const r = el('div', 'row');
   const m = el('div', 'row__main');
   m.appendChild(el('div', 'row__t', 'Reduced motion'));
-  m.appendChild(el('div', 'row__s', 'Fewer animations'));
+  m.appendChild(el('div', 'row__s', 'Fewer animations and no sliding'));
   r.appendChild(m);
   r.appendChild(switchEl(s.reducedMotion, v => { s.reducedMotion = v; save(); applyTheme(); }));
-  body.appendChild(list([r]));
+  const h = el('div', 'row');
+  const hm = el('div', 'row__main');
+  hm.appendChild(el('div', 'row__t', 'Haptics'));
+  hm.appendChild(el('div', 'row__s', 'Short vibration on taps and toasts'));
+  h.appendChild(hm);
+  h.appendChild(switchEl(s.haptics, v => { s.haptics = v; save(); if (v) haptic(20); }));
+  body.appendChild(list([r, h]));
   return screen('appearance', {title: 'Appearance', back: '#/settings-preferences', body});
 }
 
@@ -886,39 +1171,17 @@ export function applyTheme() {
     try { dark = matchMedia('(prefers-color-scheme: dark)').matches; } catch {}
   }
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.documentElement.dataset.motion = state.settings.reducedMotion ? 'reduced' : 'full';
 }
 
 export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v41', chev: false}),
+    row({title: 'Build', value: 'v42', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   return screen('about', {title: 'About', back: '#/settings-about', body});
-}
-
-export function cardsScreen() {
-  const body = el('div');
-  const l = el('div', 'list list--boxed');
-  for (const c of state.cards) {
-    l.appendChild(row({
-      title: c.label + ' card', sub: '•••• ' + c.last4 + (c.frozen ? ' · frozen' : ''),
-      onClick: () => cardSheet()
-    }));
-  }
-  body.appendChild(l);
-  const add = el('button', 'btn btn--ghost btn--block', 'Create virtual card');
-  add.onclick = () => {
-    state.cards.push({
-      id: uid('card'), label: 'Virtual',
-      last4: String(Math.floor(1000 + Math.random() * 9000)),
-      type: 'virtual', frozen: false, virtual: true, network: 'mastercard'
-    });
-    save(); toast('Virtual card created'); rerender();
-  };
-  body.appendChild(add);
-  return screen('cards', {title: 'Cards', back: '#/settings-personal', body});
 }
 
 const LAYOUT_LABELS = {
@@ -930,6 +1193,26 @@ const CAROUSEL_LABELS = {pots: 'Pots', invest: 'Investments', pension: 'Pension'
 export function layoutSheet() {
   const body = el('div');
   const L = state.layout;
+
+  const widget = el('div', 'card card--flat');
+  widget.style.cssText = 'background:#ff4f40;color:#fff;padding:16px;border-radius:20px';
+  widget.appendChild(el('div', '', '<div style="font-size:11px;font-weight:700;opacity:.8">MONZO · ' + acc().name.toUpperCase() + '</div>'));
+  widget.appendChild(el('div', '', '<div style="font-size:24px;font-weight:800;margin-top:6px">' + fmt(bal()) + '</div>'));
+  widget.appendChild(el('div', '', '<div style="font-size:11px;opacity:.85;margin-top:2px">' + fmt(leftToSpend()) + ' left to spend</div>'));
+  const wl = el('div');
+  wl.style.cssText = 'display:flex;gap:4px;margin-top:10px';
+  for (let i = 0; i < 7; i++) {
+    const d = el('div');
+    d.style.cssText = 'flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,' + (i < 4 ? '1' : '.35') + ')';
+    wl.appendChild(d);
+  }
+  widget.appendChild(wl);
+  const wWrap = el('div');
+  wWrap.style.cssText = 'padding:0 0 12px';
+  const wlbl = el('div', 'sect', 'Widget preview');
+  wWrap.appendChild(wlbl);
+  wWrap.appendChild(widget);
+  body.appendChild(wWrap);
 
   body.appendChild(el('p', 'hint', 'Reorder with the arrows. Hide anything you do not use.'));
 
@@ -980,4 +1263,4 @@ export function layoutSheet() {
 
   draw();
   sheet({title: 'Edit home', body});
-}
+                           }
