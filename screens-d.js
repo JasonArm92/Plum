@@ -2,12 +2,12 @@ import {
   state, fmt, round2, catById, categories, searchTx, pushSearch,
   clearSearches, recentSearches, planInfo, PLANS, planHasBenefit,
   planChangeQuote, changePlan, save, dayKey, dayLabel
-} from './core.js?v=44';
-import { BENEFITS, SEARCH_DIRS } from './data.js?v=44';
+} from './core.js?v=45';
+import { BENEFITS, SEARCH_DIRS } from './data.js?v=45';
 import {
   el, screen, row, list, section, tile, catIcon, icon,
   empty, toast, sheet, confirmSheet, input, pill
-} from './ui.js?v=44';
+} from './ui.js?v=45';
 
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
 
