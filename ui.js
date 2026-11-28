@@ -1,5 +1,5 @@
-import { fmt, state } from './core.js?v=44';
-import { DOMAINS, BRANDS } from './data.js?v=44';
+import { fmt, state } from './core.js?v=45';
+import { DOMAINS, BRANDS } from './data.js?v=45';
 
 export const el = (tag, cls, html) => {
   const n = document.createElement(tag);
@@ -84,22 +84,22 @@ export function tile(name, size = 42) {
 }
 
 const CAT_ICONS = {
-  basket: '<path d="M4 9h16l-1.4 10.2a2 2 0 0 1-2 1.8H7.4a2 2 0 0 1-2-1.8Z"/><path d="M8.5 9 11 3.5"/><path d="M15.5 9 13 3.5"/>',
-  cutlery: '<path d="M6 3v7a2 2 0 0 0 4 0V3"/><path d="M8 12v9"/><path d="M17 3c-1.6 1.4-2.5 3.3-2.5 5.5 0 1.6.9 2.7 2.5 3v9.5"/>',
-  train: '<rect x="6" y="3" width="12" height="13" rx="3"/><path d="M6 10h12"/><path d="M9 19l-2 2"/><path d="M15 19l2 2"/>',
-  bag: '<path d="M5 8h14l-1 12H6Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
-  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6"/><path d="M9 12h6"/>',
-  film: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16"/><path d="M16 4v16"/><path d="M3 12h18"/>',
-  pill: '<rect x="3" y="8" width="18" height="8" rx="4" transform="rotate(-30 12 12)"/><path d="M9 9l6 6"/>',
-  dumbbell: '<path d="M4 9v6"/><path d="M20 9v6"/><path d="M7 7v10"/><path d="M17 7v10"/><path d="M7 12h10"/>',
-  house: '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',
-  family: '<circle cx="8" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M3 20c0-3 2.2-5 5-5s5 2 5 5"/><path d="M14 20c0-2.2 1.2-3.7 3-3.7s3 1.5 3 3.7"/>',
-  paw: '<circle cx="7" cy="9" r="2"/><circle cx="12" cy="7" r="2"/><circle cx="17" cy="9" r="2"/><path d="M12 12c3 0 5 2 5 4.2 0 2-1.8 3.3-5 3.3s-5-1.3-5-3.3C7 14 9 12 12 12Z"/>',
-  card: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',
-  arrowdown: '<path d="M12 4v14"/><path d="M6 13l6 6 6-6"/>',
-  swap: '<path d="M4 8h13l-3-3"/><path d="M20 16H7l3 3"/>',
-  note: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h3"/>',
-  box: '<path d="M4 8l8-4 8 4v9l-8 4-8-4Z"/><path d="M4 8l8 4 8-4"/><path d="M12 12v9"/>'
+  basket: '<path d="M4 9h16l-1.6 10.2a2 2 0 0 1-2 1.8H7.6a2 2 0 0 1-2-1.8z"/><path d="M8.5 9 12 3.5 15.5 9"/>',
+  cutlery: '<path d="M7 3v8m0 0v10M4.5 3v5a2.5 2.5 0 0 0 5 0V3"/><path d="M16.5 3c-1.5 1.6-2 4-2 6.5 0 2 .8 3 2 3s2-1 2-3c0-2.5-.5-4.9-2-6.5zM16.5 12.5V21"/>',
+  train: '<rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 11h14M9 21l1.5-4M15 21l-1.5-4"/>',
+  bag: '<path d="M4 8h16l-1.4 11.1a2 2 0 0 1-2 1.9H7.4a2 2 0 0 1-2-1.9z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8h5M9.5 12h5"/>',
+  film: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 10h18M3 15h18"/>',
+  pill: '<rect x="3" y="9" width="18" height="7" rx="3.5" transform="rotate(-45 12 12.5)"/><path d="M9 9l6 6"/>',
+  dumbbell: '<path d="M4 9v6M7 7v10M17 7v10M20 9v6M7 12h10"/>',
+  house: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M9.5 21v-6h5v6"/>',
+  family: '<circle cx="8" cy="7" r="2.5"/><circle cx="16" cy="7" r="2.5"/><path d="M3 20c0-3 2.2-5 5-5s5 2 5 5M11 20c0-3 2.2-5 5-5s5 2 5 5"/>',
+  paw: '<circle cx="7" cy="9" r="1.8"/><circle cx="12" cy="7" r="1.8"/><circle cx="17" cy="9" r="1.8"/><path d="M12 11c-2.5 0-5 2-5 4.5S9.5 20 12 20s5-1 5-4.5S14.5 11 12 11z"/>',
+  card: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/>',
+  arrowdown: '<path d="M12 4v14M6 13l6 6 6-6"/>',
+  swap: '<path d="M4 8h13l-3-3M20 16H7l3 3"/>',
+  note: '<path d="M6 3h9l5 5v13H6z"/><path d="M15 3v5h5M9.5 13h5M9.5 17h5"/>',
+  box: '<path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M4 8l8 4 8-4M12 12v8"/>'
 };
 
 export function catIcon(name, size = 30, colour = '#6b6b76') {
@@ -141,16 +141,16 @@ export function avatar(size = 36) {
 }
 
 const ICONS = {
-  back: '<path d="M15 5l-7 7 7 7"/>',
-  close: '<path d="M6 6l12 12"/><path d="M18 6L6 18"/>',
-  plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+  back: '<path d="M15 19l-7-7 7-7"/>',
+  close: '<path d="M6 6l12 12M18 6L6 18"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
   chev: '<path d="M9 5l7 7-7 7"/>',
-  search: '<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>',
-  home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',
-  trends: '<path d="M4 17l5-6 4 3 7-8"/>',
-  payments: '<path d="M4 9h13l-3-3"/><path d="M20 15H7l3 3"/>',
-  borrowing: '<path d="M12 4v16"/><path d="M7 9h10"/><path d="M7 15h10"/>',
-  account: '<circle cx="12" cy="9" r="3.4"/><path d="M5 20c0-3.6 3-6 7-6s7 2.4 7 6"/>'
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4.3-4.3"/>',
+  home: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M9.5 21v-6h5v6"/>',
+  trends: '<path d="M4 18l5-6 4 3 6-8"/><path d="M15 7h5v5"/>',
+  payments: '<path d="M4 8h13l-3-3M20 16H7l3 3"/>',
+  borrowing: '<path d="M12 3v18M7 8h7a3 3 0 0 1 0 6H7"/>',
+  account: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/>'
 };
 
 export function icon(name, size = 22) {
@@ -354,7 +354,7 @@ export function sheet({title = '', body = null, foot = null, onClose = null}) {
 }
 
 export function confirmSheet({title, text, confirm = 'Confirm', danger = false, onConfirm}) {
-  const body = el('div', '', '<p class="hint">' + text + '</p>');
+  const body = el('div', '', '<br>' + text + '<br>');
   const btn = el('button', 'btn btn--block ' + (danger ? 'btn--danger' : 'btn--primary'));
   btn.textContent = confirm;
   const s = sheet({title, body, foot: btn});
