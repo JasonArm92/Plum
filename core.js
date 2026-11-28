@@ -1,8 +1,8 @@
-import { FUNDS, CATEGORY_IDS, CATEGORIES, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS, BENEFITS } from './data.js?v=42';
+import { FUNDS, CATEGORY_IDS, CATEGORIES, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS, BENEFITS } from './data.js?v=43';
 
-export const VERSION = 31;
-export const KEY = 'monzo_v31';
-export const LEGACY_KEYS = ['monzo_v30','monzo_v29','monzo_v28','monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 32;
+export const KEY = 'monzo_v32';
+export const LEGACY_KEYS = ['monzo_v31','monzo_v30','monzo_v29','monzo_v28','monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -898,6 +898,12 @@ const migrations = [
       for (const p of s.pots) if (!p.icon) p.icon = 'box';
     }
     return s;
+  }},
+  {v: 32, fn: s => {
+    if (!s.settings) s.settings = {};
+    if (typeof s.settings.haptics !== 'boolean') s.settings.haptics = true;
+    if (typeof s.settings.reducedMotion !== 'boolean') s.settings.reducedMotion = false;
+    return s;
   }}
 ];
 
@@ -1517,4 +1523,4 @@ export function lastMonthByCategory() {
 
 export function ensureCategory(id) {
   return categories().some(c => c.id === id) ? id : 'general';
-    }
+        }
