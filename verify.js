@@ -1,6 +1,6 @@
-import * as core from './core.js?v=41';
-import * as data from './data.js?v=41';
-import * as ui from './ui.js?v=41';
+import * as core from './core.js?v=42';
+import * as data from './data.js?v=42';
+import * as ui from './ui.js?v=42';
 
 const REQUIRED_CORE = [
   'state', 'fmt', 'round2', 'save', 'load', 'reset', 'acc', 'bal', 'setActive',
@@ -12,12 +12,16 @@ const REQUIRED_CORE = [
   'flexPurchase', 'flexSettle', 'takeLoan', 'loanQuote', 'overdraftDaily',
   'addTx', 'takeFunds', 'potMove', 'budgetFor', 'setBudget', 'totalBudget',
   'addPayee', 'updatePayee', 'removePayee', 'createSplit', 'markSplitPaid',
-  'investBuy', 'investSell', 'investDeposit', 'runScheduled', 'leftToSpend'
+  'investBuy', 'investSell', 'investDeposit', 'runScheduled', 'leftToSpend',
+  'virtualCardCreate', 'virtualCardRemove', 'virtualCardFreeze',
+  'virtualCardSingleUse', 'virtualCardSpend', 'canUseVirtualCards',
+  'snapshot', 'restore', 'notify', 'requestNotify', 'notifyPermission',
+  'statementMonths', 'statementRows', 'statementTotals', 'rand4'
 ];
 
-const REQUIRED_DATA = ['CATEGORIES', 'CATEGORY_ICONS', 'CATEGORY_COLOURS', 'BENEFITS', 'RISK_FUNDS', 'CONNECTED_BANKS', 'CREDIT_BANDS', 'POT_EMOJI'];
+const REQUIRED_DATA = ['CATEGORIES', 'CATEGORY_ICONS', 'CATEGORY_COLOURS', 'POT_ICONS', 'BENEFITS', 'RISK_FUNDS', 'CONNECTED_BANKS', 'CREDIT_BANDS', 'POT_EMOJI', 'NOTIFY_TYPES'];
 
-const REQUIRED_UI = ['el', 'screen', 'row', 'list', 'section', 'tile', 'icon', 'catIcon', 'cardArt', 'spendBar', 'empty', 'toast', 'sheet', 'confirmSheet', 'field', 'input', 'seg', 'switchEl', 'pill', 'avatar'];
+const REQUIRED_UI = ['el', 'screen', 'row', 'list', 'section', 'tile', 'icon', 'catIcon', 'cardArt', 'spendBar', 'empty', 'toast', 'sheet', 'confirmSheet', 'field', 'input', 'seg', 'switchEl', 'pill', 'avatar', 'haptic', 'motionOK'];
 
 function missing(mod, names, label) {
   return names.filter(n => !(n in mod)).map(n => label + ' is missing export: ' + n);
