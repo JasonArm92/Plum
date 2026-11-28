@@ -1,10 +1,12 @@
-import * as core from './core.js?v=43';
-import * as data from './data.js?v=43';
-import * as ui from './ui.js?v=43';
+import * as core from './core.js?v=44';
+import * as data from './data.js?v=44';
+import * as ui from './ui.js?v=44';
 
 const REQUIRED_CORE = [
   'state', 'VERSION', 'KEY', 'fmt', 'round2', 'clamp', 'uid', 'normalise', 'migrate',
   'save', 'load', 'reset', 'acc', 'bal', 'setActive',
+  'onboardSet', 'onboarded', 'finishOnboard', 'setPin', 'checkPin',
+  'maskEmail', 'maskPhone',
   'categories', 'catById', 'addCategory', 'updateCategory', 'removeCategory',
   'searchTx', 'pushSearch', 'clearSearches', 'recentSearches',
   'planInfo', 'PLANS', 'planHasBenefit', 'planChangeQuote', 'changePlan',
@@ -21,7 +23,7 @@ const REQUIRED_CORE = [
   'statementMonths', 'statementRows', 'statementTotals', 'rand4'
 ];
 
-const REQUIRED_DATA = ['CATEGORIES', 'CATEGORY_ICONS', 'CATEGORY_COLOURS', 'POT_ICONS', 'BENEFITS', 'RISK_FUNDS', 'CONNECTED_BANKS', 'CREDIT_BANDS', 'POT_EMOJI', 'NOTIFY_TYPES'];
+const REQUIRED_DATA = ['CATEGORIES', 'CATEGORY_ICONS', 'CATEGORY_COLOURS', 'POT_ICONS', 'BENEFITS', 'RISK_FUNDS', 'CONNECTED_BANKS', 'CREDIT_BANDS', 'POT_EMOJI', 'NOTIFY_TYPES', 'ONBOARD_SLIDES', 'CARD_COLOURS', 'PIN_KEYS'];
 
 const REQUIRED_UI = ['el', 'screen', 'row', 'list', 'section', 'tile', 'icon', 'catIcon', 'cardArt', 'spendBar', 'empty', 'toast', 'sheet', 'confirmSheet', 'field', 'input', 'seg', 'switchEl', 'pill', 'avatar', 'haptic', 'motionOK'];
 
@@ -45,6 +47,9 @@ export function verify(routes) {
   }
   for (const b of data.BENEFITS) {
     if (!Array.isArray(b.plans) || !b.plans.length) problems.push('benefit ' + b.id + ' has no plans');
+  }
+  for (const s of data.ONBOARD_SLIDES) {
+    if (!s.title || !s.body || !s.art) problems.push('slide ' + s.id + ' is incomplete');
   }
 
   return problems;
