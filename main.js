@@ -1,28 +1,28 @@
-import { load, state, runScheduled } from './core.js?v=41';
-import { el, icon, toast } from './ui.js?v=41';
-import { verify } from './verify.js?v=41';
+import { load, state, runScheduled } from './core.js?v=42';
+import { el, icon, toast } from './ui.js?v=42';
+import { verify } from './verify.js?v=42';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
   payeeScreen, payeeFormScreen, sendScreen, requestScreen, bankScreen,
   scheduledScreen, borrowingScreen, accountScreen, potsScreen, potScreen,
-  flexScreen, flexPlanScreen, loanScreen, overdraftScreen,
+  potCardScreen, flexScreen, flexPlanScreen, loanScreen, overdraftScreen,
   settingsScreen, settingsPersonalScreen, settingsSecurityScreen,
   settingsPreferencesScreen, settingsDocumentsScreen, settingsAboutScreen,
   categoriesScreen, categoryFormScreen
-} from './screens-a.js?v=41';
+} from './screens-a.js?v=42';
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
   appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, ledgerScreen,
-  splitScreen, splitsScreen, splitDetailScreen, receiptScreen
-} from './screens-b.js?v=41';
+  splitScreen, splitsScreen, splitDetailScreen, receiptScreen, virtualCardScreen
+} from './screens-b.js?v=42';
 import {
   creditScreen, creditReportScreen, mortgageScreen, dipScreen,
   connectedScreen, connectedAccountScreen
-} from './screens-c.js?v=41';
-import { searchScreen, benefitScreen, planChangeSheet } from './screens-d.js?v=41';
+} from './screens-c.js?v=42';
+import { searchScreen, benefitScreen, planChangeSheet } from './screens-d.js?v=42';
 
-const BUILD = 41;
+const BUILD = 42;
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -84,6 +84,8 @@ const SCREENS = {
   'category-edit': a => categoryFormScreen(a),
   benefit: a => benefitScreen(a),
   pots: () => potsScreen(),
+  'pot-card': a => potCardScreen(a),
+  'virtual-card': a => virtualCardScreen(a),
   payees: () => payeesScreen(),
   'payee-new': () => payeeFormScreen(null),
   'payee-edit': a => payeeFormScreen(a),
