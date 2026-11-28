@@ -9,14 +9,14 @@ import {
   virtualCardCreate, virtualCardRemove, virtualCardFreeze, virtualCardSingleUse,
   virtualCardSpend, canUseVirtualCards, notify, requestNotify, notifyPermission,
   notifySupported
-} from './core.js?v=43';
-import { FUNDS, RISK_FUNDS, CONSTITUENTS, POT_ICONS, POT_COLOURS, BENEFITS, NOTIFY_TYPES } from './data.js?v=43';
+} from './core.js?v=44';
+import { FUNDS, RISK_FUNDS, CONSTITUENTS, POT_ICONS, POT_COLOURS, BENEFITS, NOTIFY_TYPES } from './data.js?v=44';
 import {
   el, screen, row, list, section, tile, empty, toast, sheet, confirmSheet,
   field, input, seg, switchEl, pill, catIcon, cardArt, avatar, spendBar, haptic
-} from './ui.js?v=43';
-import { buildStatement, download } from './statement.js?v=43';
-import { planChangeSheet } from './screens-d.js?v=43';
+} from './ui.js?v=44';
+import { buildStatement, download } from './statement.js?v=44';
+import { planChangeSheet } from './screens-d.js?v=44';
 
 const cat = id => catById(id);
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -37,7 +37,7 @@ export function cardSheet() {
   const freeze = el('button', 'btn btn--block btn--ghost', card.frozen ? 'Unfreeze card' : 'Freeze card');
   body.appendChild(list([
     row({title: 'View card number', onClick: () => toast('•••• •••• •••• ' + card.last4)}),
-    row({title: 'Card PIN', onClick: () => toast('PIN 2580')}),
+    row({title: 'Card PIN', onClick: () => toast('PIN ' + (state.user.pin || '2580'))}),
     row({title: 'Add to Apple Pay', onClick: () => toast('Added to Apple Pay')}),
     row({title: 'Virtual cards', onClick: () => { location.hash = '#/cards'; }})
   ]));
@@ -1036,7 +1036,7 @@ export function profileScreen() {
 export function securityScreen() {
   const body = el('div');
   body.appendChild(list([
-    row({title: 'Change PIN', onClick: () => toast('PIN change')}),
+    row({title: 'Change PIN', onClick: () => { location.hash = '#/reset-pin'; }}),
     row({title: 'Biometrics', value: state.settings.biometrics ? 'On' : 'Off', chev: false})
   ]));
   const b = el('button', 'btn btn--danger btn--block', 'Log out');
@@ -1178,7 +1178,7 @@ export function aboutScreen() {
   const body = el('div');
   body.appendChild(list([
     row({title: 'Version', value: '8.10.0 clone', chev: false}),
-    row({title: 'Build', value: 'v43', chev: false}),
+    row({title: 'Build', value: 'v44', chev: false}),
     row({title: 'Made by', value: 'Jason Armstrong', chev: false})
   ]));
   body.appendChild(list([
