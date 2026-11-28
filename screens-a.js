@@ -10,12 +10,12 @@ import {
   creditScore, creditBand, creditUpdatedDays, connectedTotal, connectedExpired,
   categories, catById, isCustomCategory, addCategory, updateCategory,
   removeCategory, categoryUsage, virtualCardCreate, canUseVirtualCards
-} from './core.js?v=44';
-import { SAVINGS_INTEREST, CATEGORY_ICONS, CATEGORY_COLOURS, POT_ICONS, POT_COLOURS } from './data.js?v=44';
+} from './core.js?v=45';
+import { SAVINGS_INTEREST, CATEGORY_ICONS, CATEGORY_COLOURS, POT_ICONS, POT_COLOURS } from './data.js?v=45';
 import {
   el, screen, row, list, section, tile, avatar, icon, catIcon, cardArt, spendBar,
   empty, toast, sheet, confirmSheet, field, input, seg, switchEl, pill
-} from './ui.js?v=44';
+} from './ui.js?v=45';
 
 const cat = id => catById(id);
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
@@ -54,7 +54,7 @@ export function homeScreen() {
   add.type = 'button';
   add.setAttribute('aria-label', 'Add transaction');
   add.appendChild(icon('plus', 18));
-  add.onclick = () => import('./screens-b.js?v=44').then(m => m.addTxSheet());
+  add.onclick = () => import('./screens-b.js?v=45').then(m => m.addTxSheet());
   h.appendChild(add);
   s.appendChild(h);
 
@@ -69,7 +69,7 @@ export function homeScreen() {
     if (key === 'card') {
       const w = el('div');
       w.style.padding = '0 16px';
-      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=44').then(m => m.cardSheet())));
+      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=45').then(m => m.cardSheet())));
       body.appendChild(w);
     } else if (key === 'balance') {
       const w = el('div');
@@ -101,7 +101,7 @@ export function homeScreen() {
   edit.style.padding = '8px 16px 0';
   const eb = el('button', 'btn btn--ghost btn--sm btn--block');
   eb.textContent = 'Edit home';
-  eb.onclick = () => import('./screens-b.js?v=44').then(m => m.layoutSheet());
+  eb.onclick = () => import('./screens-b.js?v=45').then(m => m.layoutSheet());
   edit.appendChild(eb);
   body.appendChild(edit);
 
@@ -174,7 +174,7 @@ function carousel() {
       const add = el('button', 'pcard pcard--new');
       add.type = 'button';
       add.innerHTML = '<br>＋<br>New pot<br>';
-      add.onclick = () => import('./screens-b.js?v=44').then(m => m.newPotSheet());
+      add.onclick = () => import('./screens-b.js?v=45').then(m => m.newPotSheet());
       track.appendChild(add);
     } else if (key === 'invest') {
       const b = el('button', 'pcard');
@@ -284,7 +284,7 @@ export function trendsScreen() {
     top.appendChild(el('div', 'hint', 'No budget set'));
     const b = el('button', 'btn btn--ghost btn--sm btn--block', 'Set a budget');
     b.style.marginTop = '12px';
-    b.onclick = () => import('./screens-b.js?v=44').then(x => x.budgetSheet());
+    b.onclick = () => import('./screens-b.js?v=45').then(x => x.budgetSheet());
     top.appendChild(b);
   }
   body.appendChild(top);
@@ -319,7 +319,7 @@ export function trendsScreen() {
     const amtBtn = el('button', 'catrow__v');
     amtBtn.type = 'button';
     amtBtn.textContent = fmt(amt);
-    amtBtn.onclick = () => import('./screens-b.js?v=44').then(x => x.targetSheet(id));
+    amtBtn.onclick = () => import('./screens-b.js?v=45').then(x => x.targetSheet(id));
     amtWrap.appendChild(amtBtn);
     if (delta !== null) {
       const d = el('span', 'hint');
@@ -330,7 +330,7 @@ export function trendsScreen() {
     const chip = el('button', 'tgt' + (tgt ? ' tgt--on' : ''));
     chip.type = 'button';
     chip.textContent = tgt ? fmt(tgt, {dp: 0}) : 'Set';
-    chip.onclick = () => import('./screens-b.js?v=44').then(x => x.targetSheet(id));
+    chip.onclick = () => import('./screens-b.js?v=45').then(x => x.targetSheet(id));
     amtWrap.appendChild(chip);
     r.appendChild(amtWrap);
 
@@ -401,7 +401,7 @@ export function trendCatScreen(id) {
   tgtRow.appendChild(tm);
   const tb = el('button', 'btn btn--primary btn--sm');
   tb.textContent = tgt ? 'Edit' : 'Set';
-  tb.onclick = () => import('./screens-b.js?v=44').then(x => x.targetSheet(id));
+  tb.onclick = () => import('./screens-b.js?v=45').then(x => x.targetSheet(id));
   tgtRow.appendChild(tb);
   body.appendChild(tgtRow);
 
@@ -629,7 +629,7 @@ export function paymentsScreen() {
   body.appendChild(add);
 
   const edit = el('button', 'btn btn--ghost btn--sm btn--block', 'Edit actions');
-  edit.onclick = () => import('./screens-b.js?v=44').then(m => m.paymentsEditorSheet());
+  edit.onclick = () => import('./screens-b.js?v=45').then(m => m.paymentsEditorSheet());
   body.appendChild(edit);
 
   return screen('payments', {title: 'Payments', body});
@@ -1160,6 +1160,7 @@ export function accountScreen() {
         : 'See your other banks here',
       onClick: () => { location.hash = '#/connected'; }
     }),
+    row({title: 'Help', sub: 'Guides, articles and chat', onClick: () => { location.hash = '#/help'; }}),
     row({title: 'Settings', sub: 'Details, security, preferences', onClick: () => { location.hash = '#/settings'; }})
   ]));
 
@@ -1176,6 +1177,9 @@ export function settingsScreen() {
     row({title: 'Documents', sub: 'Statements and letters', onClick: () => { location.hash = '#/settings-documents'; }}),
     row({title: 'About Monzo', sub: 'Version and legal', onClick: () => { location.hash = '#/settings-about'; }})
   ]));
+  const help = el('button', 'btn btn--ghost btn--block', 'Help and support');
+  help.onclick = () => { location.hash = '#/help'; };
+  body.appendChild(help);
   return screen('settings', {title: 'Settings', back: '#/account', body});
 }
 
@@ -1229,7 +1233,7 @@ export function settingsPreferencesScreen() {
     row({title: 'Notifications', sub: 'Alerts and haptics', onClick: () => { location.hash = '#/notifications'; }}),
     row({title: 'Budgets', sub: 'Monthly targets', onClick: () => { location.hash = '#/trends'; }}),
     row({title: 'Categories', sub: 'Add your own', onClick: () => { location.hash = '#/categories'; }}),
-    row({title: 'Home layout', sub: 'Reorder sections', onClick: () => import('./screens-b.js?v=44').then(m => m.layoutSheet())})
+    row({title: 'Home layout', sub: 'Reorder sections', onClick: () => import('./screens-b.js?v=45').then(m => m.layoutSheet())})
   ]));
   return screen('settings-preferences', {title: 'Preferences', back: '#/settings', body});
 }
@@ -1278,7 +1282,7 @@ export function potsScreen() {
   }
   if (!state.pots.length) {
     l.appendChild(empty('No pots yet', 'Pots help you put money aside', {
-      label: 'Create a pot', onClick: () => import('./screens-b.js?v=44').then(m => m.newPotSheet())
+      label: 'Create a pot', onClick: () => import('./screens-b.js?v=45').then(m => m.newPotSheet())
     }));
   }
   body.appendChild(l);
@@ -1325,7 +1329,7 @@ export function potScreen(id) {
   const linked = state.cards.filter(x => x.potId === p.id);
 
   body.appendChild(list([
-    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=44').then(m => m.editPotSheet(p.id))}),
+    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=45').then(m => m.editPotSheet(p.id))}),
     row({
       title: 'Virtual card',
       sub: linked.length ? linked.length + ' card' + (linked.length === 1 ? '' : 's') + ' linked' : 'Spend straight from this pot',
@@ -1387,4 +1391,4 @@ export function potCardScreen(potId) {
   }
 
   return screen('pot-card-' + potId, {title: 'Virtual card', back: '#/pot/' + potId, body});
-}
+      }
