@@ -10,7 +10,7 @@ Live: <https://jasonarm92.github.io/>
 
 Everything in it is fictional: the account holder, the balances, the transactions going
 back to October 1992, the credit file, the connected banks. It is a UI clone for
-practising front-end work, not a bank. Unlock with PIN **2580**.
+practising front-end work, not a bank.
 
 Current build **43**, state schema **v32**. Build list Phases A–I plus C.5 are complete.
 
