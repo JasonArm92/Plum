@@ -1,18 +1,20 @@
-import * as core from './core.js?v=42';
-import * as data from './data.js?v=42';
-import * as ui from './ui.js?v=42';
+import * as core from './core.js?v=43';
+import * as data from './data.js?v=43';
+import * as ui from './ui.js?v=43';
 
 const REQUIRED_CORE = [
-  'state', 'fmt', 'round2', 'save', 'load', 'reset', 'acc', 'bal', 'setActive',
+  'state', 'VERSION', 'KEY', 'fmt', 'round2', 'clamp', 'uid', 'normalise', 'migrate',
+  'save', 'load', 'reset', 'acc', 'bal', 'setActive',
   'categories', 'catById', 'addCategory', 'updateCategory', 'removeCategory',
   'searchTx', 'pushSearch', 'clearSearches', 'recentSearches',
   'planInfo', 'PLANS', 'planHasBenefit', 'planChangeQuote', 'changePlan',
   'creditScore', 'creditBand', 'creditRefresh', 'mipQuote', 'takeDip',
   'connectedAdd', 'connectedReauth', 'connectedRemove', 'connectedTotal',
-  'flexPurchase', 'flexSettle', 'takeLoan', 'loanQuote', 'overdraftDaily',
-  'addTx', 'takeFunds', 'potMove', 'budgetFor', 'setBudget', 'totalBudget',
-  'addPayee', 'updatePayee', 'removePayee', 'createSplit', 'markSplitPaid',
-  'investBuy', 'investSell', 'investDeposit', 'runScheduled', 'leftToSpend',
+  'connectedExpired', 'flexPurchase', 'flexSettle', 'takeLoan', 'loanQuote',
+  'overdraftDaily', 'addTx', 'takeFunds', 'potMove', 'budgetFor', 'setBudget',
+  'totalBudget', 'addPayee', 'updatePayee', 'removePayee', 'createSplit',
+  'markSplitPaid', 'investBuy', 'investSell', 'investDeposit', 'runScheduled',
+  'leftToSpend', 'spentThisMonth', 'byCategory',
   'virtualCardCreate', 'virtualCardRemove', 'virtualCardFreeze',
   'virtualCardSingleUse', 'virtualCardSpend', 'canUseVirtualCards',
   'snapshot', 'restore', 'notify', 'requestNotify', 'notifyPermission',
