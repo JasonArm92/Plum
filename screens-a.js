@@ -6,19 +6,28 @@ import {
   payeesSorted, addPayee, updatePayee, removePayee, toggleFav, recentPayments,
   splitsOutstandingTotal, flexUsed, flexAvailable, totalLoanRemaining, totalBorrowed,
   loanQuote, loanApr, takeLoan, flexSettle, LOAN_MIN, LOAN_MAX, LOAN_TERMS,
-  OVERDRAFT_LIMITS, OVERDRAFT_EAR, overdraftDaily, reset,
+  OVERDRAFT_LIMITS, OVERDRAFT_EAR, overdraftDaily, reset, snapshot, restore,
   creditScore, creditBand, creditUpdatedDays, connectedTotal, connectedExpired,
   categories, catById, isCustomCategory, addCategory, updateCategory,
   removeCategory, categoryUsage
-} from './core.js?v=41';
-import { SAVINGS_INTEREST, CATEGORY_ICONS, CATEGORY_COLOURS } from './data.js?v=41';
+} from './core.js?v=42';
+import { SAVINGS_INTEREST, CATEGORY_ICONS, CATEGORY_COLOURS, POT_ICONS, POT_COLOURS } from './data.js?v=42';
 import {
   el, screen, row, list, section, tile, avatar, icon, catIcon, cardArt, spendBar,
   empty, toast, sheet, confirmSheet, field, input, seg, switchEl, pill
-} from './ui.js?v=41';
+} from './ui.js?v=42';
 
 const cat = id => catById(id);
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
+
+function potIcon(p, size = 30) {
+  const wrap = el('span', 'pcard__ico');
+  wrap.style.width = size + 'px';
+  wrap.style.height = size + 'px';
+  wrap.style.background = (p.colour || '#eeeeee') + '22';
+  wrap.appendChild(catIcon(p.icon || 'box', Math.round(size * 0.6), p.colour || '#6b6b76'));
+  return wrap;
+}
 
 export function homeScreen() {
   const s = el('section', 'screen');
@@ -45,7 +54,7 @@ export function homeScreen() {
   add.type = 'button';
   add.setAttribute('aria-label', 'Add transaction');
   add.appendChild(icon('plus', 18));
-  add.onclick = () => import('./screens-b.js?v=41').then(m => m.addTxSheet());
+  add.onclick = () => import('./screens-b.js?v=42').then(m => m.addTxSheet());
   h.appendChild(add);
   s.appendChild(h);
 
@@ -60,7 +69,7 @@ export function homeScreen() {
     if (key === 'card') {
       const w = el('div');
       w.style.padding = '0 16px';
-      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=41').then(m => m.cardSheet())));
+      w.appendChild(cardArt(acc().card, () => import('./screens-b.js?v=42').then(m => m.cardSheet())));
       body.appendChild(w);
     } else if (key === 'balance') {
       const w = el('div');
@@ -92,7 +101,7 @@ export function homeScreen() {
   edit.style.padding = '8px 16px 0';
   const eb = el('button', 'btn btn--ghost btn--sm btn--block');
   eb.textContent = 'Edit home';
-  eb.onclick = () => import('./screens-b.js?v=41').then(m => m.layoutSheet());
+  eb.onclick = () => import('./screens-b.js?v=42').then(m => m.layoutSheet());
   edit.appendChild(eb);
   body.appendChild(edit);
 
@@ -151,9 +160,7 @@ function carousel() {
       for (const p of state.pots) {
         const b = el('button', 'pcard');
         b.type = 'button';
-        const ico = el('div', 'pcard__ico', p.emoji || '🏦');
-        ico.style.background = (p.colour || '#eeeeee') + '22';
-        b.appendChild(ico);
+        b.appendChild(potIcon(p, 34));
         b.appendChild(el('div', 'pcard__n', p.name));
         const bar = el('div', 'pbar');
         const f = el('div', 'pbar__f');
@@ -167,7 +174,7 @@ function carousel() {
       const add = el('button', 'pcard pcard--new');
       add.type = 'button';
       add.innerHTML = '<div style="font-size:22px;line-height:1">＋</div><div style="margin-top:6px">New pot</div>';
-      add.onclick = () => import('./screens-b.js?v=41').then(m => m.newPotSheet());
+      add.onclick = () => import('./screens-b.js?v=42').then(m => m.newPotSheet());
       track.appendChild(add);
     } else if (key === 'invest') {
       const b = el('button', 'pcard');
@@ -277,7 +284,7 @@ export function trendsScreen() {
     top.appendChild(el('div', 'hint', 'No budget set'));
     const b = el('button', 'btn btn--ghost btn--sm btn--block', 'Set a budget');
     b.style.marginTop = '12px';
-    b.onclick = () => import('./screens-b.js?v=41').then(x => x.budgetSheet());
+    b.onclick = () => import('./screens-b.js?v=42').then(x => x.budgetSheet());
     top.appendChild(b);
   }
   body.appendChild(top);
@@ -312,7 +319,7 @@ export function trendsScreen() {
     const amtBtn = el('button', 'catrow__v');
     amtBtn.type = 'button';
     amtBtn.textContent = fmt(amt);
-    amtBtn.onclick = () => import('./screens-b.js?v=41').then(x => x.targetSheet(id));
+    amtBtn.onclick = () => import('./screens-b.js?v=42').then(x => x.targetSheet(id));
     amtWrap.appendChild(amtBtn);
     if (delta !== null) {
       const d = el('span', 'hint');
@@ -323,7 +330,7 @@ export function trendsScreen() {
     const chip = el('button', 'tgt' + (tgt ? ' tgt--on' : ''));
     chip.type = 'button';
     chip.textContent = tgt ? fmt(tgt, {dp: 0}) : 'Set';
-    chip.onclick = () => import('./screens-b.js?v=41').then(x => x.targetSheet(id));
+    chip.onclick = () => import('./screens-b.js?v=42').then(x => x.targetSheet(id));
     amtWrap.appendChild(chip);
     r.appendChild(amtWrap);
 
@@ -394,7 +401,7 @@ export function trendCatScreen(id) {
   tgtRow.appendChild(tm);
   const tb = el('button', 'btn btn--primary btn--sm');
   tb.textContent = tgt ? 'Edit' : 'Set';
-  tb.onclick = () => import('./screens-b.js?v=41').then(x => x.targetSheet(id));
+  tb.onclick = () => import('./screens-b.js?v=42').then(x => x.targetSheet(id));
   tgtRow.appendChild(tb);
   body.appendChild(tgtRow);
 
@@ -423,13 +430,12 @@ export function categoriesScreen() {
     body.appendChild(section('Yours'));
     const cl = el('div', 'list list--boxed');
     for (const c of custom) {
-      const r = row({
+      cl.appendChild(row({
         title: c.name,
         sub: categoryUsage(c.id) + ' transactions',
         tile: catIcon(c.icon, 30, c.colour),
         onClick: () => { location.hash = '#/category-edit/' + c.id; }
-      });
-      cl.appendChild(r);
+      }));
     }
     body.appendChild(cl);
   }
@@ -541,16 +547,12 @@ export function categoryFormScreen(id) {
 
   if (custom) {
     const rm = el('button', 'btn btn--ghost btn--block', 'Delete category');
-    rm.onclick = () => confirmSheet({
-      title: 'Delete ' + existing.name,
-      text: categoryUsage(id) + ' transactions will move to General.',
-      danger: true, confirm: 'Delete',
-      onConfirm: () => {
-        removeCategory(id);
-        toast('Category deleted');
-        location.hash = '#/categories';
-      }
-    });
+    rm.onclick = () => {
+      const snap = snapshot();
+      removeCategory(id);
+      toast('Category deleted', {label: 'Undo', onClick: () => { restore(snap); rerender(); }});
+      location.hash = '#/categories';
+    };
     body.appendChild(rm);
   } else if (editing) {
     body.appendChild(el('p', 'hint', 'Built-in categories can be renamed but not deleted.'));
@@ -627,7 +629,7 @@ export function paymentsScreen() {
   body.appendChild(add);
 
   const edit = el('button', 'btn btn--ghost btn--sm btn--block', 'Edit actions');
-  edit.onclick = () => import('./screens-b.js?v=41').then(m => m.paymentsEditorSheet());
+  edit.onclick = () => import('./screens-b.js?v=42').then(m => m.paymentsEditorSheet());
   body.appendChild(edit);
 
   return screen('payments', {title: 'Payments', body});
@@ -687,10 +689,12 @@ export function payeeScreen(id) {
 
   body.appendChild(list([
     row({title: 'Edit payee', onClick: () => { location.hash = '#/payee-edit/' + p.id; }}),
-    row({title: 'Remove payee', onClick: () => confirmSheet({
-      title: 'Remove ' + p.name, text: 'You can add them again later.', danger: true, confirm: 'Remove',
-      onConfirm: () => { removePayee(p.id); toast('Payee removed'); location.hash = '#/payments'; }
-    })})
+    row({title: 'Remove payee', onClick: () => {
+      const snap = snapshot();
+      removePayee(p.id);
+      toast('Payee removed', {label: 'Undo', onClick: () => { restore(snap); rerender(); }});
+      location.hash = '#/payments';
+    }})
   ]));
 
   return screen('payee-' + id, {title: p.name, back: '#/payments', body});
@@ -810,8 +814,11 @@ export function scheduledScreen() {
       onClick: () => confirmSheet({
         title: s.name, text: 'Cancel this scheduled payment?', confirm: 'Cancel payment', danger: true,
         onConfirm: () => {
+          const snap = snapshot();
           state.scheduled = state.scheduled.filter(x => x.id !== s.id);
-          save(); toast('Cancelled'); rerender();
+          save();
+          toast('Cancelled', {label: 'Undo', onClick: () => { restore(snap); rerender(); }});
+          rerender();
         }
       })
     }));
@@ -1222,7 +1229,7 @@ export function settingsPreferencesScreen() {
     row({title: 'Notifications', sub: 'Alerts and haptics', onClick: () => { location.hash = '#/notifications'; }}),
     row({title: 'Budgets', sub: 'Monthly targets', onClick: () => { location.hash = '#/trends'; }}),
     row({title: 'Categories', sub: 'Add your own', onClick: () => { location.hash = '#/categories'; }}),
-    row({title: 'Home layout', sub: 'Reorder sections', onClick: () => import('./screens-b.js?v=41').then(m => m.layoutSheet())})
+    row({title: 'Home layout', sub: 'Reorder sections', onClick: () => import('./screens-b.js?v=42').then(m => m.layoutSheet())})
   ]));
   return screen('settings-preferences', {title: 'Preferences', back: '#/settings', body});
 }
@@ -1263,17 +1270,15 @@ export function potsScreen() {
 
   const l = el('div', 'list list--boxed');
   for (const p of state.pots) {
-    const t = el('span', 'pcard__ico', p.emoji || '🏦');
-    t.style.background = (p.colour || '#eeeeee') + '22';
     l.appendChild(row({
       title: p.name, sub: fmt(p.saved || 0) + ' of ' + fmt(p.target),
-      value: p.locked ? '🔒' : '', tile: t,
+      value: p.locked ? 'Locked' : '', tile: potIcon(p, 34),
       onClick: () => { location.hash = '#/pot/' + p.id; }
     }));
   }
   if (!state.pots.length) {
     l.appendChild(empty('No pots yet', 'Pots help you put money aside', {
-      label: 'Create a pot', onClick: () => import('./screens-b.js?v=41').then(m => m.newPotSheet())
+      label: 'Create a pot', onClick: () => import('./screens-b.js?v=42').then(m => m.newPotSheet())
     }));
   }
   body.appendChild(l);
@@ -1286,9 +1291,9 @@ export function potScreen(id) {
   const body = el('div');
   const c = el('div', 'card');
   c.style.textAlign = 'center';
-  const e = el('div', '', p.emoji || '🏦');
-  e.style.fontSize = '40px';
-  c.appendChild(e);
+  const pi = potIcon(p, 56);
+  pi.style.margin = '0 auto 12px';
+  c.appendChild(pi);
   c.appendChild(el('div', 'lts__v', fmt(p.saved || 0)));
   c.appendChild(el('div', 'hint', 'of ' + fmt(p.target) + ' target'));
   c.appendChild(spendBar((p.saved || 0) / Math.max(1, p.target)));
@@ -1317,18 +1322,69 @@ export function potScreen(id) {
   };
   body.appendChild(wd);
 
+  const linked = state.cards.filter(x => x.potId === p.id);
+
   body.appendChild(list([
-    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=41').then(m => m.editPotSheet(p.id))}),
+    row({title: 'Edit pot', onClick: () => import('./screens-b.js?v=42').then(m => m.editPotSheet(p.id))}),
+    row({
+      title: 'Virtual card',
+      sub: linked.length ? linked.length + ' card' + (linked.length === 1 ? '' : 's') + ' linked' : 'Spend straight from this pot',
+      onClick: () => { location.hash = '#/pot-card/' + p.id; }
+    }),
     row({title: 'Round-ups', value: p.roundUp ? 'On' : 'Off', chev: false}),
-    row({title: 'Delete pot', onClick: () => confirmSheet({
-      title: 'Delete ' + p.name, text: 'Money will go back to your balance.', danger: true, confirm: 'Delete',
-      onConfirm: () => {
-        acc().balance = round2(acc().balance + (p.saved || 0));
-        state.pots = state.pots.filter(x => x.id !== p.id);
-        save(); toast('Pot deleted'); location.hash = '#/pots';
-      }
-    })})
+    row({title: 'Delete pot', onClick: () => {
+      const snap = snapshot();
+      acc().balance = round2(acc().balance + (p.saved || 0));
+      state.pots = state.pots.filter(x => x.id !== p.id);
+      for (const cd of state.cards) if (cd.potId === p.id) cd.potId = null;
+      save();
+      toast('Pot deleted', {label: 'Undo', onClick: () => { restore(snap); rerender(); }});
+      location.hash = '#/pots';
+    }})
   ]));
 
   return screen('pot-' + id, {title: p.name, back: '#/pots', body});
 }
+
+export function potCardScreen(potId) {
+  const p = state.pots.find(x => x.id === potId);
+  if (!p) return screen('pot-card', {title: 'Virtual card', back: '#/pots', body: empty('Pot not found')});
+  const body = el('div');
+  const cards = state.cards.filter(c => c.potId === potId);
+
+  const c = el('div', 'card');
+  c.appendChild(el('div', 'lts__l', p.name + ' card'));
+  c.appendChild(el('div', 'lts__v', fmt(p.saved || 0)));
+  c.appendChild(el('div', 'hint', 'Spending on these cards comes out of the pot, not your balance.'));
+  body.appendChild(c);
+
+  if (cards.length) {
+    const l = el('div', 'list list--boxed');
+    for (const cd of cards) {
+      l.appendChild(row({
+        title: '•••• ' + cd.last4,
+        sub: (cd.frozen ? 'Frozen' : 'Active') + (cd.singleUse ? ' · single use' : '') + ' · ' + fmt(cd.spent || 0) + ' spent',
+        onClick: () => { location.hash = '#/virtual-card/' + cd.id; }
+      }));
+    }
+    body.appendChild(l);
+  }
+
+  const add = el('button', 'btn btn--primary btn--block', 'Create a virtual card');
+  add.onclick = () => {
+    const r = virtualCardCreate(p.id);
+    if (!r.ok) return toast('Virtual cards need Plus');
+    toast('Card created');
+    location.hash = '#/virtual-card/' + r.card.id;
+  };
+  body.appendChild(add);
+
+  if (!canUseVirtualCards()) {
+    body.appendChild(el('p', 'hint', 'Virtual cards are part of Plus. Upgrade to create one.'));
+    const up = el('button', 'btn btn--ghost btn--block', 'See plans');
+    up.onclick = () => { location.hash = '#/plus'; };
+    body.appendChild(up);
+  }
+
+  return screen('pot-card-' + potId, {title: 'Virtual card', back: '#/pot/' + potId, body});
+                                              }
