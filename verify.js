@@ -1,6 +1,6 @@
-import * as core from './core.js?v=44';
-import * as data from './data.js?v=44';
-import * as ui from './ui.js?v=44';
+import * as core from './core.js?v=45';
+import * as data from './data.js?v=45';
+import * as ui from './ui.js?v=45';
 
 const REQUIRED_CORE = [
   'state', 'VERSION', 'KEY', 'fmt', 'round2', 'clamp', 'uid', 'normalise', 'migrate',
