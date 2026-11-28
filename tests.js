@@ -7,8 +7,8 @@ import {
   categories, catById, isCustomCategory, statementTotals, planChangeQuote,
   changePlan, virtualCardCreate, virtualCardSpend, virtualCardFreeze,
   canUseVirtualCards, notifyPermission, connectedExpired
-} from './core.js?v=43';
-import { el, screen, row, list, section, empty, toast, pill } from './ui.js?v=43';
+} from './core.js?v=45';
+import { el, screen, row, list, section, empty, toast, pill } from './ui.js?v=45';
 
 const results = [];
 
