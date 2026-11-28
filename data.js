@@ -4,7 +4,7 @@ export const DOMAINS = {
   waitrose:'waitrose.com', coop:'coop.co.uk', iceland:'iceland.co.uk',
   farmfoods:'farmfoods.co.uk',
   greggs:'greggs.co.uk', pret:'pret.co.uk', costa:'costa.co.uk',
-  starbucks:'starbucks.co.uk', nero:'caffenero.com',
+  starbucks:'starbucks.com', nero:'caffenero.com',
   mcdonalds:'mcdonalds.com', kfc:'kfc.co.uk', burgerking:'burgerking.co.uk',
   subway:'subway.com', dominoes:'dominos.co.uk', pizzaexpress:'pizzaexpress.com',
   wagamama:'wagamama.com', nandos:'nandos.co.uk', fiveguys:'fiveguys.co.uk',
@@ -190,11 +190,11 @@ export const FUNDS = [
 
 export const RISK_FUNDS = [
   {id:'careful', name:'Careful', risk:3, equity:25, bond:70, cash:5,
-    blurb:'Mostly bonds with a slice of shares. Smaller ups and downs.'},
+   blurb:'Mostly bonds with a slice of shares. Smaller ups and downs.'},
   {id:'balanced', name:'Balanced', risk:5, equity:65, bond:30, cash:5,
-    blurb:'A mix of shares and bonds. Moderate ups and downs.'},
+   blurb:'A mix of shares and bonds. Moderate ups and downs.'},
   {id:'adventurous', name:'Adventurous', risk:7, equity:90, bond:8, cash:2,
-    blurb:'Mostly shares. Bigger ups and downs over time.'}
+   blurb:'Mostly shares. Bigger ups and downs over time.'}
 ];
 
 export const CONSTITUENTS = {
@@ -236,15 +236,15 @@ export const CREDIT_BANDS = [
 
 export const CREDIT_FACTORS = [
   {id:'electoral', label:'On the electoral roll', impact:'good',
-    note:'Registered at your current address since 2019.'},
+   note:'Registered at your current address since 2019.'},
   {id:'payments', label:'Payment history', impact:'good',
-    note:'No missed payments in the last 24 months.'},
+   note:'No missed payments in the last 24 months.'},
   {id:'age', label:'Age of your accounts', impact:'good',
-    note:'Your oldest account is 11 years old.'},
+   note:'Your oldest account is 11 years old.'},
   {id:'utilisation', label:'Credit used', impact:'watch',
-    note:'You are using 37% of your £3,200 limit.'},
+   note:'You are using 37% of your £3,200 limit.'},
   {id:'searches', label:'Recent applications', impact:'watch',
-    note:'2 hard searches in the last 6 months.'}
+   note:'2 hard searches in the last 6 months.'}
 ];
 
 export const CREDIT_TIPS = [
