@@ -1,8 +1,8 @@
-import { FUNDS, CATEGORY_IDS, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS } from './data.js?v=40';
+import { FUNDS, CATEGORY_IDS, CATEGORIES, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS, BENEFITS } from './data.js?v=41';
 
-export const VERSION = 29;
-export const KEY = 'monzo_v29';
-export const LEGACY_KEYS = ['monzo_v28','monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 30;
+export const KEY = 'monzo_v30';
+export const LEGACY_KEYS = ['monzo_v29','monzo_v28','monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -393,6 +393,137 @@ export function connectedConsentDays(a) {
   return Math.round((a.consentExpires - now()) / 86400000);
 }
 
+/* ---------- categories ---------- */
+
+export function categories() {
+  const base = CATEGORIES.map(c => {
+    const o = state.catOverrides[c.id];
+    return o ? Object.assign({}, c, o) : c;
+  });
+  return base.concat(state.customCats.map(c => Object.assign({}, c)));
+}
+
+export function catById(id) {
+  const hit = categories().find(c => c.id === id);
+  return hit || CATEGORIES.find(c => c.id === 'general');
+}
+
+export function isCustomCategory(id) {
+  return state.customCats.some(c => c.id === id);
+}
+
+export function addCategory({name, icon, colour}) {
+  const c = {
+    id: uid('cat'),
+    name: String(name).trim().slice(0, 24),
+    icon: icon || 'box',
+    colour: colour || '#6b6b76'
+  };
+  state.customCats.push(c);
+  save();
+  return c;
+}
+
+export function updateCategory(id, patch) {
+  if (isCustomCategory(id)) {
+    const c = state.customCats.find(x => x.id === id);
+    if (!c) return false;
+    Object.assign(c, patch);
+    save();
+    return true;
+  }
+  if (!CATEGORIES.some(c => c.id === id)) return false;
+  state.catOverrides[id] = Object.assign({}, state.catOverrides[id], patch);
+  save();
+  return true;
+}
+
+export function removeCategory(id) {
+  if (!isCustomCategory(id)) return false;
+  state.customCats = state.customCats.filter(c => c.id !== id);
+  for (const t of state.tx) if (t.category === id) t.category = 'general';
+  for (const k of Object.keys(state.budgets)) delete state.budgets[k][id];
+  save();
+  return true;
+}
+
+export function categoryUsage(id) {
+  return state.tx.filter(t => t.category === id).length;
+}
+
+/* ---------- search ---------- */
+
+export function recentSearches() {
+  return state.searches.slice();
+}
+
+export function pushSearch(q) {
+  const v = String(q || '').trim();
+  if (!v) return;
+  state.searches = [v, ...state.searches.filter(x => x.toLowerCase() !== v.toLowerCase())].slice(0, 8);
+  save();
+}
+
+export function clearSearches() {
+  state.searches = [];
+  save();
+}
+
+export function searchTx(q, opts = {}) {
+  const needle = String(q || '').trim().toLowerCase();
+  const dir = opts.dir || 'all';
+  const cat = opts.cat || null;
+  let rows = state.tx.filter(t => (t.acct || 'personal') === state.active);
+  if (dir === 'in') rows = rows.filter(t => t.amount > 0);
+  if (dir === 'out') rows = rows.filter(t => t.amount < 0);
+  if (cat) rows = rows.filter(t => t.category === cat);
+  if (needle) {
+    rows = rows.filter(t => {
+      const hay = [t.name, t.note, t.ref, String(Math.abs(t.amount))]
+        .filter(Boolean).join(' ').toLowerCase();
+      if (hay.includes(needle)) return true;
+      const d = new Date(t.ts);
+      const dates = [
+        d.toLocaleDateString('en-GB'),
+        d.toLocaleDateString('en-GB', {month:'long', year:'numeric'}),
+        String(d.getFullYear())
+      ];
+      return dates.some(x => x.toLowerCase().includes(needle));
+    });
+  }
+  return rows.sort((a, b) => b.ts - a.ts).slice(0, 200);
+}
+
+/* ---------- plans and benefits ---------- */
+
+export function planPrice(id) {
+  return (PLANS[id] || PLANS.free).price;
+}
+
+export function planHasBenefit(planId, benefitId) {
+  const b = BENEFITS.find(x => x.id === benefitId);
+  return !!b && b.plans.includes(planId);
+}
+
+export function planChangeQuote(id) {
+  const to = PLANS[id] || PLANS.free;
+  const from = planInfo();
+  const renews = (state.plus && state.plus.renews) || now();
+  const daysLeft = clamp(Math.round((renews - now()) / 86400000), 0, 31);
+  const diff = round2(to.price - from.price);
+  const credit = diff < 0 ? round2(Math.abs(diff) * (daysLeft / 30)) : 0;
+  const due = diff > 0 ? diff : 0;
+  return {from, to, daysLeft, due, credit, downgrade: diff < 0, same: diff === 0};
+}
+
+export function changePlan(id) {
+  const q = planChangeQuote(id);
+  state.plan = id;
+  state.plus.renews = now() + 30 * 86400000;
+  save();
+  return q;
+}
+
 function defaultState() {
   const base = now();
   const mk = (name, amount, cat, daysAgo, acct) => ({
@@ -458,6 +589,9 @@ function defaultState() {
     splits: [],
     budgets: JSON.parse(JSON.stringify(BUDGET_SEED)),
     budgetSeeded: true,
+    customCats: [],
+    catOverrides: {},
+    searches: [],
     flex: {limit: 1000, plans: [], active: true},
     loans: [],
     overdraft: {enabled: false, limit: 0},
@@ -589,6 +723,12 @@ const migrations = [
     if (!Array.isArray(s.mip.dips)) s.mip.dips = [];
     if (typeof s.settings.appLock !== 'boolean') s.settings.appLock = true;
     return s;
+  }},
+  {v: 30, fn: s => {
+    if (!Array.isArray(s.customCats)) s.customCats = [];
+    if (!s.catOverrides || typeof s.catOverrides !== 'object') s.catOverrides = {};
+    if (!Array.isArray(s.searches)) s.searches = [];
+    return s;
   }}
 ];
 
@@ -642,6 +782,25 @@ export function normalise(input) {
     }
   }
 
+  if (!Array.isArray(s.customCats)) s.customCats = [];
+  s.customCats = s.customCats.filter(c => c && c.id && c.name).map(c => ({
+    id: c.id,
+    name: String(c.name).slice(0, 24),
+    icon: c.icon || 'box',
+    colour: c.colour || '#6b6b76'
+  }));
+  if (!s.catOverrides || typeof s.catOverrides !== 'object') s.catOverrides = {};
+  for (const id of Object.keys(s.catOverrides)) {
+    if (!CATEGORY_IDS.includes(id)) { delete s.catOverrides[id]; continue; }
+    const o = s.catOverrides[id] || {};
+    s.catOverrides[id] = {};
+    if (o.name) s.catOverrides[id].name = String(o.name).slice(0, 24);
+    if (o.icon) s.catOverrides[id].icon = o.icon;
+    if (o.colour) s.catOverrides[id].colour = o.colour;
+  }
+  if (!Array.isArray(s.searches)) s.searches = [];
+  s.searches = s.searches.filter(x => typeof x === 'string').slice(0, 8);
+
   s.layout = s.layout || {};
   if (!Array.isArray(s.layout.order) || !s.layout.order.length) {
     s.layout.order = ['card','balance','ring','carousel','activity'];
@@ -658,8 +817,15 @@ export function normalise(input) {
   if (!Array.isArray(s.cards) || !s.cards.length) {
     s.cards = [{id: uid('card'), label:'Coral', last4:'4821', type:'debit', frozen:false, virtual:false, network:'mastercard'}];
   }
-  for (const t of s.tx) if (!t.acct) t.acct = 'personal';
-  for (const t of s.scheduled) if (!t.acct) t.acct = 'personal';
+  const known = new Set(CATEGORY_IDS.concat(s.customCats.map(c => c.id)));
+  for (const t of s.tx) {
+    if (!t.acct) t.acct = 'personal';
+    if (!known.has(t.category)) t.category = 'general';
+  }
+  for (const t of s.scheduled) {
+    if (!t.acct) t.acct = 'personal';
+    if (!known.has(t.category)) t.category = 'general';
+  }
   for (const p of s.payees) if (typeof p.fav !== 'boolean') p.fav = false;
 
   if (typeof s.savings !== 'number') s.savings = 0;
@@ -1171,5 +1337,5 @@ export function lastMonthByCategory() {
 }
 
 export function ensureCategory(id) {
-  return CATEGORY_IDS.includes(id) ? id : 'general';
-      }
+  return categories().some(c => c.id === id) ? id : 'general';
+}
