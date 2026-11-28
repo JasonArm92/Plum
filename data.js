@@ -399,3 +399,46 @@ export const NOTIFY_TYPES = [
   {id:'pots', label:'Pots', note:'Round-ups and pot goals'},
   {id:'marketing', label:'Offers and product news', note:'Occasional'}
 ];
+
+/* ---------- onboarding ---------- */
+
+export const ONBOARD_SLIDES = [
+  {
+    id:'account',
+    title:'A bank that works for you',
+    body:'A current account with pots, budgeting and investing in one place.',
+    art:'card'
+  },
+  {
+    id:'pots',
+    title:'Put money aside',
+    body:'Pots keep savings away from spending, with round-ups on every purchase.',
+    art:'pot'
+  },
+  {
+    id:'trends',
+    title:'See where it goes',
+    body:'Every transaction categorised, with budgets that warn you before you overspend.',
+    art:'chart'
+  },
+  {
+    id:'borrow',
+    title:'Borrow sensibly',
+    body:'Flex, loans and overdraft with the cost shown up front. No surprises.',
+    art:'flex'
+  }
+];
+
+export const CARD_COLOURS = [
+  {id:'coral', name:'Coral', colour:'#ff4f40'},
+  {id:'sunset', name:'Sunset', colour:'#ff8000'},
+  {id:'lagoon', name:'Lagoon', colour:'#0891b2'},
+  {id:'midnight', name:'Midnight', colour:'#334155'}
+];
+
+export const PIN_KEYS = [
+  {d:'1', l:''}, {d:'2', l:'ABC'}, {d:'3', l:'DEF'},
+  {d:'4', l:'GHI'}, {d:'5', l:'JKL'}, {d:'6', l:'MNO'},
+  {d:'7', l:'PQRS'}, {d:'8', l:'TUV'}, {d:'9', l:'WXYZ'},
+  {d:'', l:''}, {d:'0', l:''}, {d:'⌫', l:''}
+];
