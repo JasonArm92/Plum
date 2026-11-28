@@ -213,6 +213,8 @@ export const POT_EMOJI = ['🏖️','🚗','🎄','🏠','💍','🎓','🎁','�
 
 export const POT_COLOURS = ['#ff4f40','#ff8000','#f5a623','#12a150','#1f6feb','#8b5cf6','#d92d20','#0b4ea2','#0891b2','#6b7280'];
 
+export const POT_ICONS = ['basket','cutlery','train','bag','receipt','film','pill','dumbbell','house','family','paw','card','note','box'];
+
 export const SAVINGS_INTEREST = 0.04;
 
 export const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -387,4 +389,13 @@ export const SEARCH_DIRS = [
   {id:'all', label:'All'},
   {id:'out', label:'Money out'},
   {id:'in', label:'Money in'}
+];
+
+/* ---------- notifications ---------- */
+
+export const NOTIFY_TYPES = [
+  {id:'bills', label:'Bills and scheduled payments', note:'Before money leaves your account'},
+  {id:'spending', label:'Spending', note:'Each time you use your card'},
+  {id:'pots', label:'Pots', note:'Round-ups and pot goals'},
+  {id:'marketing', label:'Offers and product news', note:'Occasional'}
 ];
