@@ -1,5 +1,5 @@
-import { fmt, state } from './core.js?v=42';
-import { DOMAINS, BRANDS } from './data.js?v=42';
+import { fmt, state } from './core.js?v=43';
+import { DOMAINS, BRANDS } from './data.js?v=43';
 
 export const el = (tag, cls, html) => {
   const n = document.createElement(tag);
