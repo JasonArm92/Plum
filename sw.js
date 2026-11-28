@@ -1,8 +1,8 @@
-const CACHE = 'monzo-v45';
+const CACHE = 'monzo-v46';
 const ASSETS = [
   './', './index.html', './styles.css', './boot.js', './main.js', './core.js',
-  './data.js', './ui.js', './verify.js', './statement.js', './screens-a.js',
-  './screens-b.js', './screens-c.js', './screens-d.js'
+  './data.js', './ui.js', './verify.js', './statement.js', './tests.js',
+  './screens-a.js', './screens-b.js', './screens-c.js', './screens-d.js'
 ];
 
 self.addEventListener('install', e => {
