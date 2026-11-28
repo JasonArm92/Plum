@@ -2,12 +2,12 @@ import {
   state, fmt, round2, catById, categories, searchTx, pushSearch,
   clearSearches, recentSearches, planInfo, PLANS, planHasBenefit,
   planChangeQuote, changePlan, save, dayKey, dayLabel
-} from './core.js?v=43';
-import { BENEFITS, SEARCH_DIRS } from './data.js?v=41';
+} from './core.js?v=44';
+import { BENEFITS, SEARCH_DIRS } from './data.js?v=44';
 import {
   el, screen, row, list, section, tile, catIcon, icon,
   empty, toast, sheet, confirmSheet, input, pill
-} from './ui.js?v=43';
+} from './ui.js?v=44';
 
 const rerender = () => document.dispatchEvent(new CustomEvent('render'));
 
@@ -217,4 +217,4 @@ export function planChangeSheet(id) {
     toast('You are on ' + q.to.name);
     rerender();
   };
-                }
+}
