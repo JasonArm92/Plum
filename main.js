@@ -1,6 +1,6 @@
-import { load, state, runScheduled, onboarded } from './core.js?v=44';
-import { el, icon, toast } from './ui.js?v=44';
-import { verify } from './verify.js?v=44';
+import { load, state, runScheduled, onboarded } from './core.js?v=45';
+import { el, icon, toast } from './ui.js?v=45';
+import { verify } from './verify.js?v=45';
 import {
   homeScreen, trendsScreen, trendCatScreen, paymentsScreen, payeesScreen,
   payeeScreen, payeeFormScreen, sendScreen, requestScreen, bankScreen,
@@ -9,26 +9,27 @@ import {
   settingsScreen, settingsPersonalScreen, settingsSecurityScreen,
   settingsPreferencesScreen, settingsDocumentsScreen, settingsAboutScreen,
   categoriesScreen, categoryFormScreen
-} from './screens-a.js?v=44';
+} from './screens-a.js?v=45';
 import {
   txScreen, investScreen, fundScreen, pensionScreen, isaScreen, plusScreen,
   profileScreen, securityScreen, notificationsScreen, statementsScreen,
   appearanceScreen, applyTheme, aboutScreen, cardsScreen, addTxSheet, ledgerScreen,
   splitScreen, splitsScreen, splitDetailScreen, receiptScreen, virtualCardScreen
-} from './screens-b.js?v=44';
+} from './screens-b.js?v=45';
 import {
   creditScreen, creditReportScreen, mortgageScreen, dipScreen,
   connectedScreen, connectedAccountScreen
-} from './screens-c.js?v=44';
-import { searchScreen, benefitScreen, planChangeSheet } from './screens-d.js?v=44';
-import { testsScreen } from './tests.js?v=44';
+} from './screens-c.js?v=45';
+import { searchScreen, benefitScreen, planChangeSheet } from './screens-d.js?v=45';
 import {
   welcomeScreen, signupEmailScreen, signupCheckScreen, signupPhoneScreen,
   signupPinScreen, signupCardScreen, loginScreen, forgotPinScreen,
   forgotSentScreen, resetPinScreen
-} from './screens-e.js?v=44';
+} from './screens-e.js?v=45';
+import { helpScreen, helpTopicScreen, helpArticleScreen } from './screens-f.js?v=45';
+import { testsScreen } from './tests.js?v=45';
 
-const BUILD = 44;
+const BUILD = 45;
 
 const TABS = [
   {id: 'home', label: 'Home', icon: 'home', hash: '#/home'},
@@ -101,6 +102,9 @@ const SCREENS = {
   'reset-pin': () => resetPinScreen(),
   search: () => searchScreen(),
   tests: () => testsScreen(),
+  help: () => helpScreen(),
+  'help-topic': a => helpTopicScreen(a),
+  'help-article': a => helpArticleScreen(a),
   categories: () => categoriesScreen(),
   'category-new': () => categoryFormScreen(null),
   'category-edit': a => categoryFormScreen(a),
