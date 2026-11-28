@@ -1,8 +1,8 @@
-import { FUNDS, CATEGORY_IDS, CATEGORIES, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS, BENEFITS } from './data.js?v=43';
+import { FUNDS, CATEGORY_IDS, CATEGORIES, RISK_FUNDS, CREDIT_BANDS, CONNECT_CONSENT_DAYS, BENEFITS } from './data.js?v=44';
 
-export const VERSION = 32;
-export const KEY = 'monzo_v32';
-export const LEGACY_KEYS = ['monzo_v31','monzo_v30','monzo_v29','monzo_v28','monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
+export const VERSION = 33;
+export const KEY = 'monzo_v33';
+export const LEGACY_KEYS = ['monzo_v32','monzo_v31','monzo_v30','monzo_v29','monzo_v28','monzo_v27','monzo_v26','monzo_v25','monzo_v24','monzo_v23','monzo_v22','monzo_v21','monzo_v20','monzo_v19','monzo_v18','monzo_v17','monzo_v16','monzo_v15','monzo_v14','monzo_v13','monzo_v12','monzo_v11'];
 export const MAX_CATCHUP_DAYS = 35;
 export const PIN = '2580';
 
@@ -221,6 +221,49 @@ export function loanQuote(amount, months) {
 
 export function overdraftDaily(limit) {
   return round2((limit * OVERDRAFT_EAR) / 365);
+}
+
+/* ---------- onboarding ---------- */
+
+export function onboardSet(patch) {
+  state.onboard = Object.assign({}, state.onboard, patch);
+  save();
+}
+
+export function onboarded() {
+  return !!state.onboard.done;
+}
+
+export function finishOnboard() {
+  state.onboard.done = true;
+  state.onboard.step = 'done';
+  save();
+}
+
+export function setPin(pin) {
+  const p = String(pin).replace(/\D/g, '').slice(0, 4);
+  if (p.length !== 4) return false;
+  state.user.pin = p;
+  save();
+  return true;
+}
+
+export function checkPin(pin) {
+  return String(pin) === String(state.user.pin || PIN);
+}
+
+export function maskEmail(email) {
+  const e = String(email || '');
+  const at = e.indexOf('@');
+  if (at < 1) return e;
+  const name = e.slice(0, at);
+  const keep = name.slice(0, 1);
+  return keep + '•'.repeat(Math.max(2, name.length - 1)) + e.slice(at);
+}
+
+export function maskPhone(phone) {
+  const p = String(phone || '');
+  return p.slice(0, 4) + ' ••• ' + p.slice(-3);
 }
 
 /* ---------- credit ---------- */
@@ -694,6 +737,7 @@ function defaultState() {
       joint: {id:'joint', name:'Joint', balance: 7121.92, with:'Chloe Brown', card: {last4:'7734', frozen:false}}
     },
     active: 'personal',
+    onboard: {step: 'welcome', email: '', phone: '', done: false},
     pots: [
       {id:'pot_holiday', name:'Holiday', target:6000, saved:4250.00, emoji:'🏖️', icon:'train', colour:'#1f6feb', locked:false, roundUp:true, created:base - 300*86400000},
       {id:'pot_car', name:'New car', target:12000, saved:6800.00, emoji:'🚗', icon:'card', colour:'#ff8000', locked:false, roundUp:false, created:base - 240*86400000},
@@ -904,6 +948,16 @@ const migrations = [
     if (typeof s.settings.haptics !== 'boolean') s.settings.haptics = true;
     if (typeof s.settings.reducedMotion !== 'boolean') s.settings.reducedMotion = false;
     return s;
+  }},
+  {v: 33, fn: s => {
+    const u = s.user || {};
+    s.onboard = {
+      step: 'welcome',
+      email: typeof u.email === 'string' ? u.email : '',
+      phone: typeof u.phone === 'string' ? u.phone : '',
+      done: false
+    };
+    return s;
   }}
 ];
 
@@ -914,6 +968,12 @@ export function normalise(input) {
     name: 'Jason Armstrong', first: 'Jason', dob: '1992-10-07', email: '',
     phone: '', address: '', city: '', postcode: '', pin: PIN
   }, s.user || {});
+
+  s.onboard = Object.assign({step: 'welcome', email: '', phone: '', done: false}, s.onboard || {});
+  if (typeof s.onboard.done !== 'boolean') s.onboard.done = false;
+  if (typeof s.onboard.email !== 'string') s.onboard.email = '';
+  if (typeof s.onboard.phone !== 'string') s.onboard.phone = '';
+  if (typeof s.onboard.step !== 'string') s.onboard.step = 'welcome';
 
   s.settings = Object.assign({
     notifications: true, marketing: false, biometrics: true, theme: 'system',
@@ -1523,4 +1583,4 @@ export function lastMonthByCategory() {
 
 export function ensureCategory(id) {
   return categories().some(c => c.id === id) ? id : 'general';
-        }
+}
